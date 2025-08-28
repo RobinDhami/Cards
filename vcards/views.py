@@ -78,6 +78,8 @@ def add_user(request):
     return render(request, 'add_user.html', {'skills': skills, 'colleges': colleges})
 
 
+# TODO: The edit_student_auth function is currently disabled.
+# Uncomment and update as needed if authentication for editing student profiles is required.
 # def edit_student_auth(request, student_id):
 #     student = get_object_or_404(StudentProfile, id=student_id)
 #     if request.method == 'POST':
