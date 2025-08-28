@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+  {% load static %}
+
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+    <link rel="stylesheet" href="{%static 'css/style5.css'%}" />
+    <title>Portfolio Website</title>
+  </head>
+  <body>
+    <nav>
+      <div class="nav-container">
+        <div class="logo">
+          <img src="logo.png" alt="" />
+        </div>
+        <div class="links">
+          <div
+            class="link"
+            data-aos="fade-up"
+            data-aos-duration="1000"
+            data-aos-delay="100">
+            <a href="">Home</a>
+          </div>
+          <div
+            class="link"
+            data-aos="fade-up"
+            data-aos-duration="1000"
+            data-aos-delay="200">
+            <a href="">About us</a>
+          </div>
+          <div
+            class="link"
+            data-aos="fade-up"
+            data-aos-duration="1000"
+            data-aos-delay="300">
+            <a href="">Services</a>
+          </div>
+          <div
+            class="link"
+            data-aos="fade-up"
+            data-aos-duration="1000"
+            data-aos-delay="400">
+            <a href="">Projects</a>
+          </div>
+        </div>
+        <button
+          data-aos="zoom-in"
+          data-aos-duration="1000"
+          data-aos-delay="500">
+          Contact Us
+        </button>
+      </div>
+      <svg
+        class="hamburg"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 448 512"
+        width="34"
+        height="32">
+        <!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.-->
+        <path
+          d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z" />
+      </svg>
+      <div class="dropmenu">
+        <a href="">Home</a>
+        <a href="">About us</a>
+        <a href="">Services</a>
+        <a href="">Projects</a>
+        <button>Contact Us</button>
+        <svg
+          class="cancel"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 384 512"
+          width="34"
+          height="32">
+          <!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.-->
+          <path
+            d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z" />
+        </svg>
+      </div>
+    </nav>
+
+    <!-- Section Start -->
+    <section>
+      <div class="content">
+        <div class="main-content">
+          <h1
+            data-aos="fade-right"
+            data-aos-duration="1500"
+            data-aos-delay="600">
+            Hi! I Am
+          </h1>
+          <span
+            data-aos="fade-left"
+            data-aos-duration="1500"
+            data-aos-delay="800"
+            >Samayra</span
+          >
+          <h2
+            data-aos="fade-right"
+            data-aos-duration="1500"
+            data-aos-delay="1000">
+            A Frontend Developer
+          </h2>
+          <p data-aos="flip-up" data-aos-duration="1500" data-aos-delay="1200">
+            Lorem ipsum, dolor sit amet consectetur adipisicing elit. Ducimus,
+            asperiores ad! Culpa numquam aliquid ex mollitia non, modi quisquam
+            doloremque beatae! Asperiores fugit amet tenetur nostrum tempore et
+            delectus qui.
+          </p>
+          <div class="buttons">
+            <button
+              data-aos="zoom-in"
+              data-aos-duration="1500"
+              data-aos-delay="1400">
+              Hire me
+            </button>
+            <button
+              data-aos="zoom-in"
+              data-aos-duration="1500"
+              data-aos-delay="1400">
+              See my Work
+            </button>
+          </div>
+        </div>
+        <div class="image">
+          <img
+            src="main.png"
+            alt="main-image"
+            data-aos="zoom-in"
+            data-aos-duration="2800" />
+        </div>
+      </div>
+    </section>
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+    <script>
+      AOS.init({ offset: 0 });
+    </script>
+    <script>
+      const hamburg = document.querySelector(".hamburg");
+      const cancel = document.querySelector(".cancel");
+      const navbar = document.querySelector(".dropmenu");
+
+      hamburg.addEventListener("click", () => {
+        navbar.style.transform = "translateY(0px)";
+      });
+
+      cancel.addEventListener("click", () => {
+        navbar.style.transform = "translateY(-300px)";
+      });
+    </script>
+  </body>
+</html>

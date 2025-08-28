@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Add Student to {{ college.name }}{% endblock %}
+{% block content %}
+<h2 class="mb-4">Add Student to {{ college.name }}</h2>
+<form method="post" enctype="multipart/form-data" class="card p-4 shadow-sm">
+    {% csrf_token %}
+ <div class="mb-3">
+    <label class="form-label">College</label>
+    <input type="text" class="form-control" value="{{ college.name }}" disabled>
+    <input type="hidden" name="college" value="{{ college.id }}">
+</div>
+    <div class="mb-3">
+        <label class="form-label">Full Name</label>
+        <input type="text" name="name" class="form-control" required>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Phone</label>
+        <input type="text" name="phone" class="form-control">
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input type="email" name="email" class="form-control" required>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Username</label>
+        <input type="text" name="username" class="form-control" required>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" class="form-control" required>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Bio</label>
+        <textarea name="bio" class="form-control"></textarea>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Profile Photo</label>
+        <input type="file" name="profile_photo" class="form-control">
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Cover Photo</label>
+        <input type="file" name="cover_photo" class="form-control">
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Skills</label>
+        <div>
+            {% for skill in skills %}
+                <label class="me-2">
+                    <input type="checkbox" name="skills" value="{{ skill.id }}"> {{ skill.name }}
+                </label>
+            {% endfor %}
+        </div>
+    </div>
+    <!-- Add social fields as needed -->
+    <button type="submit" class="btn btn-primary">Add Student</button>
+    <a href="{% url 'college_details' college.id %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+    // JavaScript to handle form submission and password encryption
+    document.querySelector('form').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent the default form submission
+
+        // Get the form data
+        var formData = new FormData(this);
+
+        // Encrypt the password
+        var password = formData.get('password');
+        var encryptedPassword = btoa(password); // Basic encryption for demonstration
+
+        // Set the encrypted password back to the form data
+        formData.set('password', encryptedPassword);
+
+        // Submit the form with the encrypted password
+        fetch(this.action, {
+            method: this.method,
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                // Handle successful response
+                window.location.href = '{% url "college_details" college.id %}';
+            } else {
+                // Handle error response
+                alert('Error adding student. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        });
+    });
+</script>
+{% endblock %}

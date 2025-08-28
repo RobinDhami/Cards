@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Edit College</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container py-5">
+    {% extends "base.html" %}
+    {% block title %}Edit College{% endblock %}
+    {% block content %}
+    <h2 class="mb-4">Edit College</h2>
+    <form method="post" enctype="multipart/form-data" class="card p-4 shadow-sm">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label class="form-label">Name *</label>
+            <input type="text" name="name" class="form-control" value="{{ college.name }}" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Slogan</label>
+            <input type="text" name="slogan" class="form-control" value="{{ college.slogan }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Address</label>
+            <input type="text" name="address" class="form-control" value="{{ college.address }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Logo</label>
+            {% if college.logo %}
+                <div class="mb-2">
+                    <img src="{{ college.logo.url }}" alt="Logo" style="max-height:60px;">
+                </div>
+            {% endif %}
+            <input type="file" name="logo" class="form-control">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Website</label>
+            <input type="url" name="website" class="form-control" value="{{ college.website }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control" value="{{ college.email }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Phone</label>
+            <input type="text" name="phone" class="form-control" value="{{ college.phone }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea name="description" class="form-control">{{ college.description }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <a href="{% url 'college_details' college.id %}" class="btn btn-secondary">Cancel</a>
+    </form>
+    {% endblock %}
+</body>
+</html>

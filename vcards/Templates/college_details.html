@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}{{ college.name }} Details{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">{{ college.name }}</h2>
+        <a href="{% url 'add_student_to_college' college.id %}?college={{ college.id }}" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i> Add Student
+        </a>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            Students List
+        </div>
+        <div class="card-body p-0">
+            {% if students %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th style="width:160px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td>{{ student.name }}</td>
+                            <td>{{ student.email }}</td>
+                            <td>{{ student.phone }}</td>
+                            <td>
+<!-- in your student list template -->
+<button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#profileChoiceModal" data-student-id="{{ student.id }}" title="View Profile">
+    <a href="{% url 'student_profile_choice' student.id %}">
+         <i class="bi bi-eye"></i>
+    </a>
+   
+</button>
+
+                                <a href="{% url 'edit_student_full' student.id %}" class="btn btn-sm btn-outline-warning" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <!-- Add more actions as needed -->
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                <div class="p-4 text-center text-muted">No students found for this college.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

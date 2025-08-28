@@ -1,0 +1,52 @@
+{% block content %}
+{% load tailwind_tags %}
+
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-50 via-white to-yellow-100 relative p-6">
+
+  <!-- Blurred Glass Background -->
+  <div class="absolute inset-0 pointer-events-none">
+    <img src="/static/images/brand-bg.jpg" alt="Brand Background"
+         class="w-full h-full object-cover opacity-30 blur-sm">
+    <div class="absolute inset-0 bg-gradient-to-br from-yellow-400/10 to-yellow-200/20 backdrop-blur-xl"></div>
+  </div>
+
+  <!-- Glass Card -->
+  <div class="relative bg-white/80 backdrop-blur-2xl rounded-3xl shadow-2xl max-w-md w-full p-10 text-center border border-yellow-200 ring-1 ring-yellow-100">
+    
+    <!-- Branding -->
+    <div class="flex flex-col items-center mb-6">
+      <img src="/static/images/brand-logo.png" alt="Brand Logo" 
+           class="w-16 h-16 mb-2 drop-shadow-lg">
+      <h2 class="text-lg font-extrabold text-yellow-600 tracking-wide font-sans">SkillConnect</h2>
+    </div>
+
+    <!-- Profile -->
+    <div class="flex justify-center mb-4">
+      <img src="{{ student.profile_photo.url }}" alt="{{ student.name }}"
+           class="w-28 h-28 rounded-full border-4 border-yellow-400 shadow-lg object-cover ring-2 ring-yellow-200">
+    </div>
+    
+    <!-- Name & Intro -->
+    <h1 class="text-2xl font-extrabold text-gray-800 mb-2 font-sans">{{ student.name }}</h1>
+    <p class="text-gray-500 text-base mb-8 font-medium">How would you like to connect?</p>
+    
+    <!-- Action Buttons -->
+    <div class="flex flex-col gap-4">
+      <a href="{% url 'contact_card' student.id %}"
+         class="flex items-center justify-center gap-3 bg-gradient-to-r from-yellow-500 to-yellow-400 hover:from-yellow-600 hover:to-yellow-500 text-white font-bold py-4 rounded-xl shadow-xl transition-all duration-200 transform hover:scale-105 hover:shadow-2xl text-lg tracking-wide">
+         <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10a9 9 0 11-18 0 9 9 0 0118 0z"/><path d="M12 14v2m0-8v2m0 4h.01"/></svg>
+         Contact Card
+      </a>
+      
+      <a href="{% url 'profile' student.id %}"
+         class="flex items-center justify-center gap-3 bg-white border-2 border-yellow-300 text-yellow-700 hover:bg-yellow-50 font-bold py-4 rounded-xl shadow-xl transition-all duration-200 transform hover:scale-105 hover:shadow-2xl text-lg tracking-wide">
+         <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20l9-5-9-5-9 5 9 5z"/><path d="M12 12V4"/></svg>
+         Portfolio
+      </a>
+    </div>
+    
+  </div>
+</div>
+
+{% tailwind_css %}
+{% endblock %}

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Delete College</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container py-5">
+    <div class="card p-4 shadow-sm">
+        <h3>Are you sure you want to delete "{{ college.name }}"?</h3>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Yes, Delete</button>
+            <a href="{% url 'college_details' college.id %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</body>
+</html>

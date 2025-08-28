@@ -1,0 +1,25 @@
+<!-- templates/bulk_upload.html -->
+{% extends "base.html" %}
+{% block title %}Bulk Upload Students{% endblock %}
+{% block content %}
+<div class="bg-white p-8 rounded shadow max-w-md w-full mx-auto mt-5">
+  <h1 class="text-2xl font-bold mb-4">Bulk Upload Students</h1>
+
+  <p class="mb-2 text-sm text-gray-600">
+    ✅ Required columns: <code>name</code>, <code>address</code>, <code>phone</code><br>
+    📌 Optional: <code>college</code>, <code>email</code>, etc.
+  </p>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="bg-green-100 text-green-800 p-2 rounded mb-2">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <form method="POST" enctype="multipart/form-data" class="space-y-4">
+    {% csrf_token %}
+    <input type="file" name="file" required class="border p-2 w-full" accept=".xlsx,.xls" />
+    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded w-full hover:bg-blue-700">Upload Excel</button>
+  </form>
+</div>
+{% endblock %}
