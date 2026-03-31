@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Edit Profile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-4">
+  <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
+    <h1 class="text-2xl font-bold mb-6">Edit Your Profile</h1>
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.as_p }}
+
+      <h2 class="text-xl font-semibold mt-8 mb-2">Education</h2>
+      {{ education_fs.management_form }}
+      {% for form in education_fs %}
+        <div class="border p-4 mb-2 rounded">{{ form.as_p }}</div>
+      {% endfor %}
+
+      <h2 class="text-xl font-semibold mt-8 mb-2">Achievements</h2>
+      {{ achievement_fs.management_form }}
+      {% for form in achievement_fs %}
+        <div class="border p-4 mb-2 rounded">{{ form.as_p }}</div>
+      {% endfor %}
+
+      <h2 class="text-xl font-semibold mt-8 mb-2">Projects</h2>
+      {{ project_fs.management_form }}
+      {% for form in project_fs %}
+        <div class="border p-4 mb-2 rounded">{{ form.as_p }}</div>
+      {% endfor %}
+
+      <h2 class="text-xl font-semibold mt-8 mb-2">Blog Posts</h2>
+      {{ blog_fs.management_form }}
+      {% for form in blog_fs %}
+        <div class="border p-4 mb-2 rounded">{{ form.as_p }}</div>
+      {% endfor %}
+
+      <h2 class="text-xl font-semibold mt-8 mb-2">Certifications</h2>
+      {{ cert_fs.management_form }}
+      {% for form in cert_fs %}
+        <div class="border p-4 mb-2 rounded">{{ form.as_p }}</div>
+      {% endfor %}
+
+      <h2 class="text-xl font-semibold mt-8 mb-2">Languages</h2>
+      {{ lang_fs.management_form }}
+      {% for form in lang_fs %}
+        <div class="border p-4 mb-2 rounded">{{ form.as_p }}</div>
+      {% endfor %}
+
+      <h2 class="text-xl font-semibold mt-8 mb-2">Interests</h2>
+      {{ interest_fs.management_form }}
+      {% for form in interest_fs %}
+        <div class="border p-4 mb-2 rounded">{{ form.as_p }}</div>
+      {% endfor %}
+
+      <h2 class="text-xl font-semibold mt-8 mb-2">Experience</h2>
+      {{ exp_fs.management_form }}
+      {% for form in exp_fs %}
+        <div class="border p-4 mb-2 rounded">{{ form.as_p }}</div>
+      {% endfor %}
+
+      <h2 class="text-xl font-semibold mt-8 mb-2">Choose Contact Card Template</h2>
+      <select name="contact_template" class="mb-4">
+          {% for tpl in contact_templates %}
+              <option value="{{ tpl }}" {% if tpl == student.contact_template %}selected{% endif %}>{{ tpl }}</option>
+          {% endfor %}
+      </select>
+
+      {% if portfolio_templates %}
+      <h2 class="text-xl font-semibold mt-8 mb-2">Choose Portfolio Template</h2>
+      <select name="portfolio_template" class="mb-4">
+          {% for tpl in portfolio_templates %}
+              <option value="{{ tpl }}" {% if tpl == student.portfolio_template %}selected{% endif %}>{{ tpl }}</option>
+          {% endfor %}
+      </select>
+      {% endif %}
+
+      <h2 class="text-xl font-semibold mt-8 mb-2">Choose Social Media to Display</h2>
+      <div class="flex flex-wrap gap-4 mb-4">
+          {% for soc in social_choices %}
+              <label class="flex items-center space-x-2">
+                  <input type="checkbox" name="social_stack" value="{{ soc }}"
+                      {% if soc in student.social_stack|default:"" %}checked{% endif %}>
+                  <span class="capitalize">{{ soc }}</span>
+              </label>
+          {% endfor %}
+      </div>
+
+      <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded mt-6 hover:bg-blue-700">Save Changes</button>
+    </form>
+  </div>
+</body>
+</html>

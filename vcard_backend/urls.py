@@ -23,6 +23,7 @@ urlpatterns = [
     path('student/<int:student_id>/download-vcard/', download_vcard, name='download_vcard'),
     path('student/<int:student_id>/choose/', student_profile_choice, name='student_profile_choice'),
     path('student/<int:student_id>/contact-card/', contact_card, name='contact_card'),
+    path('student/edit/<int:student_id>',edit_student_manual,name='edit_student_manual'),
     path('send-message/', send_message, name='send_message'),
 
  

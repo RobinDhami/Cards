@@ -144,24 +144,14 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
-def send_message(request, id):
-    student = get_object_or_404(StudentProfile, id=id)
-    if request.method == 'POST':
-        message = request.POST.get('message')
-        send_mail(
-            subject='New message via student card',
-            message=message,
-            from_email=request.user.email,  # or use settings.DEFAULT_FROM_EMAIL
-            recipient_list=[student.email],
-        )
-    return redirect('profile', student_id=id)
+
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'rozendhami69@gmail.com'      # <-- your Gmail address
-EMAIL_HOST_PASSWORD = 'xtqpvzakurrmfsri'           # <-- your Gmail App Password
+EMAIL_HOST_PASSWORD = 'iqmbhqxurruraolf'           # <-- your Gmail App Password
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 

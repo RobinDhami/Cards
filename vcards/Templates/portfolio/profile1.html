@@ -280,6 +280,26 @@
             transition: 0.3s;
             border-radius: 2px;
         }
+        .blog-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* responsive grid */
+  gap: 35px; /* spacing between cards */
+  margin-top: 20px;
+  margin-left:100px
+}
+ 
+.blog-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  transition: transform 0.3s;
+  cursor: pointer;
+}
+
+.blog-card:hover {
+  transform: translateY(-5px);
+}
+
 
         .mobile-menu-toggle.active .hamburger-line:nth-child(1) {
             transform: rotate(-45deg) translate(-5px, 6px);
@@ -1115,6 +1135,7 @@
             font-size: var(--caption);
             color: var(--muted);
         }
+        
 
         /* 9) Education */
         .education {
@@ -1780,8 +1801,8 @@
     <nav class="nav">
         <div class="container">
             <div class="nav-container">
-                <a href="#" class="nav-logo">{ student.name}</a>
-                
+                <a href="#" class="nav-logo">{{ student.name }}</a>
+
                 <ul class="nav-center" id="navCenter">
                     <li><a href="#work" class="nav-link active" onclick="setActiveLink(this)">Work</a></li>
                     <li><a href="#about" class="nav-link" onclick="setActiveLink(this)">About</a></li>
@@ -1790,11 +1811,7 @@
                     <li><a href="#resume" class="nav-link" onclick="setActiveLink(this)">Resume</a></li>
                     <li><a href="#contact" class="nav-link" onclick="setActiveLink(this)">Contact</a></li>
                 </ul>
-                
-                <div class="nav-right">
-                    <a href="#contact" class="nav-cta" onclick="scrollToSection('contact')">Contact</a>
-                </div>
-                
+                   
                 <div class="mobile-menu-toggle" id="mobileToggle" onclick="toggleMobileMenu()">
                     <span class="hamburger-line"></span>
                     <span class="hamburger-line"></span>
@@ -1805,37 +1822,38 @@
     </nav>
 
     <!-- 2) Hero Section -->
-    <section class="hero" id="hero">
-        <div class="container">
-            <div class="hero-content">
-                <div class="hero-text">
-                    <h1 class="h1 hero-title">Design that people remember.</h1>
-                    <p class="body hero-subtitle">
-                        Branding, type, posters, products, campaigns—built with clarity and play.
-                    </p>
-                    <div class="hero-ctas">
-                        <a href="#work" class="btn-primary" onclick="scrollToSection('work')">
-                            View Work
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M7 17L17 7M17 7H7M17 7V17"/>
-                            </svg>
-                        </a>
-                        <a href="#" class="btn-secondary" onclick="downloadResume()">Download Resume</a>
-                    </div>
+<section class="hero" id="hero">
+    <div class="container">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1 class="h1 hero-title">
+                    {{ hero_section.headline|default:"Highlight  Your Headline here" }}
+                </h1>
+                <p class="body hero-subtitle">
+                    {{ hero_section.subheadline|default:"Add your sub headline to clarify your work. Or add something about you or your aim." }}
+                </p>
+                <div class="hero-ctas">
+                    <a href="#work" class="btn-primary" onclick="scrollToSection('work')">
+                        View Work
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M7 17L17 7M17 7H7M17 7V17"/>
+                        </svg>
+                    </a>
+                    <a href="#" class="btn-secondary" onclick="downloadResume()">Download Resume</a>
                 </div>
-                
-                <div class="hero-visual">
-                    <div class="case-thumbnails">
-                        <div class="case-thumb" onclick="showProject('echo')" aria-label="Echo Skate project thumbnail"></div>
-                        <div class="case-thumb" onclick="showProject('sundial')" aria-label="Sundial Coffee project thumbnail"></div>
-                        <div class="case-thumb" onclick="showProject('zerolab')" aria-label="ZeroLab project thumbnail"></div>
-                        <div class="case-thumb" onclick="showProject('nova')" aria-label="Nova School Fest project thumbnail"></div>
+            </div>
+            <div class="hero-visual">
+                <div class="case-thumbnails">
+                    {% for proj in featured_projects %}
+                    <div class="case-thumb" onclick="window.open('{{ proj.url }}', '_blank')" aria-label="{{ proj.title }} project thumbnail" style="background: url('{{ proj.image.url }}') center/cover;">
+                        <!-- Optionally, overlay project title or icon here -->
                     </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
-    </section>
-
+    </div>
+</section>
     <!-- 3) Featured Work -->
     <section class="featured-work" id="work">
     <div class="container">
@@ -1846,18 +1864,27 @@
         
         <div class="projects-grid">
             {% for proj in projects %}
-            <div class="project-card animate-on-scroll" data-project="{{ proj.title|slugify }}" onclick="showProject('{{ proj.title|slugify }}')">
+            <div class="project-card animate-on-scroll" data-project="{{ proj.title|slugify }}">
                 <div class="project-image">
-                    <div class="view-case">
+                    {% if proj.image %}
+                        <img src="{{ proj.image.url }}" alt="{{ proj.title }}" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">
+                    {% endif %}
+                    {% if proj.url %}
+                    <a href="{{ proj.url }}" target="_blank" class="view-case">
                         View Case →
-                    </div>
+                    </a>
+                    {% else %}
+                    <span class="view-case" style="background:#ccc;cursor:not-allowed;">
+                        No Link
+                    </span>
+                    {% endif %}
                 </div>
                 <div class="project-content">
                     <div class="project-meta">
                         <div class="project-tags">
-{% for tag in proj.tag_list %}
-    <span class="project-tag">{{ tag }}</span>
-{% endfor %}
+                            {% for tag in proj.tag_list %}
+                                <span class="project-tag">{{ tag }}</span>
+                            {% endfor %}
                         </div>
                         <div class="meta">{{ proj.year }}</div>
                     </div>
@@ -1879,7 +1906,7 @@
 </section>
 
     <!-- 4) Poster Strip -->
-    <section class="poster-strip">
+    <!-- <section class="poster-strip">
         <div class="poster-container">
             <div class="poster-frame">
                 NOVA
@@ -1914,7 +1941,7 @@
                 <div class="poster-caption caption">Echo Skate / 2024</div>
             </div>
         </div>
-    </section>
+    </section> -->
 
     <!-- 5) About Section -->
     <section class="about" id="about">
@@ -1960,63 +1987,34 @@
 </section>
 
     <!-- 6) Timeline -->
-    <section class="timeline" id="timeline">
-        <div class="container">
-            <div class="section-header animate-on-scroll">
-                <h2 class="h2">Journey</h2>
-                <div class="meta">TIMELINE/003</div>
-            </div>
-            
-            <div class="timeline-container">
-                <div class="timeline-track">
-                    <div class="timeline-item" onclick="expandTimeline(this)">
-                        <div class="timeline-dot">25</div>
-                        <div class="timeline-content">
-                            <div class="timeline-year">2025</div>
-                            <div class="timeline-title">Freelance Designer</div>
-                            <div class="timeline-scope">Independent practice</div>
-                        </div>
-                    </div>
-                    
-                    <div class="timeline-item" onclick="expandTimeline(this)">
-                        <div class="timeline-dot">24</div>
-                        <div class="timeline-content">
-                            <div class="timeline-year">2024</div>
-                            <div class="timeline-title">Design Intern, Ammunition Group</div>
-                            <div class="timeline-scope">Brand systems, packaging, digital products</div>
-                        </div>
-                    </div>
-                    
-                    <div class="timeline-item" onclick="expandTimeline(this)">
-                        <div class="timeline-dot">24</div>
-                        <div class="timeline-content">
-                            <div class="timeline-year">2024</div>
-                            <div class="timeline-title">B.Des Graduate, ArtCenter</div>
-                            <div class="timeline-scope">Graphic Design, Summa Cum Laude</div>
-                        </div>
-                    </div>
-                    
-                    <div class="timeline-item" onclick="expandTimeline(this)">
-                        <div class="timeline-dot">23</div>
-                        <div class="timeline-content">
-                            <div class="timeline-year">2023</div>
-                            <div class="timeline-title">Adobe Design Achievement Award</div>
-                            <div class="timeline-scope">Student category winner, brand identity</div>
-                        </div>
-                    </div>
-                    
-                    <div class="timeline-item" onclick="expandTimeline(this)">
-                        <div class="timeline-dot">22</div>
-                        <div class="timeline-content">
-                            <div class="timeline-year">2022</div>
-                            <div class="timeline-title">Design Volunteer, AIGA SF</div>
-                            <div class="timeline-scope">Community workshops, mentorship program</div>
-                        </div>
+   <section class="timeline" id="timeline">
+    <div class="container">
+        <div class="section-header animate-on-scroll">
+            <h2 class="h2">Journey</h2>
+            <div class="meta">TIMELINE/003</div>
+        </div>
+        <div class="timeline-container">
+            <div class="timeline-track">
+                {% for item in journeys %}
+                <div class="timeline-item" onclick="expandTimeline(this)">
+                    <div class="timeline-dot">{{ item.year|slice:"-2:" }}</div>
+                    <div class="timeline-content">
+                        <div class="timeline-year">{{ item.year }}</div>
+                        <div class="timeline-title">{{ item.title }}</div>
+                        <div class="timeline-scope">{{ item.scope }}</div>
                     </div>
                 </div>
+                {% empty %}
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <div class="timeline-title">No journey entries yet.</div>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
     <!-- 7) Process -->
     <section class="process" id="process">
@@ -2054,27 +2052,37 @@
         </div>
     </section>
 
-    <!-- 8) Blog -->
-   {% for blog in blog_posts %}
-<div class="blog-card animate-on-scroll" data-category="{{ blog.category|slugify }}" onclick="showBlogPost('{{ blog.id }}')">
-    <div class="blog-image">{{ blog.category|upper }}</div>
-    <div class="blog-content">
-        <div class="blog-category">{{ blog.category }}</div>
-        <h3 class="blog-title">{{ blog.title }}</h3>
-        <p class="blog-excerpt">{{ blog.excerpt }}</p>
-        <div class="blog-meta">
-            <span>{{ blog.date }}</span>
-            <span>{{ blog.read_time }}</span>
+  <!-- 8) Blog -->
+      <section class="featured-work" id="work">
+    <div class="container">
+        <div class="section-header animate-on-scroll">
+            <h2 class="h2">BLOGS</h2>
+            <div class="meta">BLOGS/005</div>
+        </div>
+<div class="blog-container">
+    {% for blog in blog_posts %}
+    <div class="blog-card animate-on-scroll" data-category="{{ blog.category|slugify }}" onclick="showBlogPost('{{ blog.id }}')">
+        <div class="blog-image">{{ blog.category|upper }}</div>
+        <div class="blog-content">
+            <div class="blog-category">{{ blog.category }}</div>
+            <h3 class="blog-title">{{ blog.title }}</h3>
+            <p class="blog-excerpt">{{ blog.excerpt }}</p>
+            <div class="blog-meta">
+                <span>{{ blog.date }}</span>
+                <span>{{ blog.read_time }}</span>
+            </div>
         </div>
     </div>
-</div>
-{% empty %}
-<div class="blog-card animate-on-scroll">
-    <div class="blog-content">
-        <h3 class="blog-title">No blog posts yet.</h3>
+    {% empty %}
+    <div class="blog-card animate-on-scroll">
+        <div class="blog-content">
+            <h3 class="blog-title">No blog posts yet.</h3>
+        </div>
     </div>
+    {% endfor %}
 </div>
-{% endfor %}
+</section>
+
 
     <!-- 9) Education -->
   <section class="education" id="education">
@@ -2103,7 +2111,7 @@
                         <div class="education-meta">
                             <div class="degree-year">{{ edu.start_year }} - {{ edu.end_year }}</div>
                             {% if edu.gpa %}
-                                <div class="degree-gpa">GPA: {{ edu.gpa }}</div>
+                                <div class="degree-gpa">GPA/Percentage: {{ edu.gpa }}</div>
                             {% endif %}
                         </div>
                     </div>
@@ -2127,7 +2135,7 @@
                     {% if educations %}
                         <div class="stat-item">
                             <div class="stat-number">{{ educations.0.gpa|default:"-" }}</div>
-                            <div class="stat-label">GPA</div>
+                            <div class="stat-label">GPA/PERCENTAGE</div>
                         </div>
                         <div class="stat-item">
                             <div class="stat-number">
@@ -2141,7 +2149,7 @@
                         </div>
                         <div class="stat-item">
 <div class="stat-number">{{ education_years }}</div>
-                            <div class="stat-label">Years</div>
+                            <div class="stat-label">Duration</div>
                         </div>
                     {% else %}
                         <div class="stat-item">

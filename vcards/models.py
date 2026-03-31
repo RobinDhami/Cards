@@ -1,18 +1,13 @@
 from django.db import models
 from django.contrib.auth.hashers import make_password
 
-# -------------------------
-# Skill model
-# -------------------------
+# Skill
 class Skill(models.Model):
     name = models.CharField(max_length=100, unique=True)
-
     def __str__(self):
         return self.name
 
-# -------------------------
-# College model
-# -------------------------
+# College
 class College(models.Model):
     name = models.CharField(max_length=255, unique=True)
     slogan = models.CharField(max_length=255, blank=True, null=True)
@@ -23,32 +18,23 @@ class College(models.Model):
     phone = models.CharField(max_length=20, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
     def __str__(self):
         return self.name
 
-# -------------------------
 # Abstract Base Profile
-# -------------------------
 class BaseProfile(models.Model):
     name = models.CharField(max_length=255)
     phone = models.CharField(max_length=20)
     email = models.EmailField()
     bio = models.TextField(blank=True, null=True)
     username = models.CharField(max_length=150, unique=True)
-    password = models.CharField(max_length=128)  # store hashed version
+    password = models.CharField(max_length=128)
     profile_photo = models.ImageField(upload_to='profile_photos/', blank=True, null=True)
     cover_photo = models.ImageField(upload_to='cover_photos/', blank=True, null=True)
     skills = models.ManyToManyField(Skill, blank=True)
-
-    # New CV field added here:
     cv = models.FileField(upload_to='cvs/', blank=True, null=True)
-
-    # Show/hide toggles
     show_portfolio = models.BooleanField(default=True)
     show_contact_card = models.BooleanField(default=True)
-
-    # Social media links
     facebook = models.URLField(blank=True, null=True)
     messenger= models.URLField(blank=True, null=True)
     whatsapp = models.CharField(max_length=20,null=True)
@@ -61,43 +47,45 @@ class BaseProfile(models.Model):
     figma = models.URLField(blank=True, null=True)
     upwork = models.URLField(blank=True, null=True)
     website = models.URLField(blank=True, null=True)
-
-    # Analytics
     views = models.PositiveIntegerField(default=0)
     contact_clicks = models.PositiveIntegerField(default=0)
     downloads = models.PositiveIntegerField(default=0)
-
     created_at = models.DateTimeField(auto_now_add=True)
-
     def save(self, *args, **kwargs):
         if self.password and not self.password.startswith('pbkdf2_'):
             self.password = make_password(self.password)
         super().save(*args, **kwargs)
-
     class Meta:
         abstract = True
 
-# -------------------------
-# Student Profile (College)
-# -------------------------
+# Student Profile
 class StudentProfile(BaseProfile):
     college = models.ForeignKey(College, on_delete=models.CASCADE, related_name='students')
+    role = models.CharField(max_length=100, blank=True, null=True)
+    address = models.CharField(max_length=255, blank=True, null=True)
     about_intro = models.TextField(blank=True, null=True)
     about_featured = models.TextField(blank=True, null=True)
     about_current = models.TextField(blank=True, null=True)
-    # Capabilities, tools, stats: related via Capability, Tool, Stat models above
+    social_stack = models.CharField(max_length=255, blank=True, default="")  # e.g. "linkedin,instagram,github"
 
+    USER_TYPE_CHOICES = [
+        ('general', 'General'),
+        ('vip', 'VIP'),
+        ('premium', 'Premium'),
+    ]
+    user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='general')
+    contact_template = models.CharField(max_length=50, default='contact.html')
+    portfolio_template = models.CharField(max_length=50, default='portfolio1.html')
     def __str__(self):
         return f"{self.name} - {self.college.name}"
 
-# -------------------------
-# Client Profile (Normal User)
-# -------------------------
+# Client Profile
 class ClientProfile(BaseProfile):
     company_name = models.CharField(max_length=255, blank=True, null=True)
-
     def __str__(self):
         return self.name
+
+# Education
 class Education(models.Model):
     student = models.ForeignKey('StudentProfile', on_delete=models.CASCADE, related_name='educations')
     institution = models.CharField(max_length=255)
@@ -107,46 +95,64 @@ class Education(models.Model):
     end_year = models.CharField(max_length=10)
     gpa = models.CharField(max_length=10, blank=True, null=True)
     honors = models.CharField(max_length=255, blank=True, null=True)
-    coursework = models.TextField(blank=True, null=True)  # Comma-separated list
+    coursework = models.TextField(blank=True, null=True)
 
+# Achievement
 class Achievement(models.Model):
     student = models.ForeignKey('StudentProfile', on_delete=models.CASCADE, related_name='achievements')
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     year = models.CharField(max_length=10)
 
+# Project
 class Project(models.Model):
     student = models.ForeignKey('StudentProfile', on_delete=models.CASCADE, related_name='projects')
     title = models.CharField(max_length=255)
     description = models.TextField()
     year = models.CharField(max_length=10)
     tags = models.CharField(max_length=255, blank=True)
+    url = models.URLField(blank=True, null=True)
+    image = models.ImageField(upload_to='project_images/', blank=True, null=True)
 
+# BlogPost
 class BlogPost(models.Model):
     student = models.ForeignKey('StudentProfile', on_delete=models.CASCADE, related_name='blog_posts')
     title = models.CharField(max_length=255)
-    category = models.CharField(max_length=100)
-    excerpt = models.TextField()
+    category = models.CharField(max_length=100, blank=True)
+    excerpt = models.TextField(blank=True)
     content = models.TextField()
     date = models.DateField()
-    read_time = models.CharField(max_length=20)
+    read_time = models.CharField(max_length=20, blank=True)
+    image = models.ImageField(upload_to='blog_images/', blank=True, null=True)
+    def __str__(self):
+        return self.title
 
+# Certification
 class Certification(models.Model):
     student = models.ForeignKey('StudentProfile', on_delete=models.CASCADE, related_name='certifications')
     title = models.CharField(max_length=255)
-    organization = models.CharField(max_length=255)
-    year = models.CharField(max_length=10)
+    organization = models.CharField(max_length=255, blank=True)
+    year = models.CharField(max_length=10, blank=True)
+    description = models.TextField(blank=True)
+    def __str__(self):
+        return self.title
 
+# Language
 class Language(models.Model):
     student = models.ForeignKey('StudentProfile', on_delete=models.CASCADE, related_name='languages')
     name = models.CharField(max_length=100)
-    level = models.CharField(max_length=50)  # e.g. "Native", "Fluent", "Intermediate"
+    level = models.CharField(max_length=50, blank=True)
+    def __str__(self):
+        return f"{self.name} ({self.level})"
 
+# Interest
 class Interest(models.Model):
     student = models.ForeignKey('StudentProfile', on_delete=models.CASCADE, related_name='interests')
     name = models.CharField(max_length=100)
+    def __str__(self):
+        return self.name
 
-
+# Experience
 class Experience(models.Model):
     student = models.ForeignKey('StudentProfile', on_delete=models.CASCADE, related_name='experiences')
     title = models.CharField(max_length=255)
@@ -156,15 +162,42 @@ class Experience(models.Model):
     end_date = models.CharField(max_length=20, blank=True)
     responsibilities = models.TextField(blank=True)  # Each line is a bullet point
 
+# Capability (for About section)
 class Capability(models.Model):
     student = models.ForeignKey('StudentProfile', on_delete=models.CASCADE, related_name='capabilities')
     name = models.CharField(max_length=100)
+    def __str__(self):
+        return self.name
 
+# Tool (for About section)
 class Tool(models.Model):
     student = models.ForeignKey('StudentProfile', on_delete=models.CASCADE, related_name='tools')
     name = models.CharField(max_length=100)
+    def __str__(self):
+        return self.name
 
+# Stat (for About section)
 class Stat(models.Model):
     student = models.ForeignKey('StudentProfile', on_delete=models.CASCADE, related_name='stats')
     label = models.CharField(max_length=100)
     value = models.CharField(max_length=50)
+    def __str__(self):
+        return f"{self.label}: {self.value}"
+
+# Journey (for Timeline section)
+class Journey(models.Model):
+    student = models.ForeignKey('StudentProfile', on_delete=models.CASCADE, related_name='journeys')
+    year = models.CharField(max_length=10)
+    title = models.CharField(max_length=255)
+    scope = models.CharField(max_length=255, blank=True)
+    order = models.PositiveIntegerField(default=0)
+    def __str__(self):
+        return f"{self.year} - {self.title}"
+
+# HeroSection (for Hero headline/subheadline)
+class HeroSection(models.Model):
+    student = models.OneToOneField('StudentProfile', on_delete=models.CASCADE, related_name='hero_section')
+    headline = models.CharField(max_length=255)
+    subheadline = models.CharField(max_length=255, blank=True)
+    def __str__(self):
+        return f"Hero for {self.student.name}"

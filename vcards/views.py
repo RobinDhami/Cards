@@ -3,7 +3,6 @@ from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.contrib.auth.hashers import make_password
-import pandas as pd
 from django.conf import settings
 
 from .models import StudentProfile, ClientProfile, College, Skill
@@ -12,6 +11,21 @@ from .forms import (
     BlogPostFormSet, CertificationFormSet, LanguageFormSet, InterestFormSet, ExperienceFormSet
 )
 
+CONTACT_TEMPLATES = {
+    'general': ['contact2.html'],
+    'vip': ['contact.html', 'contact1.html'],
+    'premium': ['contact.html', 'contact1.html', 'contact3.html'],
+}
+PORTFOLIO_TEMPLATES = {
+    'vip': ['portfolio1.html', 'portfolio2.html'],
+    'premium': ['portfolio1.html', 'portfolio2.html', 'portfolio3.html', 'portfolio4.html', 'portfolio5.html'],
+}
+
+SOCIAL_CHOICES = [
+    "linkedin", "instagram", "facebook", "messenger", "whatsapp",
+    "twitter", "youtube", "tiktok", "github", "figma", "upwork"
+]
+
 
 def home(request):
     return render(request, 'home.html')
@@ -19,12 +33,46 @@ def home(request):
 
 def profile(request, student_id):
     student = get_object_or_404(StudentProfile, id=student_id)
+    if student.user_type == 'general':
+        messages.error(request, "Portfolio access is restricted to VIP and Premium users.")
+        return redirect('student_profile_choice', student_id=student.id)
+    hero_section = getattr(student, 'hero_section', None)
+    # Split tags for each project for template use
+    projects = student.projects.all()
+    for proj in projects:
+        proj.tag_list = [tag.strip() for tag in proj.tags.split(',')] if proj.tags else []
+    # Select up to 4 featured projects (customize as needed)
+    featured_projects = projects[:4]
+    # Split coursework for first education for template use
+    educations = student.educations.all()
+    coursework_list = []
+    if educations and getattr(educations[0], 'coursework', None):
+        coursework_list = [c.strip() for c in educations[0].coursework.split(',')]
+    # Calculate years for education stats
+    education_years = "-"
+    if educations and educations[0].start_year and educations[0].end_year:
+        try:
+            education_years = int(educations[0].end_year) - int(educations[0].start_year) + 1
+        except Exception:
+            education_years = "-"
     context = {
         'student': student,
         'capabilities': student.capabilities.all(),
         'tools': student.tools.all(),
         'stats': student.stats.all(),
-        # ...other context as before...
+        'educations': educations,
+        'achievements': student.achievements.all(),
+        'projects': projects,
+        'blog_posts': student.blog_posts.all(),
+        'journeys': student.journeys.order_by('-year', 'order'),
+        'certifications': student.certifications.all(),
+        'languages': student.languages.all(),
+        'interests': student.interests.all(),
+        'experiences': student.experiences.all(),
+        'coursework_list': coursework_list,
+        'education_years': education_years,
+        'featured_projects': featured_projects,
+        'hero_section': hero_section,
     }
     return render(request, 'portfolio/profile1.html', context)
 
@@ -117,6 +165,15 @@ def edit_student(request, student_id):
 
 def bulk_upload(request):
     if request.method == 'POST' and request.FILES.get('file'):
+        try:
+            import pandas as pd
+        except ImportError:
+            messages.error(
+                request,
+                'Bulk upload requires pandas, which is not installed in the current environment.',
+            )
+            return redirect('bulk_upload')
+
         excel_file = request.FILES['file']
         df = pd.read_excel(excel_file)
 
@@ -230,18 +287,29 @@ def add_student_to_college(request, college_id):
         'college': college,
         'skills': skills,
     })
-
+def send_message(request, id):
+    student = get_object_or_404(StudentProfile, id=id)
+    if request.method == 'POST':
+        message = request.POST.get('message')
+        send_mail(
+            subject='New message via student card',
+            message=message,
+            from_email=request.user.email,  # or use settings.DEFAULT_FROM_EMAIL
+            recipient_list=[student.email],
+        )
+    return redirect('profile', student_id=id)
 
 def contact_card(request, student_id):
     student = get_object_or_404(StudentProfile, pk=student_id)
-    # Increment views count
     student.views += 1
     student.save(update_fields=['views'])
+    social_stack = student.social_stack.split(',') if student.social_stack else []
 
     context = {
         'student': student,
+        'social_stack': social_stack,
     }
-    return render(request, 'contact/contact.html', context)
+    return render(request, 'contact/contact2.html', context)
 
 
 def download_vcard(request, student_id):
@@ -268,15 +336,13 @@ END:VCARD
 
 def student_profile_choice(request, student_id):
     student = get_object_or_404(StudentProfile, pk=student_id)
-
-    if request.method == 'POST':
-        choice = request.POST.get('choice')
-        if choice == 'contact_card':
-            return redirect('contact_card', student_id=student.id)
-        elif choice == 'portfolio':
-            return redirect('profile', student_id=student.id)
-
-    return render(request, 'student_profile_choice.html', {'student': student})
+    contact_templates = CONTACT_TEMPLATES.get(student.user_type, ['contact.html'])
+    portfolio_templates = PORTFOLIO_TEMPLATES.get(student.user_type, [])
+    return render(request, 'student_profile_choice.html', {
+        'student': student,
+        'contact_templates': contact_templates,
+        'portfolio_templates': portfolio_templates,
+    })
 
 
 def send_message(request):
@@ -322,6 +388,10 @@ This message was sent from the SkillConnect website contact form.
 
 def edit_student_full(request, student_id):
     student = get_object_or_404(StudentProfile, id=student_id)
+    contact_templates = CONTACT_TEMPLATES.get(student.user_type, ['contact.html'])
+    portfolio_templates = PORTFOLIO_TEMPLATES.get(student.user_type, [])
+    social_choices = SOCIAL_CHOICES
+
     if request.method == 'POST':
         form = StudentProfileForm(request.POST, request.FILES, instance=student)
         education_fs = EducationFormSet(request.POST, request.FILES, instance=student)
@@ -336,6 +406,11 @@ def edit_student_full(request, student_id):
         if (form.is_valid() and education_fs.is_valid() and achievement_fs.is_valid() and
             project_fs.is_valid() and blog_fs.is_valid() and cert_fs.is_valid() and
             lang_fs.is_valid() and interest_fs.is_valid() and exp_fs.is_valid()):
+            # Save social_stack as comma-separated string
+            social_stack = request.POST.getlist('social_stack')
+            student.social_stack = ",".join(social_stack)
+            student.contact_template = request.POST.get('contact_template', student.contact_template)
+            student.portfolio_template = request.POST.get('portfolio_template', student.portfolio_template)
             form.save()
             education_fs.save()
             achievement_fs.save()
@@ -369,4 +444,50 @@ def edit_student_full(request, student_id):
         'interest_fs': interest_fs,
         'exp_fs': exp_fs,
         'student': student,
+        'contact_templates': contact_templates,
+        'portfolio_templates': portfolio_templates,
+        'social_choices': social_choices,
     })
+
+
+def edit_student_manual(request, student_id):
+    student = get_object_or_404(StudentProfile, pk=student_id)
+    contact_templates = CONTACT_TEMPLATES.get(student.user_type, ['contact.html'])
+    portfolio_templates = PORTFOLIO_TEMPLATES.get(student.user_type, [])
+
+    if request.method == 'POST':
+        student.name = request.POST.get('name', student.name)
+        student.email = request.POST.get('email', student.email)
+        student.phone = request.POST.get('phone', student.phone)
+        student.role = request.POST.get('role', student.role)
+        student.address = request.POST.get('address', student.address)
+        student.about_intro = request.POST.get('about_intro', student.about_intro)
+        student.about_featured = request.POST.get('about_featured', student.about_featured)
+        student.about_current = request.POST.get('about_current', student.about_current)
+        student.contact_template = request.POST.get('contact_template', student.contact_template)
+        student.portfolio_template = request.POST.get('portfolio_template', student.portfolio_template)
+        # Add more fields as needed
+        student.save()
+        return redirect('student_profile_choice', student_id=student.id)
+
+    return render(request, 'edit_student_manual.html', {
+        'student': student,
+        'contact_templates': contact_templates,
+        'portfolio_templates': portfolio_templates,
+        'social_choices': SOCIAL_CHOICES,  # <-- add this
+    })
+
+def blog_post_create(request, student_id):
+    student = get_object_or_404(StudentProfile, id=student_id)
+    if request.method == 'POST':
+        if student.user_type == 'vip' and student.blog_posts.count() >= 2:
+            messages.error(request, "VIP users can only post 2 blogs.")
+            return redirect('profile', student_id=student.id)
+
+        # Handle blog post creation
+        # ... (existing code for creating a blog post)
+
+        messages.success(request, "Blog post created successfully.")
+        return redirect('profile', student_id=student.id)
+
+    return render(request, 'create_blog_post.html', {'student': student})

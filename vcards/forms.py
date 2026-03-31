@@ -10,7 +10,8 @@ class StudentProfileForm(forms.ModelForm):
         model = StudentProfile
         fields = [
             'name', 'phone', 'email', 'bio', 'username', 'profile_photo', 'cover_photo', 'cv',
-            'facebook', 'instagram', 'twitter', 'linkedin', 'youtube', 'tiktok', 'github', 'figma', 'upwork', 'website'
+            'facebook', 'instagram', 'twitter', 'linkedin', 'youtube', 'tiktok', 'github', 'figma', 'upwork', 'website',
+            'contact_template', 'portfolio_template', 'social_stack'
         ]
         widgets = {
             'bio': forms.Textarea(attrs={'rows': 3}),
