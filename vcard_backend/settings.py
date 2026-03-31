@@ -54,10 +54,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'tailwind',
     'theme',
+    'django_browser_reload',
 ]
-
-if DEBUG:
-    INSTALLED_APPS.append('django_browser_reload')
 
 TAILWIND_APP_NAME = 'theme'
 INTERNAL_IPS = [
