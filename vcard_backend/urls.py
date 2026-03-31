@@ -25,8 +25,9 @@ urlpatterns = [
     path('student/<int:student_id>/contact-card/', contact_card, name='contact_card'),
     path('student/edit/<int:student_id>',edit_student_manual,name='edit_student_manual'),
     path('send-message/', send_message, name='send_message'),
-
- 
-    path("__reload__/", include("django_browser_reload.urls")),
-
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+if settings.DEBUG:
+    urlpatterns += [
+        path("__reload__/", include("django_browser_reload.urls")),
+    ]
