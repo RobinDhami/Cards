@@ -60,7 +60,14 @@ class BaseProfile(models.Model):
 
 # Student Profile
 class StudentProfile(BaseProfile):
-    college = models.ForeignKey(College, on_delete=models.CASCADE, related_name='students')
+    PROFILE_CATEGORY_CHOICES = [
+        ('school', 'School / College Profile'),
+        ('professional', 'Independent Professional'),
+    ]
+
+    college = models.ForeignKey(College, on_delete=models.SET_NULL, related_name='students', blank=True, null=True)
+    profile_category = models.CharField(max_length=20, choices=PROFILE_CATEGORY_CHOICES, default='school')
+    organization_name = models.CharField(max_length=255, blank=True, null=True)
     role = models.CharField(max_length=100, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
     about_intro = models.TextField(blank=True, null=True)
@@ -77,7 +84,30 @@ class StudentProfile(BaseProfile):
     contact_template = models.CharField(max_length=50, default='contact.html')
     portfolio_template = models.CharField(max_length=50, default='portfolio1.html')
     def __str__(self):
-        return f"{self.name} - {self.college.name}"
+        if self.college:
+            return f"{self.name} - {self.college.name}"
+        if self.organization_name:
+            return f"{self.name} - {self.organization_name}"
+        return self.name
+
+
+class ProfileActivity(models.Model):
+    EVENT_TYPE_CHOICES = [
+        ('view', 'Card View'),
+        ('download', 'vCard Download'),
+        ('contact', 'Contact Action'),
+    ]
+
+    student = models.ForeignKey('StudentProfile', on_delete=models.CASCADE, related_name='activities')
+    event_type = models.CharField(max_length=20, choices=EVENT_TYPE_CHOICES)
+    action = models.CharField(max_length=50, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.student.name} - {self.event_type} ({self.action or 'n/a'})"
 
 # Client Profile
 class ClientProfile(BaseProfile):

@@ -9,12 +9,15 @@ class StudentProfileForm(forms.ModelForm):
     class Meta:
         model = StudentProfile
         fields = [
-            'name', 'phone', 'email', 'bio', 'username', 'profile_photo', 'cover_photo', 'cv',
+            'name', 'phone', 'email', 'bio', 'username',
+            'role', 'address', 'profile_photo', 'cover_photo', 'cv',
             'facebook', 'instagram', 'twitter', 'linkedin', 'youtube', 'tiktok', 'github', 'figma', 'upwork', 'website',
             'contact_template', 'portfolio_template', 'social_stack'
         ]
         widgets = {
             'bio': forms.Textarea(attrs={'rows': 3}),
+            'role': forms.TextInput(attrs={'placeholder': 'Teacher, Consultant, Designer, etc.'}),
+            'address': forms.TextInput(attrs={'placeholder': 'Office or campus address'}),
         }
 
 class EducationForm(forms.ModelForm):

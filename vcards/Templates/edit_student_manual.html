@@ -2,93 +2,282 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Edit Profile</title>
+  <title>Edit Profile Settings</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 p-4">
-  <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
-    <h1 class="text-2xl font-bold mb-6">Edit Your Profile</h1>
-    <form method="POST" enctype="multipart/form-data">
-      {% csrf_token %}
-      {{ form.as_p }}
+<body class="bg-slate-100 text-slate-900">
+  <div class="max-w-6xl mx-auto px-4 py-6">
+    <div class="flex flex-col lg:flex-row gap-6">
+      <aside class="lg:w-80">
+        <div class="bg-slate-900 text-white rounded-3xl p-6 shadow-xl sticky top-6">
+          <p class="text-sm uppercase tracking-[0.2em] text-slate-300 mb-2">Profile Settings</p>
+          <h1 class="text-3xl font-bold leading-tight">{{ student.name }}</h1>
+          <p class="mt-3 text-slate-300">
+            Manage public card content, portfolio access, organization details, and profile visibility from one place.
+          </p>
 
-      <h2 class="text-xl font-semibold mt-8 mb-2">Education</h2>
-      {{ education_fs.management_form }}
-      {% for form in education_fs %}
-        <div class="border p-4 mb-2 rounded">{{ form.as_p }}</div>
-      {% endfor %}
+          <div class="mt-6 space-y-3 text-sm">
+            <div class="rounded-2xl bg-white/10 px-4 py-3">
+              <div class="text-slate-300">Profile Type</div>
+              <div class="font-semibold">
+                {% if student.profile_category == 'professional' %}Independent Professional{% else %}School / College Profile{% endif %}
+              </div>
+            </div>
+            <div class="rounded-2xl bg-white/10 px-4 py-3">
+              <div class="text-slate-300">Public Access</div>
+              <div class="font-semibold">
+                {% if student.user_type == 'general' %}Contact card only{% else %}Contact card + portfolio{% endif %}
+              </div>
+            </div>
+            <div class="rounded-2xl bg-white/10 px-4 py-3">
+              <div class="text-slate-300">Organization</div>
+              <div class="font-semibold">{{ student.college.name|default:student.organization_name|default:"Personal Brand" }}</div>
+            </div>
+          </div>
 
-      <h2 class="text-xl font-semibold mt-8 mb-2">Achievements</h2>
-      {{ achievement_fs.management_form }}
-      {% for form in achievement_fs %}
-        <div class="border p-4 mb-2 rounded">{{ form.as_p }}</div>
-      {% endfor %}
+          <div class="mt-6 space-y-2">
+            <a href="{% url 'student_owner_dashboard' student.id %}" class="block w-full rounded-xl bg-white text-slate-900 px-4 py-3 font-semibold text-center">Owner Dashboard</a>
+            <a href="{% url 'contact_card' student.id %}" class="block w-full rounded-xl border border-white/30 px-4 py-3 font-semibold text-center">View Contact Card</a>
+            {% if student.user_type != 'general' %}
+              <a href="{% url 'profile' student.id %}" class="block w-full rounded-xl border border-white/30 px-4 py-3 font-semibold text-center">View Portfolio</a>
+            {% endif %}
+            <a href="{% url 'download_vcard' student.id %}" class="block w-full rounded-xl border border-white/30 px-4 py-3 font-semibold text-center">Download vCard</a>
+            <a href="{% url 'logout_student_edit' student.id %}" class="block w-full rounded-xl border border-white/30 px-4 py-3 font-semibold text-center">Logout</a>
+          </div>
 
-      <h2 class="text-xl font-semibold mt-8 mb-2">Projects</h2>
-      {{ project_fs.management_form }}
-      {% for form in project_fs %}
-        <div class="border p-4 mb-2 rounded">{{ form.as_p }}</div>
-      {% endfor %}
+          <div class="mt-6 text-xs text-slate-300 leading-5">
+            School profiles must use a registered school. Independent professionals can type any organization, including a school or college name, without linking to the registered school list.
+          </div>
+        </div>
+      </aside>
 
-      <h2 class="text-xl font-semibold mt-8 mb-2">Blog Posts</h2>
-      {{ blog_fs.management_form }}
-      {% for form in blog_fs %}
-        <div class="border p-4 mb-2 rounded">{{ form.as_p }}</div>
-      {% endfor %}
-
-      <h2 class="text-xl font-semibold mt-8 mb-2">Certifications</h2>
-      {{ cert_fs.management_form }}
-      {% for form in cert_fs %}
-        <div class="border p-4 mb-2 rounded">{{ form.as_p }}</div>
-      {% endfor %}
-
-      <h2 class="text-xl font-semibold mt-8 mb-2">Languages</h2>
-      {{ lang_fs.management_form }}
-      {% for form in lang_fs %}
-        <div class="border p-4 mb-2 rounded">{{ form.as_p }}</div>
-      {% endfor %}
-
-      <h2 class="text-xl font-semibold mt-8 mb-2">Interests</h2>
-      {{ interest_fs.management_form }}
-      {% for form in interest_fs %}
-        <div class="border p-4 mb-2 rounded">{{ form.as_p }}</div>
-      {% endfor %}
-
-      <h2 class="text-xl font-semibold mt-8 mb-2">Experience</h2>
-      {{ exp_fs.management_form }}
-      {% for form in exp_fs %}
-        <div class="border p-4 mb-2 rounded">{{ form.as_p }}</div>
-      {% endfor %}
-
-      <h2 class="text-xl font-semibold mt-8 mb-2">Choose Contact Card Template</h2>
-      <select name="contact_template" class="mb-4">
-          {% for tpl in contact_templates %}
-              <option value="{{ tpl }}" {% if tpl == student.contact_template %}selected{% endif %}>{{ tpl }}</option>
+      <main class="flex-1">
+        {% if messages %}
+          {% for message in messages %}
+            <div class="mb-4 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-blue-800 shadow-sm">{{ message }}</div>
           {% endfor %}
-      </select>
+        {% endif %}
 
-      {% if portfolio_templates %}
-      <h2 class="text-xl font-semibold mt-8 mb-2">Choose Portfolio Template</h2>
-      <select name="portfolio_template" class="mb-4">
-          {% for tpl in portfolio_templates %}
-              <option value="{{ tpl }}" {% if tpl == student.portfolio_template %}selected{% endif %}>{{ tpl }}</option>
-          {% endfor %}
-      </select>
-      {% endif %}
+        <form method="POST" enctype="multipart/form-data" class="space-y-6">
+          {% csrf_token %}
 
-      <h2 class="text-xl font-semibold mt-8 mb-2">Choose Social Media to Display</h2>
-      <div class="flex flex-wrap gap-4 mb-4">
-          {% for soc in social_choices %}
-              <label class="flex items-center space-x-2">
-                  <input type="checkbox" name="social_stack" value="{{ soc }}"
-                      {% if soc in student.social_stack|default:"" %}checked{% endif %}>
-                  <span class="capitalize">{{ soc }}</span>
-              </label>
-          {% endfor %}
-      </div>
+          <section class="bg-white rounded-3xl p-6 shadow-lg">
+            <h2 class="text-xl font-bold mb-5">Identity & Organization</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-semibold mb-1">Profile Category</label>
+                <select name="profile_category" id="profile-category" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+                  <option value="school" {% if student.profile_category == 'school' %}selected{% endif %}>School / College Profile</option>
+                  <option value="professional" {% if student.profile_category == 'professional' %}selected{% endif %}>Independent Professional</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1">Profile Tier</label>
+                <select name="user_type" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+                  <option value="general" {% if student.user_type == 'general' %}selected{% endif %}>General - Contact Card Only</option>
+                  <option value="vip" {% if student.user_type == 'vip' %}selected{% endif %}>VIP - Contact Card + Portfolio</option>
+                  <option value="premium" {% if student.user_type == 'premium' %}selected{% endif %}>Premium - Extended Portfolio Access</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1">Full Name</label>
+                <input type="text" name="name" value="{{ student.name }}" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1">Username</label>
+                <input type="text" name="username" value="{{ student.username }}" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1">Role / Designation</label>
+                <input type="text" name="role" value="{{ student.role|default:'' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3" placeholder="Teacher, Principal, Consultant, Doctor">
+              </div>
+              <div id="edit-college-wrap">
+                <label class="block text-sm font-semibold mb-1">Registered School / College</label>
+                <select name="college" id="registered-college" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+                  <option value="">Choose a registered school</option>
+                  {% for college in colleges %}
+                    <option value="{{ college.id }}" {% if student.college_id == college.id %}selected{% endif %}>{{ college.name }}</option>
+                  {% endfor %}
+                </select>
+                <p class="mt-1 text-xs text-slate-500">Required only for school-linked profiles.</p>
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-sm font-semibold mb-1">Typed Organization / Brand Name</label>
+                <input type="text" name="organization_name" value="{{ student.organization_name|default:'' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3" placeholder="Private school, clinic, studio, consultancy, academy">
+                <p class="mt-1 text-xs text-slate-500">Independent professionals can type any school, college, business, or personal brand name here.</p>
+              </div>
+            </div>
+          </section>
 
-      <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded mt-6 hover:bg-blue-700">Save Changes</button>
-    </form>
+          <section class="bg-white rounded-3xl p-6 shadow-lg">
+            <h2 class="text-xl font-bold mb-5">Basic Profile Content</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-semibold mb-1">Email</label>
+                <input type="email" name="email" value="{{ student.email }}" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1">Phone</label>
+                <input type="text" name="phone" value="{{ student.phone }}" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-sm font-semibold mb-1">Address</label>
+                <input type="text" name="address" value="{{ student.address|default:'' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-sm font-semibold mb-1">Bio</label>
+                <textarea name="bio" rows="3" class="w-full rounded-xl border border-slate-300 px-4 py-3">{{ student.bio|default:'' }}</textarea>
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-sm font-semibold mb-1">Intro</label>
+                <textarea name="about_intro" rows="3" class="w-full rounded-xl border border-slate-300 px-4 py-3">{{ student.about_intro|default:'' }}</textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1">Featured About Block</label>
+                <textarea name="about_featured" rows="3" class="w-full rounded-xl border border-slate-300 px-4 py-3">{{ student.about_featured|default:'' }}</textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1">Current Focus</label>
+                <textarea name="about_current" rows="3" class="w-full rounded-xl border border-slate-300 px-4 py-3">{{ student.about_current|default:'' }}</textarea>
+              </div>
+            </div>
+          </section>
+
+          <section class="bg-white rounded-3xl p-6 shadow-lg">
+            <h2 class="text-xl font-bold mb-5">Visibility & Card Settings</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="rounded-2xl border border-slate-200 p-4">
+                <label class="flex items-start gap-3">
+                  <input type="checkbox" name="show_contact_card" class="mt-1 h-4 w-4" {% if student.show_contact_card %}checked{% endif %}>
+                  <span>
+                    <span class="block font-semibold">Show Contact Card</span>
+                    <span class="block text-sm text-slate-500">Keep the quick card public with phone, email, social links, and vCard download.</span>
+                  </span>
+                </label>
+              </div>
+              <div class="rounded-2xl border border-slate-200 p-4">
+                <label class="flex items-start gap-3">
+                  <input type="checkbox" name="show_portfolio" class="mt-1 h-4 w-4" {% if student.show_portfolio %}checked{% endif %}>
+                  <span>
+                    <span class="block font-semibold">Show Portfolio</span>
+                    <span class="block text-sm text-slate-500">Useful for VIP or Premium profiles that need a richer public presentation.</span>
+                  </span>
+                </label>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1">Contact Card Template</label>
+                <select name="contact_template" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+                  {% for tpl in contact_templates %}
+                    <option value="{{ tpl }}" {% if tpl == student.contact_template %}selected{% endif %}>{{ tpl }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1">Portfolio Template</label>
+                <select name="portfolio_template" class="w-full rounded-xl border border-slate-300 px-4 py-3" {% if not portfolio_templates %}disabled{% endif %}>
+                  {% if portfolio_templates %}
+                    {% for tpl in portfolio_templates %}
+                      <option value="{{ tpl }}" {% if tpl == student.portfolio_template %}selected{% endif %}>{{ tpl }}</option>
+                    {% endfor %}
+                  {% else %}
+                    <option>No portfolio available on General tier</option>
+                  {% endif %}
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section class="bg-white rounded-3xl p-6 shadow-lg">
+            <h2 class="text-xl font-bold mb-5">Public Links & Social Buttons</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+              <input type="url" name="website" value="{{ student.website|default:'' }}" placeholder="Website URL" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+              <input type="url" name="linkedin" value="{{ student.linkedin|default:'' }}" placeholder="LinkedIn URL" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+              <input type="url" name="facebook" value="{{ student.facebook|default:'' }}" placeholder="Facebook URL" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+              <input type="url" name="instagram" value="{{ student.instagram|default:'' }}" placeholder="Instagram URL" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+              <input type="url" name="twitter" value="{{ student.twitter|default:'' }}" placeholder="Twitter URL" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+              <input type="url" name="youtube" value="{{ student.youtube|default:'' }}" placeholder="YouTube URL" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+              <input type="url" name="github" value="{{ student.github|default:'' }}" placeholder="GitHub URL" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+              <input type="url" name="figma" value="{{ student.figma|default:'' }}" placeholder="Figma URL" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+              <input type="url" name="upwork" value="{{ student.upwork|default:'' }}" placeholder="Upwork URL" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+              <input type="url" name="messenger" value="{{ student.messenger|default:'' }}" placeholder="Messenger URL" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+              <input type="text" name="whatsapp" value="{{ student.whatsapp|default:'' }}" placeholder="WhatsApp Number" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold mb-2">Show These Social Buttons On The Card</label>
+              <div class="flex flex-wrap gap-3">
+                {% for soc in social_choices %}
+                  <label class="inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 text-sm">
+                    <input type="checkbox" name="social_stack" value="{{ soc }}" {% if soc in selected_socials %}checked{% endif %}>
+                    <span class="capitalize">{{ soc }}</span>
+                  </label>
+                {% endfor %}
+              </div>
+            </div>
+          </section>
+
+          <section class="bg-white rounded-3xl p-6 shadow-lg">
+            <h2 class="text-xl font-bold mb-5">Files & Images</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-semibold mb-1">Profile Photo</label>
+                <input type="file" name="profile_photo" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-white">
+                {% if student.profile_photo %}<p class="mt-1 text-xs text-slate-500">Current: {{ student.profile_photo.name }}</p>{% endif %}
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1">Cover Photo</label>
+                <input type="file" name="cover_photo" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-white">
+                {% if student.cover_photo %}<p class="mt-1 text-xs text-slate-500">Current: {{ student.cover_photo.name }}</p>{% endif %}
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1">CV / Resume</label>
+                <input type="file" name="cv" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-white">
+                {% if student.cv %}<p class="mt-1 text-xs text-slate-500">Current: {{ student.cv.name }}</p>{% endif %}
+              </div>
+            </div>
+          </section>
+
+          <section class="bg-white rounded-3xl p-6 shadow-lg">
+            <h2 class="text-xl font-bold mb-5">Skills</h2>
+            <div class="flex flex-wrap gap-3">
+              {% for skill in skills %}
+                <label class="inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 text-sm">
+                  <input type="checkbox" name="skills" value="{{ skill.id }}" {% if skill in student.skills.all %}checked{% endif %}>
+                  <span>{{ skill.name }}</span>
+                </label>
+              {% endfor %}
+            </div>
+          </section>
+
+          <div class="flex flex-wrap gap-3 pb-6">
+            <button type="submit" class="rounded-xl bg-slate-900 px-6 py-3 text-white font-semibold hover:bg-slate-800">Save Profile Settings</button>
+            <a href="{% url 'student_profile_choice' student.id %}" class="rounded-xl border border-slate-300 px-6 py-3 font-semibold text-slate-700 hover:bg-slate-50">Cancel</a>
+          </div>
+        </form>
+      </main>
+    </div>
   </div>
+
+  <script>
+    function syncEditCategory() {
+      const select = document.getElementById('profile-category');
+      const wrap = document.getElementById('edit-college-wrap');
+      const college = document.getElementById('registered-college');
+      const isSchool = select && select.value === 'school';
+
+      if (wrap) {
+        wrap.style.opacity = isSchool ? '1' : '0.55';
+      }
+      if (college) {
+        college.required = isSchool;
+        college.disabled = !isSchool;
+        if (!isSchool) {
+          college.value = '';
+        }
+      }
+    }
+
+    document.getElementById('profile-category')?.addEventListener('change', syncEditCategory);
+    syncEditCategory();
+  </script>
 </body>
 </html>

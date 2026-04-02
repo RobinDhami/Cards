@@ -1,237 +1,497 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Admin Dashboard</title>
+  <title>Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Bootstrap CSS & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Inter', Arial, sans-serif; background: #f5f7fa; color: #23272f; }
-    .sidebar {
-      position: fixed;
-      left: 0; top: 0; bottom: 0;
-      width: 60px;
-      background: #23272f;
-      color: #fff;
-      padding: 2rem 0.5rem 1rem 0.5rem;
-      border-radius: 0 18px 18px 0;
-      z-index: 1000;
-      transition: width 0.3s;
-      overflow-x: hidden;
-    }
-    .sidebar:hover, .sidebar:focus-within {
-      width: 220px;
-      transition: width 0.3s;
-    }
-    .sidebar .nav-link {
-      color: #fff;
-      font-weight: 500;
-      border-radius: 8px;
-      margin-bottom: 0.5rem;
-      transition: background 0.2s, color 0.2s, padding 0.3s;
-      white-space: nowrap;
-      overflow: hidden;
-      padding-left: 0.7rem;
-      padding-right: 0.7rem;
-    }
-    .sidebar .nav-link.active, .sidebar .nav-link:hover {
-      background: #3a405a;
-      color: #fff;
-    }
-    .sidebar .nav-link i {
-      margin-right: 0.7rem;
-      font-size: 1.3rem;
-      vertical-align: middle;
-    }
-    .sidebar .nav-label {
-      opacity: 0;
-      transition: opacity 0.3s;
-      display: inline-block;
-      vertical-align: middle;
-    }
-    .sidebar:hover .nav-label, .sidebar:focus-within .nav-label {
-      opacity: 1;
-      transition: opacity 0.3s;
-    }
-    .main-content {
-      margin-left: 60px;
-      padding: 2rem 1rem;
-      transition: margin-left 0.3s;
-    }
-    .sidebar:hover ~ .main-content, .sidebar:focus-within ~ .main-content {
-      margin-left: 220px;
-      transition: margin-left 0.3s;
-    }
-    .dashboard-header {
-      font-weight: 700;
-      font-size: 2rem;
-      margin-bottom: 2rem;
-      color: #23272f;
-      letter-spacing: -1px;
-    }
-    .btn-custom {
-      border-radius: 8px;
-      font-weight: 500;
-      padding: 0.5rem 1.2rem;
-      font-size: 1rem;
-      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-      box-shadow: 0 2px 8px rgba(34,34,59,0.04);
-    }
-    .btn-custom-primary { background: #23272f; color: #fff; border: none; }
-    .btn-custom-primary:hover, .btn-custom-primary:focus { background: #3a405a; color: #fff; }
-    .btn-custom-secondary { background: #e0e1dd; color: #23272f; border: none; }
-    .btn-custom-secondary:hover, .btn-custom-secondary:focus { background: #bfc0c0; color: #23272f; }
-    .card { border-radius: 16px; border: none; box-shadow: 0 4px 24px rgba(34,34,59,0.07); margin-bottom: 2.5rem; background: #fff;}
-    .card-header { border-radius: 16px 16px 0 0; font-weight: 600; font-size: 1.15rem; background: #f7f7fa; border-bottom: 1px solid #ececec; padding: 1rem 1.5rem;}
-    .card-body { padding: 1.5rem;}
-    .table th, .table td { vertical-align: middle; border-top: none;}
-    .table th { color: #3a405a; font-weight: 600; background: #f2f3f7; border-bottom: 2px solid #e0e1dd;}
-    .table-hover tbody tr:hover { background: #f7f7fa; cursor: pointer;}
-    .alert { border-radius: 8px; font-size: 1rem; margin-bottom: 1.5rem; border: none; background: #e0e1dd; color: #23272f;}
-    .section-title { font-size: 1.25rem; font-weight: 700; color: #3a405a; margin-bottom: 1.2rem; letter-spacing: -0.5px;}
-    .no-data { color: #bfc0c0; font-style: italic; padding: 2rem 0; text-align: center; font-size: 1.1rem;}
-    .btn-sm { padding: 0.25rem 0.7rem; font-size: 0.95rem; border-radius: 6px;}
-    .table-actions .btn { margin-right: 0.3rem;}
-    @media (max-width: 991px) {
-      .sidebar { min-height: auto; margin-bottom: 2rem; }
-      .main-content { margin-left: 0; }
-      .sidebar, .sidebar:hover, .sidebar:focus-within { width: 100vw; border-radius: 0; }
-    }
+    body { background: #f4f6fb; color: #233044; }
+    .shell { max-width: 1280px; margin: 0 auto; padding: 2rem 1rem 3rem; }
+    .hero-card, .panel, .metric-card { border: 0; border-radius: 20px; box-shadow: 0 12px 32px rgba(35, 48, 68, 0.08); }
+    .hero-card { background: linear-gradient(135deg, #123456, #335c81); color: #fff; }
+    .metric-card { background: #fff; }
+    .metric-value { font-size: 1.9rem; font-weight: 700; }
+    .section-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem; }
+    .pill { display: inline-flex; align-items: center; gap: .35rem; border-radius: 999px; padding: .35rem .7rem; font-size: .85rem; font-weight: 600; }
+    .pill-school { background: #e0ecff; color: #1c4f9c; }
+    .pill-pro { background: #e9f7ef; color: #1d7a46; }
+    .pill-general { background: #eef2f6; color: #52606d; }
+    .pill-premium { background: #fff1dd; color: #9a6700; }
+    .table thead th { border-bottom: 0; color: #5b6675; font-size: .9rem; text-transform: uppercase; letter-spacing: .04em; }
+    .table td { vertical-align: middle; }
+    .quick-actions .btn { border-radius: 12px; }
+    .form-card { background: linear-gradient(180deg, #fff, #f9fbff); }
   </style>
-  <script>
-    function showSection(section) {
-      document.getElementById('colleges-section').style.display = section === 'colleges' ? 'block' : 'none';
-      document.getElementById('users-section').style.display = section === 'users' ? 'block' : 'none';
-      document.getElementById('nav-colleges').classList.toggle('active', section === 'colleges');
-      document.getElementById('nav-users').classList.toggle('active', section === 'users');
-    }
-    window.onload = function() { showSection('users'); }
-  </script>
 </head>
 <body>
-  <div class="sidebar d-flex flex-column align-items-start">
-    <a id="nav-users" class="nav-link active" href="javascript:void(0);" onclick="showSection('users')">
-      <i class="bi bi-person"></i> <span class="nav-label">Users</span>
-    </a>
-    <a id="nav-colleges" class="nav-link" href="javascript:void(0);" onclick="showSection('colleges')">
-      <i class="bi bi-building"></i> <span class="nav-label">Colleges</span>
-    </a>
-    <a class="nav-link" href="{% url 'bulk_upload' %}">
-      <i class="bi bi-upload"></i> <span class="nav-label">Bulk Upload</span>
-    </a>
-  </div>
-  <div class="main-content">
-    <div class="dashboard-header mb-4">
-      <i class="bi bi-speedometer2 me-2"></i>Admin Dashboard
+  <div class="shell">
+    <div class="card hero-card mb-4">
+      <div class="card-body p-4 p-lg-5">
+        <div class="row align-items-center g-4">
+          <div class="col-lg-8">
+            <h1 class="h2 fw-bold mb-3">Digital profile dashboard</h1>
+            <p class="mb-3">Manage school-linked profiles and independent professionals from one place. Create profiles, add schools, upload bulk records, and review card engagement without leaving this dashboard.</p>
+            <div class="d-flex flex-wrap gap-2 quick-actions">
+              <a href="#create-profile" class="btn btn-light text-dark">
+                <i class="bi bi-person-plus me-2"></i>Add Profile
+              </a>
+              <a href="#create-college" class="btn btn-outline-light">
+                <i class="bi bi-building-add me-2"></i>Add School / College
+              </a>
+              <a href="#bulk-upload" class="btn btn-outline-light">
+                <i class="bi bi-upload me-2"></i>Bulk Upload
+              </a>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="bg-white bg-opacity-10 rounded-4 p-4">
+              <div class="fw-semibold mb-2">What this dashboard supports</div>
+              <ul class="mb-0 ps-3">
+                <li>School users grouped under a school</li>
+                <li>Independent professionals without a school</li>
+                <li>Public contact card and portfolio links</li>
+                <li>Views, saves, and contact-click analytics</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Flash Messages -->
     {% if messages %}
       {% for message in messages %}
-        <div class="alert alert-info shadow-sm">{{ message }}</div>
+        <div class="alert alert-info border-0 shadow-sm">{{ message }}</div>
       {% endfor %}
     {% endif %}
 
-    <!-- Users Section -->
-    <div id="users-section">
-      <div class="mb-4 d-flex flex-wrap gap-2">
-        <a href="{% url 'add_user' %}" class="btn btn-custom btn-custom-primary">
-          <i class="bi bi-person-plus"></i> Add User
-        </a>
+    <div class="row g-3 mb-4">
+      <div class="col-md-6 col-xl-3">
+        <div class="card metric-card">
+          <div class="card-body">
+            <div class="text-muted small mb-2">Total Profiles</div>
+            <div class="metric-value">{{ total_users }}</div>
+          </div>
+        </div>
       </div>
-      <div class="section-title mb-3">
-        <i class="bi bi-people"></i> Registered Users
+      <div class="col-md-6 col-xl-3">
+        <div class="card metric-card">
+          <div class="card-body">
+            <div class="text-muted small mb-2">School Profiles</div>
+            <div class="metric-value">{{ total_school_users }}</div>
+          </div>
+        </div>
       </div>
-      <div class="card">
-        <div class="card-body p-0">
-          {% if users %}
-            <div class="table-responsive">
-              <table class="table table-hover mb-0">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Username</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th style="width:140px;">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for user in users %}
-                    <tr>
-                      <td>{{ user.name }}</td>
-                      <td>{{ user.username }}</td>
-                      <td>{{ user.email }}</td>
-                      <td>{{ user.phone }}</td>
-                      <td class="table-actions">
-                        <a href="{% url 'profile' user.id %}" class="btn btn-sm btn-outline-primary" title="View">
-                          <i class="bi bi-eye"></i>
-                        </a>
-                        <a href="{% url 'edit_student_auth' user.id %}" class="btn btn-sm btn-outline-warning" title="Edit">
-                          <i class="bi bi-pencil"></i>
-                        </a>
-                      </td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          {% else %}
-            <div class="no-data">No users registered yet.</div>
-          {% endif %}
+      <div class="col-md-6 col-xl-3">
+        <div class="card metric-card">
+          <div class="card-body">
+            <div class="text-muted small mb-2">Independent Professionals</div>
+            <div class="metric-value">{{ total_professionals }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 col-xl-3">
+        <div class="card metric-card">
+          <div class="card-body">
+            <div class="text-muted small mb-2">Schools / Colleges</div>
+            <div class="metric-value">{{ total_schools }}</div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Colleges Section -->
-    <div id="colleges-section" style="display:none;">
-      <div class="d-flex flex-wrap gap-2 mb-4">
-        <a href="{% url 'add_college' %}" class="btn btn-custom btn-custom-primary">
-          <i class="bi bi-plus-circle"></i> Add College
-        </a>
+    <div class="card panel mb-4">
+      <div class="card-body">
+        <div class="section-title">Find Profiles Quickly</div>
+        <form method="get" class="row g-3 align-items-end">
+          <div class="col-lg-5">
+            <label class="form-label">Search</label>
+            <input type="text" class="form-control" name="q" value="{{ search_query }}" placeholder="Name, username, email, role, school or organization">
+          </div>
+          <div class="col-md-3 col-lg-2">
+            <label class="form-label">Category</label>
+            <select name="category" class="form-select">
+              <option value="">All</option>
+              <option value="school" {% if category_filter == 'school' %}selected{% endif %}>School</option>
+              <option value="professional" {% if category_filter == 'professional' %}selected{% endif %}>Professional</option>
+            </select>
+          </div>
+          <div class="col-md-3 col-lg-2">
+            <label class="form-label">Card Access</label>
+            <select name="template_access" class="form-select">
+              <option value="">All</option>
+              <option value="contact-only" {% if template_filter == 'contact-only' %}selected{% endif %}>Contact only</option>
+              <option value="portfolio" {% if template_filter == 'portfolio' %}selected{% endif %}>Has portfolio</option>
+            </select>
+          </div>
+          <div class="col-md-6 col-lg-3 d-flex gap-2">
+            <button class="btn btn-dark w-100" type="submit">Apply Filters</button>
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary w-100">Reset</a>
+          </div>
+        </form>
       </div>
-      <div class="section-title mb-3">
-        <i class="bi bi-building"></i> Colleges List
-      </div>
-      <div class="card">
-        <div class="card-body p-0">
-          {% if colleges %}
-            <div class="table-responsive">
-              <table class="table table-hover mb-0">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th style="width:180px;">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for college in colleges %}
-                    <tr onclick="window.location='{% url 'college_details' college.id %}'" style="cursor:pointer;">
-                      <td>{{ college.name }}</td>
-                      <td class="table-actions">
-                        <a href="{% url 'college_details' college.id %}" class="btn btn-sm btn-outline-info" title="View">
-                          <i class="bi bi-eye"></i>
-                        </a>
-                        <a href="{% url 'edit_college' college.id %}" class="btn btn-sm btn-outline-warning" title="Edit">
-                          <i class="bi bi-pencil"></i>
-                        </a>
-                        <a href="{% url 'delete_college' college.id %}" class="btn btn-sm btn-outline-danger" title="Delete" onclick="return confirm('Are you sure you want to delete this college?'); event.stopPropagation();">
-                          <i class="bi bi-trash"></i>
-                        </a>
-                      </td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-12">
+        <div class="card panel">
+          <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+              <div>
+                <div class="section-title mb-1">Profiles</div>
+                <div class="text-muted">School-linked users and independent professionals live together here, and now each row also shows engagement.</div>
+              </div>
+              <a href="#create-profile" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-2"></i>New Profile
+              </a>
             </div>
-          {% else %}
-            <div class="no-data">No colleges found.</div>
-          {% endif %}
+            {% if users %}
+              <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Profile</th>
+                      <th>Category</th>
+                      <th>School / Organization</th>
+                      <th>Card Access</th>
+                      <th>Analytics</th>
+                      <th>Public Links</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for user in users %}
+                      <tr>
+                        <td>
+                          <div class="fw-semibold">{{ user.name }}</div>
+                          <div class="text-muted small">@{{ user.username }}{% if user.role %} . {{ user.role }}{% endif %}</div>
+                          <div class="text-muted small">{{ user.email }}{% if user.phone %} . {{ user.phone }}{% endif %}</div>
+                        </td>
+                        <td>
+                          {% if user.profile_category == 'professional' %}
+                            <span class="pill pill-pro"><i class="bi bi-briefcase"></i>Professional</span>
+                          {% else %}
+                            <span class="pill pill-school"><i class="bi bi-mortarboard"></i>School</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if user.college %}
+                            <div>{{ user.college.name }}</div>
+                            <div class="text-muted small">School-linked profile</div>
+                          {% elif user.organization_name %}
+                            <div>{{ user.organization_name }}</div>
+                            <div class="text-muted small">Independent organization</div>
+                          {% else %}
+                            <span class="text-muted">Personal brand</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if user.user_type == 'general' %}
+                            <span class="pill pill-general">Contact card only</span>
+                          {% else %}
+                            <span class="pill pill-premium">{{ user.user_type|title }} portfolio enabled</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          <div class="small">
+                            <div><strong>{{ user.views }}</strong> views</div>
+                            <div><strong>{{ user.downloads }}</strong> downloads</div>
+                            <div><strong>{{ user.contact_clicks }}</strong> contact clicks</div>
+                          </div>
+                        </td>
+                        <td>
+                          <div class="d-flex flex-wrap gap-2">
+                            <a href="{% url 'contact_card' user.id %}" class="btn btn-sm btn-outline-secondary">Contact</a>
+                            {% if user.user_type != 'general' %}
+                              <a href="{% url 'profile' user.id %}" class="btn btn-sm btn-outline-secondary">Portfolio</a>
+                            {% endif %}
+                            <a href="{% url 'download_vcard' user.id %}" class="btn btn-sm btn-outline-secondary">vCard</a>
+                          </div>
+                        </td>
+                        <td>
+                          <div class="d-flex flex-wrap gap-2">
+                            <a href="{% url 'edit_student_auth' user.id %}" class="btn btn-sm btn-warning">Manage</a>
+                          </div>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="text-muted">No profiles found with the current filters.</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-7">
+        <div class="card panel h-100">
+          <div class="card-body">
+            <div class="section-title">Schools / Colleges</div>
+            {% if colleges %}
+              <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Profiles</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for college in colleges %}
+                      <tr>
+                        <td>
+                          <div class="fw-semibold">{{ college.name }}</div>
+                          {% if college.address %}<div class="text-muted small">{{ college.address }}</div>{% endif %}
+                        </td>
+                        <td>{{ college.students.count }}</td>
+                        <td class="d-flex flex-wrap gap-2">
+                          <a href="{% url 'college_details' college.id %}" class="btn btn-sm btn-outline-primary">Open</a>
+                          <a href="{% url 'edit_college' college.id %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="text-muted">No school records yet.</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-5" id="bulk-upload">
+        <div class="card panel h-100 form-card">
+          <div class="card-body">
+            <div class="section-title">Bulk Upload Profiles</div>
+            <p class="text-muted">Upload an Excel file here instead of leaving the dashboard.</p>
+            <form method="post" action="{% url 'bulk_upload' %}" enctype="multipart/form-data" class="row g-3">
+              {% csrf_token %}
+              <div class="col-12">
+                <label class="form-label">Excel File</label>
+                <input type="file" name="file" class="form-control" accept=".xlsx,.xls" required>
+                <div class="form-text">Expected columns: <code>name</code>, <code>phone</code>, <code>email</code>, <code>college</code>.</div>
+              </div>
+              <div class="col-12">
+                <button type="submit" class="btn btn-dark w-100">Upload File</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card panel h-100">
+          <div class="card-body">
+            <div class="section-title">Top Performing Profiles</div>
+            <div class="list-group list-group-flush">
+              {% for profile in top_profiles %}
+                <div class="list-group-item border-0 px-0">
+                  <div class="d-flex justify-content-between align-items-start gap-3">
+                    <div>
+                      <div class="fw-semibold">{{ profile.name }}</div>
+                      <div class="text-muted small">@{{ profile.username }}</div>
+                    </div>
+                    <div class="text-end small">
+                      <div><strong>{{ profile.views }}</strong> views</div>
+                      <div><strong>{{ profile.downloads }}</strong> downloads</div>
+                      <div><strong>{{ profile.contact_clicks }}</strong> clicks</div>
+                    </div>
+                  </div>
+                </div>
+              {% empty %}
+                <div class="text-muted">No performance data yet.</div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card panel h-100">
+          <div class="card-body">
+            <div class="section-title">Recent Activity</div>
+            <div class="list-group list-group-flush">
+              {% for activity in recent_activities %}
+                <div class="list-group-item border-0 px-0">
+                  <div class="fw-semibold">{{ activity.student.name }}</div>
+                  <div class="text-muted small text-capitalize">{{ activity.event_type }}{% if activity.action %} · {{ activity.action }}{% endif %}</div>
+                  <div class="text-muted small">{{ activity.created_at }}</div>
+                </div>
+              {% empty %}
+                <div class="text-muted">No recent activity yet.</div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12" id="create-profile">
+        <div class="card panel form-card">
+          <div class="card-body">
+            <div class="section-title">Create Profile</div>
+            <form method="post" action="{% url 'add_user' %}" enctype="multipart/form-data" class="row g-3">
+              {% csrf_token %}
+              <div class="col-md-6">
+                <label class="form-label">Full Name</label>
+                <input type="text" name="name" class="form-control" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Username</label>
+                <input type="text" name="username" class="form-control" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" class="form-control" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Phone</label>
+                <input type="text" name="phone" class="form-control">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Profile Category</label>
+                <select name="profile_category" id="dashboard-profile-category" class="form-select">
+                  <option value="school">School / College Profile</option>
+                  <option value="professional">Independent Professional</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Profile Tier</label>
+                <select name="user_type" class="form-select">
+                  <option value="general">General</option>
+                  <option value="vip">VIP</option>
+                  <option value="premium">Premium</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Role / Designation</label>
+                <input type="text" name="role" class="form-control">
+              </div>
+              <div class="col-md-6" id="dashboard-college-wrap">
+                <label class="form-label">Registered School / College</label>
+                <select name="college" id="dashboard-college-select" class="form-select">
+                  <option value="">Choose a school</option>
+                  {% for college in colleges %}
+                    <option value="{{ college.id }}">{{ college.name }}</option>
+                  {% endfor %}
+                </select>
+                <div class="form-text">Required only for school-linked profiles.</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Organization / Brand Name</label>
+                <input type="text" name="organization_name" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Address</label>
+                <input type="text" name="address" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Password</label>
+                <input type="password" name="password" class="form-control" required>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Bio</label>
+                <textarea name="bio" rows="3" class="form-control"></textarea>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Profile Photo</label>
+                <input type="file" name="photo" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Resume / CV</label>
+                <input type="file" name="resume" class="form-control">
+              </div>
+              <div class="col-12">
+                <label class="form-label">Skills</label>
+                <div class="d-flex flex-wrap gap-2">
+                  {% for skill in skills %}
+                    <label class="pill pill-general">
+                      <input type="checkbox" name="skills" value="{{ skill.id }}">
+                      <span>{{ skill.name }}</span>
+                    </label>
+                  {% endfor %}
+                </div>
+              </div>
+              <div class="col-12">
+                <button type="submit" class="btn btn-dark">Create Profile</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12" id="create-college">
+        <div class="card panel form-card">
+          <div class="card-body">
+            <div class="section-title">Add School / College</div>
+            <form method="post" action="{% url 'add_college' %}" enctype="multipart/form-data" class="row g-3">
+              {% csrf_token %}
+              <div class="col-md-6">
+                <label class="form-label">Name</label>
+                <input type="text" name="name" class="form-control" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Slogan</label>
+                <input type="text" name="slogan" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Address</label>
+                <input type="text" name="address" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Website</label>
+                <input type="url" name="website" class="form-control" placeholder="https://example.com">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" class="form-control">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Phone</label>
+                <input type="text" name="phone" class="form-control">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Logo</label>
+                <input type="file" name="logo" class="form-control">
+              </div>
+              <div class="col-12">
+                <label class="form-label">Description</label>
+                <textarea name="description" rows="3" class="form-control"></textarea>
+              </div>
+              <div class="col-12">
+                <button type="submit" class="btn btn-primary">Add School / College</button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>
   </div>
+
+  <script>
+    function syncDashboardCategoryFields() {
+      const category = document.getElementById('dashboard-profile-category');
+      const collegeWrap = document.getElementById('dashboard-college-wrap');
+      const collegeSelect = document.getElementById('dashboard-college-select');
+      const isSchool = category && category.value === 'school';
+
+      if (collegeWrap) {
+        collegeWrap.style.opacity = isSchool ? '1' : '0.55';
+      }
+      if (collegeSelect) {
+        collegeSelect.required = isSchool;
+        collegeSelect.disabled = !isSchool;
+        if (!isSchool) {
+          collegeSelect.value = '';
+        }
+      }
+    }
+
+    document.getElementById('dashboard-profile-category')?.addEventListener('change', syncDashboardCategoryFields);
+    syncDashboardCategoryFields();
+  </script>
 </body>
 </html>

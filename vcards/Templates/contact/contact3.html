@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ student.name }} | Digital Contact Card</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    html, body { height: 100%; margin: 0; }
+    * { box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; }
+    .card-wrapper {
+      width: 100%;
+      min-height: 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: #f9f8f6;
+    }
+    .hero-name {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+    .glass-card {
+      backdrop-filter: blur(40px) saturate(1.8);
+      -webkit-backdrop-filter: blur(40px) saturate(1.8);
+    }
+    .profile-ring {
+      position: relative;
+      display: inline-block;
+    }
+    .profile-ring::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      padding: 3px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-dim));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+    }
+    .action-btn,
+    .social-icon,
+    .info-block,
+    .save-btn {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .action-btn:hover,
+    .social-icon:hover,
+    .save-btn:hover {
+      transform: translateY(-2px);
+    }
+    .social-icon:hover {
+      transform: translateY(-3px) scale(1.08);
+    }
+    .info-block:hover {
+      background: rgba(255,255,255,0.08);
+    }
+    .save-btn {
+      position: relative;
+      overflow: hidden;
+    }
+    .save-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%);
+      transform: translateX(-100%);
+      transition: transform 0.6s ease;
+    }
+    .save-btn:hover::after {
+      transform: translateX(100%);
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .anim-1 { animation: fadeUp 0.7s 0.1s both ease-out; }
+    .anim-2 { animation: fadeUp 0.7s 0.25s both ease-out; }
+    .anim-3 { animation: fadeUp 0.7s 0.4s both ease-out; }
+    .anim-4 { animation: fadeUp 0.7s 0.55s both ease-out; }
+    .anim-5 { animation: fadeUp 0.7s 0.7s both ease-out; }
+    .anim-6 { animation: fadeUp 0.7s 0.85s both ease-out; }
+  </style>
+</head>
+<body class="h-full">
+  <div class="card-wrapper">
+    <div
+      class="w-full max-w-[380px] rounded-[28px] px-6 pt-10 pb-12 shadow-[0_20px_60px_rgba(0,0,0,0.3)]"
+      style="--bg: #0a1a12; --bg-card: rgba(14,32,22,0.7); --text: #f5f0e8; --text-dim: #a8b5a0; --accent: #c9a96e; --accent-dim: rgba(201,169,110,0.4); --surface: rgba(201,169,110,0.08); background: var(--bg); color: var(--text);"
+    >
+      <div class="anim-1 text-center mb-8">
+        <div class="profile-ring mb-6">
+          <div class="w-[120px] h-[120px] rounded-full overflow-hidden bg-gradient-to-br from-[#1a3d28] to-[#2a5a3a] flex items-center justify-center">
+            {% if student.profile_photo %}
+              <img src="{{ student.profile_photo.url }}" alt="{{ student.name }}" class="w-full h-full object-cover">
+            {% else %}
+              <span class="hero-name text-4xl" style="color: var(--accent);">{{ student.name|slice:":1"|upper }}</span>
+            {% endif %}
+          </div>
+        </div>
+        <h1 class="hero-name text-[36px] mb-2" style="color: var(--text);">{{ student.name }}</h1>
+        {% if student.role %}
+          <p class="text-[14px] font-medium tracking-[0.12em] uppercase mb-1" style="color: var(--accent);">{{ student.role }}</p>
+        {% endif %}
+        {% if display_organization %}
+          <p class="text-[13px]" style="color: var(--text-dim);">{{ display_organization }}</p>
+        {% endif %}
+      </div>
+
+      {% if student.bio %}
+        <div class="anim-2 glass-card rounded-[20px] py-5 px-[22px] mb-6 text-center border" style="background: var(--bg-card); border-color: rgba(201,169,110,0.12);">
+          <p class="text-sm leading-7 font-light m-0" style="color: var(--text-dim);">{{ student.bio }}</p>
+        </div>
+      {% endif %}
+
+      <div class="anim-3 mb-7">
+        <a href="{% url 'download_vcard' student.id %}" class="save-btn w-full rounded-2xl py-4 px-4 border-0 text-[15px] font-semibold tracking-[0.04em] flex items-center justify-center gap-[10px] no-underline" style="background: linear-gradient(135deg, #c9a96e, #a8883e); color: #0a1a12;">
+          <i data-lucide="user-plus" style="width: 18px; height: 18px;"></i>
+          <span>Save Contact</span>
+        </a>
+      </div>
+
+      <div class="anim-4 grid grid-cols-2 sm:grid-cols-4 gap-[10px] mb-7">
+        {% if student.phone %}
+          <a href="{{ phone_action_url }}" class="action-btn flex flex-col items-center gap-2 py-4 px-2 rounded-2xl no-underline" style="background: var(--surface); border: 1px solid rgba(201,169,110,0.1); color: var(--text);">
+            <i data-lucide="phone" style="width: 20px; height: 20px; color: var(--accent);"></i>
+            <span class="text-[11px]" style="color: var(--text-dim);">Call</span>
+          </a>
+        {% endif %}
+        {% if student.email %}
+          <a href="{{ email_action_url }}" class="action-btn flex flex-col items-center gap-2 py-4 px-2 rounded-2xl no-underline" style="background: var(--surface); border: 1px solid rgba(201,169,110,0.1); color: var(--text);">
+            <i data-lucide="mail" style="width: 20px; height: 20px; color: var(--accent);"></i>
+            <span class="text-[11px]" style="color: var(--text-dim);">Email</span>
+          </a>
+        {% endif %}
+        {% if student.whatsapp %}
+          <a href="{{ whatsapp_action_url }}" class="action-btn flex flex-col items-center gap-2 py-4 px-2 rounded-2xl no-underline" style="background: var(--surface); border: 1px solid rgba(201,169,110,0.1); color: var(--text);">
+            <i data-lucide="message-circle" style="width: 20px; height: 20px; color: var(--accent);"></i>
+            <span class="text-[11px]" style="color: var(--text-dim);">WhatsApp</span>
+          </a>
+        {% endif %}
+        {% if website_url %}
+          <a href="{{ website_action_url }}" class="action-btn flex flex-col items-center gap-2 py-4 px-2 rounded-2xl no-underline" style="background: var(--surface); border: 1px solid rgba(201,169,110,0.1); color: var(--text);">
+            <i data-lucide="globe" style="width: 20px; height: 20px; color: var(--accent);"></i>
+            <span class="text-[11px]" style="color: var(--text-dim);">Website</span>
+          </a>
+        {% endif %}
+      </div>
+
+      <div class="anim-5 flex flex-col gap-[2px] rounded-[20px] overflow-hidden mb-7">
+        {% if student.phone %}
+          <div class="info-block flex items-center gap-[14px] py-4 px-[18px]" style="background: var(--surface);">
+            <i data-lucide="phone" style="width: 16px; height: 16px; color: var(--accent); flex-shrink: 0;"></i>
+            <div>
+              <p class="text-[10px] uppercase tracking-[0.1em] mb-[2px]" style="color: var(--text-dim);">Phone</p>
+              <p class="text-sm m-0 font-normal">{{ student.phone }}</p>
+            </div>
+          </div>
+        {% endif %}
+        {% if student.email %}
+          <div class="info-block flex items-center gap-[14px] py-4 px-[18px]" style="background: var(--surface);">
+            <i data-lucide="mail" style="width: 16px; height: 16px; color: var(--accent); flex-shrink: 0;"></i>
+            <div>
+              <p class="text-[10px] uppercase tracking-[0.1em] mb-[2px]" style="color: var(--text-dim);">Email</p>
+              <p class="text-sm m-0 font-normal break-all">{{ student.email }}</p>
+            </div>
+          </div>
+        {% endif %}
+        {% if website_url %}
+          <div class="info-block flex items-center gap-[14px] py-4 px-[18px]" style="background: var(--surface);">
+            <i data-lucide="globe" style="width: 16px; height: 16px; color: var(--accent); flex-shrink: 0;"></i>
+            <div>
+              <p class="text-[10px] uppercase tracking-[0.1em] mb-[2px]" style="color: var(--text-dim);">Website</p>
+              <p class="text-sm m-0 font-normal break-all">{{ student.website }}</p>
+            </div>
+          </div>
+        {% endif %}
+        {% if student.address %}
+          <div class="info-block flex items-center gap-[14px] py-4 px-[18px]" style="background: var(--surface);">
+            <i data-lucide="map-pin" style="width: 16px; height: 16px; color: var(--accent); flex-shrink: 0;"></i>
+            <div>
+              <p class="text-[10px] uppercase tracking-[0.1em] mb-[2px]" style="color: var(--text-dim);">Address</p>
+              <p class="text-sm m-0 font-normal">{{ student.address }}</p>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+
+      {% if social_links %}
+        <div class="anim-6 flex justify-center flex-wrap gap-[14px] mb-8">
+          {% for social in social_links %}
+            <a href="{{ social.tracked_url }}" class="social-icon w-11 h-11 rounded-full flex items-center justify-center no-underline" style="background: var(--surface); border: 1px solid rgba(201,169,110,0.12);" aria-label="{{ social.label }}">
+              <i class="{{ social.fa_class }}" style="font-size: 18px; color: var(--accent);"></i>
+            </a>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="anim-6 grid grid-cols-2 gap-2.5 mb-6">
+        {% if student.show_portfolio and student.user_type != 'general' %}
+          <a href="{{ portfolio_action_url }}" class="action-btn flex items-center justify-center gap-2 py-3 px-3 rounded-2xl no-underline text-xs font-semibold tracking-wide" style="background: var(--surface); border: 1px solid rgba(201,169,110,0.1); color: var(--text);">
+            <i data-lucide="briefcase" style="width: 14px; height: 14px; color: var(--accent);"></i>
+            Portfolio
+          </a>
+        {% else %}
+          <span></span>
+        {% endif %}
+        <a href="{% url 'edit_student_auth' student.id %}" class="action-btn flex items-center justify-center gap-2 py-3 px-3 rounded-2xl no-underline text-xs font-semibold tracking-wide" style="background: var(--surface); border: 1px solid rgba(201,169,110,0.1); color: var(--text);">
+          <i data-lucide="log-in" style="width: 14px; height: 14px; color: var(--accent);"></i>
+          Login
+        </a>
+      </div>
+
+      <div class="anim-6 text-center opacity-40">
+        <div class="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.15em]" style="color: var(--text-dim);">
+          <i data-lucide="wifi" style="width: 12px; height: 12px;"></i>
+          NFC &amp; QR Smart Card
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>
