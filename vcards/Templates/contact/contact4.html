@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ student.name }} | Contact Card</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Manrope', sans-serif;
+      background:
+        radial-gradient(circle at top right, rgba(59,130,246,.16), transparent 28%),
+        linear-gradient(180deg, #f5f7fb 0%, #e9eef5 100%);
+    }
+    .premium-shadow { box-shadow: 0 28px 70px rgba(15, 23, 42, 0.14); }
+    .hover-card { transition: transform .22s ease, box-shadow .22s ease; }
+    .hover-card:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(15, 23, 42, 0.12); }
+  </style>
+</head>
+<body class="min-h-screen px-4 py-8">
+  <div class="mx-auto max-w-md">
+    <div class="premium-shadow overflow-hidden rounded-[34px] bg-white">
+      <div class="relative px-6 pb-20 pt-7 text-white" style="background:linear-gradient(135deg,#0f172a 0%,#1d4ed8 55%,#38bdf8 100%)">
+        {% if student.cover_photo %}
+          <div class="absolute inset-0 bg-cover bg-center opacity-20" style="background-image:url('{{ student.cover_photo.url }}')"></div>
+        {% endif %}
+        <div class="relative z-10 flex items-center justify-between">
+          <div>
+            <p class="text-[11px] font-semibold uppercase tracking-[0.28em] text-blue-100">Corporate Card</p>
+            <p class="mt-2 text-sm text-blue-100/80">Clean. Trusted. Direct.</p>
+          </div>
+          <div class="rounded-full border border-white/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]">Live</div>
+        </div>
+        <div class="relative z-10 mt-10 flex justify-center">
+          <div class="h-28 w-28 overflow-hidden rounded-[28px] ring-4 ring-white/25">
+            {% if student.profile_photo %}
+              <img src="{{ student.profile_photo.url }}" alt="{{ student.name }}" class="h-full w-full object-cover">
+            {% else %}
+              <div class="flex h-full w-full items-center justify-center bg-white text-3xl font-bold text-slate-900">{{ student.name|slice:":1"|upper }}</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="-mt-14 rounded-t-[34px] bg-white px-6 pb-7 pt-6">
+        <div class="text-center">
+          <h1 class="text-[30px] font-extrabold tracking-[-0.04em] text-slate-900">{{ student.name }}</h1>
+          {% if student.role %}
+            <p class="mt-2 text-sm font-semibold text-blue-700">{{ student.role }}</p>
+          {% endif %}
+          {% if display_organization %}
+            <p class="mt-1 text-sm text-slate-500">{{ display_organization }}</p>
+          {% endif %}
+        </div>
+
+        <div class="mt-6 grid grid-cols-2 gap-3">
+          <a href="{% url 'download_vcard' student.id %}" class="hover-card rounded-2xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white">Save Contact</a>
+          <a href="{% url 'edit_student_auth' student.id %}" class="hover-card rounded-2xl border border-slate-200 px-4 py-3 text-center text-sm font-semibold text-slate-700">Login</a>
+        </div>
+
+        <div class="mt-6 grid gap-3">
+          {% if student.phone %}
+            <a href="{{ phone_action_url }}" class="hover-card rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div class="flex items-center gap-3">
+                <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600"><i data-lucide="phone" class="h-5 w-5"></i></div>
+                <div>
+                  <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Phone</p>
+                  <p class="mt-1 text-sm font-semibold text-slate-900">{{ student.phone }}</p>
+                </div>
+              </div>
+            </a>
+          {% endif %}
+          {% if student.email %}
+            <a href="{{ email_action_url }}" class="hover-card rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div class="flex items-center gap-3">
+                <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-100 text-rose-500"><i data-lucide="mail" class="h-5 w-5"></i></div>
+                <div class="min-w-0">
+                  <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Email</p>
+                  <p class="mt-1 break-all text-sm font-semibold text-slate-900">{{ student.email }}</p>
+                </div>
+              </div>
+            </a>
+          {% endif %}
+          <div class="grid grid-cols-2 gap-3">
+            {% if website_url %}
+              <a href="{{ website_action_url }}" class="hover-card rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center">
+                <i data-lucide="globe" class="mx-auto h-5 w-5 text-sky-600"></i>
+                <p class="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Website</p>
+              </a>
+            {% endif %}
+            {% if student.whatsapp %}
+              <a href="{{ whatsapp_action_url }}" class="hover-card rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center">
+                <i data-lucide="message-circle" class="mx-auto h-5 w-5 text-emerald-500"></i>
+                <p class="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">WhatsApp</p>
+              </a>
+            {% endif %}
+          </div>
+          {% if student.address %}
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div class="flex items-center gap-3">
+                <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-600"><i data-lucide="map-pin" class="h-5 w-5"></i></div>
+                <div>
+                  <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Address</p>
+                  <p class="mt-1 text-sm font-semibold text-slate-900">{{ student.address }}</p>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+
+        {% if social_links %}
+          <div class="mt-6 border-t border-slate-100 pt-6">
+            <div class="flex flex-wrap justify-center gap-3">
+              {% for social in social_links %}
+                <a href="{{ social.tracked_url }}" class="hover-card flex h-11 w-11 items-center justify-center rounded-full bg-slate-100" aria-label="{{ social.label }}">
+                  <i data-lucide="{{ social.icon }}" style="width:18px;height:18px;color:
+                    {% if social.key == 'linkedin' %}#0a66c2{% elif social.key == 'instagram' %}#e4405f{% elif social.key == 'facebook' %}#1877f2{% elif social.key == 'messenger' %}#0084ff{% elif social.key == 'whatsapp' %}#25d366{% elif social.key == 'twitter' %}#111827{% elif social.key == 'youtube' %}#ff0000{% elif social.key == 'tiktok' %}#111111{% elif social.key == 'github' %}#181717{% elif social.key == 'figma' %}#f24e1e{% elif social.key == 'upwork' %}#14a800{% else %}#0f172a{% endif %};"></i>
+                </a>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
+        {% if student.show_portfolio and student.user_type != 'general' %}
+          <a href="{{ portfolio_action_url }}" class="mt-6 block rounded-2xl border border-slate-200 px-4 py-3 text-center text-sm font-semibold text-slate-700">Portfolio</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

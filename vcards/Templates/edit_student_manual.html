@@ -25,9 +25,7 @@
             </div>
             <div class="rounded-2xl bg-white/10 px-4 py-3">
               <div class="text-slate-300">Public Access</div>
-              <div class="font-semibold">
-                {% if student.user_type == 'general' %}Contact card only{% else %}Contact card + portfolio{% endif %}
-              </div>
+              <div class="font-semibold">Contact card first</div>
             </div>
             <div class="rounded-2xl bg-white/10 px-4 py-3">
               <div class="text-slate-300">Organization</div>
@@ -38,10 +36,16 @@
           <div class="mt-6 space-y-2">
             <a href="{% url 'student_owner_dashboard' student.id %}" class="block w-full rounded-xl bg-white text-slate-900 px-4 py-3 font-semibold text-center">Owner Dashboard</a>
             <a href="{% url 'contact_card' student.id %}" class="block w-full rounded-xl border border-white/30 px-4 py-3 font-semibold text-center">View Contact Card</a>
+            <a href="{% url 'print_card_preview' student.id %}" class="block w-full rounded-xl border border-white/30 px-4 py-3 font-semibold text-center">Print Preview</a>
             {% if student.user_type != 'general' %}
-              <a href="{% url 'profile' student.id %}" class="block w-full rounded-xl border border-white/30 px-4 py-3 font-semibold text-center">View Portfolio</a>
+              <a href="{% url 'profile' student.id %}" class="block w-full rounded-xl border border-white/30 px-4 py-3 font-semibold text-center">Portfolio Coming Soon</a>
             {% endif %}
             <a href="{% url 'download_vcard' student.id %}" class="block w-full rounded-xl border border-white/30 px-4 py-3 font-semibold text-center">Download vCard</a>
+            <form method="post" action="{% url 'reset_student_password' student.id %}">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{% url 'edit_student_manual' student.id %}">
+              <button type="submit" class="block w-full rounded-xl border border-white/30 px-4 py-3 font-semibold text-center">Reset Login Password</button>
+            </form>
             <a href="{% url 'logout_student_edit' student.id %}" class="block w-full rounded-xl border border-white/30 px-4 py-3 font-semibold text-center">Logout</a>
           </div>
 
@@ -89,7 +93,15 @@
               </div>
               <div>
                 <label class="block text-sm font-semibold mb-1">Role / Designation</label>
-                <input type="text" name="role" value="{{ student.role|default:'' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3" placeholder="Teacher, Principal, Consultant, Doctor">
+                <select name="school_role" id="school-role-select" class="w-full rounded-xl border border-slate-300 px-4 py-3 {% if student.profile_category == 'professional' %}hidden{% endif %}">
+                  {% if student.profile_category == 'school' and student.role and student.role not in school_role_choices %}
+                    <option value="{{ student.role }}" selected>{{ student.role }} (Current)</option>
+                  {% endif %}
+                  {% for role_name in school_role_choices %}
+                    <option value="{{ role_name }}" {% if student.role == role_name %}selected{% endif %}>{{ role_name }}</option>
+                  {% endfor %}
+                </select>
+                <input type="text" name="role" id="custom-role-input" value="{% if student.profile_category == 'professional' or student.role not in school_role_choices %}{{ student.role|default:'' }}{% endif %}" class="w-full rounded-xl border border-slate-300 px-4 py-3 {% if student.profile_category != 'professional' %}hidden{% endif %}" placeholder="Consultant, Designer, Doctor">
               </div>
               <div id="edit-college-wrap">
                 <label class="block text-sm font-semibold mb-1">Registered School / College</label>
@@ -167,22 +179,49 @@
               <div>
                 <label class="block text-sm font-semibold mb-1">Contact Card Template</label>
                 <select name="contact_template" class="w-full rounded-xl border border-slate-300 px-4 py-3">
-                  {% for tpl in contact_templates %}
-                    <option value="{{ tpl }}" {% if tpl == student.contact_template %}selected{% endif %}>{{ tpl }}</option>
+                  {% for option in contact_template_choices %}
+                    <option value="{{ option.value }}" {% if option.value == student.contact_template %}selected{% endif %}>{{ option.label }}</option>
                   {% endfor %}
                 </select>
+                <div class="mt-2 space-y-1 text-xs text-slate-500">
+                  {% for option in contact_template_choices %}
+                    <div><span class="font-semibold text-slate-700">{{ option.label }}:</span> {{ option.description }}</div>
+                  {% endfor %}
+                </div>
               </div>
               <div>
                 <label class="block text-sm font-semibold mb-1">Portfolio Template</label>
-                <select name="portfolio_template" class="w-full rounded-xl border border-slate-300 px-4 py-3" {% if not portfolio_templates %}disabled{% endif %}>
-                  {% if portfolio_templates %}
-                    {% for tpl in portfolio_templates %}
-                      <option value="{{ tpl }}" {% if tpl == student.portfolio_template %}selected{% endif %}>{{ tpl }}</option>
-                    {% endfor %}
-                  {% else %}
-                    <option>No portfolio available on General tier</option>
-                  {% endif %}
+                <input type="text" value="Coming soon" disabled class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-slate-50">
+                <p class="mt-1 text-xs text-slate-500">We are focusing on contact card quality first.</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="bg-white rounded-3xl p-6 shadow-lg">
+            <h2 class="text-xl font-bold mb-5">Print Card & QR</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-semibold mb-1">Print Template</label>
+                <select name="print_template" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+                  {% for option in print_template_choices %}
+                    <option value="{{ option.value }}" {% if option.value == student.print_template %}selected{% endif %}>{{ option.label }}</option>
+                  {% endfor %}
                 </select>
+                <p class="mt-1 text-xs text-slate-500">This controls the printable card design, separate from the mobile contact card.</p>
+                <div class="mt-2 space-y-1 text-xs text-slate-500">
+                  {% for option in print_template_choices %}
+                    <div><span class="font-semibold text-slate-700">{{ option.label }}:</span> {{ option.description }}</div>
+                  {% endfor %}
+                </div>
+              </div>
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div class="text-sm font-semibold text-slate-800">Printing flow</div>
+                <div class="mt-2 text-sm text-slate-600">Choose a print template, review the QR print preview, and use custom notes when the client wants something special.</div>
+                <a href="{% url 'print_card_preview' student.id %}" class="mt-4 inline-flex rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Open Print Preview</a>
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-sm font-semibold mb-1">Custom Print Notes</label>
+                <textarea name="print_custom_note" rows="4" class="w-full rounded-xl border border-slate-300 px-4 py-3" placeholder="Custom logo placement, brand colors, front/back request, finishing, paper notes...">{{ student.print_custom_note|default:'' }}</textarea>
               </div>
             </div>
           </section>
@@ -246,6 +285,11 @@
                 </label>
               {% endfor %}
             </div>
+            <div class="mt-5">
+              <label class="block text-sm font-semibold mb-1">Custom Skills</label>
+              <input type="text" name="custom_skills" class="w-full rounded-xl border border-slate-300 px-4 py-3" placeholder="Public Speaking, Leadership, Design Thinking">
+              <p class="mt-1 text-xs text-slate-500">Add any new skills separated by commas. They will be saved and reusable later.</p>
+            </div>
           </section>
 
           <div class="flex flex-wrap gap-3 pb-6">
@@ -262,6 +306,8 @@
       const select = document.getElementById('profile-category');
       const wrap = document.getElementById('edit-college-wrap');
       const college = document.getElementById('registered-college');
+      const schoolRole = document.getElementById('school-role-select');
+      const customRole = document.getElementById('custom-role-input');
       const isSchool = select && select.value === 'school';
 
       if (wrap) {
@@ -273,6 +319,15 @@
         if (!isSchool) {
           college.value = '';
         }
+      }
+      if (schoolRole) {
+        schoolRole.disabled = !isSchool;
+        schoolRole.classList.toggle('hidden', !isSchool);
+      }
+      if (customRole) {
+        customRole.disabled = isSchool;
+        customRole.required = !isSchool;
+        customRole.classList.toggle('hidden', isSchool);
       }
     }
 

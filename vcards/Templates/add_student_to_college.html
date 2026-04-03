@@ -26,8 +26,17 @@
         <input type="text" name="username" class="form-control" required>
     </div>
     <div class="mb-3">
-        <label class="form-label">Password</label>
-        <input type="password" name="password" class="form-control" required>
+        <label class="form-label">Login Password</label>
+        <input type="text" class="form-control" value="Auto-generated from username and phone" disabled>
+        <div class="form-text">You can reset the password later from the dashboard if needed.</div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">School Role</label>
+        <select name="school_role" class="form-select">
+            {% for role_name in school_role_choices %}
+                <option value="{{ role_name }}">{{ role_name }}</option>
+            {% endfor %}
+        </select>
     </div>
     <div class="mb-3">
         <label class="form-label">Bio</label>
@@ -50,49 +59,14 @@
                 </label>
             {% endfor %}
         </div>
+        <div class="mt-3">
+            <label class="form-label">Custom Skills</label>
+            <input type="text" name="custom_skills" class="form-control" placeholder="Teaching, Curriculum Design, Mentoring">
+            <div class="form-text">Separate extra skills with commas.</div>
+        </div>
     </div>
     <!-- Add social fields as needed -->
     <button type="submit" class="btn btn-primary">Add Student</button>
     <a href="{% url 'college_details' college.id %}" class="btn btn-secondary">Cancel</a>
 </form>
-{% endblock %}
-{% block scripts %}
-<script>
-    // JavaScript to handle form submission and password encryption
-    document.querySelector('form').addEventListener('submit', function(event) {
-        event.preventDefault(); // Prevent the default form submission
-
-        // Get the form data
-        var formData = new FormData(this);
-
-        // Encrypt the password
-        var password = formData.get('password');
-        var encryptedPassword = btoa(password); // Basic encryption for demonstration
-
-        // Set the encrypted password back to the form data
-        formData.set('password', encryptedPassword);
-
-        // Submit the form with the encrypted password
-        fetch(this.action, {
-            method: this.method,
-            body: formData,
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}'
-            }
-        })
-        .then(response => {
-            if (response.ok) {
-                // Handle successful response
-                window.location.href = '{% url "college_details" college.id %}';
-            } else {
-                // Handle error response
-                alert('Error adding student. Please try again.');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred. Please try again.');
-        });
-    });
-</script>
 {% endblock %}

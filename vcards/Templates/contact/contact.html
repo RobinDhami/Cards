@@ -1,319 +1,137 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{student.name}} - Digital Contact Card</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: '#6366f1',
-                        'brand-dark': '#4f46e5'
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        .glass-card {
-            backdrop-filter: blur(10px);
-            background: rgba(255, 255, 255, 0.9);
-        }
-        .hover-lift {
-            transition: transform 0.2s ease;
-        }
-        .hover-lift:hover {
-            transform: translateY(-2px);
-        }
-        .pulse-ring {
-            animation: pulse-ring 2s infinite;
-        }
-        @keyframes pulse-ring {
-            0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(1.2); opacity: 0; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ student.name }} | Contact Card</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background:
+        radial-gradient(circle at top left, rgba(125, 211, 252, 0.18), transparent 28%),
+        linear-gradient(180deg, #f8fbff 0%, #ecf3fb 100%);
+      font-family: 'Inter', sans-serif;
+    }
+    .serif { font-family: 'Fraunces', serif; }
+    .shell-shadow { box-shadow: 0 28px 72px rgba(30, 41, 59, 0.12); }
+    .hover-soft { transition: transform .22s ease, box-shadow .22s ease; }
+    .hover-soft:hover { transform: translateY(-2px); box-shadow: 0 16px 28px rgba(15, 23, 42, 0.10); }
+  </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 via-white to-purple-50 min-h-screen">
-    <div class="max-w-md mx-auto bg-white shadow-2xl rounded-3xl overflow-hidden">
-        <!-- Header Section -->
-        <div class="relative bg-gradient-to-r from-brand to-purple-600 px-6 pt-8 pb-16">
-            <!-- Profile Photo -->
-            <div class="flex justify-center mb-4">
-                <div class="relative">
-                    <div class="absolute inset-0 bg-white rounded-full pulse-ring"></div>
-                    <div class="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-lg relative z-10">
-                        <svg class="w-20 h-20 text-brand" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                        </svg>
-                    </div>
+<body class="min-h-screen px-4 py-8">
+  <div class="mx-auto max-w-md">
+    <div class="shell-shadow overflow-hidden rounded-[34px] bg-white">
+      <div class="relative px-6 pb-20 pt-7 text-slate-900">
+        {% if student.cover_photo %}
+          <div class="absolute inset-0 bg-cover bg-center opacity-20" style="background-image:url('{{ student.cover_photo.url }}')"></div>
+        {% endif %}
+        <div class="absolute inset-0 bg-gradient-to-br from-sky-50 via-white to-blue-50"></div>
+        <div class="relative z-10">
+          <div class="flex items-center justify-between">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.28em] text-sky-700">Faculty Card</p>
+            <div class="rounded-full bg-white/80 px-3 py-1 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200">Verified profile</div>
+          </div>
+          <div class="mt-10 flex justify-center">
+            <div class="h-28 w-28 overflow-hidden rounded-full ring-8 ring-white">
+              {% if student.profile_photo %}
+                <img src="{{ student.profile_photo.url }}" alt="{{ student.name }}" class="h-full w-full object-cover">
+              {% else %}
+                <div class="flex h-full w-full items-center justify-center bg-sky-900 text-3xl font-bold text-white">{{ student.name|slice:":1"|upper }}</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="-mt-14 rounded-t-[34px] bg-white px-6 pb-7 pt-6">
+        <div class="text-center">
+          <h1 class="serif text-[31px] tracking-[-0.04em] text-slate-900">{{ student.name }}</h1>
+          {% if student.role %}
+            <p class="mt-2 text-xs font-semibold uppercase tracking-[0.22em] text-sky-700">{{ student.role }}</p>
+          {% endif %}
+          {% if display_organization %}
+            <p class="mt-2 text-sm text-slate-500">{{ display_organization }}</p>
+          {% endif %}
+          {% if student.bio %}
+            <p class="mx-auto mt-4 max-w-[28rem] text-sm leading-7 text-slate-600">{{ student.bio }}</p>
+          {% endif %}
+        </div>
+
+        <div class="mt-6 grid grid-cols-2 gap-3">
+          <a href="{% url 'download_vcard' student.id %}" class="hover-soft rounded-2xl bg-sky-800 px-4 py-3 text-center text-sm font-semibold text-white">Save Contact</a>
+          <a href="{% url 'edit_student_auth' student.id %}" class="hover-soft rounded-2xl border border-slate-200 px-4 py-3 text-center text-sm font-semibold text-slate-700">Login</a>
+        </div>
+
+        <div class="mt-6 rounded-[28px] border border-slate-200 bg-slate-50 p-4">
+          <div class="grid gap-3">
+            {% if student.phone %}
+              <a href="{{ phone_action_url }}" class="hover-soft flex items-center gap-4 rounded-2xl bg-white px-4 py-4">
+                <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600"><i data-lucide="phone" class="h-5 w-5"></i></div>
+                <div>
+                  <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Phone</p>
+                  <p class="mt-1 text-sm font-semibold text-slate-900">{{ student.phone }}</p>
                 </div>
-            </div>
-            
-            <!-- Name & Title -->
-            <div class="text-center text-white">
-                <h1 class="text-3xl font-bold mb-2"> {{student.name}}</h1>
-                <p class="text-xl text-blue-100 mb-3">{{student.role}}</p>
-                <p class="text-blue-100 text-sm leading-relaxed px-4">
-                    Passionate about creating beautiful, user-centered digital experiences. 
-                    Helping brands connect with their audience through innovative design.
-                </p>
-            </div>
-        </div>
-
-        <!-- Quick Action Buttons -->
-        <div class="px-6 -mt-8 relative z-10">
-            <div class="grid grid-cols-2 gap-3 mb-6">
-                <button onclick="callPhone()" class="glass-card rounded-2xl p-4 hover-lift shadow-lg border border-white/20">
-                    <div class="flex items-center justify-center space-x-2">
-                        <i class="fas fa-phone text-green-600"></i>
-                        <span class="font-semibold text-gray-700">Call</span>
-                    </div>
-                </button>
-                <button onclick="openWhatsApp()" class="glass-card rounded-2xl p-4 hover-lift shadow-lg border border-white/20">
-                    <div class="flex items-center justify-center space-x-2">
-                        <i class="fab fa-whatsapp text-green-500"></i>
-                        <span class="font-semibold text-gray-700">WhatsApp</span>
-                    </div>
-                </button>
-                <button onclick="sendEmail()" class="glass-card rounded-2xl p-4 hover-lift shadow-lg border border-white/20">
-                    <div class="flex items-center justify-center space-x-2">
-                        <i class="fas fa-envelope text-red-500"></i>
-                        <span class="font-semibold text-gray-700">Email</span>
-                    </div>
-                </button>
-                <button onclick="openWebsite()" class="glass-card rounded-2xl p-4 hover-lift shadow-lg border border-white/20">
-                    <div class="flex items-center justify-center space-x-2">
-                        <i class="fas fa-globe text-brand"></i>
-                        <span class="font-semibold text-gray-700">Portfolio</span>
-                    </div>
-                </button>
-            </div>
-        </div>
-
-        <!-- Social Media Links -->
-<div class="px-6 mb-6">
- <div class="flex flex-wrap justify-center gap-4">
-    {% with stack=student.social_stack|default:"" %}
-        {% for soc in social_stack %}
-            {% if soc == "linkedin" and student.linkedin %}
-                <a href="{{ student.linkedin }}" target="_blank" class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center hover-lift shadow-lg">
-                    <i class="fab fa-linkedin-in text-white"></i>
-                </a>
-            {% elif soc == "instagram" and student.instagram %}
-                <a href="{{ student.instagram }}" target="_blank" class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center hover-lift shadow-lg">
-                    <i class="fab fa-instagram text-white"></i>
-                </a>
-            {% elif soc == "facebook" and student.facebook %}
-                <a href="{{ student.facebook }}" target="_blank" class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center hover-lift shadow-lg">
-                    <i class="fab fa-facebook-f text-white"></i>
-                </a>
-            {% elif soc == "messenger" and student.messenger %}
-                <a href="{{ student.messenger }}" target="_blank" class="w-12 h-12 bg-blue-400 rounded-full flex items-center justify-center hover-lift shadow-lg">
-                    <i class="fab fa-facebook-messenger text-white"></i>
-                </a>
-            {% elif soc == "whatsapp" and student.whatsapp %}
-                <a href="https://wa.me/{{ student.whatsapp }}" target="_blank" class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center hover-lift shadow-lg">
-                    <i class="fab fa-whatsapp text-white"></i>
-                </a>
-            {% elif soc == "twitter" and student.twitter %}
-                <a href="{{ student.twitter }}" target="_blank" class="w-12 h-12 bg-black rounded-full flex items-center justify-center hover-lift shadow-lg">
-                    <i class="fab fa-x-twitter text-white"></i>
-                </a>
-            {% elif soc == "youtube" and student.youtube %}
-                <a href="{{ student.youtube }}" target="_blank" class="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center hover-lift shadow-lg">
-                    <i class="fab fa-youtube text-white"></i>
-                </a>
-            {% elif soc == "tiktok" and student.tiktok %}
-                <a href="{{ student.tiktok }}" target="_blank" class="w-12 h-12 bg-black rounded-full flex items-center justify-center hover-lift shadow-lg">
-                    <i class="fab fa-tiktok text-white"></i>
-                </a>
-            {% elif soc == "github" and student.github %}
-                <a href="{{ student.github }}" target="_blank" class="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center hover-lift shadow-lg">
-                    <i class="fab fa-github text-white"></i>
-                </a>
-            {% elif soc == "figma" and student.figma %}
-                <a href="{{ student.figma }}" target="_blank" class="w-12 h-12 bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 rounded-full flex items-center justify-center hover-lift shadow-lg">
-                    <i class="fab fa-figma text-white"></i>
-                </a>
-            {% elif soc == "upwork" and student.upwork %}
-                <a href="{{ student.upwork }}" target="_blank" class="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center hover-lift shadow-lg">
-                    <i class="fas fa-briefcase text-white"></i>
-                </a>
+              </a>
             {% endif %}
-        {% endfor %}
-    {% endwith %}
-</div>
-</div>
-
-
-        <!-- Contact Details -->
-        <div class="px-6 mb-6">
-            <div class="bg-gray-50 rounded-2xl p-5">
-                <h3 class="font-bold text-gray-800 mb-4 flex items-center">
-                    <i class="fas fa-address-card text-brand mr-2"></i>
-                    Contact Details
-                </h3>
-                <div class="space-y-3">
-                    <div class="flex items-center space-x-3">
-                        <i class="fas fa-phone text-gray-500 w-5"></i>
-                        <span class="text-gray-700">{{student.phone}}</span>
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        <i class="fas fa-envelope text-gray-500 w-5"></i>
-                        <span class="text-gray-700">{{student.email}}</span>
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        <i class="fas fa-map-marker-alt text-gray-500 w-5"></i>
-                        <span class="text-gray-700">{{student.address}}</span>
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        <i class="fas fa-graduation-cap text-gray-500 w-5"></i>
-                        <span class="text-gray-700">{{student.college}}</span>
-                    </div>
+            {% if student.email %}
+              <a href="{{ email_action_url }}" class="hover-soft flex items-center gap-4 rounded-2xl bg-white px-4 py-4">
+                <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-100 text-rose-500"><i data-lucide="mail" class="h-5 w-5"></i></div>
+                <div class="min-w-0">
+                  <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Email</p>
+                  <p class="mt-1 break-all text-sm font-semibold text-slate-900">{{ student.email }}</p>
                 </div>
-            </div>
-        </div>
-
-        <!-- Services/Expertise -->
-        <div class="px-6 mb-6">
-            <div class="bg-gradient-to-r from-brand/10 to-purple-100 rounded-2xl p-5">
-                <h3 class="font-bold text-gray-800 mb-4 flex items-center">
-                    <i class="fas fa-star text-brand mr-2"></i>
-                    Expertise
-                </h3>
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="bg-white rounded-lg px-3 py-2 text-sm font-medium text-gray-700 shadow-sm">
-                        UX/UI Design
-                    </div>
-                    <div class="bg-white rounded-lg px-3 py-2 text-sm font-medium text-gray-700 shadow-sm">
-                        Prototyping
-                    </div>
-                    <div class="bg-white rounded-lg px-3 py-2 text-sm font-medium text-gray-700 shadow-sm">
-                        User Research
-                    </div>
-                    <div class="bg-white rounded-lg px-3 py-2 text-sm font-medium text-gray-700 shadow-sm">
-                        Branding
-                    </div>
+              </a>
+            {% endif %}
+            {% if student.address %}
+              <div class="flex items-center gap-4 rounded-2xl bg-white px-4 py-4">
+                <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-600"><i data-lucide="map-pin" class="h-5 w-5"></i></div>
+                <div>
+                  <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Address</p>
+                  <p class="mt-1 text-sm font-semibold text-slate-900">{{ student.address }}</p>
                 </div>
-            </div>
-        </div>
-
-        <!-- QR Code Section -->
-        <div class="px-6 mb-6">
-            <div class="bg-white border-2 border-dashed border-gray-200 rounded-2xl p-5 text-center">
-                <div class="w-24 h-24 bg-gray-100 rounded-lg mx-auto mb-3 flex items-center justify-center">
-                    <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M12 12h.01M12 12v.01M12 21.01V21m0 .01h.01M21 12.01h.01M21 12v.01M21 12h-1M3 12h1m0 0v.01M4 12.01h.01M4 12v.01M4 4.99V5m.01.01h.01M4 5.01V5M5 4.99h.01M5 5.01V5M5 5h.01M12 3.99V4m.01.01h.01M12 4.01V4M12 4h.01M21 4.99V5m.01.01h.01M21 5.01V5M21 5h.01"/>
-                    </svg>
+              </div>
+            {% endif %}
+            {% if website_url %}
+              <a href="{{ website_action_url }}" class="hover-soft flex items-center gap-4 rounded-2xl bg-white px-4 py-4">
+                <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-100 text-sky-600"><i data-lucide="globe" class="h-5 w-5"></i></div>
+                <div class="min-w-0">
+                  <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Website</p>
+                  <p class="mt-1 break-all text-sm font-semibold text-slate-900">{{ student.website }}</p>
                 </div>
-                <p class="text-sm text-gray-600 mb-2">Scan to save contact</p>
-                <button onclick="generateQR()" class="text-brand font-semibold text-sm">Generate QR Code</button>
-            </div>
+              </a>
+            {% endif %}
+          </div>
         </div>
 
-        <!-- CTA Buttons -->
-        <div class="px-6 mb-6">
-            <button onclick="downloadVCard()" class="w-full bg-brand hover:bg-brand-dark text-white font-bold py-4 rounded-2xl mb-3 hover-lift shadow-lg transition-colors">
-                <i class="fas fa-download mr-2"></i>
-                Save Contact
-            </button>
-            <button onclick="letsConnect()" class="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-4 rounded-2xl hover-lift shadow-lg transition-all">
-                <i class="fas fa-handshake mr-2"></i>
-                Let's Connect!
-            </button>
-        </div>
+        {% if social_links %}
+          <div class="mt-6 flex flex-wrap justify-center gap-3">
+            {% for social in social_links %}
+              <a href="{{ social.tracked_url }}" class="hover-soft flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white" aria-label="{{ social.label }}">
+                <i data-lucide="{{ social.icon }}" style="width:18px;height:18px;color:
+                  {% if social.key == 'linkedin' %}#0a66c2{% elif social.key == 'instagram' %}#e4405f{% elif social.key == 'facebook' %}#1877f2{% elif social.key == 'messenger' %}#0084ff{% elif social.key == 'whatsapp' %}#25d366{% elif social.key == 'twitter' %}#111827{% elif social.key == 'youtube' %}#ff0000{% elif social.key == 'tiktok' %}#111111{% elif social.key == 'github' %}#181717{% elif social.key == 'figma' %}#f24e1e{% elif social.key == 'upwork' %}#14a800{% else %}#0f172a{% endif %};"></i>
+              </a>
+            {% endfor %}
+          </div>
+        {% endif %}
 
-        <!-- Footer -->
-        <div class="px-6 pb-6">
-            <div class="text-center text-gray-500 text-sm">
-                <div class="flex items-center justify-center mb-2">
-                    <div class="w-8 h-8 bg-brand rounded-lg flex items-center justify-center mr-2">
-                        <span class="text-white font-bold text-xs">AJ</span>
-                    </div>
-                    <span class="font-semibold">Alex Johnson Design</span>
-                </div>
-                <p>&copy; 2024 All rights reserved</p>
-            </div>
+        <div class="mt-6 grid grid-cols-2 gap-3">
+          {% if student.show_portfolio and student.user_type != 'general' %}
+            <a href="{{ portfolio_action_url }}" class="hover-soft rounded-2xl border border-slate-200 px-4 py-3 text-center text-sm font-semibold text-slate-700">Portfolio</a>
+          {% else %}
+            <span></span>
+          {% endif %}
+          {% if student.whatsapp %}
+            <a href="{{ whatsapp_action_url }}" class="hover-soft rounded-2xl bg-emerald-500 px-4 py-3 text-center text-sm font-semibold text-white">WhatsApp</a>
+          {% endif %}
         </div>
+      </div>
     </div>
-
-    <script>
-        function callPhone() {
-    window.open('tel:{{ student.phone }}', '_blank');
-}
-function openWhatsApp() {
-    window.open('https://wa.me/{{ student.whatsapp }}', '_blank');
-}
-function sendEmail() {
-    window.open('mailto:{{ student.email }}', '_blank');
-}
-function openWebsite() {
-    window.open('{{ student.website }}', '_blank');
-}
-
-        function openLinkedIn() {
-            window.open('{{ student.linkedin }}', '_blank');
-        }
-
-        function openInstagram() {
-            window.open('{{ student.instagram }}', '_blank');
-        }
-
-        function openFacebook() {
-            window.open('{{ student.facebook }}', '_blank');
-        }
-
-        function generateQR() {
-            alert('QR Code would be generated here! In a real implementation, this would create a QR code containing the vCard data.');
-        }
-
-function downloadVCard() {
-    const vCardData = `BEGIN:VCARD
-VERSION:3.0
-FN:{{ student.name|escape }}
-ORG:{{ student.college|escape }}
-TITLE:{{ student.role|default_if_none:"" |escape }}
-TEL:{{ student.phone|escape }}
-EMAIL:{{ student.email|escape }}
-URL:{{ student.website|escape }}
-ADR:;;{{ student.address|default_if_none:"" |escape }}
-END:VCARD`;
-
-    const blob = new Blob([vCardData], { type: 'text/vcard' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = '{{ student.name|default:"contact" |slugify }}_Contact.vcf';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-}
-
-        function letsConnect() {
-            const message = "Thanks for your interest in connecting! I'd love to hear about your project. What can I help you with?";
-            alert(message);
-            // In a real implementation, this could open a contact form or scheduling tool
-        }
-
-        // Add smooth scrolling and entrance animations
-        document.addEventListener('DOMContentLoaded', function() {
-            const cards = document.querySelectorAll('.glass-card, .bg-gray-50, .bg-gradient-to-r');
-            cards.forEach((card, index) => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                setTimeout(() => {
-                    card.style.transition = 'all 0.6s ease';
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, index * 100);
-            });
-        });
-    </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9793176b0450988a',t:'MTc1Njg3OTkwNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+  </div>
+  <script>lucide.createIcons();</script>
+</body>
 </html>
