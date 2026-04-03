@@ -157,6 +157,11 @@
                 </label>
               {% endfor %}
             </div>
+            <div class="mt-4">
+              <label class="block font-semibold mb-2">Custom Skills</label>
+              <input type="text" name="custom_skills" class="w-full border rounded-lg p-3" placeholder="Teaching, Counseling, Graphic Design, Public Speaking" />
+              <p class="mt-1 text-sm text-slate-500">Separate extra skills with commas.</p>
+            </div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input type="url" name="website" placeholder="Website URL" class="w-full border rounded-lg p-3" />
@@ -176,7 +181,8 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block font-semibold mb-1">Password</label>
-              <input type="password" name="password" required class="w-full border rounded-lg p-3" />
+              <input type="text" value="Auto-generated from username and phone" disabled class="w-full border rounded-lg p-3 bg-slate-50" />
+              <p class="mt-2 text-sm text-slate-500">The system creates the password automatically. You can reset it later from the admin dashboard.</p>
             </div>
           </div>
         </section>

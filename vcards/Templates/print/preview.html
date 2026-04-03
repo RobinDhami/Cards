@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ student.name }} | Print Preview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .card-ratio { aspect-ratio: 1.75 / 1; }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-900">
+  <div class="mx-auto max-w-6xl px-4 py-8">
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <p class="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Print Preview</p>
+        <h1 class="mt-2 text-3xl font-bold">{{ student.name }}</h1>
+        <p class="mt-2 text-sm text-slate-600">{{ print_template_meta.label }}. {{ print_template_meta.description }}</p>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <a href="{% url 'edit_student_manual' student.id %}" class="rounded-xl border border-slate-300 px-4 py-3 font-semibold text-slate-700">Edit Print Settings</a>
+        <a href="{{ qr_code_url }}" class="rounded-xl bg-slate-900 px-4 py-3 font-semibold text-white">Download QR</a>
+      </div>
+    </div>
+
+    <div class="mb-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div class="grid gap-6 md:grid-cols-2">
+        {% if print_template == 'print_school.html' %}
+          <div class="card-ratio overflow-hidden rounded-[24px] bg-white shadow-xl">
+            <div class="flex h-full flex-col justify-between bg-gradient-to-br from-sky-900 to-blue-600 p-6 text-white">
+              <div class="flex items-start justify-between gap-4">
+                <div>
+                  <div class="text-xs font-semibold uppercase tracking-[0.22em] text-blue-100">School Card</div>
+                  <div class="mt-3 text-2xl font-bold">{{ student.name }}</div>
+                  {% if student.role %}<div class="mt-1 text-sm text-blue-100">{{ student.role }}</div>{% endif %}
+                </div>
+                {% if student.profile_photo %}
+                  <img src="{{ student.profile_photo.url }}" alt="{{ student.name }}" class="h-16 w-16 rounded-2xl object-cover ring-2 ring-white/30">
+                {% endif %}
+              </div>
+              <div>
+                <div class="text-sm font-semibold">{{ display_organization }}</div>
+                <div class="mt-2 text-xs text-blue-100">Phone: {{ student.phone }}</div>
+                <div class="mt-1 text-xs text-blue-100">{{ student.email }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="card-ratio overflow-hidden rounded-[24px] bg-white shadow-xl">
+            <div class="flex h-full items-center justify-between bg-white p-6">
+              <div class="max-w-[52%]">
+                <div class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Scan To Connect</div>
+                <div class="mt-3 text-2xl font-bold text-slate-900">Save Contact</div>
+                <div class="mt-3 text-sm text-slate-600">Scan the QR code to open the live digital contact card.</div>
+              </div>
+              <div class="rounded-2xl border border-slate-200 p-3">
+                <img src="{{ qr_code_url }}" alt="QR Code" class="h-28 w-28">
+              </div>
+            </div>
+          </div>
+        {% elif print_template == 'print_modern.html' %}
+          <div class="card-ratio overflow-hidden rounded-[24px] bg-[#111827] shadow-xl">
+            <div class="flex h-full flex-col justify-between p-6 text-white">
+              <div class="flex items-start justify-between gap-4">
+                <div>
+                  <div class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Modern Print</div>
+                  <div class="mt-4 text-3xl font-bold">{{ student.name }}</div>
+                </div>
+                <div class="h-12 w-12 rounded-full bg-emerald-400/20"></div>
+              </div>
+              <div class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <div class="text-slate-400">Role</div>
+                  <div class="mt-1 font-semibold">{{ student.role|default:"Professional" }}</div>
+                </div>
+                <div>
+                  <div class="text-slate-400">Phone</div>
+                  <div class="mt-1 font-semibold">{{ student.phone }}</div>
+                </div>
+                <div class="col-span-2">
+                  <div class="text-slate-400">Organization</div>
+                  <div class="mt-1 font-semibold">{{ display_organization|default:"Independent Professional" }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card-ratio overflow-hidden rounded-[24px] bg-white shadow-xl">
+            <div class="grid h-full grid-cols-[1fr_150px]">
+              <div class="flex flex-col justify-between p-6">
+                <div>
+                  <div class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Live Card Access</div>
+                  <div class="mt-3 text-2xl font-bold text-slate-900">Tap. Scan. Save.</div>
+                </div>
+                <div>
+                  <div class="text-sm text-slate-600">{{ contact_card_url }}</div>
+                  <div class="mt-3 text-xs uppercase tracking-[0.18em] text-emerald-600">Ready for print export</div>
+                </div>
+              </div>
+              <div class="flex items-center justify-center bg-slate-50 p-4">
+                <img src="{{ qr_code_url }}" alt="QR Code" class="h-28 w-28">
+              </div>
+            </div>
+          </div>
+        {% else %}
+          <div class="card-ratio overflow-hidden rounded-[24px] bg-white shadow-xl">
+            <div class="grid h-full grid-cols-[120px_1fr]">
+              <div class="flex items-center justify-center bg-slate-900 p-4">
+                {% if student.profile_photo %}
+                  <img src="{{ student.profile_photo.url }}" alt="{{ student.name }}" class="h-20 w-20 rounded-full object-cover ring-4 ring-white/20">
+                {% else %}
+                  <div class="flex h-20 w-20 items-center justify-center rounded-full bg-white text-2xl font-bold text-slate-900">{{ student.name|slice:":1"|upper }}</div>
+                {% endif %}
+              </div>
+              <div class="flex flex-col justify-center p-6">
+                <div class="text-2xl font-bold text-slate-900">{{ student.name }}</div>
+                <div class="mt-1 text-sm font-semibold text-slate-500">{{ student.role|default:"Professional" }}</div>
+                <div class="mt-4 text-sm text-slate-700">{{ display_organization }}</div>
+                <div class="mt-2 text-sm text-slate-700">{{ student.phone }}</div>
+                <div class="mt-1 text-sm text-slate-700">{{ student.email }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="card-ratio overflow-hidden rounded-[24px] bg-white shadow-xl">
+            <div class="flex h-full items-center justify-between p-6">
+              <div class="max-w-[56%]">
+                <div class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Classic Back</div>
+                <div class="mt-3 text-2xl font-bold text-slate-900">{{ student.name }}</div>
+                <div class="mt-3 text-sm text-slate-600">Scan to open the live contact profile and save the latest details.</div>
+              </div>
+              <div class="rounded-2xl border border-slate-200 p-3">
+                <img src="{{ qr_code_url }}" alt="QR Code" class="h-28 w-28">
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+
+      <aside class="rounded-[24px] bg-white p-6 shadow-xl">
+        <h2 class="text-xl font-bold">Print Handoff</h2>
+        <div class="mt-4 space-y-4 text-sm text-slate-600">
+          <div>
+            <div class="font-semibold text-slate-800">Selected print style</div>
+            <div class="mt-1">{{ print_template_meta.label }}</div>
+          </div>
+          <div>
+            <div class="font-semibold text-slate-800">QR destination</div>
+            <div class="mt-1 break-all">{{ contact_card_url }}</div>
+          </div>
+          <div>
+            <div class="font-semibold text-slate-800">Custom print notes</div>
+            <div class="mt-1">{% if student.print_custom_note %}{{ student.print_custom_note }}{% else %}No custom instructions yet.{% endif %}</div>
+          </div>
+          <div class="rounded-2xl bg-slate-50 p-4">
+            <div class="font-semibold text-slate-800">Suggested workflow</div>
+            <div class="mt-2">1. Pick the print style.</div>
+            <div class="mt-1">2. Review the preview and QR.</div>
+            <div class="mt-1">3. Export this design or use the notes for a custom print request.</div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

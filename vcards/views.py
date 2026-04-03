@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
 from django.core.mail import send_mail
-from django.contrib.auth.hashers import check_password, make_password
+from django.contrib.auth.hashers import check_password
 from django.conf import settings
 from django.db.models import Count, Q
 from django.db.models.functions import TruncDate
@@ -10,6 +10,9 @@ from django.template import TemplateDoesNotExist
 from django.urls import reverse
 from django.utils import timezone
 from datetime import timedelta
+from io import BytesIO
+
+import qrcode
 
 from .models import StudentProfile, ClientProfile, College, ProfileActivity, Skill
 from .forms import (
@@ -18,19 +21,52 @@ from .forms import (
 )
 
 CONTACT_TEMPLATES = {
-    'general': ['contact2.html'],
-    'vip': ['contact.html', 'contact1.html', 'contact3.html'],
-    'premium': ['contact.html', 'contact1.html', 'contact3.html'],
+    'general': ['contact.html', 'contact1.html', 'contact2.html', 'contact3.html', 'contact4.html'],
+    'vip': ['contact.html', 'contact1.html', 'contact2.html', 'contact3.html', 'contact4.html'],
+    'premium': ['contact.html', 'contact1.html', 'contact2.html', 'contact3.html', 'contact4.html'],
+}
+CONTACT_TEMPLATE_META = {
+    'contact.html': {'label': 'Faculty', 'description': 'Warm and friendly for teachers, staff, and school-facing profiles.'},
+    'contact1.html': {'label': 'Elegant', 'description': 'A polished premium card with a softer look.'},
+    'contact2.html': {'label': 'Minimal', 'description': 'Simple and utility-first for clean contact sharing.'},
+    'contact3.html': {'label': 'Bold', 'description': 'Stronger contrast and modern styling for standout profiles.'},
+    'contact4.html': {'label': 'Corporate', 'description': 'Structured and professional for organizations and executives.'},
 }
 PORTFOLIO_TEMPLATES = {
-    'vip': ['portfolio1.html', 'portfolio2.html'],
-    'premium': ['portfolio1.html', 'portfolio2.html', 'portfolio3.html', 'portfolio4.html', 'portfolio5.html'],
+    'vip': ['portfolio1.html', 'portfolio2.html', 'profile6.html'],
+    'premium': ['portfolio1.html', 'portfolio2.html', 'portfolio3.html', 'portfolio4.html', 'portfolio5.html', 'profile6.html'],
+}
+PRINT_TEMPLATES = {
+    'print_classic.html': {'label': 'Classic Print', 'description': 'A balanced card for standard business-card printing.'},
+    'print_school.html': {'label': 'School Print', 'description': 'Designed for faculty, staff, and school identity cards.'},
+    'print_modern.html': {'label': 'Modern Print', 'description': 'A cleaner modern layout for premium and executive cards.'},
 }
 
 SOCIAL_CHOICES = [
     "linkedin", "instagram", "facebook", "messenger", "whatsapp",
     "twitter", "youtube", "tiktok", "github", "figma", "upwork"
 ]
+
+SCHOOL_ROLE_CHOICES = [
+    'Teacher',
+    'Senior Teacher',
+    'Lecturer',
+    'Professor',
+    'Assistant Professor',
+    'Head of Department',
+    'Coordinator',
+    'Vice Principal',
+    'Principal',
+    'Chairman',
+    'Dean',
+    'Faculty Mentor',
+]
+
+FACULTY_ROLE_KEYWORDS = (
+    'teacher', 'faculty', 'lecturer', 'professor', 'principal', 'chairman',
+    'chairperson', 'hod', 'head', 'coordinator', 'dean', 'mentor', 'instructor',
+    'trainer', 'academic'
+)
 
 
 def _student_edit_session_key(student_id):
@@ -39,6 +75,12 @@ def _student_edit_session_key(student_id):
 
 def _is_student_edit_authorized(request, student_id):
     return request.session.get(_student_edit_session_key(student_id), False)
+
+
+def _generate_profile_password(name):
+    clean_name = ''.join(ch for ch in (name or 'user') if ch.isalpha()) or 'user'
+    first_three = clean_name[:3]
+    return f'{first_three.upper()}@@123{first_three.lower()}'
 
 
 def home(request):
@@ -51,6 +93,47 @@ def _build_tracked_action_url(student_id, action):
 
 def _log_profile_activity(student, event_type, action=''):
     ProfileActivity.objects.create(student=student, event_type=event_type, action=action)
+
+
+def _normalize_public_url(url):
+    if url and not url.startswith(('http://', 'https://')):
+        return f'https://{url}'
+    return url or ''
+
+
+def _build_public_contact_url(request, student):
+    return request.build_absolute_uri(reverse('contact_card', args=[student.id]))
+
+
+def _extract_role_from_post(request, profile_category, fallback=''):
+    if profile_category == 'school':
+        return request.POST.get('school_role') or request.POST.get('role') or fallback
+    return request.POST.get('role') or fallback
+
+
+def _assign_profile_skills(student, request):
+    selected_ids = request.POST.getlist('skills')
+    selected_skills = list(Skill.objects.filter(id__in=selected_ids))
+
+    raw_custom_skills = request.POST.get('custom_skills', '')
+    custom_names = []
+    for part in raw_custom_skills.replace('\n', ',').split(','):
+        cleaned = part.strip()
+        if cleaned:
+            custom_names.append(cleaned)
+
+    for name in custom_names:
+        skill, _ = Skill.objects.get_or_create(name=name)
+        selected_skills.append(skill)
+
+    unique_skills = []
+    seen_ids = set()
+    for skill in selected_skills:
+        if skill.id not in seen_ids:
+            unique_skills.append(skill)
+            seen_ids.add(skill.id)
+
+    student.skills.set(unique_skills)
 
 
 def _calculate_profile_completion(student):
@@ -70,50 +153,71 @@ def _calculate_profile_completion(student):
     return int((completed / len(checks)) * 100)
 
 
+def _is_school_faculty_profile(student):
+    role = (student.role or '').strip().lower()
+    if student.profile_category != 'school':
+        return False
+    return any(keyword in role for keyword in FACULTY_ROLE_KEYWORDS)
+
+
+def _get_portfolio_template(student, requested_template=None):
+    allowed_templates = PORTFOLIO_TEMPLATES.get(student.user_type, [])
+    if not allowed_templates:
+        return None
+
+    if requested_template in allowed_templates:
+        return requested_template
+
+    if _is_school_faculty_profile(student) and 'profile6.html' in allowed_templates:
+        return 'profile6.html'
+
+    current_template = student.portfolio_template
+    if current_template in allowed_templates:
+        return current_template
+
+    return allowed_templates[0]
+
+
 def profile(request, student_id):
     student = get_object_or_404(StudentProfile, id=student_id)
-    if student.user_type == 'general':
-        messages.error(request, "Portfolio access is restricted to VIP and Premium users.")
-        return redirect('student_profile_choice', student_id=student.id)
-    hero_section = getattr(student, 'hero_section', None)
-    # Split tags for each project for template use
-    projects = student.projects.all()
-    for proj in projects:
-        proj.tag_list = [tag.strip() for tag in proj.tags.split(',')] if proj.tags else []
-    # Select up to 4 featured projects (customize as needed)
-    featured_projects = projects[:4]
-    # Split coursework for first education for template use
-    educations = student.educations.all()
-    coursework_list = []
-    if educations and getattr(educations[0], 'coursework', None):
-        coursework_list = [c.strip() for c in educations[0].coursework.split(',')]
-    # Calculate years for education stats
-    education_years = "-"
-    if educations and educations[0].start_year and educations[0].end_year:
-        try:
-            education_years = int(educations[0].end_year) - int(educations[0].start_year) + 1
-        except Exception:
-            education_years = "-"
+    student.views += 1
+    student.save(update_fields=['views'])
+    _log_profile_activity(student, 'view', 'portfolio-coming-soon')
     context = {
         'student': student,
-        'capabilities': student.capabilities.all(),
-        'tools': student.tools.all(),
-        'stats': student.stats.all(),
-        'educations': educations,
-        'achievements': student.achievements.all(),
-        'projects': projects,
-        'blog_posts': student.blog_posts.all(),
-        'journeys': student.journeys.order_by('-year', 'order'),
-        'certifications': student.certifications.all(),
-        'languages': student.languages.all(),
-        'interests': student.interests.all(),
-        'experiences': student.experiences.all(),
-        'coursework_list': coursework_list,
-        'education_years': education_years,
-        'featured_projects': featured_projects,
-        'hero_section': hero_section,
+        'display_organization': student.organization_name or (student.college.name if student.college else ''),
+        'contact_card_url': reverse('contact_card', args=[student.id]),
     }
-    return render(request, 'portfolio/profile1.html', context)
+    return render(request, 'portfolio/coming_soon.html', context)
+
+
+def print_qr_code(request, student_id):
+    student = get_object_or_404(StudentProfile, pk=student_id)
+    qr = qrcode.QRCode(version=1, box_size=10, border=2)
+    qr.add_data(_build_public_contact_url(request, student))
+    qr.make(fit=True)
+    image = qr.make_image(fill_color='black', back_color='white')
+    buffer = BytesIO()
+    image.save(buffer, format='PNG')
+    buffer.seek(0)
+    return HttpResponse(buffer.getvalue(), content_type='image/png')
+
+
+def print_card_preview(request, student_id):
+    student = get_object_or_404(StudentProfile, pk=student_id)
+    selected_print_template = student.print_template
+    if selected_print_template not in PRINT_TEMPLATES:
+        selected_print_template = 'print_classic.html'
+
+    context = {
+        'student': student,
+        'display_organization': student.organization_name or (student.college.name if student.college else ''),
+        'print_template': selected_print_template,
+        'print_template_meta': PRINT_TEMPLATES[selected_print_template],
+        'contact_card_url': _build_public_contact_url(request, student),
+        'qr_code_url': reverse('print_qr_code', args=[student.id]),
+    }
+    return render(request, 'print/preview.html', context)
 
 
 def admin_dashboard(request):
@@ -162,12 +266,14 @@ def admin_dashboard(request):
         'skills': skills,
         'recent_activities': recent_activities,
         'top_profiles': top_profiles,
+        'school_role_choices': SCHOOL_ROLE_CHOICES,
     })
 
 
 def add_user(request):
     if request.method == 'POST':
         profile_category = request.POST.get('profile_category', 'school')
+        raw_password = _generate_profile_password(request.POST.get('name'))
         college = None
         college_id = request.POST.get('college')
         if profile_category == 'school':
@@ -185,11 +291,11 @@ def add_user(request):
             profile_category=profile_category,
             organization_name=request.POST.get('organization_name'),
             bio=request.POST.get('bio'),
-            role=request.POST.get('role'),
+            role=_extract_role_from_post(request, profile_category),
             address=request.POST.get('address'),
             about_intro=request.POST.get('about_me'),
             user_type=request.POST.get('user_type', 'general'),
-            password=make_password(request.POST['password']),
+            password=raw_password,
             # Handle CV upload:
             cv=request.FILES.get('cv', request.FILES.get('resume')),
         )
@@ -199,10 +305,11 @@ def add_user(request):
         if request.FILES.get('cover_photo'):
             student.cover_photo = request.FILES['cover_photo']
 
+        student.portfolio_template = _get_portfolio_template(student) or student.portfolio_template
+
         student.save()
 
-        skill_ids = request.POST.getlist('skills')
-        student.skills.set(skill_ids)
+        _assign_profile_skills(student, request)
 
         # Social media fields
         for field in ['facebook', 'instagram', 'twitter', 'linkedin', 'youtube', 'tiktok', 'github', 'figma', 'upwork', 'website']:
@@ -211,7 +318,11 @@ def add_user(request):
         student.save()
         messages.success(
             request,
-            'Professional profile created successfully!' if profile_category == 'professional' else 'School-linked profile created successfully!'
+            (
+                'Professional profile created successfully!'
+                if profile_category == 'professional'
+                else 'School-linked profile created successfully!'
+            ) + f' Default login password: {raw_password}'
         )
         return redirect('admin_dashboard')
     return redirect(f"{reverse('admin_dashboard')}#create-profile")
@@ -239,7 +350,19 @@ def logout_student_edit(request, student_id):
 
 
 def edit_student(request, student_id):
-    return redirect('edit_student_auth', student_id=student_id)
+    request.session[_student_edit_session_key(student_id)] = True
+    messages.success(request, 'Admin access enabled for this profile.')
+    return redirect('edit_student_manual', student_id=student_id)
+
+
+def reset_student_password(request, student_id):
+    student = get_object_or_404(StudentProfile, pk=student_id)
+    raw_password = _generate_profile_password(student.name)
+    student.password = raw_password
+    student.save(update_fields=['password'])
+    messages.success(request, f'{student.name} password reset. New password: {raw_password}')
+    redirect_target = request.POST.get('next') or reverse('admin_dashboard')
+    return redirect(redirect_target)
 
 
 def student_owner_dashboard(request, student_id):
@@ -320,6 +443,8 @@ def student_owner_dashboard(request, student_id):
         'recent_activities': recent_activities,
         'nfc_qr_status': nfc_qr_status,
         'public_card_url': public_card_url,
+        'contact_template_label': CONTACT_TEMPLATE_META.get(student.contact_template, {}).get('label', student.contact_template),
+        'print_template_label': PRINT_TEMPLATES.get(student.print_template, {}).get('label', student.print_template),
     }
     return render(request, 'student_owner_dashboard.html', context)
 
@@ -419,6 +544,7 @@ def add_student_to_college(request, college_id):
     college = get_object_or_404(College, id=college_id)
     skills = Skill.objects.all()
     if request.method == 'POST':
+        raw_password = _generate_profile_password(request.POST.get('name'))
         student = StudentProfile(
             name=request.POST['name'],
             phone=request.POST['phone'],
@@ -427,28 +553,29 @@ def add_student_to_college(request, college_id):
             college=college,
             profile_category='school',
             bio=request.POST.get('bio'),
-            role=request.POST.get('role'),
+            role=_extract_role_from_post(request, 'school'),
             address=request.POST.get('address'),
             organization_name=request.POST.get('organization_name') or college.name,
-            password=make_password(request.POST['password']),
+            password=raw_password,
             cv=request.FILES.get('cv', None),  # CV upload here
         )
         if request.FILES.get('profile_photo'):
             student.profile_photo = request.FILES['profile_photo']
         if request.FILES.get('cover_photo'):
             student.cover_photo = request.FILES['cover_photo']
+        student.portfolio_template = _get_portfolio_template(student) or student.portfolio_template
         student.save()
-        skill_ids = request.POST.getlist('skills')
-        student.skills.set(skill_ids)
+        _assign_profile_skills(student, request)
         # Social media fields
         for field in ['facebook', 'instagram', 'twitter', 'linkedin', 'youtube', 'tiktok', 'github', 'figma', 'upwork', 'website']:
             setattr(student, field, request.POST.get(field))
         student.save()
-        messages.success(request, 'Student added to college successfully!')
+        messages.success(request, f'Student added to college successfully! Default login password: {raw_password}')
         return redirect('college_details', college_id=college.id)
     return render(request, 'add_student_to_college.html', {
         'college': college,
         'skills': skills,
+        'school_role_choices': SCHOOL_ROLE_CHOICES,
     })
 def send_message(request, id):
     student = get_object_or_404(StudentProfile, id=id)
@@ -470,10 +597,7 @@ def contact_card(request, student_id):
     social_stack = [item.strip() for item in student.social_stack.split(',') if item.strip()] if student.social_stack else []
     requested_template = student.contact_template or 'contact2.html'
     template_name = f'contact/{requested_template}'
-    website_url = student.website or ''
-
-    if website_url and not website_url.startswith(('http://', 'https://')):
-        website_url = f'https://{website_url}'
+    website_url = _normalize_public_url(student.website)
 
     social_links = []
     social_config = {
@@ -523,6 +647,7 @@ def contact_card(request, student_id):
         'website_action_url': _build_tracked_action_url(student.id, 'website'),
         'whatsapp_action_url': _build_tracked_action_url(student.id, 'whatsapp'),
         'portfolio_action_url': _build_tracked_action_url(student.id, 'portfolio'),
+        'contact_template_meta': CONTACT_TEMPLATE_META,
     }
     try:
         return render(request, template_name, context)
@@ -555,9 +680,7 @@ END:VCARD
 
 def track_contact_action(request, student_id, action):
     student = get_object_or_404(StudentProfile, pk=student_id)
-    website_url = student.website or ''
-    if website_url and not website_url.startswith(('http://', 'https://')):
-        website_url = f'https://{website_url}'
+    website_url = _normalize_public_url(student.website)
 
     action_targets = {
         'phone': f'tel:{student.phone}' if student.phone else '',
@@ -657,7 +780,10 @@ def edit_student_full(request, student_id):
             social_stack = request.POST.getlist('social_stack')
             student.social_stack = ",".join(social_stack)
             student.contact_template = request.POST.get('contact_template', student.contact_template)
-            student.portfolio_template = request.POST.get('portfolio_template', student.portfolio_template)
+            student.portfolio_template = _get_portfolio_template(
+                student,
+                request.POST.get('portfolio_template', student.portfolio_template),
+            ) or student.portfolio_template
             form.save()
             education_fs.save()
             achievement_fs.save()
@@ -714,7 +840,7 @@ def edit_student_manual(request, student_id):
         student.profile_category = request.POST.get('profile_category', student.profile_category)
         student.organization_name = request.POST.get('organization_name', student.organization_name)
         student.bio = request.POST.get('bio', student.bio)
-        student.role = request.POST.get('role', student.role)
+        student.role = _extract_role_from_post(request, student.profile_category, student.role)
         student.address = request.POST.get('address', student.address)
         student.about_intro = request.POST.get('about_intro', student.about_intro)
         student.about_featured = request.POST.get('about_featured', student.about_featured)
@@ -740,13 +866,18 @@ def edit_student_manual(request, student_id):
             student.cv = request.FILES['cv']
 
         student.contact_template = request.POST.get('contact_template', student.contact_template)
-        student.portfolio_template = request.POST.get('portfolio_template', student.portfolio_template)
+        student.print_template = request.POST.get('print_template', student.print_template)
+        student.print_custom_note = request.POST.get('print_custom_note', student.print_custom_note)
+        student.portfolio_template = _get_portfolio_template(
+            student,
+            request.POST.get('portfolio_template', student.portfolio_template),
+        ) or student.portfolio_template
 
         for field in ['facebook', 'instagram', 'twitter', 'linkedin', 'youtube', 'tiktok', 'github', 'figma', 'upwork', 'website', 'messenger', 'whatsapp']:
             setattr(student, field, request.POST.get(field))
 
         student.save()
-        student.skills.set(request.POST.getlist('skills'))
+        _assign_profile_skills(student, request)
         messages.success(request, 'Profile settings updated successfully.')
         return redirect('student_profile_choice', student_id=student.id)
 
@@ -758,6 +889,25 @@ def edit_student_manual(request, student_id):
         'skills': Skill.objects.all(),
         'selected_socials': [item.strip() for item in student.social_stack.split(',') if item.strip()],
         'social_choices': SOCIAL_CHOICES,  # <-- add this
+        'school_role_choices': SCHOOL_ROLE_CHOICES,
+        'contact_template_meta': CONTACT_TEMPLATE_META,
+        'print_templates': PRINT_TEMPLATES,
+        'contact_template_choices': [
+            {
+                'value': tpl,
+                'label': CONTACT_TEMPLATE_META.get(tpl, {}).get('label', tpl),
+                'description': CONTACT_TEMPLATE_META.get(tpl, {}).get('description', ''),
+            }
+            for tpl in contact_templates
+        ],
+        'print_template_choices': [
+            {
+                'value': key,
+                'label': meta['label'],
+                'description': meta['description'],
+            }
+            for key, meta in PRINT_TEMPLATES.items()
+        ],
     })
 
 def blog_post_create(request, student_id):

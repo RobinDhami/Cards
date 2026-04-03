@@ -83,6 +83,8 @@ class StudentProfile(BaseProfile):
     user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='general')
     contact_template = models.CharField(max_length=50, default='contact.html')
     portfolio_template = models.CharField(max_length=50, default='portfolio1.html')
+    print_template = models.CharField(max_length=50, default='print_classic.html')
+    print_custom_note = models.TextField(blank=True, default='')
     def __str__(self):
         if self.college:
             return f"{self.name} - {self.college.name}"
