@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ student.name }} | Faculty Portfolio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --navy: #1a2744;
+            --navy-light: #243356;
+            --gold: #b8963e;
+            --gold-light: #d4af5c;
+            --cream: #f8f6f1;
+            --parchment: #faf9f6;
+            --warm-gray: #6b6460;
+            --line: #e8e4de;
+            --card: #ffffff;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: linear-gradient(180deg, var(--cream) 0%, #ffffff 42%, var(--parchment) 100%);
+            color: var(--navy);
+            font-family: 'Source Sans 3', sans-serif;
+        }
+        h1, h2, h3, h4, blockquote { font-family: 'Playfair Display', serif; }
+        a { color: inherit; }
+        .shell { max-width: 1080px; margin: 0 auto; padding: 0 20px 64px; }
+        .top-bar { height: 4px; background: linear-gradient(90deg, var(--navy), var(--gold), var(--gold-light), var(--gold), var(--navy)); }
+        .header { text-align: center; padding: 40px 0 28px; }
+        .watermark { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); opacity: .65; font-weight: 700; }
+        .gold-line { height: 1px; max-width: 200px; margin: 16px auto 0; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+        .brand-wrap { display: flex; justify-content: center; margin-bottom: 18px; }
+        .brand-badge, .brand-logo {
+            width: 88px; height: 88px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid var(--gold); background: linear-gradient(135deg, var(--navy), var(--navy-light));
+            overflow: hidden;
+        }
+        .brand-logo img { width: 100%; height: 100%; object-fit: cover; }
+        .grid { display: grid; gap: 20px; }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 28px;
+            box-shadow: 0 6px 32px rgba(26, 39, 68, 0.05);
+        }
+        .hero {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            gap: 28px;
+            align-items: center;
+        }
+        .profile-ring {
+            width: 160px; height: 160px; border-radius: 50%;
+            padding: 4px; background: linear-gradient(135deg, var(--gold), var(--navy), var(--gold));
+            margin: 0 auto;
+        }
+        .profile-inner {
+            width: 100%; height: 100%; border-radius: 50%;
+            overflow: hidden; background: var(--cream);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 54px; font-weight: 700; color: var(--navy);
+        }
+        .profile-inner img { width: 100%; height: 100%; object-fit: cover; }
+        .verified {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 8px 14px; border-radius: 999px;
+            background: linear-gradient(135deg, var(--navy), var(--navy-light));
+            color: var(--gold-light); font-size: 12px; font-weight: 700;
+            letter-spacing: .08em; text-transform: uppercase;
+        }
+        .subtle { color: var(--warm-gray); }
+        .role { color: var(--gold); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+        .contact-inline { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 16px; color: var(--navy); }
+        .contact-inline span { display: inline-flex; align-items: center; gap: 8px; }
+        .stats { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; }
+        .stat {
+            border: 1px solid var(--line); border-radius: 14px; padding: 18px 14px;
+            background: linear-gradient(135deg, var(--parchment), var(--cream)); text-align: center;
+        }
+        .stat-value { font: 700 34px/1 'Playfair Display', serif; color: var(--navy); }
+        .stat-label { margin-top: 8px; font-size: 12px; color: var(--warm-gray); text-transform: uppercase; letter-spacing: .08em; }
+        .section-title { display: flex; align-items: center; gap: 10px; margin: 0 0 18px; font-size: 24px; }
+        .icon-box {
+            width: 34px; height: 34px; border-radius: 10px; flex: 0 0 auto;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--cream); color: var(--gold); border: 1px solid var(--line);
+        }
+        .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+        .chip { padding: 8px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--cream); font-size: 14px; font-weight: 600; }
+        .timeline { display: flex; flex-direction: column; gap: 14px; }
+        .timeline-item { display: grid; grid-template-columns: 18px 1fr; gap: 14px; align-items: start; }
+        .timeline-mark { width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 3px solid var(--gold); margin-top: 4px; }
+        .bullet-list { margin: 0; padding-left: 18px; color: #4a4545; }
+        .bullet-list li { margin-bottom: 10px; }
+        .dark-panel {
+            background: linear-gradient(135deg, var(--navy), var(--navy-light));
+            color: var(--cream); border-color: #2d4070;
+        }
+        .dark-panel .section-title, .dark-panel .section-title h3 { color: var(--cream); }
+        .trust-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
+        .trust-card {
+            border-radius: 14px; padding: 18px 16px; text-align: center;
+            background: rgba(255,255,255,.06); border: 1px solid rgba(184,150,62,.2);
+        }
+        .contact-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
+        .contact-row { display: flex; gap: 12px; align-items: start; }
+        .button-row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 28px; }
+        .button {
+            display: inline-flex; align-items: center; gap: 10px; padding: 12px 22px; border-radius: 12px;
+            text-decoration: none; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; font-size: 13px;
+            border: 1px solid rgba(184,150,62,.25);
+        }
+        .button-primary { background: linear-gradient(135deg, var(--navy), var(--navy-light)); color: var(--gold-light); }
+        .button-secondary { background: var(--cream); color: var(--navy); }
+        .socials { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 18px; }
+        .social-link {
+            width: 42px; height: 42px; border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center;
+            background: var(--cream); border: 1px solid var(--line); text-decoration: none; font-size: 14px; font-weight: 700;
+        }
+        footer { text-align: center; padding-top: 26px; }
+        @media (max-width: 820px) {
+            .hero, .stats, .contact-grid, .trust-grid { grid-template-columns: 1fr; }
+            .card { padding: 22px; }
+            .contact-inline { justify-content: center; }
+            .hero-copy { text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar"></div>
+    <div class="shell">
+        <header class="header">
+            <div class="brand-wrap">
+                {% if student.college and student.college.logo %}
+                    <div class="brand-logo">
+                        <img src="{{ student.college.logo.url }}" alt="{{ student.college.name }}">
+                    </div>
+                {% else %}
+                    <div class="brand-badge">
+                        <svg width="44" height="44" viewBox="0 0 44 44" fill="none" aria-hidden="true">
+                            <path d="M22 4L6 14v4h32v-4L22 4z" fill="#b8963e" opacity=".9"/>
+                            <rect x="9" y="20" width="4" height="14" rx="1" fill="#d4af5c"/>
+                            <rect x="17" y="20" width="4" height="14" rx="1" fill="#d4af5c"/>
+                            <rect x="25" y="20" width="4" height="14" rx="1" fill="#d4af5c"/>
+                            <rect x="31" y="20" width="4" height="14" rx="1" fill="#d4af5c"/>
+                            <rect x="5" y="35" width="34" height="4" rx="1.5" fill="#b8963e"/>
+                            <circle cx="22" cy="11" r="3" fill="#1a2744"/>
+                        </svg>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="watermark">Official Faculty Profile</div>
+            <h2>{{ student.college.name|default:display_organization|default:"Verified Institution" }}</h2>
+            <p class="subtle">{{ student.role|default:"Faculty Member" }}</p>
+            <div class="gold-line"></div>
+        </header>
+
+        <div class="grid">
+            <section class="card hero">
+                <div>
+                    <div class="profile-ring">
+                        <div class="profile-inner">
+                            {% if student.profile_photo %}
+                                <img src="{{ student.profile_photo.url }}" alt="{{ student.name }}">
+                            {% else %}
+                                {{ student.name|slice:":1" }}{% if student.role %}{{ student.role|slice:":1" }}{% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-copy">
+                    <div class="verified">Verified Faculty</div>
+                    <h1 style="margin:14px 0 8px; font-size: clamp(32px, 4vw, 44px);">{{ student.name }}</h1>
+                    <div class="role">{{ student.role|default:"Faculty Member" }}</div>
+                    <p class="subtle" style="margin: 8px 0 0;">{{ student.college.name|default:display_organization|default:"School / College" }}</p>
+                    {% if student.college and student.college.slogan %}
+                        <p class="subtle" style="margin: 6px 0 0;">{{ student.college.slogan }}</p>
+                    {% endif %}
+                    <div class="contact-inline">
+                        {% if student.email %}<span>School Email: {{ student.email }}</span>{% endif %}
+                        {% if student.phone %}<span>Office Phone: {{ student.phone }}</span>{% endif %}
+                    </div>
+                </div>
+            </section>
+
+            <section class="stats">
+                <div class="stat">
+                    <div class="stat-value">{{ experience_years }}</div>
+                    <div class="stat-label">Years Experience</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">{{ educations|length }}</div>
+                    <div class="stat-label">Academic Milestones</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">{{ publication_count }}</div>
+                    <div class="stat-label">Publications / Articles</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">{{ award_count }}</div>
+                    <div class="stat-label">Awards / Honors</div>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="section-title">
+                    <div class="icon-box">B</div>
+                    <h3 style="margin:0;">Professional Biography</h3>
+                </div>
+                <p style="margin:0; font-size:15px; line-height:1.8; color:#4a4545;">
+                    {{ student.bio|default:student.about_intro|default:"This verified faculty profile highlights the educator's role, academic background, and contribution to the institution." }}
+                </p>
+            </section>
+
+            <section class="card">
+                <div class="section-title">
+                    <div class="icon-box">P</div>
+                    <h3 style="margin:0;">Teaching Philosophy</h3>
+                </div>
+                <blockquote style="margin:0; padding-left:18px; border-left:3px solid var(--gold); font-size:18px; line-height:1.7; color:#4a4545;">
+                    "{{ student.about_intro|default:"Education is built on clarity, discipline, empathy, and a commitment to helping learners grow with confidence." }}"
+                </blockquote>
+            </section>
+
+            <section class="card">
+                <div class="section-title">
+                    <div class="icon-box">S</div>
+                    <h3 style="margin:0;">Subjects & Expertise</h3>
+                </div>
+                <div class="chips">
+                    {% for tag in subject_tags %}
+                        <span class="chip">{{ tag }}</span>
+                    {% empty %}
+                        <span class="chip">Teaching Excellence</span>
+                        <span class="chip">Curriculum Development</span>
+                        <span class="chip">Academic Mentorship</span>
+                    {% endfor %}
+                </div>
+                {% if student.about_featured %}
+                    <p class="subtle" style="margin:16px 0 0;">{{ student.about_featured }}</p>
+                {% endif %}
+            </section>
+
+            <section class="card">
+                <div class="section-title">
+                    <div class="icon-box">A</div>
+                    <h3 style="margin:0;">Academic Journey</h3>
+                </div>
+                <div class="timeline">
+                    {% for education in academic_journey %}
+                        <div class="timeline-item">
+                            <div class="timeline-mark"></div>
+                            <div>
+                                <div style="font-weight:700;">{{ education.degree }}{% if education.major %} in {{ education.major }}{% endif %}</div>
+                                <div class="subtle">{{ education.institution }}{% if education.start_year or education.end_year %} · {{ education.start_year }}{% if education.end_year %} - {{ education.end_year }}{% endif %}{% endif %}</div>
+                                {% if education.honors %}<div class="subtle">{{ education.honors }}</div>{% endif %}
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="timeline-item">
+                            <div class="timeline-mark"></div>
+                            <div class="subtle">Academic qualifications can be added from the profile editor.</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="section-title">
+                    <div class="icon-box">F</div>
+                    <h3 style="margin:0;">Faculty Achievements</h3>
+                </div>
+                <ul class="bullet-list">
+                    {% for achievement in faculty_achievements %}
+                        <li>
+                            <strong>{{ achievement.title }}</strong>
+                            {% if achievement.year %}<span class="subtle"> · {{ achievement.year }}</span>{% endif %}
+                            {% if achievement.description %}<div class="subtle">{{ achievement.description }}</div>{% endif %}
+                        </li>
+                    {% empty %}
+                        <li>Achievements, awards, and recognitions will appear here once added by the institution or faculty owner.</li>
+                    {% endfor %}
+                </ul>
+            </section>
+
+            <section class="card">
+                <div class="section-title">
+                    <div class="icon-box">I</div>
+                    <h3 style="margin:0;">Institutional Contribution</h3>
+                </div>
+                <ul class="bullet-list">
+                    {% for item in leadership_entries %}
+                        <li>
+                            <strong>{{ item.title }}</strong>{% if item.company %} at {{ item.company }}{% endif %}
+                            {% if item.start_date or item.end_date %}<span class="subtle"> · {{ item.start_date }}{% if item.end_date %} - {{ item.end_date }}{% endif %}</span>{% endif %}
+                            {% if item.responsibilities %}<div class="subtle">{{ item.responsibilities|linebreaksbr }}</div>{% endif %}
+                        </li>
+                    {% empty %}
+                        <li>{{ student.about_current|default:"Leadership roles, committees, mentorship, and institutional contributions can be highlighted here." }}</li>
+                    {% endfor %}
+                </ul>
+            </section>
+
+            <section class="card dark-panel">
+                <div class="section-title">
+                    <div class="icon-box" style="background:rgba(184,150,62,.15); border-color:rgba(184,150,62,.3); color:var(--gold-light);">T</div>
+                    <h3 style="margin:0;">Why Students Trust This Educator</h3>
+                </div>
+                <div class="trust-grid">
+                    <div class="trust-card">
+                        <div style="font-size:28px;">C</div>
+                        <div style="margin-top:10px; color:var(--gold-light); text-transform:uppercase; letter-spacing:.08em; font-size:12px; font-weight:700;">Clarity</div>
+                        <div style="margin-top:8px; color:rgba(248,246,241,.74); font-size:13px;">Communicates complex ideas with structure and calm confidence.</div>
+                    </div>
+                    <div class="trust-card">
+                        <div style="font-size:28px;">G</div>
+                        <div style="margin-top:10px; color:var(--gold-light); text-transform:uppercase; letter-spacing:.08em; font-size:12px; font-weight:700;">Guidance</div>
+                        <div style="margin-top:8px; color:rgba(248,246,241,.74); font-size:13px;">Supports learners with mentorship, discipline, and consistency.</div>
+                    </div>
+                    <div class="trust-card">
+                        <div style="font-size:28px;">I</div>
+                        <div style="margin-top:10px; color:var(--gold-light); text-transform:uppercase; letter-spacing:.08em; font-size:12px; font-weight:700;">Integrity</div>
+                        <div style="margin-top:8px; color:rgba(248,246,241,.74); font-size:13px;">Represents a school-verified faculty identity backed by the institution.</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="section-title">
+                    <div class="icon-box">M</div>
+                    <h3 style="margin:0;">Message from the Educator</h3>
+                </div>
+                <blockquote style="margin:0; font-size:18px; line-height:1.8; color:#4a4545;">
+                    "{{ student.about_current|default:"Education is not only about knowledge transfer. It is about helping people think deeply, act responsibly, and grow with purpose." }}"
+                </blockquote>
+            </section>
+
+            <section class="card">
+                <div class="section-title">
+                    <div class="icon-box">C</div>
+                    <h3 style="margin:0;">Contact Information</h3>
+                </div>
+                <div class="contact-grid">
+                    <div class="contact-row">
+                        <div class="icon-box">E</div>
+                        <div>
+                            <div class="subtle" style="text-transform:uppercase; letter-spacing:.08em; font-size:12px;">School Email</div>
+                            <div style="font-weight:700;">{{ student.email|default:student.college.email|default:"Not provided" }}</div>
+                        </div>
+                    </div>
+                    <div class="contact-row">
+                        <div class="icon-box">P</div>
+                        <div>
+                            <div class="subtle" style="text-transform:uppercase; letter-spacing:.08em; font-size:12px;">Office Phone</div>
+                            <div style="font-weight:700;">{{ student.phone|default:student.college.phone|default:"Not provided" }}</div>
+                        </div>
+                    </div>
+                    <div class="contact-row">
+                        <div class="icon-box">A</div>
+                        <div>
+                            <div class="subtle" style="text-transform:uppercase; letter-spacing:.08em; font-size:12px;">Office Address</div>
+                            <div style="font-weight:700;">{{ student.address|default:student.college.address|default:"Not provided" }}</div>
+                        </div>
+                    </div>
+                    <div class="contact-row">
+                        <div class="icon-box">W</div>
+                        <div>
+                            <div class="subtle" style="text-transform:uppercase; letter-spacing:.08em; font-size:12px;">Faculty Page</div>
+                            <div style="font-weight:700;">{{ student.website|default:student.college.website|default:"Not provided" }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-row">
+                    {% if student.cv %}
+                        <a class="button button-primary" href="{{ student.cv.url }}" download>Download CV</a>
+                    {% endif %}
+                    {% if student.email %}
+                        <a class="button button-secondary" href="mailto:{{ student.email }}">Email</a>
+                    {% endif %}
+                    {% if portfolio_website_url %}
+                        <a class="button button-secondary" href="{{ portfolio_website_url }}" target="_blank" rel="noopener noreferrer">
+                            {% if student.website %}Faculty Page{% else %}School Website{% endif %}
+                        </a>
+                    {% endif %}
+                </div>
+
+                <div class="socials">
+                    {% if student.linkedin %}<a class="social-link" href="{{ student.linkedin }}" target="_blank" rel="noopener noreferrer">in</a>{% endif %}
+                    {% if student.instagram %}<a class="social-link" href="{{ student.instagram }}" target="_blank" rel="noopener noreferrer">ig</a>{% endif %}
+                    {% if student.facebook %}<a class="social-link" href="{{ student.facebook }}" target="_blank" rel="noopener noreferrer">f</a>{% endif %}
+                    {% if student.twitter %}<a class="social-link" href="{{ student.twitter }}" target="_blank" rel="noopener noreferrer">x</a>{% endif %}
+                    {% if student.youtube %}<a class="social-link" href="{{ student.youtube }}" target="_blank" rel="noopener noreferrer">yt</a>{% endif %}
+                </div>
+            </section>
+        </div>
+
+        <footer>
+            <div class="gold-line"></div>
+            <div style="margin-top:18px;" class="verified">Official School-Verified Faculty Profile</div>
+            <p class="subtle" style="margin:14px 0 0;">This profile is maintained and verified by {{ student.college.name|default:display_organization|default:"the institution" }}.</p>
+            <p class="watermark" style="margin-top:10px;">Faculty role access is reserved for school-registered profiles.</p>
+        </footer>
+    </div>
+</body>
+</html>
