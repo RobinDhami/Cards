@@ -10,7 +10,7 @@ services:
     runtime: python
     plan: free
     buildCommand: ./build.sh
-    startCommand: python -m gunicorn vcard_backend.wsgi:application --bind 0.0.0.0:$PORT --workers 1
+    startCommand: python manage.py check --deploy && python -m gunicorn vcard_backend.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --log-level debug --access-logfile - --error-logfile -
     envVars:
       - key: SECRET_KEY
         generateValue: true
