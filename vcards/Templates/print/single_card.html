@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Single Card Preview</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <style>
+    body { background: #f8f9fb; color: #10223b; }
+    .single-card-stack { display: grid; gap: 28px; }
+    .card-pair {
+      display: grid;
+      gap: 24px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .print-card {
+      position: relative;
+      width: 100%;
+      min-height: 540px;
+      background: #fff;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+    }
+    .corner { position: absolute; top: 0; left: 0; width: 82px; height: 82px; border-bottom-right-radius: 60px; z-index: 2; }
+    .bottom-wave { position: absolute; bottom: 0; left: 0; width: 100%; height: 68px; }
+    .bottom-wave svg { width: 100%; height: 100%; display: block; }
+    .card-inner { position: relative; z-index: 3; padding: 28px 28px 96px; display: flex; flex-direction: column; align-items: center; text-align: center; height: 100%; box-sizing: border-box; }
+    .logo-slot img, .blank-logo { width: 56px; height: 56px; object-fit: contain; display: block; margin: 0 auto; }
+    .school-name { margin-top: 14px; font-size: 20px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #1f2937; }
+    .school-slogan, .school-meta { font-size: 11px; color: #6b7280; }
+    .school-slogan { margin-top: 8px; }
+    .school-meta { margin-top: 8px; line-height: 1.4; }
+    .photo-wrap { width: 130px; height: 130px; border-radius: 999px; padding: 4px; margin-top: 24px; position: relative; }
+    .photo-inner { width: 100%; height: 100%; border-radius: 999px; overflow: hidden; border: 4px solid #fff; background: #e5e7eb; }
+    .photo-inner img, .qr-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .photo-fallback { display: flex; align-items: center; justify-content: center; height: 100%; font-size: 40px; font-weight: 700; color: #475569; }
+    .signature-overlay { position: absolute; width: 84px; right: -10px; bottom: -10px; opacity: .85; }
+    .member-name { margin-top: 20px; font-size: 18px; font-weight: 700; text-transform: uppercase; color: #1f2937; }
+    .member-role { margin-top: 6px; font-size: 12px; font-weight: 700; letter-spacing: .28em; text-transform: uppercase; }
+    .divider { width: 48px; height: 2px; margin-top: 16px; }
+    .details { width: 100%; max-width: 228px; margin-top: 18px; font-size: 13px; color: #111827; }
+    .details div { display: grid; grid-template-columns: 64px 1fr; gap: 8px; text-align: left; margin-bottom: 8px; }
+    .qr-shell { margin-top: 10px; padding: 16px; background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05); }
+    .qr-frame { width: 124px; height: 124px; padding: 10px; border: 3px solid #1f2937; border-radius: 10px; background: #fff; }
+    .school-contact-label { margin-top: 18px; font-size: 10px; text-transform: uppercase; letter-spacing: .34em; color: #6b7280; font-weight: 700; }
+    .school-contact { margin-top: 8px; font-size: 13px; font-weight: 600; color: #374151; }
+    .school-contact.email { font-size: 11px; font-weight: 500; }
+    .card-back-inner .divider { margin-top: 24px; }
+    .terms-box { margin-top: 24px; max-width: 235px; }
+    .terms-title { font-size: 14px; font-weight: 700; color: #111827; }
+    .terms-copy { margin-top: 12px; font-size: 12px; line-height: 1.6; color: #4b5563; }
+    @media (max-width: 991px) { .card-pair { grid-template-columns: 1fr; } }
+    @media print {
+      .screen-only { display: none !important; }
+      body { background: #fff; }
+      .card-pair { break-after: page; }
+      .panel-card { box-shadow: none !important; border-radius: 0 !important; border: 0 !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+    <div class="screen-only mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Print Preview</div>
+          <h1 class="mt-1 text-2xl font-bold text-slate-900">Single Card Preview</h1>
+          <p class="mt-1 text-sm text-slate-500">{{ selected_count }} cards ready for preview</p>
+        </div>
+        <form method="post" action="{% url 'dashboard_print_export_pdf' %}" class="flex flex-wrap gap-2">
+          {% csrf_token %}
+          <input type="hidden" name="school" value="{{ current_school.id }}">
+          {% for member_id in selected_ids %}<input type="hidden" name="selected_ids" value="{{ member_id }}">{% endfor %}
+          <input type="hidden" name="member_type" value="{{ filter_state.member_type }}">
+          <input type="hidden" name="academic_level" value="{{ filter_state.academic_level }}">
+          <input type="hidden" name="section" value="{{ filter_state.section }}">
+          <input type="hidden" name="q" value="{{ filter_state.q }}">
+          <input type="hidden" name="front_design" value="{{ print_options.front_design }}">
+          <input type="hidden" name="back_design" value="{{ print_options.back_design }}">
+          <input type="hidden" name="print_mode" value="{{ print_options.print_mode }}">
+          <input type="hidden" name="orientation" value="{{ print_options.orientation }}">
+          <input type="hidden" name="card_type" value="{{ print_options.card_type }}">
+          <input type="hidden" name="calendar" value="{{ print_options.calendar }}">
+          <input type="hidden" name="valid_till" value="{{ print_options.valid_till }}">
+          <input type="hidden" name="label" value="{{ print_options.label }}">
+          <input type="hidden" name="theme_primary" value="{{ print_options.theme_primary }}">
+          <input type="hidden" name="theme_light_primary" value="{{ print_options.theme_light_primary }}">
+          <input type="hidden" name="theme_secondary" value="{{ print_options.theme_secondary }}">
+          <input type="hidden" name="theme_ternary" value="{{ print_options.theme_ternary }}">
+          <a href="{% url 'dashboard_print' %}{{ nav_school_query }}" class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700">Back</a>
+          <button type="button" onclick="window.print()" class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700">Browser Print</button>
+          <button type="submit" class="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white">Download PDF</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="single-card-stack">
+      {% for card in cards %}
+        <div class="panel-card rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div class="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">{{ card.member_name }}</div>
+          <div class="card-pair">
+            {% include "print/partials/card_front.html" with card=card %}
+            {% include "print/partials/card_back.html" with card=card %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</body>
+</html>

@@ -183,4 +183,7 @@ DEFAULT_FROM_EMAIL = os.environ.get(
     EMAIL_HOST_USER or "webmaster@localhost",
 )
 
+LOGIN_URL = "/login/"
+LOGIN_REDIRECT_URL = "/dashboard/"
+
 

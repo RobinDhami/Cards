@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="189"
+     height="321"
+     viewBox="0 0 141.75 240.75"
+     preserveAspectRatio="xMidYMid meet"
+     class="w-full h-full block">
+
+  <defs>
+    <clipPath id="backClip1">
+      <path d="M 0 0.0859375 L 141.5 0.0859375 L 141.5 240.414062 L 0 240.414062 Z"/>
+    </clipPath>
+    <clipPath id="backClip2">
+      <path d="M 0 0.0859375 L 141.386719 0.0859375 L 141.386719 240.21875 L 0 240.21875 Z"/>
+    </clipPath>
+    <clipPath id="backClip3">
+      <path d="M 98 196.246094 L 133 196.246094 L 133 224 L 98 224 Z"/>
+    </clipPath>
+    <clipPath id="backClip4">
+      <path d="M 0 208 L 141.5 208 L 141.5 229.160156 L 0 229.160156 Z"/>
+    </clipPath>
+    <clipPath id="backClip5">
+      <path d="M 0 196.246094 L 112 196.246094 L 112 220 L 0 220 Z"/>
+    </clipPath>
+    <clipPath id="backClip6">
+      <path d="M 93 210 L 141.5 210 L 141.5 229.160156 L 93 229.160156 Z"/>
+    </clipPath>
+    <clipPath id="backClip7">
+      <path d="M 0 221 L 141.5 221 L 141.5 223 L 0 223 Z"/>
+    </clipPath>
+    <clipPath id="backClip8">
+      <path d="M 0 229.105469 L 141.5 229.105469 L 141.5 240.414062 L 0 240.414062 Z"/>
+    </clipPath>
+    <clipPath id="backClip9">
+      <path d="M 0 0.0859375 L 141.5 0.0859375 L 141.5 14.222656 L 0 14.222656 Z"/>
+    </clipPath>
+    <clipPath id="backClip10">
+      <rect x="0" y="0" width="142" height="241"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#backClip1)">
+    <path fill="#ffffff" d="M 0 0.0859375 L 141.5 0.0859375 L 141.5 240.414062 L 0 240.414062 Z"/>
+    <g clip-path="url(#backClip10)">
+      <g clip-path="url(#backClip2)">
+        <path fill="{{ theme_light_primary|default:'#f8f8ec' }}" d="M 0 0.0859375 L 141.386719 0.0859375 L 141.386719 240.21875 L 0 240.21875 Z"/>
+      </g>
+      <g clip-path="url(#backClip3)">
+        <path fill="{{ theme_ternary|default:'#ff8000' }}" d="M 125.753906 223.109375 L 98.964844 196.261719 L 111.5 196.261719 L 132.023438 216.832031 Z"/>
+      </g>
+      <g clip-path="url(#backClip4)">
+        <path fill="{{ theme_secondary|default:'#333333' }}" d="M -6.78125 208.28125 L 148.070312 208.28125 L 148.070312 229.148438 L -6.78125 229.148438 Z"/>
+      </g>
+      <g clip-path="url(#backClip5)">
+        <path fill="{{ theme_ternary|default:'#fea621' }}" d="M 111.496094 196.257812 L 87.953125 219.855469 L -6.78125 219.855469 L -6.78125 210.972656 L 84.28125 210.972656 L 98.964844 196.257812 Z"/>
+      </g>
+      <g clip-path="url(#backClip6)">
+        <path fill="{{ theme_ternary|default:'#fea621' }}" d="M 148.070312 210.609375 L 148.070312 219.488281 L 116.144531 219.488281 L 106.503906 229.148438 L 93.972656 229.148438 L 112.472656 210.609375 Z"/>
+      </g>
+      <g clip-path="url(#backClip7)">
+        <path fill="#e5e5e5" d="M -6.78125 221.320312 L 148.070312 221.320312 L 148.070312 222.40625 L -6.78125 222.40625 Z"/>
+      </g>
+      <g clip-path="url(#backClip8)">
+        <path fill="{{ theme_secondary|default:'#333333' }}" d="M -15.179688 229.105469 L 156.613281 229.105469 L 156.613281 271.515625 L -15.179688 271.515625 Z"/>
+      </g>
+      <g clip-path="url(#backClip9)">
+        <path fill="{{ theme_secondary|default:'#333333' }}" d="M -15.179688 -15.527344 L 156.574219 -15.527344 L 156.574219 14.222656 L -15.179688 14.222656 Z"/>
+      </g>
+    </g>
+  </g>
+
+  <text x="70.8" y="34" text-anchor="middle" font-size="8" font-weight="700" fill="{{ theme_secondary|default:'#333333' }}">
+    {{ school_name|default:"SCHOOL NAME"|upper|truncatechars:18 }}
+  </text>
+  <text x="70.8" y="42" text-anchor="middle" font-size="5" letter-spacing="1" fill="{{ theme_secondary|default:'#333333' }}">
+    {{ card_type_label|default:"ID CARD"|upper|truncatechars:18 }}
+  </text>
+
+  <text x="70.8" y="82" text-anchor="middle" font-size="8" font-weight="700" fill="#222">
+    Terms &amp; Conditions
+  </text>
+
+  <text x="20" y="102" font-size="4.6" fill="#555">
+    <tspan x="20" dy="0">{{ terms_lines.0 }}</tspan>
+    <tspan x="20" dy="6">{{ terms_lines.1 }}</tspan>
+    <tspan x="20" dy="6">{{ terms_lines.2 }}</tspan>
+    <tspan x="20" dy="6">{{ terms_lines.3 }}</tspan>
+    <tspan x="20" dy="6">{{ terms_lines.4 }}</tspan>
+  </text>
+
+  <rect x="52" y="150" width="38" height="38" fill="#ffffff" stroke="#777" stroke-width="0.8"/>
+  {% if qr_code_url %}
+    <image href="{{ qr_code_url }}" x="54" y="152" width="34" height="34" preserveAspectRatio="xMidYMid meet"/>
+  {% else %}
+    <text x="71" y="171" text-anchor="middle" font-size="4.5" fill="#777">QR</text>
+  {% endif %}
+
+  {% if principal_signature_url %}
+    <image href="{{ principal_signature_url }}" x="42" y="190" width="48" height="16" preserveAspectRatio="xMidYMid meet"/>
+  {% else %}
+    <path d="M 44 203 C 50 196, 58 210, 67 200 C 72 194, 79 207, 88 198"
+          fill="none" stroke="#666" stroke-width="1.2" stroke-linecap="round"/>
+  {% endif %}
+  <line x1="40" y1="210" x2="95" y2="210" stroke="#777" stroke-width="0.8"/>
+  <text x="67.5" y="217" text-anchor="middle" font-size="4.5" fill="#666">
+    Authorized Signature
+  </text>
+</svg>

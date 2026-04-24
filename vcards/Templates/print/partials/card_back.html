@@ -1,0 +1,35 @@
+<div class="print-card">
+  {% if card.back_theme_key == 'back_official_wave' %}
+    {% include "print/themes/back_official_wave.html" with school_name=card.school_name card_type_label=card.card_type_label terms_lines=card.terms_lines qr_code_url=card.qr_code_url principal_signature_url=card.principal_signature_url %}
+  {% else %}
+    <div class="corner" style="background: {{ card.theme_primary }};"></div>
+    <div class="bottom-wave">
+      <svg viewBox="0 0 320 70" preserveAspectRatio="none">
+        <path d="M0 40 C60 60,120 25,180 35 C240 45,280 25,320 35 L320 70 L0 70 Z" fill="{{ card.theme_primary }}"/>
+        <path d="M0 50 C60 70,120 35,180 45 C240 55,280 35,320 45 L320 70 L0 70 Z" fill="{{ card.theme_ternary }}"/>
+      </svg>
+    </div>
+    <div class="card-inner card-back-inner">
+      <div class="qr-shell">
+        <div class="qr-frame" style="border-color: {{ card.theme_secondary }};">
+          <img src="{{ card.qr_code_url }}" alt="QR Code">
+        </div>
+      </div>
+
+      <div class="school-contact-label">School Contact</div>
+      {% if card.school_phone %}<div class="school-contact">{{ card.school_phone }}</div>{% endif %}
+      {% if card.school_email %}<div class="school-contact email">{{ card.school_email }}</div>{% endif %}
+
+      <div class="divider" style="background: {{ card.theme_ternary }};"></div>
+
+      <div class="terms-box">
+        <div class="terms-title">Terms &amp; Conditions</div>
+        <div class="terms-copy">
+          This card belongs to <strong>{{ card.member_name }}</strong>.
+          If found, please return it to the school administration office{% if card.school_phone %} or contact {{ card.school_phone }}{% endif %}.
+          {% if card.print_valid_till %}Valid till {{ card.print_valid_till }} {{ card.calendar_type }}.{% endif %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>

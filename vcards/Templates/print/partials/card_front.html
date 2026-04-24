@@ -1,0 +1,56 @@
+<div class="print-card">
+  {% if card.front_theme_key == 'front_official_wave' %}
+    {% include "print/themes/front_official_wave.html" with school_name=card.school_name card_type_label=card.card_type_label card_label=card.card_label member_photo_url=card.member_photo_url member_name=card.member_name member_id_number=card.member_id_number member_dob=card.member_dob member_address_lines=card.member_address_lines %}
+  {% else %}
+    <div class="corner" style="background: {{ card.theme_primary }};"></div>
+    <div class="bottom-wave">
+      <svg viewBox="0 0 320 70" preserveAspectRatio="none">
+        <path d="M0 40 C60 60,120 25,180 35 C240 45,280 25,320 35 L320 70 L0 70 Z" fill="{{ card.theme_primary }}"/>
+        <path d="M0 50 C60 70,120 35,180 45 C240 55,280 35,320 45 L320 70 L0 70 Z" fill="{{ card.theme_ternary }}"/>
+      </svg>
+    </div>
+    <div class="card-inner">
+      <div class="logo-slot">
+        {% if card.school_logo_url %}
+          <img src="{{ card.school_logo_url }}" alt="{{ card.school_name }}">
+        {% else %}
+          <div class="blank-logo"></div>
+        {% endif %}
+      </div>
+
+      <div class="school-name">{{ card.school_name }}</div>
+      {% if card.school_slogan %}
+        <div class="school-slogan">{{ card.school_slogan }}</div>
+      {% endif %}
+      <div class="school-meta">
+        {% if card.school_address %}<div>{{ card.school_address }}</div>{% endif %}
+        {% if card.school_phone %}<div>Tel: {{ card.school_phone }}</div>{% endif %}
+      </div>
+
+      <div class="photo-wrap" style="background: linear-gradient(135deg, {{ card.theme_ternary }}, {{ card.theme_primary }}, {{ card.theme_secondary }});">
+        <div class="photo-inner">
+          {% if card.member_photo_url %}
+            <img src="{{ card.member_photo_url }}" alt="{{ card.member_name }}">
+          {% else %}
+            <div class="photo-fallback">{{ card.member_name|slice:":1"|upper }}</div>
+          {% endif %}
+        </div>
+        {% if card.principal_signature_url %}
+          <img src="{{ card.principal_signature_url }}" alt="{{ card.principal_name }}" class="signature-overlay">
+        {% endif %}
+      </div>
+
+      <div class="member-name">{{ card.member_name }}</div>
+      <div class="member-role" style="color: {{ card.theme_primary }};">{{ card.member_type_label }}</div>
+      <div class="divider" style="background: {{ card.theme_ternary }};"></div>
+
+      <div class="details">
+        {% if card.member_id_number %}<div><strong>ID</strong><span>: {{ card.member_id_number }}</span></div>{% endif %}
+        {% if card.member_email %}<div><strong>Email</strong><span>: {{ card.member_email }}</span></div>{% endif %}
+        {% if card.member_phone %}<div><strong>Phone</strong><span>: {{ card.member_phone }}</span></div>{% endif %}
+        {% if card.member_class_label %}<div><strong>Class</strong><span>: {{ card.member_class_label }}</span></div>{% endif %}
+        {% if card.member_section %}<div><strong>Section</strong><span>: {{ card.member_section }}</span></div>{% endif %}
+      </div>
+    </div>
+  {% endif %}
+</div>

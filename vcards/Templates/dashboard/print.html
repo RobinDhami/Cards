@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>School ID Card Studio</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: { 50:'#f0f3f9', 100:'#dce3f0', 200:'#b8c7e1', 300:'#8ba3cc', 400:'#5d7db5', 500:'#1e3a5f', 600:'#1a3254', 700:'#152a47', 800:'#0f1f35', 900:'#0a1524' },
+            gold: { 50:'#fdf9ef', 100:'#faf0d4', 200:'#f4dfa8', 300:'#edc96f', 400:'#d4a843', 500:'#b8922e', 600:'#967525', 700:'#74591d', 800:'#5a4418', 900:'#3f3012' },
+            slate2: { 50:'#f8f9fb', 100:'#f1f3f7', 200:'#e4e7ee', 300:'#cdd2dd', 400:'#9ca5b8', 500:'#6b7689', 600:'#535c6e', 700:'#3e4555', 800:'#2a303c', 900:'#1a1e27' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'DM Sans', sans-serif; }
+    .font-display { font-family: 'Playfair Display', serif; }
+    .theme-card { transition: all 0.2s ease; }
+    .theme-card:hover { transform: translateY(-2px); }
+    .card-shadow { box-shadow: 0 1px 3px rgba(30,58,95,0.08), 0 4px 12px rgba(30,58,95,0.04); }
+    .card-shadow-lg { box-shadow: 0 4px 16px rgba(30,58,95,0.1), 0 8px 32px rgba(30,58,95,0.06); }
+    .id-card { box-shadow: 0 2px 12px rgba(0,0,0,0.15); }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    .anim-in { animation: fadeUp 0.4s ease both; }
+    .anim-d1 { animation-delay: 0.05s; }
+    .anim-d2 { animation-delay: 0.1s; }
+    .anim-d3 { animation-delay: 0.15s; }
+    .anim-d4 { animation-delay: 0.2s; }
+    .anim-d5 { animation-delay: 0.25s; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #cdd2dd; border-radius: 3px; }
+    .preview-shell { transition: all 0.2s ease; }
+    .preview-shell.landscape { width: 360px !important; height: 240px !important; }
+  </style>
+</head>
+<body class="h-full bg-slate2-50 text-slate2-800">
+  <div id="app" class="flex h-full overflow-auto">
+    {% include "dashboard/_sidebar.html" %}
+
+    <div class="flex flex-1 flex-col overflow-auto" style="min-height:100%">
+      <header class="flex shrink-0 items-center justify-between border-b border-slate2-200 bg-white px-4 py-3 sm:px-6">
+        <div class="flex items-center gap-3">
+          <button id="mobile-menu-btn" class="rounded-lg p-1.5 hover:bg-slate2-100 lg:hidden"><i data-lucide="menu" class="h-5 w-5"></i></button>
+          <div>
+            <h1 class="font-display text-lg font-bold text-navy-500 sm:text-xl">Generate and Print ID Cards</h1>
+            <p class="hidden text-xs text-slate2-400 sm:block">Design, preview and batch-print student identification cards</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="relative rounded-lg p-2 hover:bg-slate2-100"><i data-lucide="bell" class="h-4.5 w-4.5 text-slate2-500"></i><span class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500"></span></button>
+          <button class="rounded-lg p-2 hover:bg-slate2-100"><i data-lucide="help-circle" class="h-4.5 w-4.5 text-slate2-500"></i></button>
+        </div>
+      </header>
+
+      <main class="flex-1 space-y-5 p-4 sm:p-6">
+        {% if messages %}
+          <div class="space-y-3">
+            {% for message in messages %}
+              <div class="rounded-xl border px-4 py-3 text-sm {% if message.tags == 'error' %}border-red-200 bg-red-50 text-red-700{% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-700{% else %}border-emerald-200 bg-emerald-50 text-emerald-700{% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="anim-in flex flex-wrap items-center gap-4 rounded-xl bg-white p-4 card-shadow">
+          <div class="flex min-w-[200px] flex-1 items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-navy-50"><i data-lucide="school" class="h-5 w-5 text-navy-500"></i></div>
+            <div>
+              <div class="text-xs font-medium text-slate2-400">Selected School</div>
+              <div class="font-semibold text-navy-500">{{ current_school.name }}</div>
+            </div>
+          </div>
+          <div class="flex gap-5 text-center">
+            <div>
+              <div class="text-lg font-bold text-navy-500">{{ school_student_total }}</div>
+              <div class="text-[11px] text-slate2-400">Total Students</div>
+            </div>
+            <div class="w-px bg-slate2-200"></div>
+            <div>
+              <div class="text-lg font-bold text-gold-500">{{ school_teacher_total }}</div>
+              <div class="text-[11px] text-slate2-400">Teachers / Staff</div>
+            </div>
+            <div class="w-px bg-slate2-200"></div>
+            <div>
+              <div class="text-lg font-bold text-emerald-600">{{ member_count }}</div>
+              <div class="text-[11px] text-slate2-400">Filtered</div>
+            </div>
+          </div>
+          {% if is_super_admin %}
+            <a href="{% url 'admin_dashboard' %}{{ nav_school_query }}" class="ml-auto flex items-center gap-1 text-sm font-medium text-navy-500 hover:text-navy-600"><i data-lucide="repeat" class="h-3.5 w-3.5"></i>Change</a>
+          {% endif %}
+        </div>
+
+        <form method="get" class="anim-in anim-d1 rounded-xl bg-white p-5 card-shadow">
+          {% if current_school %}<input type="hidden" name="school" value="{{ current_school.id }}">{% endif %}
+          <div class="grid grid-cols-1 gap-3 lg:grid-cols-4">
+            <div class="relative lg:col-span-2">
+              <i data-lucide="search" class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate2-400"></i>
+              <input type="text" name="q" value="{{ filter_state.q }}" placeholder="Search name, role, phone" class="w-full rounded-lg border border-slate2-200 pl-9 pr-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-navy-300">
+            </div>
+            <select name="member_type" class="w-full rounded-lg border border-slate2-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-navy-300">
+              <option value="all" {% if filter_state.member_type == 'all' %}selected{% endif %}>All Members</option>
+              <option value="student" {% if filter_state.member_type == 'student' %}selected{% endif %}>Students</option>
+              <option value="teacher" {% if filter_state.member_type == 'teacher' %}selected{% endif %}>Teachers</option>
+            </select>
+            <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-lg bg-gold-400 px-5 py-2 text-xs font-semibold text-navy-700 transition hover:bg-gold-500"><i data-lucide="filter" class="h-3.5 w-3.5"></i>Apply Filters</button>
+          </div>
+          <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <select name="academic_level" class="w-full rounded-lg border border-slate2-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-navy-300">
+              <option value="">All Classes</option>
+              {% for option in academic_level_choices %}
+                <option value="{{ option.value }}" {% if option.value == filter_state.academic_level %}selected{% endif %}>{{ option.label }}</option>
+              {% endfor %}
+            </select>
+            <select name="section" class="w-full rounded-lg border border-slate2-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-navy-300">
+              <option value="">All Sections</option>
+              {% for section in sections %}
+                <option value="{{ section }}" {% if section == filter_state.section %}selected{% endif %}>{{ section }}</option>
+              {% endfor %}
+            </select>
+            <select name="print_mode" class="w-full rounded-lg border border-slate2-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-navy-300">
+              <option value="a4" {% if print_options.print_mode == 'a4' %}selected{% endif %}>A4 Grid Preview</option>
+              <option value="single" {% if print_options.print_mode == 'single' %}selected{% endif %}>Single Card Preview</option>
+            </select>
+          </div>
+        </form>
+
+        <form method="post" action="{% url 'dashboard_print_preview' %}">
+          {% csrf_token %}
+          {% if current_school %}<input type="hidden" name="school" value="{{ current_school.id }}">{% endif %}
+          <input type="hidden" name="q" value="{{ filter_state.q }}">
+          <input type="hidden" name="member_type" value="{{ filter_state.member_type }}">
+          <input type="hidden" name="academic_level" value="{{ filter_state.academic_level }}">
+          <input type="hidden" name="section" value="{{ filter_state.section }}">
+          <input type="hidden" name="front_design" id="front-design-input" value="{{ print_options.front_design }}">
+          <input type="hidden" name="back_design" id="back-design-input" value="{{ print_options.back_design }}">
+
+          <div class="flex flex-col gap-5 xl:flex-row">
+            <div class="space-y-5 xl:w-[420px] xl:flex-shrink-0">
+              <div class="anim-in anim-d2 rounded-xl bg-white p-5 card-shadow">
+                <h2 class="mb-3 flex items-center gap-2 text-sm font-semibold text-navy-500"><i data-lucide="users" class="h-4 w-4 text-gold-500"></i>Student Selection</h2>
+                <div class="space-y-3">
+                  <div class="flex gap-2">
+                    <button type="button" class="batch-btn flex-1 rounded-lg bg-navy-500 px-3 py-2 text-xs font-medium text-white" data-mode="batch">Batch Select</button>
+                    <button type="button" class="batch-btn flex-1 rounded-lg bg-slate2-100 px-3 py-2 text-xs font-medium text-slate2-600 hover:bg-slate2-200" data-mode="individual">Individual</button>
+                  </div>
+                  <div id="batch-panel">
+                    <div class="grid grid-cols-2 gap-2">
+                      <div class="rounded-lg border border-slate2-200 px-3 py-2 text-xs text-slate2-500">Member Type: {{ filter_state.member_type|default:"all"|title }}</div>
+                      <div class="rounded-lg border border-slate2-200 px-3 py-2 text-xs text-slate2-500">Section: {{ filter_state.section|default:"All" }}</div>
+                    </div>
+                    <div class="mt-2 flex items-center justify-between rounded-lg bg-navy-50 px-3 py-2">
+                      <span class="text-xs font-medium text-navy-500">{{ member_count }} members available</span>
+                      <button type="button" id="select-all-visible" class="text-[11px] font-medium text-gold-600 hover:underline">Select All</button>
+                    </div>
+                  </div>
+                  <div id="individual-panel" class="hidden">
+                    <div class="relative">
+                      <i data-lucide="search" class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate2-400"></i>
+                      <input type="text" id="member-search" placeholder="Search selected list..." class="w-full rounded-lg border border-slate2-200 pl-9 pr-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-navy-300">
+                    </div>
+                    <div id="individual-list" class="mt-2 max-h-40 space-y-1.5 overflow-auto">
+                      {% for member in members %}
+                        <label class="member-option flex items-center gap-2 rounded px-2 py-1.5 hover:bg-slate2-50 cursor-pointer" data-name="{{ member.name|lower }}" data-meta="{{ member.unique_identifier|default:''|lower }}">
+                          <input type="checkbox" name="selected_ids" value="{{ member.id }}" class="member-checkbox h-3.5 w-3.5 accent-navy-500">
+                          <span class="text-xs">{{ member.name }} - {{ member.unique_identifier|default:member.role }}</span>
+                        </label>
+                      {% empty %}
+                        <div class="px-2 py-2 text-xs text-slate2-400">No members available.</div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="anim-in anim-d3 rounded-xl bg-white p-5 card-shadow">
+                <h2 class="mb-3 flex items-center gap-2 text-sm font-semibold text-navy-500"><i data-lucide="sliders" class="h-4 w-4 text-gold-500"></i>Print Configuration</h2>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="mb-1 block text-[11px] font-medium text-slate2-500">Card Type</label>
+                    <select name="card_type" class="w-full rounded-lg border border-slate2-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-navy-300">
+                      {% for option in print_card_types %}
+                        <option value="{{ option.value }}" {% if option.value == print_options.card_type %}selected{% endif %}>{{ option.label }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div>
+                    <label class="mb-1 block text-[11px] font-medium text-slate2-500">Orientation</label>
+                    <select name="orientation" id="cfg-orient" class="w-full rounded-lg border border-slate2-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-navy-300">
+                      {% for option in print_orientations %}
+                        <option value="{{ option.value }}" {% if option.value == print_options.orientation %}selected{% endif %}>{{ option.label }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div>
+                    <label class="mb-1 block text-[11px] font-medium text-slate2-500">Calendar</label>
+                    <select name="calendar" id="calendar-select" class="w-full rounded-lg border border-slate2-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-navy-300">
+                      <option value="bs" {% if print_options.calendar == 'bs' %}selected{% endif %}>BS</option>
+                      <option value="ad" {% if print_options.calendar == 'ad' %}selected{% endif %}>AD</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="mb-1 block text-[11px] font-medium text-slate2-500">Valid Till</label>
+                    <input type="text" name="valid_till" value="{{ print_options.valid_till }}" class="w-full rounded-lg border border-slate2-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-navy-300" placeholder="Date value">
+                  </div>
+                  <div class="col-span-2">
+                    <label class="mb-1 block text-[11px] font-medium text-slate2-500">Print Label</label>
+                    <input type="text" name="label" value="{{ print_options.label }}" class="w-full rounded-lg border border-slate2-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-navy-300" placeholder="Student Identity Card">
+                  </div>
+                  <div class="col-span-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                      <label class="mb-1 block text-[11px] font-medium text-slate2-500">Primary</label>
+                      <div class="flex gap-2">
+                        <input type="color" value="{{ print_options.theme_primary }}" data-color-target="theme_primary" class="h-9 w-11 rounded-lg border border-slate2-200 bg-white p-1">
+                        <input type="text" name="theme_primary" value="{{ print_options.theme_primary }}" class="w-full rounded-lg border border-slate2-200 px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-navy-300">
+                      </div>
+                    </div>
+                    <div>
+                      <label class="mb-1 block text-[11px] font-medium text-slate2-500">Light Primary</label>
+                      <div class="flex gap-2">
+                        <input type="color" value="{{ print_options.theme_light_primary }}" data-color-target="theme_light_primary" class="h-9 w-11 rounded-lg border border-slate2-200 bg-white p-1">
+                        <input type="text" name="theme_light_primary" value="{{ print_options.theme_light_primary }}" class="w-full rounded-lg border border-slate2-200 px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-navy-300">
+                      </div>
+                    </div>
+                    <div>
+                      <label class="mb-1 block text-[11px] font-medium text-slate2-500">Secondary</label>
+                      <div class="flex gap-2">
+                        <input type="color" value="{{ print_options.theme_secondary }}" data-color-target="theme_secondary" class="h-9 w-11 rounded-lg border border-slate2-200 bg-white p-1">
+                        <input type="text" name="theme_secondary" value="{{ print_options.theme_secondary }}" class="w-full rounded-lg border border-slate2-200 px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-navy-300">
+                      </div>
+                    </div>
+                    <div>
+                      <label class="mb-1 block text-[11px] font-medium text-slate2-500">Accent</label>
+                      <div class="flex gap-2">
+                        <input type="color" value="{{ print_options.theme_ternary }}" data-color-target="theme_ternary" class="h-9 w-11 rounded-lg border border-slate2-200 bg-white p-1">
+                        <input type="text" name="theme_ternary" value="{{ print_options.theme_ternary }}" class="w-full rounded-lg border border-slate2-200 px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-navy-300">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="anim-in anim-d4 rounded-xl bg-white p-5 card-shadow">
+                <h2 class="mb-1 flex items-center gap-2 text-sm font-semibold text-navy-500"><i data-lucide="palette" class="h-4 w-4 text-gold-500"></i>Card Theme</h2>
+                <p class="mb-3 text-[11px] text-slate2-400">Official wave is the only supported studio design for now.</p>
+                <div class="mb-3">
+                  <div class="mb-2 text-[11px] font-medium text-slate2-500">Front Design</div>
+                  <div class="grid grid-cols-1 gap-2" id="front-themes">
+                    {% for option in print_front_design_choices %}
+                      <button type="button" class="theme-card front-theme overflow-hidden rounded-lg border-2 {% if option.value == print_options.front_design %}border-navy-500{% else %}border-slate2-200{% endif %}" data-theme="{{ option.value }}">
+                        <div class="flex items-center gap-3 bg-slate2-50 p-3 text-left">
+                          <div class="aspect-[3/4] w-14 overflow-hidden rounded-md bg-gradient-to-b from-navy-500 via-navy-400 to-navy-600 p-1">
+                            <div class="flex h-full flex-col items-center justify-center">
+                              <div class="mb-1 h-5 w-5 rounded-full bg-white/30"></div>
+                              <div class="mb-0.5 h-0.5 w-8 rounded bg-gold-400"></div>
+                              <div class="h-0.5 w-6 rounded bg-white/40"></div>
+                            </div>
+                          </div>
+                          <div>
+                            <div class="text-xs font-semibold text-navy-500">{{ option.label }}</div>
+                            <div class="mt-1 text-[11px] text-slate2-400">Recommended official front for school ID printing.</div>
+                          </div>
+                        </div>
+                      </button>
+                    {% endfor %}
+                  </div>
+                </div>
+                <div>
+                  <div class="mb-2 text-[11px] font-medium text-slate2-500">Back Design</div>
+                  <div class="grid grid-cols-1 gap-2" id="back-themes">
+                    {% for option in print_back_design_choices %}
+                      <button type="button" class="theme-card back-theme overflow-hidden rounded-lg border-2 {% if option.value == print_options.back_design %}border-navy-500{% else %}border-slate2-200{% endif %}" data-theme="{{ option.value }}">
+                        <div class="flex items-center gap-3 bg-slate2-50 p-3 text-left">
+                          <div class="aspect-[3/4] w-14 overflow-hidden rounded-md bg-white p-1">
+                            <div class="flex h-full flex-col items-center justify-center gap-0.5">
+                              <div class="h-0.5 w-7 rounded bg-slate2-300"></div>
+                              <div class="h-0.5 w-5 rounded bg-slate2-200"></div>
+                              <div class="mt-0.5 h-4 w-4 rounded bg-slate2-100"></div>
+                              <div class="h-0.5 w-6 rounded bg-slate2-200"></div>
+                            </div>
+                          </div>
+                          <div>
+                            <div class="text-xs font-semibold text-navy-500">{{ option.label }}</div>
+                            <div class="mt-1 text-[11px] text-slate2-400">Recommended official back with QR and terms.</div>
+                          </div>
+                        </div>
+                      </button>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex-1 space-y-5">
+              <div class="anim-in anim-d4 rounded-xl bg-white p-5 card-shadow">
+                <div class="mb-4 flex items-center justify-between">
+                  <h2 class="flex items-center gap-2 text-sm font-semibold text-navy-500"><i data-lucide="eye" class="h-4 w-4 text-gold-500"></i>Live Preview</h2>
+                  <div class="flex gap-1.5">
+                    <button type="button" id="flip-btn" class="flex items-center gap-1 rounded-lg bg-slate2-100 px-3 py-1.5 text-[11px] font-medium text-slate2-600 hover:bg-slate2-200"><i data-lucide="rotate-cw" class="h-3 w-3"></i>Flip</button>
+                  </div>
+                </div>
+                <div id="preview-area" class="flex flex-wrap justify-center gap-6">
+                  <div class="text-center">
+                    <div class="mb-2 text-[10px] font-medium uppercase tracking-wider text-slate2-400">Front</div>
+                    <div id="card-front" class="preview-shell id-card overflow-hidden rounded-xl" style="width:240px;height:360px;background-color:{{ print_options.theme_light_primary }};">
+                      <div id="preview-front-top" class="absolute left-0 right-0 top-0 h-4" style="background-color:{{ print_options.theme_secondary }};"></div>
+                      <div id="preview-front-accent-a" class="absolute left-0 right-0 bottom-8 h-5" style="background-color:{{ print_options.theme_ternary }};"></div>
+                      <div id="preview-front-accent-b" class="absolute left-0 right-0 bottom-0 h-8" style="background-color:{{ print_options.theme_secondary }};"></div>
+                      <div class="relative flex h-full flex-col items-center px-4 pb-14 pt-7 text-center text-slate-700">
+                        <div class="mt-1 mb-2 flex h-12 w-12 items-center justify-center rounded-full border border-slate2-300 bg-white">
+                          {% if preview_card and preview_card.school_logo_url %}
+                            <img src="{{ preview_card.school_logo_url }}" alt="{{ preview_card.school_name }}" class="h-8 w-8 rounded-full object-cover">
+                          {% else %}
+                            <i data-lucide="graduation-cap" class="h-6 w-6 text-slate2-500"></i>
+                          {% endif %}
+                        </div>
+                        <div id="card-school-name" class="mb-0.5 text-center text-[9px] font-bold uppercase tracking-widest" style="color:{{ print_options.theme_secondary }};">
+                          {{ preview_card.school_name|default:current_school.name }}
+                        </div>
+                        <div id="card-type-label" class="mb-3 text-[7px] uppercase tracking-wider text-slate2-500">
+                          {{ preview_card.card_type_label|default:"ID Card" }}
+                        </div>
+                        <div id="card-print-label" class="mb-3 rounded-md px-3 py-1 text-[8px] font-bold uppercase tracking-wide" style="background-color:{{ print_options.theme_ternary }};color:#6b3f00;">
+                          {{ preview_label }}
+                        </div>
+                        <div class="mb-3 flex h-24 w-20 items-center justify-center overflow-hidden rounded-md border border-slate2-300 bg-slate2-200">
+                          {% if preview_card and preview_card.member_photo_url %}
+                            <img src="{{ preview_card.member_photo_url }}" alt="{{ preview_card.member_name }}" class="h-full w-full object-cover">
+                          {% else %}
+                            <i data-lucide="user" class="h-8 w-8 text-slate2-500"></i>
+                          {% endif %}
+                        </div>
+                        <div class="w-full space-y-2 text-[8px]">
+                          <div class="grid grid-cols-[2rem_0.5rem_1fr] text-left">
+                            <span class="font-semibold">Name</span><span>:</span><span id="card-member-name">{{ preview_card.member_name|default:"Select a member" }}</span>
+                          </div>
+                          <div class="grid grid-cols-[2rem_0.5rem_1fr] text-left">
+                            <span class="font-semibold">ID</span><span>:</span><span id="card-member-id">{{ preview_card.member_id_number|default:"ID preview" }}</span>
+                          </div>
+                          <div class="grid grid-cols-[2rem_0.5rem_1fr] text-left">
+                            <span class="font-semibold">DOB</span><span>:</span><span id="card-member-dob">{{ preview_card.member_dob|default:"-" }}</span>
+                          </div>
+                          <div class="grid grid-cols-[2rem_0.5rem_1fr] text-left">
+                            <span class="font-semibold">Class</span><span>:</span><span id="card-member-class">{{ preview_card.member_class_label|default:"-" }}{% if preview_card.member_section %} - {{ preview_card.member_section }}{% endif %}</span>
+                          </div>
+                          <div class="grid grid-cols-[2rem_0.5rem_1fr] text-left">
+                            <span class="font-semibold">Address</span><span>:</span><span id="card-member-address">{% if preview_card and preview_card.member_address_lines %}{{ preview_card.member_address_lines.0 }} {% if preview_card.member_address_lines.1 %}{{ preview_card.member_address_lines.1 }}{% endif %}{% else %}Address will appear here{% endif %}</span>
+                          </div>
+                        </div>
+                        <div id="card-valid-till" class="absolute bottom-2 text-[7px] text-slate2-500">Valid: {{ print_options.valid_till|default:"Set Valid Till" }}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="text-center">
+                    <div class="mb-2 text-[10px] font-medium uppercase tracking-wider text-slate2-400">Back</div>
+                    <div id="card-back" class="preview-shell id-card overflow-hidden rounded-xl" style="width:240px;height:360px;background-color:{{ print_options.theme_light_primary }};">
+                      <div id="preview-back-top" class="absolute left-0 right-0 top-0 h-4" style="background-color:{{ print_options.theme_secondary }};"></div>
+                      <div id="preview-back-accent-a" class="absolute left-0 right-0 bottom-8 h-5" style="background-color:{{ print_options.theme_ternary }};"></div>
+                      <div id="preview-back-accent-b" class="absolute left-0 right-0 bottom-0 h-8" style="background-color:{{ print_options.theme_secondary }};"></div>
+                      <div class="relative flex h-full flex-col px-4 pb-14 pt-7 text-slate2-700">
+                        <div class="mb-4 text-center text-[9px] font-bold uppercase tracking-wider" style="color:{{ print_options.theme_secondary }};">Terms &amp; Conditions</div>
+                        <div id="card-terms-copy" class="flex-1 text-[8px] leading-relaxed text-slate2-600">
+                          {% if preview_card and preview_card.terms_lines %}
+                            {% for line in preview_card.terms_lines %}{% if line %}<div>{{ line }}</div>{% endif %}{% endfor %}
+                          {% else %}
+                            <div>Select a member to preview the back note.</div>
+                          {% endif %}
+                        </div>
+                        <div class="mt-4 flex flex-col items-center">
+                          <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-slate2-100">
+                            {% if preview_card and preview_card.qr_code_url %}
+                              <img src="{{ preview_card.qr_code_url }}" alt="QR code" class="h-10 w-10 object-contain">
+                            {% else %}
+                              <svg viewBox="0 0 24 24" class="h-8 w-8 text-slate2-400">
+                                <rect x="3" y="3" width="7" height="7" fill="currentColor" rx="1" />
+                                <rect x="14" y="3" width="7" height="7" fill="currentColor" rx="1" />
+                                <rect x="3" y="14" width="7" height="7" fill="currentColor" rx="1" />
+                                <rect x="15" y="15" width="5" height="5" fill="currentColor" rx="0.5" />
+                              </svg>
+                            {% endif %}
+                          </div>
+                          <div class="mt-3 w-full border-t border-slate2-200 pt-3 text-center text-[7px] leading-relaxed text-slate2-500">
+                            <div id="card-school-phone">{% if preview_card and preview_card.school_phone %}{{ preview_card.school_phone }}{% else %}School phone not added{% endif %}</div>
+                            <div id="card-school-email">{% if preview_card and preview_card.school_email %}{{ preview_card.school_email }}{% else %}School email not added{% endif %}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="anim-in anim-d5 rounded-xl bg-white p-5 card-shadow-lg">
+                <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <div class="text-xs text-slate2-400"><span class="font-semibold text-navy-500" id="selected-count-label">0 cards</span> ready to generate</div>
+                  <div class="flex flex-wrap gap-2">
+                    <button type="submit" class="action-btn flex items-center gap-2 rounded-lg border-2 border-navy-500 px-5 py-2.5 text-xs font-semibold text-navy-500 transition hover:bg-navy-50"><i data-lucide="eye" class="h-3.5 w-3.5"></i>Preview Selected</button>
+                    <button type="submit" formaction="{% url 'dashboard_print_export_pdf' %}" class="action-btn flex items-center gap-2 rounded-lg bg-navy-500 px-5 py-2.5 text-xs font-semibold text-white transition hover:bg-navy-600"><i data-lucide="file-down" class="h-3.5 w-3.5"></i>Export PDF</button>
+                    <button type="submit" class="action-btn flex items-center gap-2 rounded-lg bg-gold-500 px-5 py-2.5 text-xs font-semibold text-white transition hover:bg-gold-600"><i data-lucide="printer" class="h-3.5 w-3.5"></i>Print Cards</button>
+                  </div>
+                </div>
+
+                <div class="overflow-hidden rounded-xl border border-slate2-200">
+                  <div class="overflow-x-auto">
+                    <table class="w-full min-w-[700px] text-sm">
+                      <thead>
+                        <tr class="border-b border-slate2-200 bg-slate2-50">
+                          <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-navy-400" style="width:48px;"><input type="checkbox" id="master-checkbox"></th>
+                          <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-navy-400">Name</th>
+                          <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-navy-400">Type</th>
+                          <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-navy-400">Class</th>
+                          <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-navy-400">Section</th>
+                          <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-navy-400">Contact</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for member in members %}
+                          <tr class="border-b border-slate2-100 hover:bg-slate2-50 member-row">
+                            <td class="px-5 py-4"><input type="checkbox" name="selected_ids" value="{{ member.id }}" class="member-checkbox h-4 w-4 accent-navy-500"></td>
+                            <td class="px-5 py-4">
+                              <div class="font-semibold text-navy-500">{{ member.name }}</div>
+                              <div class="text-xs text-slate2-400">{{ member.role|default:member.get_member_type_display }}</div>
+                            </td>
+                            <td class="px-5 py-4 text-xs text-slate2-500">{{ member.get_member_type_display }}</td>
+                            <td class="px-5 py-4 text-xs text-slate2-500">{{ member.get_academic_level_display|default:"-" }}</td>
+                            <td class="px-5 py-4 text-xs text-slate2-500">{{ member.section|default:"-" }}</td>
+                            <td class="px-5 py-4">
+                              <div class="text-xs text-navy-500">{{ member.phone }}</div>
+                              <div class="text-xs text-slate2-400">{{ member.email }}</div>
+                            </td>
+                          </tr>
+                        {% empty %}
+                          <tr>
+                            <td colspan="6" class="px-5 py-12 text-center text-sm text-slate2-400">No members match the current filters.</td>
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </main>
+
+      <div id="mobile-nav" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/40" id="mobile-nav-bg"></div>
+        <div class="absolute bottom-0 left-0 top-0 w-64 overflow-auto bg-navy-500 p-5 text-white">
+          <div class="mb-5 flex items-center justify-between">
+            <div class="font-bold">Menu</div><button id="close-mobile-nav" class="rounded p-1 hover:bg-navy-400"><i data-lucide="x" class="h-5 w-5"></i></button>
+          </div>
+          <nav class="space-y-1 text-sm">
+            <a href="{% url 'admin_dashboard' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-navy-200 hover:bg-navy-400/30"><i data-lucide="layout-dashboard" class="h-4 w-4"></i>Dashboard</a>
+            {% if is_super_admin %}
+              <a href="{% url 'admin_dashboard' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-navy-200 hover:bg-navy-400/30"><i data-lucide="school" class="h-4 w-4"></i>Schools</a>
+            {% endif %}
+            <a href="{% url 'dashboard_students' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-navy-200 hover:bg-navy-400/30"><i data-lucide="users" class="h-4 w-4"></i>Students</a>
+            <a href="{% url 'dashboard_teachers' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-navy-200 hover:bg-navy-400/30"><i data-lucide="briefcase" class="h-4 w-4"></i>Teachers / Staff</a>
+            <a href="{% url 'dashboard_print' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg bg-navy-400/40 px-3 py-2.5 font-medium text-white"><i data-lucide="printer" class="h-4 w-4 text-gold-400"></i>ID Card Studio</a>
+            <a href="{% url 'dashboard_bulk_upload' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-navy-200 hover:bg-navy-400/30"><i data-lucide="upload-cloud" class="h-4 w-4"></i>Bulk Upload</a>
+            <a href="{% url 'dashboard_settings' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-navy-200 hover:bg-navy-400/30"><i data-lucide="settings" class="h-4 w-4"></i>Settings</a>
+            <a href="{% url 'dashboard_logout' %}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-navy-200 hover:bg-navy-400/30"><i data-lucide="log-out" class="h-4 w-4"></i>Logout</a>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function updateSelectedCount() {
+      const count = document.querySelectorAll('.member-checkbox:checked').length;
+      const label = document.getElementById('selected-count-label');
+      if (label) label.textContent = `${count} card${count === 1 ? '' : 's'}`;
+    }
+
+    function syncRowState() {
+      document.querySelectorAll('.member-checkbox').forEach((checkbox) => {
+        checkbox.closest('.member-row')?.classList.toggle('bg-navy-50', checkbox.checked);
+      });
+      updateSelectedCount();
+    }
+
+    document.querySelectorAll('.batch-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.batch-btn').forEach((b) => {
+          b.classList.remove('bg-navy-500', 'text-white');
+          b.classList.add('bg-slate2-100', 'text-slate2-600');
+        });
+        btn.classList.remove('bg-slate2-100', 'text-slate2-600');
+        btn.classList.add('bg-navy-500', 'text-white');
+        const mode = btn.dataset.mode;
+        document.getElementById('batch-panel').classList.toggle('hidden', mode !== 'batch');
+        document.getElementById('individual-panel').classList.toggle('hidden', mode !== 'individual');
+      });
+    });
+
+    document.getElementById('select-all-visible')?.addEventListener('click', () => {
+      document.querySelectorAll('.member-checkbox').forEach((checkbox) => { checkbox.checked = true; });
+      const master = document.getElementById('master-checkbox');
+      if (master) master.checked = true;
+      syncRowState();
+    });
+
+    document.getElementById('master-checkbox')?.addEventListener('change', (event) => {
+      document.querySelectorAll('.member-checkbox').forEach((checkbox) => { checkbox.checked = event.target.checked; });
+      syncRowState();
+    });
+
+    document.querySelectorAll('.member-checkbox').forEach((checkbox) => {
+      checkbox.addEventListener('change', syncRowState);
+    });
+
+    document.getElementById('member-search')?.addEventListener('input', (event) => {
+      const query = event.target.value.trim().toLowerCase();
+      document.querySelectorAll('.member-option').forEach((option) => {
+        const haystack = `${option.dataset.name} ${option.dataset.meta}`;
+        option.classList.toggle('hidden', Boolean(query) && !haystack.includes(query));
+      });
+    });
+
+    function updatePreviewFromForm() {
+      const light = document.querySelector('input[name="theme_light_primary"]')?.value || '#f7f5f0';
+      const secondary = document.querySelector('input[name="theme_secondary"]')?.value || '#1a1a2a';
+      const ternary = document.querySelector('input[name="theme_ternary"]')?.value || '#c9a84c';
+      const label = document.querySelector('input[name="label"]')?.value || 'Student Identity Card';
+      const validTill = document.querySelector('input[name="valid_till"]')?.value || 'Set Valid Till';
+      const cardType = document.querySelector('select[name="card_type"] option:checked')?.textContent || 'ID Card';
+      const orientation = document.getElementById('cfg-orient')?.value || 'portrait';
+
+      document.getElementById('preview-front-top')?.style.setProperty('background-color', secondary);
+      document.getElementById('preview-front-accent-a')?.style.setProperty('background-color', ternary);
+      document.getElementById('preview-front-accent-b')?.style.setProperty('background-color', secondary);
+      document.getElementById('preview-back-top')?.style.setProperty('background-color', secondary);
+      document.getElementById('preview-back-accent-a')?.style.setProperty('background-color', ternary);
+      document.getElementById('preview-back-accent-b')?.style.setProperty('background-color', secondary);
+      document.getElementById('card-front')?.style.setProperty('background-color', light);
+      document.getElementById('card-back')?.style.setProperty('background-color', light);
+      document.getElementById('card-school-name')?.style.setProperty('color', secondary);
+      document.getElementById('card-print-label')?.style.setProperty('background-color', ternary);
+      if (document.getElementById('card-print-label')) document.getElementById('card-print-label').textContent = label;
+      if (document.getElementById('card-type-label')) document.getElementById('card-type-label').textContent = cardType;
+      if (document.getElementById('card-valid-till')) document.getElementById('card-valid-till').textContent = `Valid: ${validTill}`;
+
+      document.querySelectorAll('.preview-shell').forEach((card) => {
+        card.classList.toggle('landscape', orientation === 'landscape');
+      });
+    }
+
+    document.querySelectorAll('input[type="color"][data-color-target]').forEach((picker) => {
+      const target = document.querySelector(`input[name="${picker.dataset.colorTarget}"]`);
+      if (!target) return;
+      picker.addEventListener('input', () => {
+        target.value = picker.value;
+        updatePreviewFromForm();
+      });
+      target.addEventListener('input', () => {
+        const value = target.value.trim();
+        if (/^#([0-9a-fA-F]{6})$/.test(value)) {
+          picker.value = value;
+          updatePreviewFromForm();
+        }
+      });
+    });
+
+    document.querySelectorAll('input[name="label"], input[name="valid_till"], input[name="theme_primary"], input[name="theme_light_primary"], input[name="theme_secondary"], input[name="theme_ternary"], select[name="card_type"], select[name="orientation"]').forEach((field) => {
+      field.addEventListener('input', updatePreviewFromForm);
+      field.addEventListener('change', updatePreviewFromForm);
+    });
+
+    document.querySelectorAll('.front-theme').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.getElementById('front-design-input').value = btn.dataset.theme;
+        document.querySelectorAll('.front-theme').forEach((b) => {
+          b.classList.remove('border-navy-500');
+          b.classList.add('border-slate2-200');
+        });
+        btn.classList.remove('border-slate2-200');
+        btn.classList.add('border-navy-500');
+      });
+    });
+
+    document.querySelectorAll('.back-theme').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.getElementById('back-design-input').value = btn.dataset.theme;
+        document.querySelectorAll('.back-theme').forEach((b) => {
+          b.classList.remove('border-navy-500');
+          b.classList.add('border-slate2-200');
+        });
+        btn.classList.remove('border-slate2-200');
+        btn.classList.add('border-navy-500');
+      });
+    });
+
+    document.getElementById('flip-btn')?.addEventListener('click', () => {
+      const area = document.getElementById('preview-area');
+      if (!area || area.children.length < 2) return;
+      area.insertBefore(area.lastElementChild, area.firstElementChild);
+    });
+
+    document.getElementById('mobile-menu-btn')?.addEventListener('click', () => {
+      document.getElementById('mobile-nav').classList.remove('hidden');
+    });
+    document.getElementById('close-mobile-nav')?.addEventListener('click', () => {
+      document.getElementById('mobile-nav').classList.add('hidden');
+    });
+    document.getElementById('mobile-nav-bg')?.addEventListener('click', () => {
+      document.getElementById('mobile-nav').classList.add('hidden');
+    });
+
+    syncRowState();
+    updatePreviewFromForm();
+    lucide.createIcons();
+  </script>
+</body>
+</html>

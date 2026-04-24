@@ -66,6 +66,9 @@
           {% if student.bio %}
             <p class="mx-auto mt-4 max-w-[28rem] text-sm leading-7 text-slate-600">{{ student.bio }}</p>
           {% endif %}
+          {% if member_unique_id %}
+            <p class="mt-3 inline-flex rounded-full bg-slate-100 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-600">ID: {{ member_unique_id }}</p>
+          {% endif %}
         </div>
 
         <div class="mt-6 grid grid-cols-2 gap-3">
@@ -74,6 +77,22 @@
         </div>
 
         <div class="mt-6 space-y-3">
+          {% if school_name %}
+            <div class="flex items-center gap-4 rounded-2xl border border-[var(--line)] bg-[var(--soft)] px-4 py-4">
+              <div class="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-slate-900 text-white">
+                {% if school_logo_url %}
+                  <img src="{{ school_logo_url }}" alt="{{ school_name }}" class="h-full w-full object-cover">
+                {% else %}
+                  <i data-lucide="building-2" class="h-5 w-5"></i>
+                {% endif %}
+              </div>
+              <div class="min-w-0">
+                <div class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">School</div>
+                <div class="mt-1 text-sm font-semibold text-slate-900">{{ school_name }}</div>
+                {% if school_address %}<div class="mt-1 text-xs text-slate-500">{{ school_address }}</div>{% endif %}
+              </div>
+            </div>
+          {% endif %}
           {% if student.phone %}
             <a href="{{ phone_action_url }}" class="hover-up flex items-center gap-4 rounded-2xl border border-[var(--line)] bg-[var(--soft)] px-4 py-4">
               <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600"><i data-lucide="phone" class="h-5 w-5"></i></div>
@@ -110,6 +129,16 @@
               </div>
             </div>
           {% endif %}
+          {% if emergency_contact_name or emergency_contact_phone %}
+            <div class="flex items-center gap-4 rounded-2xl border border-[var(--line)] bg-[var(--soft)] px-4 py-4">
+              <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-100 text-red-600"><i data-lucide="shield-plus" class="h-5 w-5"></i></div>
+              <div class="min-w-0">
+                <div class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Emergency Contact</div>
+                {% if emergency_contact_name %}<div class="mt-1 text-sm font-semibold text-slate-900">{{ emergency_contact_name }}</div>{% endif %}
+                {% if emergency_contact_phone %}<div class="mt-1 text-sm text-slate-700">{{ emergency_contact_phone }}</div>{% endif %}
+              </div>
+            </div>
+          {% endif %}
         </div>
 
         {% if social_links %}
@@ -126,8 +155,8 @@
         {% endif %}
 
         <div class="mt-6 grid grid-cols-2 gap-3">
-          {% if student.show_portfolio and student.user_type != 'general' %}
-            <a href="{{ portfolio_action_url }}" class="hover-up rounded-2xl border border-slate-200 px-4 py-3 text-center text-sm font-semibold text-slate-700">Portfolio</a>
+          {% if map_url %}
+            <a href="{{ map_action_url }}" class="hover-up rounded-2xl border border-slate-200 px-4 py-3 text-center text-sm font-semibold text-slate-700">Navigate</a>
           {% else %}
             <span></span>
           {% endif %}

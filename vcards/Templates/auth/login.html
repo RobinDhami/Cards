@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>School Identity Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-100 flex items-center justify-center px-4 py-10">
+  <div class="w-full max-w-md rounded-3xl bg-white p-8 shadow-xl">
+    <p class="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">School Identity Platform</p>
+    <h1 class="mt-3 text-3xl font-bold text-slate-900">Login</h1>
+    <p class="mt-3 text-sm text-slate-600">Use your school admin, teacher, or super admin account to continue.</p>
+
+    {% if messages %}
+      <div class="mt-5 space-y-2">
+        {% for message in messages %}
+          <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <form method="post" class="mt-6 space-y-4">
+      {% csrf_token %}
+      <div>
+        <label class="mb-1 block text-sm font-semibold text-slate-700">Username</label>
+        <input type="text" name="username" required class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-slate-500 focus:outline-none">
+      </div>
+      <div>
+        <label class="mb-1 block text-sm font-semibold text-slate-700">Password</label>
+        <input type="password" name="password" required class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-slate-500 focus:outline-none">
+      </div>
+      <button type="submit" class="w-full rounded-xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800">Login</button>
+    </form>
+
+    <div class="mt-4 text-sm text-slate-500">
+      Public visitors should use QR or contact card links instead of this login page.
+    </div>
+  </div>
+</body>
+</html>

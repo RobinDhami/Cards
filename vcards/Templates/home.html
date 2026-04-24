@@ -281,9 +281,9 @@
                 <a href="#servives" class="nav-link text-white font-medium text-sm tracking-wide">Services</a>
                 <a href="#contact" class="nav-link text-white font-medium text-sm tracking-wide">Contact</a>
                 <a href="#products" class="nav-link text-white font-medium text-sm tracking-wide">Products</a>
-                <button onclick="scrollToSection('pricing')" class="nav-cta-btn text-white px-8 py-3 rounded-full font-bold text-sm tracking-wide shadow-lg ml-4">
-                    Get Your Card
-                </button>
+                <a href="{% url 'dashboard_login' %}" class="nav-cta-btn text-white px-8 py-3 rounded-full font-bold text-sm tracking-wide shadow-lg ml-4 inline-block">
+                    Login
+                </a>
             </div>
             
             <!-- Mobile menu button -->
@@ -315,12 +315,12 @@
                 </p>
 
                 <div class="flex flex-col sm:flex-row gap-4">
-                    <button onclick="scrollToSection('products')" class="bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-blue-500 hover:to-cyan-400 text-black px-8 py-4 rounded-xl font-bold text-lg shadow-2xl hover:shadow-3xl transition-all duration-300">
+                    <a href="#pricing" class="inline-block bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-blue-500 hover:to-cyan-400 text-black px-8 py-4 rounded-xl font-bold text-lg shadow-2xl hover:shadow-3xl transition-all duration-300 text-center">
                         Order Your Card Today
-                    </button>
-                    <button onclick="scrollToSection('how-it-works')" class="border border-cyan-400 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-cyan-400/20 transition-all duration-300">
+                    </a>
+                    <a href="#features" class="inline-block border border-cyan-400 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-cyan-400/20 transition-all duration-300 text-center">
                         See How It Works
-                    </button>
+                    </a>
                 </div>
             </div>
 

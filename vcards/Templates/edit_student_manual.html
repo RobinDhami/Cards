@@ -1,338 +1,420 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="en" class="h-full">
 <head>
-  <meta charset="UTF-8" />
-  <title>Edit Profile Settings</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Student</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: '#0f1d3d',
+            navyLight: '#1a2d5a',
+            gold: '#c9a84c',
+            goldLight: '#e8d9a0',
+            slate50: '#f7f8fb',
+            slate100: '#eef0f5',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    html, body { height: 100%; margin: 0; }
+    body { font-family: 'DM Sans', sans-serif; }
+    .font-display { font-family: 'Playfair Display', serif; }
+    .form-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #dde1ea;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: 'DM Sans', sans-serif;
+      background: #fff;
+      color: #1a2d5a;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: #c9a84c;
+      box-shadow: 0 0 0 3px rgba(201,168,76,0.15);
+    }
+    .form-input::placeholder { color: #a0a8be; }
+    .form-input[readonly] { background: #f1f3f8; color: #7a82a0; cursor: not-allowed; }
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1a2d5a;
+      margin-bottom: 6px;
+      letter-spacing: 0.01em;
+    }
+    .section-card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 1px 4px rgba(15,29,61,0.06), 0 4px 16px rgba(15,29,61,0.04);
+      padding: 28px 28px 24px;
+      border: 1px solid #eef0f5;
+    }
+    @media (max-width: 640px) {
+      .section-card { padding: 20px 16px 18px; }
+    }
+    .upload-zone {
+      border: 2px dashed #dde1ea;
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      background: #fafbfd;
+    }
+    .upload-zone:hover { border-color: #c9a84c; background: #fffdf5; }
+    .upload-zone.has-file { border-color: #c9a84c; border-style: solid; background: #fffdf5; }
+    .choice-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      border: 1px solid #dde1ea;
+      border-radius: 999px;
+      padding: .45rem .8rem;
+      font-size: 12px;
+      font-weight: 600;
+      color: #1a2d5a;
+      background: white;
+    }
+    .choice-chip input { accent-color: #c9a84c; }
+    .toast-msg {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #0f1d3d;
+      color: #fff;
+      padding: 12px 28px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 100;
+      box-shadow: 0 8px 24px rgba(15,29,61,0.25);
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    .toast-msg.show { opacity: 1; }
+  </style>
 </head>
-<body class="bg-slate-100 text-slate-900">
-  <div class="max-w-6xl mx-auto px-4 py-6">
-    <div class="flex flex-col lg:flex-row gap-6">
-      <aside class="lg:w-80">
-        <div class="bg-slate-900 text-white rounded-3xl p-6 shadow-xl sticky top-6">
-          <p class="text-sm uppercase tracking-[0.2em] text-slate-300 mb-2">Profile Settings</p>
-          <h1 class="text-3xl font-bold leading-tight">{{ student.name }}</h1>
-          <p class="mt-3 text-slate-300">
-            Manage public card content, portfolio access, organization details, and profile visibility from one place.
-          </p>
+<body class="h-full overflow-auto bg-slate50">
+  <div id="app-wrapper" class="min-h-full w-full pb-12">
+    <div class="relative w-full overflow-hidden bg-navy">
+      <div class="absolute inset-0 opacity-10" style="background:radial-gradient(ellipse at 80% 20%, #c9a84c 0%, transparent 60%)"></div>
+      <div class="relative z-10 mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14">
+        <div class="mb-3 flex items-center gap-2"><span class="inline-block h-6 w-1.5 rounded bg-gold"></span><span class="text-xs font-semibold uppercase tracking-widest text-gold">Student Editor</span></div>
+        <h1 class="font-display text-2xl font-bold text-white sm:text-3xl">{{ student.name }}</h1>
+        <p class="mt-2 text-sm text-slate-300" style="color:#b0b8d0">Review and update student profile data below. All fields are editable unless marked read-only.</p>
+      </div>
+    </div>
 
-          <div class="mt-6 space-y-3 text-sm">
-            <div class="rounded-2xl bg-white/10 px-4 py-3">
-              <div class="text-slate-300">Profile Type</div>
-              <div class="font-semibold">
-                {% if student.profile_category == 'professional' %}Independent Professional{% else %}School / College Profile{% endif %}
-              </div>
+    <form method="post" enctype="multipart/form-data" class="relative z-20 mx-auto -mt-4 max-w-4xl space-y-6 px-4 sm:px-6">
+      {% csrf_token %}
+
+      {% if messages %}
+        <div class="space-y-3">
+          {% for message in messages %}
+            <div class="rounded-xl border px-4 py-3 text-sm {% if message.tags == 'error' %}border-red-200 bg-red-50 text-red-700{% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-700{% else %}border-emerald-200 bg-emerald-50 text-emerald-700{% endif %}">
+              {{ message }}
             </div>
-            <div class="rounded-2xl bg-white/10 px-4 py-3">
-              <div class="text-slate-300">Public Access</div>
-              <div class="font-semibold">Contact card first</div>
-            </div>
-            <div class="rounded-2xl bg-white/10 px-4 py-3">
-              <div class="text-slate-300">Organization</div>
-              <div class="font-semibold">{{ student.college.name|default:student.organization_name|default:"Personal Brand" }}</div>
-            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="section-card" style="animation: fadeUp 0.4s ease both">
+        <div class="mb-5 flex items-center gap-2">
+          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-navy"><i data-lucide="user" class="h-4 w-4 text-gold"></i></div>
+          <h2 class="text-base font-semibold text-navy">Identity</h2>
+        </div>
+        <div class="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
+          <div>
+            <label class="form-label">Full Name</label>
+            <input class="form-input" name="name" value="{{ student.name }}" placeholder="Full name">
           </div>
-
-          <div class="mt-6 space-y-2">
-            <a href="{% url 'student_owner_dashboard' student.id %}" class="block w-full rounded-xl bg-white text-slate-900 px-4 py-3 font-semibold text-center">Owner Dashboard</a>
-            <a href="{% url 'contact_card' student.id %}" class="block w-full rounded-xl border border-white/30 px-4 py-3 font-semibold text-center">View Contact Card</a>
-            <a href="{% url 'print_card_preview' student.id %}" class="block w-full rounded-xl border border-white/30 px-4 py-3 font-semibold text-center">Print Preview</a>
-            {% if student.user_type != 'general' %}
-              <a href="{% url 'profile' student.id %}" class="block w-full rounded-xl border border-white/30 px-4 py-3 font-semibold text-center">Portfolio Coming Soon</a>
-            {% endif %}
-            <a href="{% url 'download_vcard' student.id %}" class="block w-full rounded-xl border border-white/30 px-4 py-3 font-semibold text-center">Download vCard</a>
-            <form method="post" action="{% url 'reset_student_password' student.id %}">
-              {% csrf_token %}
-              <input type="hidden" name="next" value="{% url 'edit_student_manual' student.id %}">
-              <button type="submit" class="block w-full rounded-xl border border-white/30 px-4 py-3 font-semibold text-center">Reset Login Password</button>
-            </form>
-            <a href="{% url 'logout_student_edit' student.id %}" class="block w-full rounded-xl border border-white/30 px-4 py-3 font-semibold text-center">Logout</a>
+          <div>
+            <label class="form-label">Username</label>
+            <input class="form-input" name="username" value="{{ student.username }}" placeholder="Username">
           </div>
-
-          <div class="mt-6 text-xs text-slate-300 leading-5">
-            School profiles must use a registered school. Independent professionals can type any organization, including a school or college name, without linking to the registered school list.
+          <div>
+            <label class="form-label">Unique ID</label>
+            <input class="form-input" value="{{ student.unique_identifier }}" readonly>
+          </div>
+          {% if can_manage_school_fields %}
+            <div>
+              <label class="form-label">Member Type</label>
+              <select class="form-input" id="member-type-select" name="member_type">
+                {% for value, label in member_type_choices %}
+                  <option value="{{ value }}" {% if student.member_type == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          {% else %}
+            <input type="hidden" id="member-type-select" value="{{ student.member_type }}">
+          {% endif %}
+          <div>
+            <label class="form-label">Role</label>
+            <input class="form-input" name="role" value="{{ student.role|default:'' }}" placeholder="Role">
+          </div>
+          {% if can_manage_school_fields %}
+            <div>
+              <label class="form-label">School / College</label>
+              <select class="form-input" name="college">
+                <option value="">Choose a registered school</option>
+                {% for college in colleges %}
+                  <option value="{{ college.id }}" {% if student.college_id == college.id %}selected{% endif %}>{{ college.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          {% endif %}
+          <div class="sm:col-span-2">
+            <label class="form-label">Organization / Brand Name</label>
+            <input class="form-input" name="organization_name" value="{{ student.organization_name|default:'' }}" placeholder="Organization">
           </div>
         </div>
-      </aside>
+      </div>
 
-      <main class="flex-1">
-        {% if messages %}
-          {% for message in messages %}
-            <div class="mb-4 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-blue-800 shadow-sm">{{ message }}</div>
-          {% endfor %}
-        {% endif %}
+      <div id="academic-data-section" class="section-card" style="animation: fadeUp 0.5s ease both">
+        <div class="mb-5 flex items-center gap-2">
+          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-navy"><i data-lucide="book-open" class="h-4 w-4 text-gold"></i></div>
+          <h2 class="text-base font-semibold text-navy">Academic Data</h2>
+        </div>
+        <div class="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-3">
+          <div>
+            <label class="form-label">Class / Grade</label>
+            <select class="form-input" name="academic_level">
+              <option value="">Select class / grade</option>
+              {% for value, label in academic_level_choices %}
+                <option value="{{ value }}" {% if student.academic_level == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Section</label>
+            <input class="form-input" name="section" value="{{ student.section|default:'' }}" placeholder="Section">
+          </div>
+          <div>
+            <label class="form-label">Roll Number</label>
+            <input class="form-input" name="roll_number" value="{{ student.roll_number|default:'' }}" placeholder="Roll #">
+          </div>
+          <div>
+            <label class="form-label">Gender</label>
+            <select class="form-input" name="gender">
+              <option value="">Not set</option>
+              {% for value, label in gender_choices %}
+                <option value="{{ value }}" {% if student.gender == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Blood Group</label>
+            <input class="form-input" name="blood_group" value="{{ student.blood_group|default:'' }}" placeholder="Blood group">
+          </div>
+        </div>
+      </div>
 
-        <form method="POST" enctype="multipart/form-data" class="space-y-6">
-          {% csrf_token %}
-
-          <section class="bg-white rounded-3xl p-6 shadow-lg">
-            <h2 class="text-xl font-bold mb-5">Identity & Organization</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-semibold mb-1">Profile Category</label>
-                <select name="profile_category" id="profile-category" class="w-full rounded-xl border border-slate-300 px-4 py-3">
-                  <option value="school" {% if student.profile_category == 'school' %}selected{% endif %}>School / College Profile</option>
-                  <option value="professional" {% if student.profile_category == 'professional' %}selected{% endif %}>Independent Professional</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-sm font-semibold mb-1">Profile Tier</label>
-                <select name="user_type" class="w-full rounded-xl border border-slate-300 px-4 py-3">
-                  <option value="general" {% if student.user_type == 'general' %}selected{% endif %}>General - Contact Card Only</option>
-                  <option value="vip" {% if student.user_type == 'vip' %}selected{% endif %}>VIP - Contact Card + Portfolio</option>
-                  <option value="premium" {% if student.user_type == 'premium' %}selected{% endif %}>Premium - Extended Portfolio Access</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-sm font-semibold mb-1">Full Name</label>
-                <input type="text" name="name" value="{{ student.name }}" class="w-full rounded-xl border border-slate-300 px-4 py-3">
-              </div>
-              <div>
-                <label class="block text-sm font-semibold mb-1">Username</label>
-                <input type="text" name="username" value="{{ student.username }}" class="w-full rounded-xl border border-slate-300 px-4 py-3">
-              </div>
-              <div>
-                <label class="block text-sm font-semibold mb-1">Role / Designation</label>
-                <select name="school_role" id="school-role-select" class="w-full rounded-xl border border-slate-300 px-4 py-3 {% if student.profile_category == 'professional' %}hidden{% endif %}">
-                  {% if student.profile_category == 'school' and student.role and student.role not in school_role_choices %}
-                    <option value="{{ student.role }}" selected>{{ student.role }} (Current)</option>
-                  {% endif %}
-                  {% for role_name in school_role_choices %}
-                    <option value="{{ role_name }}" {% if student.role == role_name %}selected{% endif %}>{{ role_name }}</option>
-                  {% endfor %}
-                </select>
-                <input type="text" name="role" id="custom-role-input" value="{% if student.profile_category == 'professional' or student.role not in school_role_choices %}{{ student.role|default:'' }}{% endif %}" class="w-full rounded-xl border border-slate-300 px-4 py-3 {% if student.profile_category != 'professional' %}hidden{% endif %}" placeholder="Consultant, Designer, Doctor">
-              </div>
-              <div id="edit-college-wrap">
-                <label class="block text-sm font-semibold mb-1">Registered School / College</label>
-                <select name="college" id="registered-college" class="w-full rounded-xl border border-slate-300 px-4 py-3">
-                  <option value="">Choose a registered school</option>
-                  {% for college in colleges %}
-                    <option value="{{ college.id }}" {% if student.college_id == college.id %}selected{% endif %}>{{ college.name }}</option>
-                  {% endfor %}
-                </select>
-                <p class="mt-1 text-xs text-slate-500">Required only for school-linked profiles.</p>
-              </div>
-              <div class="md:col-span-2">
-                <label class="block text-sm font-semibold mb-1">Typed Organization / Brand Name</label>
-                <input type="text" name="organization_name" value="{{ student.organization_name|default:'' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3" placeholder="Private school, clinic, studio, consultancy, academy">
-                <p class="mt-1 text-xs text-slate-500">Independent professionals can type any school, college, business, or personal brand name here.</p>
-              </div>
+      <div class="section-card" style="animation: fadeUp 0.6s ease both">
+        <div class="mb-5 flex items-center gap-2">
+          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-navy"><i data-lucide="phone" class="h-4 w-4 text-gold"></i></div>
+          <h2 class="text-base font-semibold text-navy">Contact</h2>
+        </div>
+        <div class="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
+          <div>
+            <label class="form-label">Email</label>
+            <input class="form-input" type="email" name="email" value="{{ student.email }}" placeholder="Email">
+          </div>
+          <div>
+            <label class="form-label">Phone</label>
+            <input class="form-input" type="tel" name="phone" value="{{ student.phone }}" placeholder="Phone">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="form-label">Address</label>
+            <input class="form-input" name="address" value="{{ student.address|default:'' }}" placeholder="Full address">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="form-label">Bio / Note</label>
+            <textarea class="form-input" rows="2" name="bio" placeholder="Short bio or note">{{ student.bio|default:'' }}</textarea>
+          </div>
+          <div>
+            <label class="form-label">Emergency Contact Name</label>
+            <input class="form-input" name="emergency_contact_name" value="{{ student.emergency_contact_name|default:'' }}" placeholder="Name">
+          </div>
+          <div>
+            <label class="form-label">Emergency Contact Phone</label>
+            <input class="form-input" type="tel" name="emergency_contact_phone" value="{{ student.emergency_contact_phone|default:'' }}" placeholder="Phone">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="form-label">Map / Navigation Link</label>
+            <div class="relative">
+              <input class="form-input pr-10" name="map_url" value="{{ student.map_url|default:'' }}" placeholder="Google Maps link">
+              <i data-lucide="map-pin" class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gold"></i>
             </div>
-          </section>
+          </div>
+        </div>
+      </div>
 
-          <section class="bg-white rounded-3xl p-6 shadow-lg">
-            <h2 class="text-xl font-bold mb-5">Basic Profile Content</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-semibold mb-1">Email</label>
-                <input type="email" name="email" value="{{ student.email }}" class="w-full rounded-xl border border-slate-300 px-4 py-3">
-              </div>
-              <div>
-                <label class="block text-sm font-semibold mb-1">Phone</label>
-                <input type="text" name="phone" value="{{ student.phone }}" class="w-full rounded-xl border border-slate-300 px-4 py-3">
-              </div>
-              <div class="md:col-span-2">
-                <label class="block text-sm font-semibold mb-1">Address</label>
-                <input type="text" name="address" value="{{ student.address|default:'' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3">
-              </div>
-              <div class="md:col-span-2">
-                <label class="block text-sm font-semibold mb-1">Bio</label>
-                <textarea name="bio" rows="3" class="w-full rounded-xl border border-slate-300 px-4 py-3">{{ student.bio|default:'' }}</textarea>
-              </div>
-              <div class="md:col-span-2">
-                <label class="block text-sm font-semibold mb-1">Intro</label>
-                <textarea name="about_intro" rows="3" class="w-full rounded-xl border border-slate-300 px-4 py-3">{{ student.about_intro|default:'' }}</textarea>
-              </div>
-              <div>
-                <label class="block text-sm font-semibold mb-1">Featured About Block</label>
-                <textarea name="about_featured" rows="3" class="w-full rounded-xl border border-slate-300 px-4 py-3">{{ student.about_featured|default:'' }}</textarea>
-              </div>
-              <div>
-                <label class="block text-sm font-semibold mb-1">Current Focus</label>
-                <textarea name="about_current" rows="3" class="w-full rounded-xl border border-slate-300 px-4 py-3">{{ student.about_current|default:'' }}</textarea>
-              </div>
-            </div>
-          </section>
-
-          <section class="bg-white rounded-3xl p-6 shadow-lg">
-            <h2 class="text-xl font-bold mb-5">Visibility & Card Settings</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div class="rounded-2xl border border-slate-200 p-4">
-                <label class="flex items-start gap-3">
-                  <input type="checkbox" name="show_contact_card" class="mt-1 h-4 w-4" {% if student.show_contact_card %}checked{% endif %}>
-                  <span>
-                    <span class="block font-semibold">Show Contact Card</span>
-                    <span class="block text-sm text-slate-500">Keep the quick card public with phone, email, social links, and vCard download.</span>
-                  </span>
-                </label>
-              </div>
-              <div class="rounded-2xl border border-slate-200 p-4">
-                <label class="flex items-start gap-3">
-                  <input type="checkbox" name="show_portfolio" class="mt-1 h-4 w-4" {% if student.show_portfolio %}checked{% endif %}>
-                  <span>
-                    <span class="block font-semibold">Show Portfolio</span>
-                    <span class="block text-sm text-slate-500">Useful for VIP or Premium profiles that need a richer public presentation.</span>
-                  </span>
-                </label>
-              </div>
-              <div>
-                <label class="block text-sm font-semibold mb-1">Contact Card Template</label>
-                <select name="contact_template" class="w-full rounded-xl border border-slate-300 px-4 py-3">
-                  {% for option in contact_template_choices %}
-                    <option value="{{ option.value }}" {% if option.value == student.contact_template %}selected{% endif %}>{{ option.label }}</option>
-                  {% endfor %}
-                </select>
-                <div class="mt-2 space-y-1 text-xs text-slate-500">
-                  {% for option in contact_template_choices %}
-                    <div><span class="font-semibold text-slate-700">{{ option.label }}:</span> {{ option.description }}</div>
-                  {% endfor %}
-                </div>
-              </div>
-              <div>
-                <label class="block text-sm font-semibold mb-1">Portfolio Template</label>
-                <input type="text" value="Coming soon" disabled class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-slate-50">
-                <p class="mt-1 text-xs text-slate-500">We are focusing on contact card quality first.</p>
-              </div>
-            </div>
-          </section>
-
-          <section class="bg-white rounded-3xl p-6 shadow-lg">
-            <h2 class="text-xl font-bold mb-5">Print Card & QR</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label class="block text-sm font-semibold mb-1">Print Template</label>
-                <select name="print_template" class="w-full rounded-xl border border-slate-300 px-4 py-3">
-                  {% for option in print_template_choices %}
-                    <option value="{{ option.value }}" {% if option.value == student.print_template %}selected{% endif %}>{{ option.label }}</option>
-                  {% endfor %}
-                </select>
-                <p class="mt-1 text-xs text-slate-500">This controls the printable card design, separate from the mobile contact card.</p>
-                <div class="mt-2 space-y-1 text-xs text-slate-500">
-                  {% for option in print_template_choices %}
-                    <div><span class="font-semibold text-slate-700">{{ option.label }}:</span> {{ option.description }}</div>
-                  {% endfor %}
-                </div>
-              </div>
-              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div class="text-sm font-semibold text-slate-800">Printing flow</div>
-                <div class="mt-2 text-sm text-slate-600">Choose a print template, review the QR print preview, and use custom notes when the client wants something special.</div>
-                <a href="{% url 'print_card_preview' student.id %}" class="mt-4 inline-flex rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Open Print Preview</a>
-              </div>
-              <div class="md:col-span-2">
-                <label class="block text-sm font-semibold mb-1">Custom Print Notes</label>
-                <textarea name="print_custom_note" rows="4" class="w-full rounded-xl border border-slate-300 px-4 py-3" placeholder="Custom logo placement, brand colors, front/back request, finishing, paper notes...">{{ student.print_custom_note|default:'' }}</textarea>
-              </div>
-            </div>
-          </section>
-
-          <section class="bg-white rounded-3xl p-6 shadow-lg">
-            <h2 class="text-xl font-bold mb-5">Public Links & Social Buttons</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-              <input type="url" name="website" value="{{ student.website|default:'' }}" placeholder="Website URL" class="w-full rounded-xl border border-slate-300 px-4 py-3">
-              <input type="url" name="linkedin" value="{{ student.linkedin|default:'' }}" placeholder="LinkedIn URL" class="w-full rounded-xl border border-slate-300 px-4 py-3">
-              <input type="url" name="facebook" value="{{ student.facebook|default:'' }}" placeholder="Facebook URL" class="w-full rounded-xl border border-slate-300 px-4 py-3">
-              <input type="url" name="instagram" value="{{ student.instagram|default:'' }}" placeholder="Instagram URL" class="w-full rounded-xl border border-slate-300 px-4 py-3">
-              <input type="url" name="twitter" value="{{ student.twitter|default:'' }}" placeholder="Twitter URL" class="w-full rounded-xl border border-slate-300 px-4 py-3">
-              <input type="url" name="youtube" value="{{ student.youtube|default:'' }}" placeholder="YouTube URL" class="w-full rounded-xl border border-slate-300 px-4 py-3">
-              <input type="url" name="github" value="{{ student.github|default:'' }}" placeholder="GitHub URL" class="w-full rounded-xl border border-slate-300 px-4 py-3">
-              <input type="url" name="figma" value="{{ student.figma|default:'' }}" placeholder="Figma URL" class="w-full rounded-xl border border-slate-300 px-4 py-3">
-              <input type="url" name="upwork" value="{{ student.upwork|default:'' }}" placeholder="Upwork URL" class="w-full rounded-xl border border-slate-300 px-4 py-3">
-              <input type="url" name="messenger" value="{{ student.messenger|default:'' }}" placeholder="Messenger URL" class="w-full rounded-xl border border-slate-300 px-4 py-3">
-              <input type="text" name="whatsapp" value="{{ student.whatsapp|default:'' }}" placeholder="WhatsApp Number" class="w-full rounded-xl border border-slate-300 px-4 py-3">
-            </div>
+      <div class="section-card" style="animation: fadeUp 0.65s ease both">
+        <div class="mb-5 flex items-center gap-2">
+          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-navy"><i data-lucide="share-2" class="h-4 w-4 text-gold"></i></div>
+          <h2 class="text-base font-semibold text-navy">Digital Card Settings</h2>
+        </div>
+        <div class="space-y-5">
+          <label class="flex items-center justify-between rounded-xl border border-slate100 bg-slate50 px-4 py-3">
             <div>
-              <label class="block text-sm font-semibold mb-2">Show These Social Buttons On The Card</label>
-              <div class="flex flex-wrap gap-3">
-                {% for soc in social_choices %}
-                  <label class="inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 text-sm">
-                    <input type="checkbox" name="social_stack" value="{{ soc }}" {% if soc in selected_socials %}checked{% endif %}>
-                    <span class="capitalize">{{ soc }}</span>
-                  </label>
-                {% endfor %}
-              </div>
+              <div class="text-sm font-semibold text-navyLight">Public contact card</div>
+              <div class="mt-1 text-xs text-slate-500">Turn this on to keep the digital card publicly viewable.</div>
             </div>
-          </section>
+            <input type="checkbox" name="show_contact_card" class="h-4 w-4 accent-[color:#c9a84c]" {% if student.show_contact_card %}checked{% endif %}>
+          </label>
 
-          <section class="bg-white rounded-3xl p-6 shadow-lg">
-            <h2 class="text-xl font-bold mb-5">Files & Images</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label class="block text-sm font-semibold mb-1">Profile Photo</label>
-                <input type="file" name="profile_photo" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-white">
-                {% if student.profile_photo %}<p class="mt-1 text-xs text-slate-500">Current: {{ student.profile_photo.name }}</p>{% endif %}
-              </div>
-              <div>
-                <label class="block text-sm font-semibold mb-1">Cover Photo</label>
-                <input type="file" name="cover_photo" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-white">
-                {% if student.cover_photo %}<p class="mt-1 text-xs text-slate-500">Current: {{ student.cover_photo.name }}</p>{% endif %}
-              </div>
-              <div>
-                <label class="block text-sm font-semibold mb-1">CV / Resume</label>
-                <input type="file" name="cv" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-white">
-                {% if student.cv %}<p class="mt-1 text-xs text-slate-500">Current: {{ student.cv.name }}</p>{% endif %}
-              </div>
-            </div>
-          </section>
-
-          <section class="bg-white rounded-3xl p-6 shadow-lg">
-            <h2 class="text-xl font-bold mb-5">Skills</h2>
-            <div class="flex flex-wrap gap-3">
-              {% for skill in skills %}
-                <label class="inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 text-sm">
-                  <input type="checkbox" name="skills" value="{{ skill.id }}" {% if skill in student.skills.all %}checked{% endif %}>
-                  <span>{{ skill.name }}</span>
+          <div>
+            <label class="form-label">Social Icons To Show On Card</label>
+            <div class="flex flex-wrap gap-2">
+              {% for choice in social_choices %}
+                <label class="choice-chip">
+                  <input type="checkbox" name="social_stack" value="{{ choice }}" {% if choice in selected_socials %}checked{% endif %}>
+                  <span>{{ choice|title }}</span>
                 </label>
               {% endfor %}
             </div>
-            <div class="mt-5">
-              <label class="block text-sm font-semibold mb-1">Custom Skills</label>
-              <input type="text" name="custom_skills" class="w-full rounded-xl border border-slate-300 px-4 py-3" placeholder="Public Speaking, Leadership, Design Thinking">
-              <p class="mt-1 text-xs text-slate-500">Add any new skills separated by commas. They will be saved and reusable later.</p>
-            </div>
-          </section>
-
-          <div class="flex flex-wrap gap-3 pb-6">
-            <button type="submit" class="rounded-xl bg-slate-900 px-6 py-3 text-white font-semibold hover:bg-slate-800">Save Profile Settings</button>
-            <a href="{% url 'student_profile_choice' student.id %}" class="rounded-xl border border-slate-300 px-6 py-3 font-semibold text-slate-700 hover:bg-slate-50">Cancel</a>
           </div>
-        </form>
-      </main>
-    </div>
+
+          <div class="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
+            <div>
+              <label class="form-label">Facebook</label>
+              <input class="form-input" type="url" name="facebook" value="{{ student.facebook|default:'' }}" placeholder="https://facebook.com/username">
+            </div>
+            <div>
+              <label class="form-label">Instagram</label>
+              <input class="form-input" type="url" name="instagram" value="{{ student.instagram|default:'' }}" placeholder="https://instagram.com/username">
+            </div>
+            <div>
+              <label class="form-label">Twitter / X</label>
+              <input class="form-input" type="url" name="twitter" value="{{ student.twitter|default:'' }}" placeholder="https://x.com/username">
+            </div>
+            <div>
+              <label class="form-label">LinkedIn</label>
+              <input class="form-input" type="url" name="linkedin" value="{{ student.linkedin|default:'' }}" placeholder="https://linkedin.com/in/username">
+            </div>
+            <div>
+              <label class="form-label">YouTube</label>
+              <input class="form-input" type="url" name="youtube" value="{{ student.youtube|default:'' }}" placeholder="https://youtube.com/...">
+            </div>
+            <div>
+              <label class="form-label">TikTok</label>
+              <input class="form-input" type="url" name="tiktok" value="{{ student.tiktok|default:'' }}" placeholder="https://tiktok.com/@username">
+            </div>
+            <div>
+              <label class="form-label">GitHub</label>
+              <input class="form-input" type="url" name="github" value="{{ student.github|default:'' }}" placeholder="https://github.com/username">
+            </div>
+            <div>
+              <label class="form-label">Figma</label>
+              <input class="form-input" type="url" name="figma" value="{{ student.figma|default:'' }}" placeholder="https://figma.com/@username">
+            </div>
+            <div>
+              <label class="form-label">Upwork</label>
+              <input class="form-input" type="url" name="upwork" value="{{ student.upwork|default:'' }}" placeholder="https://upwork.com/freelancers/...">
+            </div>
+            <div>
+              <label class="form-label">Website</label>
+              <input class="form-input" type="url" name="website" value="{{ student.website|default:'' }}" placeholder="https://example.com">
+            </div>
+            <div>
+              <label class="form-label">Messenger</label>
+              <input class="form-input" type="url" name="messenger" value="{{ student.messenger|default:'' }}" placeholder="https://m.me/username">
+            </div>
+            <div>
+              <label class="form-label">WhatsApp Number</label>
+              <input class="form-input" type="tel" name="whatsapp" value="{{ student.whatsapp|default:'' }}" placeholder="+97798XXXXXXXX">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card" style="animation: fadeUp 0.7s ease both">
+        <div class="mb-5 flex items-center gap-2">
+          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-navy"><i data-lucide="upload" class="h-4 w-4 text-gold"></i></div>
+          <h2 class="text-base font-semibold text-navy">Files</h2>
+        </div>
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+          <div>
+            <label class="form-label">Profile Photo</label>
+            <div class="upload-zone {% if student.profile_photo %}has-file{% endif %}" id="zone-profile" onclick="document.getElementById('file-profile').click()">
+              <i data-lucide="camera" class="mx-auto mb-2 h-6 w-6 text-gold"></i>
+              <p class="text-xs text-slate-400" id="zone-profile-text">{% if student.profile_photo %}{{ student.profile_photo.name }}{% else %}Click to upload{% endif %}</p>
+              <input type="file" id="file-profile" name="profile_photo" accept="image/*" class="hidden" onchange="handleFile(this,'zone-profile','zone-profile-text')">
+            </div>
+          </div>
+          <div>
+            <label class="form-label">Cover Photo</label>
+            <div class="upload-zone {% if student.cover_photo %}has-file{% endif %}" id="zone-cover" onclick="document.getElementById('file-cover').click()">
+              <i data-lucide="image" class="mx-auto mb-2 h-6 w-6 text-gold"></i>
+              <p class="text-xs text-slate-400" id="zone-cover-text">{% if student.cover_photo %}{{ student.cover_photo.name }}{% else %}Click to upload{% endif %}</p>
+              <input type="file" id="file-cover" name="cover_photo" accept="image/*" class="hidden" onchange="handleFile(this,'zone-cover','zone-cover-text')">
+            </div>
+          </div>
+          <div>
+            <label class="form-label">CV / Resume</label>
+            <div class="upload-zone {% if student.cv %}has-file{% endif %}" id="zone-cv" onclick="document.getElementById('file-cv').click()">
+              <i data-lucide="file-text" class="mx-auto mb-2 h-6 w-6 text-gold"></i>
+              <p class="text-xs text-slate-400" id="zone-cv-text">{% if student.cv %}{{ student.cv.name }}{% else %}Click to upload{% endif %}</p>
+              <input type="file" id="file-cv" name="cv" accept=".pdf,.doc,.docx" class="hidden" onchange="handleFile(this,'zone-cv','zone-cv-text')">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-3 pb-8 pt-2 sm:flex-row" style="animation: fadeUp 0.8s ease both">
+        <button type="submit" id="btn-save" class="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gold px-8 py-3 font-semibold text-navy shadow-md transition-all hover:bg-yellow-600 sm:flex-none">
+          <i data-lucide="check-circle" class="h-4 w-4"></i> <span id="btn-save-text">Save Student Data</span>
+        </button>
+        <a id="btn-back" href="{% if student.college_id %}{% url 'college_details' student.college_id %}{% else %}{% url 'admin_dashboard' %}{% endif %}" class="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-8 py-3 font-semibold text-navy shadow-sm transition-all hover:bg-slate-100 sm:flex-none">
+          <i data-lucide="arrow-left" class="h-4 w-4"></i> <span id="btn-back-text">Back</span>
+        </a>
+      </div>
+    </form>
   </div>
 
-  <script>
-    function syncEditCategory() {
-      const select = document.getElementById('profile-category');
-      const wrap = document.getElementById('edit-college-wrap');
-      const college = document.getElementById('registered-college');
-      const schoolRole = document.getElementById('school-role-select');
-      const customRole = document.getElementById('custom-role-input');
-      const isSchool = select && select.value === 'school';
+  <div id="toast" class="toast-msg">Student data saved successfully!</div>
 
-      if (wrap) {
-        wrap.style.opacity = isSchool ? '1' : '0.55';
-      }
-      if (college) {
-        college.required = isSchool;
-        college.disabled = !isSchool;
-        if (!isSchool) {
-          college.value = '';
-        }
-      }
-      if (schoolRole) {
-        schoolRole.disabled = !isSchool;
-        schoolRole.classList.toggle('hidden', !isSchool);
-      }
-      if (customRole) {
-        customRole.disabled = isSchool;
-        customRole.required = !isSchool;
-        customRole.classList.toggle('hidden', isSchool);
+  <style>
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+  <script>
+    function handleFile(input, zoneId, textId) {
+      const zone = document.getElementById(zoneId);
+      const text = document.getElementById(textId);
+      if (input.files && input.files[0]) {
+        text.textContent = input.files[0].name;
+        zone.classList.add('has-file');
       }
     }
 
-    document.getElementById('profile-category')?.addEventListener('change', syncEditCategory);
-    syncEditCategory();
+    function syncAcademicSection() {
+      const memberType = document.getElementById('member-type-select');
+      const academicSection = document.getElementById('academic-data-section');
+      if (!memberType || !academicSection) return;
+      academicSection.style.display = memberType.value === 'student' ? '' : 'none';
+    }
+
+    document.getElementById('member-type-select')?.addEventListener('change', syncAcademicSection);
+    syncAcademicSection();
+    lucide.createIcons();
   </script>
 </body>
 </html>

@@ -1,0 +1,52 @@
+<aside id="sidebar" class="hidden w-64 flex-shrink-0 flex-col text-white lg:flex" style="min-height:100%; background-color:#1e3a5f">
+  <div class="border-b border-white/10 p-5">
+    <div class="flex items-center gap-3">
+      <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gold-400">
+        <i data-lucide="graduation-cap" class="h-5 w-5 text-navy-900"></i>
+      </div>
+      <div>
+        <div class="font-display text-sm font-bold leading-tight">{{ current_school.name|default:"School Workspace"|truncatechars:18 }}</div>
+        <div class="text-[11px] uppercase tracking-widest text-navy-200 opacity-70">Admin Portal</div>
+      </div>
+    </div>
+  </div>
+  <nav class="flex-1 space-y-1 overflow-auto px-3 py-4 text-sm">
+    <a href="{% url 'admin_dashboard' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'home' %}bg-white/12 text-white font-medium{% else %}text-navy-200 hover:bg-white/8 hover:text-white{% endif %}">
+      <i data-lucide="layout-dashboard" class="h-4 w-4 {% if active_module == 'home' %}text-gold-400{% endif %}"></i>Dashboard
+    </a>
+    {% if is_super_admin %}
+      <a href="{% url 'admin_dashboard' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition text-navy-200 hover:bg-white/8 hover:text-white">
+        <i data-lucide="school" class="h-4 w-4"></i>Schools
+      </a>
+    {% endif %}
+    <a href="{% url 'dashboard_students' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'students' %}bg-white/12 text-white font-medium{% else %}text-navy-200 hover:bg-white/8 hover:text-white{% endif %}">
+      <i data-lucide="users" class="h-4 w-4 {% if active_module == 'students' %}text-gold-400{% endif %}"></i>Students
+    </a>
+    <a href="{% url 'dashboard_teachers' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'teachers' %}bg-white/12 text-white font-medium{% else %}text-navy-200 hover:bg-white/8 hover:text-white{% endif %}">
+      <i data-lucide="briefcase" class="h-4 w-4 {% if active_module == 'teachers' %}text-gold-400{% endif %}"></i>Teachers / Staff
+    </a>
+    <a href="{% url 'dashboard_print' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'print' %}bg-white/12 text-white font-medium{% else %}text-navy-200 hover:bg-white/8 hover:text-white{% endif %}">
+      <i data-lucide="printer" class="h-4 w-4 {% if active_module == 'print' %}text-gold-400{% endif %}"></i>ID Card Studio
+    </a>
+    <a href="{% url 'dashboard_bulk_upload' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'bulk_upload' %}bg-white/12 text-white font-medium{% else %}text-navy-200 hover:bg-white/8 hover:text-white{% endif %}">
+      <i data-lucide="upload-cloud" class="h-4 w-4 {% if active_module == 'bulk_upload' %}text-gold-400{% endif %}"></i>Bulk Upload
+    </a>
+    <a href="{% url 'dashboard_settings' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'settings' %}bg-white/12 text-white font-medium{% else %}text-navy-200 hover:bg-white/8 hover:text-white{% endif %}">
+      <i data-lucide="settings" class="h-4 w-4 {% if active_module == 'settings' %}text-gold-400{% endif %}"></i>Settings
+    </a>
+  </nav>
+  <div class="border-t border-white/10 p-4 space-y-3">
+    <a href="{% url 'dashboard_logout' %}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-navy-200 transition hover:bg-white/8 hover:text-white">
+      <i data-lucide="log-out" class="h-4 w-4"></i>Logout
+    </a>
+    <div class="flex items-center gap-3">
+      <div class="flex h-8 w-8 items-center justify-center rounded-full bg-navy-600 text-xs font-semibold text-gold-400">
+        {{ request.user.first_name|default:request.user.username|slice:":2"|upper }}
+      </div>
+      <div class="text-xs">
+        <div class="font-medium text-white">{{ request.user.first_name|default:"Admin User" }}</div>
+        <div class="text-navy-300">{% if is_super_admin %}Super Admin{% else %}School Admin{% endif %}</div>
+      </div>
+    </div>
+  </div>
+</aside>

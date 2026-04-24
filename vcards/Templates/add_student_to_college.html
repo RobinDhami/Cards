@@ -1,72 +1,418 @@
-{% extends "base.html" %}
-{% block title %}Add Student to {{ college.name }}{% endblock %}
-{% block content %}
-<h2 class="mb-4">Add Student to {{ college.name }}</h2>
-<form method="post" enctype="multipart/form-data" class="card p-4 shadow-sm">
-    {% csrf_token %}
- <div class="mb-3">
-    <label class="form-label">College</label>
-    <input type="text" class="form-control" value="{{ college.name }}" disabled>
-    <input type="hidden" name="college" value="{{ college.id }}">
-</div>
-    <div class="mb-3">
-        <label class="form-label">Full Name</label>
-        <input type="text" name="name" class="form-control" required>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Phone</label>
-        <input type="text" name="phone" class="form-control">
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Email</label>
-        <input type="email" name="email" class="form-control" required>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Username</label>
-        <input type="text" name="username" class="form-control" required>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Login Password</label>
-        <input type="text" class="form-control" value="Auto-generated from username and phone" disabled>
-        <div class="form-text">You can reset the password later from the dashboard if needed.</div>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">School Role</label>
-        <select name="school_role" class="form-select">
-            {% for role_name in school_role_choices %}
-                <option value="{{ role_name }}">{{ role_name }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Bio</label>
-        <textarea name="bio" class="form-control"></textarea>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Profile Photo</label>
-        <input type="file" name="profile_photo" class="form-control">
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Cover Photo</label>
-        <input type="file" name="cover_photo" class="form-control">
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Skills</label>
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add {{ role_type|title }} — SchoolCard Admin</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: { 50:'#f0f3f9', 100:'#dce3f0', 200:'#b8c7e1', 300:'#8aa3cc', 400:'#5a7db5', 500:'#1a3a6b', 600:'#152e55', 700:'#102240', 800:'#0b172b', 900:'#060d18' },
+            gold: { 50:'#fefbf0', 100:'#fdf3d0', 200:'#fbe7a1', 300:'#f8d76b', 400:'#f0c430', 500:'#c9a227', 600:'#a07e1e', 700:'#785e17', 800:'#503f0f', 900:'#2a2008' },
+            slate2: { 50:'#f8f9fb', 100:'#f1f3f7', 200:'#e4e7ee', 300:'#cdd2dc' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'DM Sans', sans-serif; }
+    .font-display { font-family: 'Playfair Display', serif; }
+    .form-input-style {
+      width: 100%;
+      padding: 0.625rem 0.875rem;
+      border: 1px solid #e4e7ee;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background: #fff;
+      color: #102240;
+    }
+    .form-input-style:focus {
+      outline: none;
+      border-color: #1a3a6b;
+      box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
+    }
+    .form-input-style::placeholder { color: #9ca3af; }
+    .form-label { font-size: 0.8125rem; font-weight: 600; color: #152e55; margin-bottom: 0.25rem; display: block; }
+    .sidebar-link { display:flex; align-items:center; gap:0.625rem; padding:0.5rem 0.75rem; border-radius:0.5rem; font-size:0.8125rem; font-weight:500; color:#8aa3cc; transition:all 0.15s; }
+    .sidebar-link:hover { background:rgba(255,255,255,0.08); color:#fff; }
+    .sidebar-link.active { background:rgba(255,255,255,0.12); color:#f8d76b; }
+    .upload-zone { border:2px dashed #cdd2dc; border-radius:0.75rem; padding:1.5rem; text-align:center; cursor:pointer; transition:border-color 0.2s, background 0.2s; position:relative; overflow:hidden; }
+    .upload-zone:hover { border-color:#1a3a6b; background:#f0f3f9; }
+    .upload-zone.has-file { border-color:#1a3a6b; border-style:solid; background:#f0f3f9; }
+    select.form-input-style {
+      appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;
+      background-position:right 0.75rem center;
+      padding-right:2.5rem;
+    }
+    textarea.form-input-style { resize:vertical; min-height:5rem; }
+    .card-section { background:#fff; border-radius:0.75rem; padding:1.5rem; box-shadow:0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03); border:1px solid #f1f3f7; }
+    @media(max-width:1023px) { .desktop-sidebar { display:none !important; } }
+  </style>
+</head>
+<body class="h-full bg-slate2-50">
+  <div class="flex h-full overflow-auto" id="app-root">
+    <aside class="desktop-sidebar flex w-60 flex-shrink-0 flex-col bg-navy-700" style="min-height:100%">
+      <div class="flex items-center gap-3 border-b border-white/10 p-5">
+        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gold-400">
+          <i data-lucide="graduation-cap" class="h-5 w-5 text-navy-800"></i>
+        </div>
         <div>
-            {% for skill in skills %}
-                <label class="me-2">
-                    <input type="checkbox" name="skills" value="{{ skill.id }}"> {{ skill.name }}
-                </label>
-            {% endfor %}
+          <div class="text-sm font-bold tracking-wide text-white">SchoolCard</div>
+          <div class="text-[0.65rem] uppercase tracking-widest text-navy-300">Admin Panel</div>
         </div>
-        <div class="mt-3">
-            <label class="form-label">Custom Skills</label>
-            <input type="text" name="custom_skills" class="form-control" placeholder="Teaching, Curriculum Design, Mentoring">
-            <div class="form-text">Separate extra skills with commas.</div>
+      </div>
+      <nav class="flex-1 space-y-0.5 p-3">
+        <a href="{% url 'admin_dashboard' %}?school={{ college.id }}" class="sidebar-link"><i data-lucide="layout-dashboard" class="h-4 w-4"></i>Dashboard</a>
+        {% if is_super_admin %}
+          <a href="{% url 'admin_dashboard' %}?school={{ college.id }}" class="sidebar-link"><i data-lucide="building" class="h-4 w-4"></i>Schools</a>
+        {% endif %}
+        <a href="{% url 'dashboard_students' %}?school={{ college.id }}" class="sidebar-link active"><i data-lucide="users" class="h-4 w-4"></i>Students</a>
+        <a href="{% url 'dashboard_teachers' %}?school={{ college.id }}" class="sidebar-link"><i data-lucide="briefcase" class="h-4 w-4"></i>Teachers</a>
+        <a href="{% url 'dashboard_print' %}?school={{ college.id }}" class="sidebar-link"><i data-lucide="contact" class="h-4 w-4"></i>Contact Cards</a>
+        <a href="{% url 'dashboard_print' %}?school={{ college.id }}" class="sidebar-link"><i data-lucide="id-card" class="h-4 w-4"></i>ID Cards</a>
+        <a href="{% url 'dashboard_print' %}?school={{ college.id }}" class="sidebar-link"><i data-lucide="printer" class="h-4 w-4"></i>Print Queue</a>
+      </nav>
+      <div class="border-t border-white/10 p-3">
+        <a href="{% url 'dashboard_settings' %}?school={{ college.id }}" class="sidebar-link"><i data-lucide="settings" class="h-4 w-4"></i>Settings</a>
+        <a href="{% url 'dashboard_logout' %}" class="sidebar-link"><i data-lucide="log-out" class="h-4 w-4"></i>Logout</a>
+      </div>
+    </aside>
+
+    <div class="flex min-w-0 flex-1 flex-col" style="min-height:100%">
+      <header class="flex flex-shrink-0 items-center justify-between border-b border-slate2-200 bg-white px-4 py-3 sm:px-6">
+        <div class="flex items-center gap-3">
+          <button id="mobile-menu-btn" class="rounded-lg p-1.5 text-navy-500 hover:bg-slate2-100 lg:hidden"><i data-lucide="menu" class="h-5 w-5"></i></button>
+          <nav class="hidden items-center gap-1.5 text-xs text-navy-400 sm:flex">
+            <a href="{% url 'admin_dashboard' %}?school={{ college.id }}">Dashboard</a><i data-lucide="chevron-right" class="h-3 w-3"></i>
+            <a href="{% url 'dashboard_students' %}?school={{ college.id }}">Students</a><i data-lucide="chevron-right" class="h-3 w-3"></i>
+            <span class="font-semibold text-navy-700">{{ role_type|title }}</span>
+          </nav>
         </div>
+        <div class="flex items-center gap-3">
+          <button class="relative rounded-lg p-2 text-navy-400 hover:bg-slate2-100">
+            <i data-lucide="bell" class="h-4.5 w-4.5"></i>
+            <span class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500"></span>
+          </button>
+          <div class="flex h-8 w-8 items-center justify-center rounded-full bg-navy-500 text-xs font-bold text-white">
+            {{ request.user.first_name|default:request.user.username|slice:":2"|upper }}
+          </div>
+        </div>
+      </header>
+
+      <main class="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
+        <div class="mx-auto max-w-4xl">
+          {% if messages %}
+            <div class="mb-5 space-y-3">
+              {% for message in messages %}
+                <div class="rounded-xl border px-4 py-3 text-sm {% if message.tags == 'error' %}border-red-200 bg-red-50 text-red-700{% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-700{% else %}border-emerald-200 bg-emerald-50 text-emerald-700{% endif %}">
+                  {{ message }}
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <div class="mb-6">
+            <h1 class="font-display text-xl font-bold text-navy-700 sm:text-2xl">Add {{ role_type|title }} to School</h1>
+            <p class="mt-1 text-sm text-navy-400">Fill in the {{ role_type }} details below. Fields marked with <span class="text-red-500">*</span> are required.</p>
+          </div>
+
+          <form method="post" enctype="multipart/form-data" class="space-y-5" id="student-form">
+            {% csrf_token %}
+            <input type="hidden" name="member_type" value="{% if role_type == 'teacher' %}teacher{% else %}student{% endif %}">
+            <input type="hidden" name="college" value="{{ college.id }}">
+
+            <div class="card-section">
+              <div class="mb-4 flex items-center gap-2">
+                <div class="flex h-7 w-7 items-center justify-center rounded-md bg-gold-100"><i data-lucide="building" class="h-3.5 w-3.5 text-gold-600"></i></div>
+                <h2 class="text-sm font-semibold text-navy-700">School Information</h2>
+              </div>
+              <div>
+                <label class="form-label">Selected School <i data-lucide="lock" class="ml-1 inline h-3 w-3 text-navy-300"></i></label>
+                <div class="flex items-center gap-2 rounded-lg border border-slate2-200 bg-slate2-50 px-3.5 py-2.5">
+                  <div class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded bg-navy-500"><i data-lucide="graduation-cap" class="h-3.5 w-3.5 text-white"></i></div>
+                  <span class="text-sm font-medium text-navy-600">{{ college.name }}</span>
+                  <span class="ml-auto rounded bg-navy-50 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-navy-300">Locked</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-section">
+              <div class="mb-4 flex items-center gap-2">
+                <div class="flex h-7 w-7 items-center justify-center rounded-md bg-blue-50"><i data-lucide="user" class="h-3.5 w-3.5 text-navy-500"></i></div>
+                <h2 class="text-sm font-semibold text-navy-700">Personal Information</h2>
+              </div>
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div class="sm:col-span-2">
+                  <label class="form-label">Full Name <span class="text-red-500">*</span></label>
+                  <input type="text" name="name" class="form-input-style" placeholder="e.g. Aarav Sharma" required>
+                </div>
+                <div>
+                  <label class="form-label">Gender</label>
+                  <select name="gender" class="form-input-style">
+                    <option value="">Select gender</option>
+                    {% for value, label in gender_choices %}
+                      {% if value %}
+                        <option value="{{ value }}">{{ label }}</option>
+                      {% endif %}
+                    {% endfor %}
+                  </select>
+                </div>
+                <div>
+                  <label class="form-label">Blood Group</label>
+                  <input type="text" name="blood_group" class="form-input-style" placeholder="e.g. O+">
+                </div>
+                <div>
+                  <label class="form-label">Phone</label>
+                  <input type="tel" name="phone" class="form-input-style" placeholder="+91 98765 43210">
+                </div>
+                <div>
+                  <label class="form-label">Email <span class="text-red-500">*</span></label>
+                  <input type="email" name="email" class="form-input-style" placeholder="student@example.com" required>
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="form-label">Bio</label>
+                  <textarea name="bio" class="form-input-style" placeholder="A short bio about the student or teacher (optional)"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-section">
+              <div class="mb-4 flex items-center gap-2">
+                <div class="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-50"><i data-lucide="key" class="h-3.5 w-3.5 text-emerald-600"></i></div>
+                <h2 class="text-sm font-semibold text-navy-700">Account &amp; Login</h2>
+              </div>
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label class="form-label">Username <span class="text-red-500">*</span></label>
+                  <input type="text" name="username" class="form-input-style" placeholder="e.g. aarav.sharma.2025" required>
+                </div>
+                <div>
+                  <label class="form-label">School Role <span class="text-red-500">*</span></label>
+                  <select name="school_role" class="form-input-style" required>
+                    {% if role_type == 'teacher' %}
+                      {% for role_name in school_role_choices %}
+                        <option value="{{ role_name }}" {% if role_name == default_role %}selected{% endif %}>{{ role_name }}</option>
+                      {% endfor %}
+                    {% else %}
+                      {% for role_name in student_role_choices %}
+                        <option value="{{ role_name }}" {% if role_name == default_role %}selected{% endif %}>{{ role_name }}</option>
+                      {% endfor %}
+                    {% endif %}
+                  </select>
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="form-label">Login Password</label>
+                  <div class="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2.5">
+                    <i data-lucide="shield-check" class="h-4 w-4 flex-shrink-0 text-emerald-500"></i>
+                    <div>
+                      <p class="text-sm font-medium text-emerald-700">Auto-generated on creation</p>
+                      <p class="mt-0.5 text-xs text-emerald-500">A secure password will be generated automatically for this profile.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-section {% if role_type == 'teacher' %}hidden{% endif %}" id="academic-fields">
+              <div class="mb-4 flex items-center gap-2">
+                <div class="flex h-7 w-7 items-center justify-center rounded-md bg-gold-100"><i data-lucide="book-open" class="h-3.5 w-3.5 text-gold-600"></i></div>
+                <h2 class="text-sm font-semibold text-navy-700">Academic Details</h2>
+              </div>
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div>
+                  <label class="form-label">Class / Grade</label>
+                  <select name="academic_level" class="form-input-style">
+                    <option value="">Select class</option>
+                    {% for value, label in academic_level_choices %}
+                      <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div>
+                  <label class="form-label">Section</label>
+                  <input type="text" name="section" class="form-input-style" placeholder="e.g. A">
+                </div>
+                <div>
+                  <label class="form-label">Roll Number</label>
+                  <input type="text" name="roll_number" class="form-input-style" placeholder="e.g. 27">
+                </div>
+              </div>
+            </div>
+
+            <div class="card-section">
+              <div class="mb-4 flex items-center gap-2">
+                <div class="flex h-7 w-7 items-center justify-center rounded-md bg-sky-50"><i data-lucide="share-2" class="h-3.5 w-3.5 text-sky-500"></i></div>
+                <h2 class="text-sm font-semibold text-navy-700">Social Media Links</h2>
+              </div>
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label class="form-label">Facebook</label>
+                  <div class="relative"><i data-lucide="facebook" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-600"></i><input type="url" name="facebook" class="form-input-style" style="padding-left:2.25rem" placeholder="https://facebook.com/username"></div>
+                </div>
+                <div>
+                  <label class="form-label">Instagram</label>
+                  <div class="relative"><i data-lucide="instagram" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-pink-500"></i><input type="url" name="instagram" class="form-input-style" style="padding-left:2.25rem" placeholder="https://instagram.com/username"></div>
+                </div>
+                <div>
+                  <label class="form-label">YouTube</label>
+                  <div class="relative"><i data-lucide="youtube" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-red-600"></i><input type="url" name="youtube" class="form-input-style" style="padding-left:2.25rem" placeholder="https://youtube.com/channel/username"></div>
+                </div>
+                <div>
+                  <label class="form-label">LinkedIn</label>
+                  <div class="relative"><i data-lucide="linkedin" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-700"></i><input type="url" name="linkedin" class="form-input-style" style="padding-left:2.25rem" placeholder="https://linkedin.com/in/username"></div>
+                </div>
+                <div>
+                  <label class="form-label">Twitter / X</label>
+                  <div class="relative"><i data-lucide="twitter" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-700"></i><input type="url" name="twitter" class="form-input-style" style="padding-left:2.25rem" placeholder="https://x.com/username"></div>
+                </div>
+                <div>
+                  <label class="form-label">Website</label>
+                  <div class="relative"><i data-lucide="globe" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-navy-400"></i><input type="url" name="website" class="form-input-style" style="padding-left:2.25rem" placeholder="https://example.com"></div>
+                </div>
+                <div>
+                  <label class="form-label">Messenger</label>
+                  <div class="relative"><i data-lucide="message-square" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-sky-500"></i><input type="url" name="messenger" class="form-input-style" style="padding-left:2.25rem" placeholder="https://m.me/username"></div>
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="form-label">WhatsApp</label>
+                  <div class="relative"><i data-lucide="message-circle" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-green-500"></i><input type="tel" name="whatsapp" class="form-input-style" style="padding-left:2.25rem" placeholder="+91 98765 43210"></div>
+                  <p class="mt-1 text-xs text-navy-300">This number will be stored for WhatsApp contact on the digital card later.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-section">
+              <div class="mb-4 flex items-center gap-2">
+                <div class="flex h-7 w-7 items-center justify-center rounded-md bg-red-50"><i data-lucide="phone-call" class="h-3.5 w-3.5 text-red-500"></i></div>
+                <h2 class="text-sm font-semibold text-navy-700">Emergency &amp; Location</h2>
+              </div>
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label class="form-label">Emergency Contact Name</label>
+                  <input type="text" name="emergency_contact_name" class="form-input-style" placeholder="e.g. Rajesh Sharma (Father)">
+                </div>
+                <div>
+                  <label class="form-label">Emergency Contact Phone</label>
+                  <input type="tel" name="emergency_contact_phone" class="form-input-style" placeholder="+91 98765 43210">
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="form-label">Map / Navigation Link</label>
+                  <div class="relative"><i data-lucide="map-pin" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-navy-300"></i><input type="url" name="map_url" class="form-input-style" style="padding-left:2.25rem" placeholder="https://maps.google.com/..."></div>
+                  <p class="mt-1 text-xs text-navy-300">Paste a Google Maps link if you want quick navigation from the future digital card.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-section">
+              <div class="mb-4 flex items-center gap-2">
+                <div class="flex h-7 w-7 items-center justify-center rounded-md bg-violet-50"><i data-lucide="camera" class="h-3.5 w-3.5 text-violet-500"></i></div>
+                <h2 class="text-sm font-semibold text-navy-700">Photos</h2>
+              </div>
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label class="form-label">Profile Photo</label>
+                  <div class="upload-zone" id="profile-upload" onclick="document.getElementById('profile-input').click()">
+                    <input type="file" id="profile-input" name="profile_photo" accept="image/*" class="hidden" onchange="handleUpload(this,'profile-upload','profile-preview')">
+                    <div id="profile-preview" class="flex flex-col items-center gap-2">
+                      <div class="flex h-12 w-12 items-center justify-center rounded-full bg-slate2-100"><i data-lucide="user" class="h-5 w-5 text-navy-300"></i></div>
+                      <p class="text-xs font-medium text-navy-400">Click to upload profile photo</p>
+                      <p class="text-[0.65rem] text-navy-300">JPG, PNG — Max 2MB</p>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label class="form-label">Cover Photo</label>
+                  <div class="upload-zone" id="cover-upload" onclick="document.getElementById('cover-input').click()">
+                    <input type="file" id="cover-input" name="cover_photo" accept="image/*" class="hidden" onchange="handleUpload(this,'cover-upload','cover-preview')">
+                    <div id="cover-preview" class="flex flex-col items-center gap-2">
+                      <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-slate2-100"><i data-lucide="image" class="h-5 w-5 text-navy-300"></i></div>
+                      <p class="text-xs font-medium text-navy-400">Click to upload cover photo</p>
+                      <p class="text-[0.65rem] text-navy-300">JPG, PNG — Max 5MB</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex flex-col items-center gap-3 pb-8 pt-2 sm:flex-row">
+              <button type="submit" class="flex w-full items-center justify-center gap-2 rounded-lg bg-navy-500 px-8 py-2.5 text-sm font-semibold text-white shadow-md shadow-navy-500/20 transition-all hover:bg-navy-600 sm:w-auto">
+                <i data-lucide="user-plus" class="h-4 w-4"></i> Add {{ role_type|title }}
+              </button>
+              <a href="{% if role_type == 'teacher' %}{% url 'dashboard_teachers' %}?school={{ college.id }}{% else %}{% url 'dashboard_students' %}?school={{ college.id }}{% endif %}" id="cancel-btn" class="flex w-full items-center justify-center gap-2 rounded-lg border border-slate2-200 bg-white px-8 py-2.5 text-sm font-semibold text-navy-500 transition-all hover:bg-slate2-50 sm:w-auto">
+                Cancel
+              </a>
+            </div>
+          </form>
+        </div>
+      </main>
     </div>
-    <!-- Add social fields as needed -->
-    <button type="submit" class="btn btn-primary">Add Student</button>
-    <a href="{% url 'college_details' college.id %}" class="btn btn-secondary">Cancel</a>
-</form>
-{% endblock %}
+  </div>
+
+  <div id="mobile-overlay" class="fixed inset-0 z-40 hidden bg-black/40" onclick="closeMobileMenu()"></div>
+  <aside id="mobile-sidebar" class="fixed left-0 top-0 bottom-0 z-50 w-64 -translate-x-full bg-navy-700 transition-transform duration-200">
+    <div class="flex items-center gap-3 border-b border-white/10 p-5">
+      <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gold-400"><i data-lucide="graduation-cap" class="h-5 w-5 text-navy-800"></i></div>
+      <div>
+        <div class="text-sm font-bold text-white">SchoolCard</div>
+        <div class="text-[0.65rem] uppercase tracking-widest text-navy-300">Admin Panel</div>
+      </div>
+      <button onclick="closeMobileMenu()" class="ml-auto text-white/60 hover:text-white"><i data-lucide="x" class="h-5 w-5"></i></button>
+    </div>
+    <nav class="space-y-0.5 p-3">
+      <a href="{% url 'admin_dashboard' %}?school={{ college.id }}" class="sidebar-link"><i data-lucide="layout-dashboard" class="h-4 w-4"></i>Dashboard</a>
+      {% if is_super_admin %}
+        <a href="{% url 'admin_dashboard' %}?school={{ college.id }}" class="sidebar-link"><i data-lucide="building" class="h-4 w-4"></i>Schools</a>
+      {% endif %}
+      <a href="{% url 'dashboard_students' %}?school={{ college.id }}" class="sidebar-link active"><i data-lucide="users" class="h-4 w-4"></i>Students</a>
+      <a href="{% url 'dashboard_teachers' %}?school={{ college.id }}" class="sidebar-link"><i data-lucide="briefcase" class="h-4 w-4"></i>Teachers</a>
+      <a href="{% url 'dashboard_print' %}?school={{ college.id }}" class="sidebar-link"><i data-lucide="contact" class="h-4 w-4"></i>Contact Cards</a>
+      <a href="{% url 'dashboard_print' %}?school={{ college.id }}" class="sidebar-link"><i data-lucide="id-card" class="h-4 w-4"></i>ID Cards</a>
+    </nav>
+  </aside>
+
+  <script>
+    function handleUpload(input, zoneId, previewId) {
+      const zone = document.getElementById(zoneId);
+      const preview = document.getElementById(previewId);
+      const file = input.files[0];
+      if (!file) return;
+      zone.classList.add('has-file');
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const isProfile = zoneId === 'profile-upload';
+        preview.innerHTML = `
+          <img src="${e.target.result}" class="${isProfile ? 'w-16 h-16 rounded-full' : 'w-full h-20 rounded-lg'} object-cover mx-auto">
+          <p class="text-xs text-navy-600 font-medium">${file.name}</p>
+          <p class="text-[0.65rem] text-navy-300">${(file.size/1024).toFixed(0)} KB</p>
+        `;
+        lucide.createIcons();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function openMobileMenu() {
+      document.getElementById('mobile-overlay').classList.remove('hidden');
+      document.getElementById('mobile-sidebar').style.transform = 'translateX(0)';
+    }
+
+    function closeMobileMenu() {
+      document.getElementById('mobile-overlay').classList.add('hidden');
+      document.getElementById('mobile-sidebar').style.transform = 'translateX(-100%)';
+    }
+
+    document.getElementById('mobile-menu-btn')?.addEventListener('click', openMobileMenu);
+    lucide.createIcons();
+  </script>
+</body>
+</html>

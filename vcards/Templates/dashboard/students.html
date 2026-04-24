@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Management</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: { 50:'#f0f3f9', 100:'#dce3f0', 200:'#b8c7e1', 300:'#8ba3cc', 400:'#5d7fb7', 500:'#1e3a5f', 600:'#172e4d', 700:'#10223b', 800:'#0a1629', 900:'#050b17' },
+            gold: { 50:'#fdf9ef', 100:'#f9f0d4', 200:'#f2dfa8', 300:'#e8c96d', 400:'#d4a944', 500:'#b8860b', 600:'#966d09', 700:'#745407', 800:'#523b05', 900:'#302203' },
+            slate2: { 50:'#f8f9fb', 100:'#f1f3f7', 200:'#e2e6ee', 300:'#cdd3df', 400:'#9aa5b8' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'DM Sans', sans-serif; }
+    .font-display { font-family: 'Playfair Display', serif; }
+    .sidebar-link { transition: all 0.15s ease; }
+    .sidebar-link:hover, .sidebar-link.active { background: rgba(255,255,255,0.1); }
+    .table-row { transition: background 0.1s ease; }
+    .table-row:hover { background: #f8f9fb; }
+    .btn-action { transition: all 0.15s ease; }
+  </style>
+</head>
+<body class="h-full overflow-auto bg-slate2-50 text-navy-700">
+  <div class="flex h-full w-full flex-col lg:flex-row">
+    {% include "dashboard/_sidebar.html" %}
+
+    <div class="flex h-full flex-1 flex-col overflow-auto">
+      <header class="shrink-0 border-b border-slate2-200 bg-white px-4 py-3 lg:px-8">
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <button id="mobile-menu-btn" class="rounded-lg p-1.5 hover:bg-slate2-100 lg:hidden">
+              <i data-lucide="menu" class="h-5 w-5"></i>
+            </button>
+            <div>
+              <h1 id="page-title" class="font-display text-lg font-bold text-navy-500">Student Management</h1>
+              <p class="mt-0.5 text-[11px] text-navy-400">
+                <span id="breadcrumb-school">{{ current_school.name|default:"School Workspace" }}</span> → Students
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            {% if is_super_admin and school_options %}
+              <form method="get" class="hidden items-center gap-2 xl:flex">
+                <label for="schoolSwitcher" class="text-[11px] font-semibold uppercase tracking-[0.18em] text-navy-400">School</label>
+                <select id="schoolSwitcher" name="school" class="rounded-lg border border-slate2-200 bg-slate2-50 px-3 py-2 text-[13px] text-navy-600 focus:outline-none focus:ring-2 focus:ring-navy-200">
+                  {% for school in school_options %}
+                    <option value="{{ school.id }}" {% if current_school and school.id == current_school.id %}selected{% endif %}>{{ school.name }}</option>
+                  {% endfor %}
+                </select>
+                <button type="submit" class="rounded-lg border border-slate2-200 px-3 py-2 text-[12px] font-semibold text-navy-500 hover:bg-slate2-50">Open</button>
+              </form>
+            {% endif %}
+            {% if current_school %}
+              <a href="{% url 'add_student_to_college' current_school.id %}" id="add-student-btn" class="btn-action flex items-center gap-2 rounded-lg bg-gold-500 px-4 py-2 text-[13px] font-semibold text-white shadow-sm hover:bg-gold-600">
+                <i data-lucide="plus" class="h-4 w-4"></i>
+                <span class="hidden sm:inline">Add Student</span>
+              </a>
+            {% endif %}
+            <div class="ml-2 flex h-8 w-8 items-center justify-center rounded-full bg-navy-500 text-xs font-semibold text-white">
+              {{ request.user.first_name|default:request.user.username|slice:":2"|upper }}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="flex-1 space-y-5 p-4 lg:p-8">
+        {% if messages %}
+          <div class="space-y-2">
+            {% for message in messages %}
+              <div class="rounded-xl border px-4 py-3 text-sm {% if message.tags == 'error' %}border-red-200 bg-red-50 text-red-700{% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-700{% else %}border-emerald-200 bg-emerald-50 text-emerald-700{% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="rounded-xl border border-slate2-200 bg-white p-4 shadow-sm lg:p-5">
+          <div class="mb-3 flex items-center gap-2">
+            <i data-lucide="filter" class="h-3.5 w-3.5 text-navy-400"></i>
+            <span class="text-[13px] font-semibold text-navy-500">Filters</span>
+          </div>
+          <form method="get" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {% if current_school %}<input type="hidden" name="school" value="{{ current_school.id }}">{% endif %}
+            <div class="relative lg:col-span-2">
+              <i data-lucide="search" class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-navy-400"></i>
+              <input name="q" value="{{ search_query }}" type="text" placeholder="Name, email, phone, roll number" class="w-full rounded-lg border border-slate2-200 bg-slate2-50 py-2.5 pl-9 pr-3 text-[13px] focus:border-navy-400 focus:outline-none focus:ring-2 focus:ring-navy-200">
+            </div>
+            <select name="academic_level" class="w-full rounded-lg border border-slate2-200 bg-slate2-50 px-3 py-2.5 text-[13px] text-navy-600 focus:outline-none focus:ring-2 focus:ring-navy-200">
+              <option value="">All Classes</option>
+              {% for option in academic_level_choices %}
+                <option value="{{ option.value }}" {% if option.value == academic_level %}selected{% endif %}>{{ option.label }}</option>
+              {% endfor %}
+            </select>
+            <div class="flex gap-3">
+              <select name="section" class="flex-1 rounded-lg border border-slate2-200 bg-slate2-50 px-3 py-2.5 text-[13px] text-navy-600 focus:outline-none focus:ring-2 focus:ring-navy-200">
+                <option value="">All Sections</option>
+                {% for section in sections %}
+                  <option value="{{ section }}" {% if section == section_filter %}selected{% endif %}>{{ section }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn-action whitespace-nowrap rounded-lg bg-navy-500 px-5 py-2.5 text-[13px] font-semibold text-white hover:bg-navy-600">Filter</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-[13px] font-semibold text-navy-500">Showing {{ students.count }} student{{ students.count|pluralize }}</span>
+            {% if search_query or academic_level or section_filter %}
+              <span class="rounded-full bg-navy-100 px-2 py-0.5 text-[11px] font-medium text-navy-500">Filtered</span>
+            {% endif %}
+          </div>
+          {% if search_query or academic_level or section_filter %}
+            <a href="{% url 'dashboard_students' %}{{ nav_school_query }}" class="btn-action text-[12px] font-medium text-gold-600 hover:text-gold-700">Clear filters</a>
+          {% endif %}
+        </div>
+
+        <div class="overflow-hidden rounded-xl border border-slate2-200 bg-white shadow-sm">
+          {% if students %}
+            <div class="overflow-x-auto">
+              <table class="w-full text-[13px]">
+                <thead>
+                  <tr class="border-b border-slate2-200 bg-slate2-50 text-left text-navy-400">
+                    <th class="px-4 py-3 font-semibold lg:px-5">Name</th>
+                    <th class="px-4 py-3 font-semibold">Class</th>
+                    <th class="px-4 py-3 font-semibold">Section</th>
+                    <th class="hidden px-4 py-3 font-semibold md:table-cell">Contact</th>
+                    <th class="px-4 py-3 text-right font-semibold lg:px-5">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for student in students %}
+                    <tr class="table-row border-b border-slate2-100 last:border-0">
+                      <td class="px-4 py-3.5 lg:px-5">
+                        <div class="font-semibold text-navy-600">{{ student.name }}</div>
+                        <div class="mt-0.5 font-mono text-[11px] text-navy-400">{{ student.unique_identifier|default:"-" }}</div>
+                      </td>
+                      <td class="px-4 py-3.5 text-navy-600">{{ student.get_academic_level_display|default:"-" }}</td>
+                      <td class="px-4 py-3.5">
+                        <span class="rounded px-2 py-0.5 text-[12px] font-semibold {% if student.section %}bg-navy-100 text-navy-500{% else %}bg-slate2-100 text-navy-400{% endif %}">
+                          {{ student.section|default:"-" }}
+                        </span>
+                      </td>
+                      <td class="hidden px-4 py-3.5 md:table-cell">
+                        <div class="text-navy-600">{{ student.phone|default:"-" }}</div>
+                        <div class="mt-0.5 text-[11px] text-navy-400">{{ student.email|default:"-" }}</div>
+                      </td>
+                      <td class="px-4 py-3.5 text-right lg:px-5">
+                        <div class="inline-flex items-center gap-1">
+                          <a href="{% url 'edit_student_manual' student.id %}" class="btn-action rounded-lg p-1.5 hover:bg-navy-100" title="Edit">
+                            <i data-lucide="edit-3" class="h-3.5 w-3.5 text-navy-400"></i>
+                          </a>
+                          <a href="{% url 'contact_card' student.id %}" class="btn-action rounded-lg p-1.5 hover:bg-gold-100" title="Card">
+                            <i data-lucide="credit-card" class="h-3.5 w-3.5 text-gold-500"></i>
+                          </a>
+                          <form method="post" action="{% url 'delete_student_profile' student.id %}" class="inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{% url 'dashboard_students' %}{{ nav_school_query }}">
+                            <button type="submit" class="btn-action rounded-lg p-1.5 hover:bg-red-50" title="Delete" onclick="return confirm('Delete this student?');">
+                              <i data-lucide="trash-2" class="h-3.5 w-3.5 text-red-400"></i>
+                            </button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="py-16 text-center text-navy-400">
+              <i data-lucide="inbox" class="mx-auto mb-3 h-9 w-9 text-slate2-300"></i>
+              <p class="text-sm font-medium">No students found</p>
+              <p class="mt-1 text-[12px] text-navy-400/70">Try adjusting your filters or add a student to this school.</p>
+            </div>
+          {% endif %}
+        </div>
+      </main>
+    </div>
+
+    <div id="mobile-overlay" class="fixed inset-0 z-40 hidden bg-black/40 lg:hidden" onclick="closeMobileSidebar()"></div>
+    <aside id="mobile-sidebar" class="fixed left-0 top-0 bottom-0 z-50 hidden w-64 overflow-auto bg-navy-500 text-white lg:hidden"></aside>
+  </div>
+
+  <script>
+    function openMobileSidebar() {
+      const sidebar = document.getElementById('mobile-sidebar');
+      sidebar.innerHTML = document.getElementById('sidebar').innerHTML;
+      sidebar.classList.remove('hidden');
+      document.getElementById('mobile-overlay').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeMobileSidebar() {
+      document.getElementById('mobile-sidebar').classList.add('hidden');
+      document.getElementById('mobile-overlay').classList.add('hidden');
+    }
+
+    document.getElementById('mobile-menu-btn')?.addEventListener('click', openMobileSidebar);
+    lucide.createIcons();
+  </script>
+</body>
+</html>

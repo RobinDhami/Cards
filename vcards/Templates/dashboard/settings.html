@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit School Details</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: { 50:'#f0f3f9', 100:'#dce3f0', 200:'#b8c7e1', 300:'#8ea5cc', 400:'#6483b7', 500:'#1a3a6b', 600:'#152f56', 700:'#102442', 800:'#0b192d', 900:'#060e19' },
+            gold: { 50:'#fdf9ef', 100:'#f9efd3', 200:'#f2dda6', 300:'#e8c76e', 400:'#d4a84a', 500:'#c49a2e', 600:'#a07c24', 700:'#7c5f1b', 800:'#584312', 900:'#342709' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'DM Sans', sans-serif; }
+    .font-display { font-family: 'Playfair Display', serif; }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(26,58,107,0.2);
+      border-color: #1a3a6b;
+    }
+    .upload-zone {
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      transition: all 0.2s;
+    }
+    .upload-zone:hover {
+      border-color: #1a3a6b;
+      background: #f0f3f9;
+    }
+  </style>
+</head>
+<body class="h-full overflow-auto bg-navy-50 text-gray-800">
+  <div class="flex h-full overflow-auto">
+    {% include "dashboard/_sidebar.html" %}
+
+    <div class="flex flex-1 flex-col overflow-auto">
+    <nav class="flex shrink-0 items-center justify-between bg-navy-500 px-6 py-3 shadow-lg">
+      <div class="flex items-center gap-3">
+        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gold-400">
+          <i data-lucide="graduation-cap" class="h-5 w-5 text-navy-800"></i>
+        </div>
+        <span class="text-lg font-bold tracking-tight text-white">SchoolCard<span class="text-gold-400">Pro</span></span>
+      </div>
+      <div class="flex items-center gap-4">
+        <a href="{% url 'admin_dashboard' %}{{ nav_school_query }}" class="text-navy-200 transition hover:text-white">
+          <i data-lucide="layout-dashboard" class="h-5 w-5"></i>
+        </a>
+        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-navy-400 text-sm font-semibold text-white">
+          {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+        </div>
+      </div>
+    </nav>
+
+    <div class="shrink-0 px-6 py-4">
+      <div class="mb-1 flex items-center gap-2 text-sm text-gray-500">
+        <a href="{% url 'admin_dashboard' %}{{ nav_school_query }}" class="cursor-pointer hover:text-navy-500">Dashboard</a>
+        <i data-lucide="chevron-right" class="h-3.5 w-3.5"></i>
+        {% if is_super_admin %}
+          <a href="{% url 'admin_dashboard' %}{{ nav_school_query }}" class="cursor-pointer hover:text-navy-500">Schools</a>
+          <i data-lucide="chevron-right" class="h-3.5 w-3.5"></i>
+        {% endif %}
+        <span class="font-medium text-navy-500">Edit School Details</span>
+      </div>
+      <h1 class="font-display text-2xl font-bold text-navy-700">Edit School Details</h1>
+      {% if current_school %}
+        <p class="mt-1 text-sm text-gray-500">{{ current_school.name }}</p>
+      {% endif %}
+    </div>
+
+    <div class="flex-1 px-6 pb-8">
+      {% if messages %}
+        <div class="mb-5 space-y-3">
+          {% for message in messages %}
+            <div class="rounded-xl border px-4 py-3 text-sm {% if message.tags == 'error' %}border-red-200 bg-red-50 text-red-700{% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-700{% else %}border-emerald-200 bg-emerald-50 text-emerald-700{% endif %}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <form method="post" enctype="multipart/form-data" class="flex flex-col gap-6 lg:flex-row">
+        {% csrf_token %}
+        {% if current_school %}<input type="hidden" name="school" value="{{ current_school.id }}">{% endif %}
+
+        <div class="min-w-0 flex-1">
+          <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+            <div class="mb-6 flex items-center gap-2">
+              <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-navy-50">
+                <i data-lucide="school" class="h-4 w-4 text-navy-500"></i>
+              </div>
+              <h2 class="text-lg font-semibold text-navy-700">School Information</h2>
+            </div>
+
+            <div class="space-y-5">
+              <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div>
+                  <label class="mb-1.5 block text-sm font-medium text-gray-600">School Name <span class="text-red-400">*</span></label>
+                  <input type="text" name="name" value="{{ college.name }}" required class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm transition">
+                </div>
+                <div>
+                  <label class="mb-1.5 block text-sm font-medium text-gray-600">Slogan</label>
+                  <input type="text" name="slogan" value="{{ college.slogan }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm transition">
+                </div>
+              </div>
+
+              <div>
+                <label class="mb-1.5 block text-sm font-medium text-gray-600">Address</label>
+                <input type="text" name="address" value="{{ college.address }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm transition">
+              </div>
+
+              <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
+                <div>
+                  <label class="mb-1.5 block text-sm font-medium text-gray-600">Phone</label>
+                  <input type="text" name="phone" value="{{ college.phone }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm transition">
+                </div>
+                <div>
+                  <label class="mb-1.5 block text-sm font-medium text-gray-600">Email</label>
+                  <input type="email" name="email" value="{{ college.email }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm transition">
+                </div>
+                <div>
+                  <label class="mb-1.5 block text-sm font-medium text-gray-600">Website</label>
+                  <input type="url" name="website" value="{{ college.website }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm transition">
+                </div>
+              </div>
+
+              <div>
+                <label class="mb-1.5 block text-sm font-medium text-gray-600">Principal Name</label>
+                <input type="text" name="principal_name" value="{{ college.principal_name }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm transition">
+              </div>
+
+              <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div>
+                  <label class="mb-1.5 block text-sm font-medium text-gray-600">School Logo</label>
+                  <label class="upload-zone block cursor-pointer p-5 text-center">
+                    <input type="file" name="logo" accept="image/*" class="hidden">
+                    {% if college.logo %}
+                      <img src="{{ college.logo.url }}" alt="{{ college.name }}" class="mx-auto mb-3 h-16 w-16 rounded-xl object-cover">
+                      <p class="text-sm text-gray-500">Current logo uploaded. Click to replace.</p>
+                    {% else %}
+                      <i data-lucide="image-plus" class="mx-auto mb-2 h-8 w-8 text-gray-400"></i>
+                      <p class="text-sm text-gray-500">Click to upload logo</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-400">PNG, JPG up to 2MB</p>
+                  </label>
+                </div>
+
+                <div>
+                  <label class="mb-1.5 block text-sm font-medium text-gray-600">Principal Signature</label>
+                  <label class="upload-zone block cursor-pointer p-5 text-center">
+                    <input type="file" name="principal_signature" accept="image/*" class="hidden">
+                    {% if college.principal_signature %}
+                      <img src="{{ college.principal_signature.url }}" alt="Principal signature" class="mx-auto mb-3 h-16 max-w-full object-contain">
+                      <p class="text-sm text-gray-500">Current signature uploaded. Click to replace.</p>
+                    {% else %}
+                      <i data-lucide="pen-tool" class="mx-auto mb-2 h-8 w-8 text-gray-400"></i>
+                      <p class="text-sm text-gray-500">Click to upload signature</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-400">PNG with transparent background preferred</p>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label class="mb-1.5 block text-sm font-medium text-gray-600">Description</label>
+                <textarea name="description" rows="4" class="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm transition">{{ college.description }}</textarea>
+              </div>
+
+              <div class="pt-2 lg:hidden">
+                <button type="submit" class="flex w-full items-center justify-center gap-2 rounded-xl bg-navy-500 py-3 font-semibold text-white shadow-md shadow-navy-500/20 transition hover:bg-navy-600">
+                  <i data-lucide="save" class="h-4 w-4"></i>
+                  <span>Save School Settings</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="w-full flex-shrink-0 space-y-6 lg:w-80">
+          <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+            <div class="mb-5 flex items-center gap-2">
+              <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-gold-50">
+                <i data-lucide="shield" class="h-4 w-4 text-gold-600"></i>
+              </div>
+              <h2 class="font-semibold text-navy-700">School Admin Access</h2>
+            </div>
+
+            <div class="space-y-4">
+              <div>
+                <label class="mb-1.5 block text-sm font-medium text-gray-600">Admin Username</label>
+                <input type="text" name="admin_username" value="{{ admin_username }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm transition">
+              </div>
+              <div>
+                <label class="mb-1.5 block text-sm font-medium text-gray-600">New Password</label>
+                <div class="relative">
+                  <input type="password" id="pw-field" name="admin_password" placeholder="Enter new password" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 pr-10 text-sm transition">
+                  <button type="button" onclick="togglePw()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    <i data-lucide="eye" class="h-4 w-4" id="pw-icon"></i>
+                  </button>
+                </div>
+                <p class="mt-1.5 text-xs text-gray-400">Leave blank to keep current password</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+            <div class="mb-5 flex items-center gap-2">
+              <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-navy-50">
+                <i data-lucide="palette" class="h-4 w-4 text-navy-500"></i>
+              </div>
+              <h2 class="font-semibold text-navy-700">Theme Colors</h2>
+            </div>
+
+            <div class="space-y-4">
+              <div class="flex items-center gap-3">
+                <input type="color" value="{{ college.theme_primary|default:'#1a3a6b' }}" class="h-9 w-9 flex-shrink-0 cursor-pointer rounded-lg border-2 border-gray-200" data-target="theme_primary">
+                <div class="flex-1">
+                  <label class="mb-1 block text-xs font-medium text-gray-500">Primary</label>
+                  <input type="text" name="theme_primary" value="{{ college.theme_primary|default:'#1a3a6b' }}" class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 font-mono text-xs transition">
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <input type="color" value="{{ college.theme_light_primary|default:'#f7f5f0' }}" class="h-9 w-9 flex-shrink-0 cursor-pointer rounded-lg border-2 border-gray-200" data-target="theme_light_primary">
+                <div class="flex-1">
+                  <label class="mb-1 block text-xs font-medium text-gray-500">Light Primary</label>
+                  <input type="text" name="theme_light_primary" value="{{ college.theme_light_primary|default:'#f7f5f0' }}" class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 font-mono text-xs transition">
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <input type="color" value="{{ college.theme_secondary|default:'#1a1a2a' }}" class="h-9 w-9 flex-shrink-0 cursor-pointer rounded-lg border-2 border-gray-200" data-target="theme_secondary">
+                <div class="flex-1">
+                  <label class="mb-1 block text-xs font-medium text-gray-500">Secondary</label>
+                  <input type="text" name="theme_secondary" value="{{ college.theme_secondary|default:'#1a1a2a' }}" class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 font-mono text-xs transition">
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <input type="color" value="{{ college.theme_ternary|default:'#c9a84c' }}" class="h-9 w-9 flex-shrink-0 cursor-pointer rounded-lg border-2 border-gray-200" data-target="theme_ternary">
+                <div class="flex-1">
+                  <label class="mb-1 block text-xs font-medium text-gray-500">Ternary</label>
+                  <input type="text" name="theme_ternary" value="{{ college.theme_ternary|default:'#c9a84c' }}" class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 font-mono text-xs transition">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="hidden lg:block">
+            <button type="submit" class="flex w-full items-center justify-center gap-2 rounded-xl bg-navy-500 py-3 font-semibold text-white shadow-md shadow-navy-500/20 transition hover:bg-navy-600">
+              <i data-lucide="save" class="h-4 w-4"></i>
+              <span>Save School Settings</span>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+    </div>
+  </div>
+
+  <script>
+    function togglePw() {
+      const field = document.getElementById('pw-field');
+      const icon = document.getElementById('pw-icon');
+      if (!field) return;
+      field.type = field.type === 'password' ? 'text' : 'password';
+      if (icon) {
+        icon.setAttribute('data-lucide', field.type === 'password' ? 'eye' : 'eye-off');
+        lucide.createIcons();
+      }
+    }
+
+    document.querySelectorAll('input[type="color"][data-target]').forEach((picker) => {
+      const target = document.querySelector(`input[name="${picker.dataset.target}"]`);
+      if (!target) return;
+      picker.addEventListener('input', () => {
+        target.value = picker.value;
+      });
+      target.addEventListener('input', () => {
+        const value = target.value.trim();
+        if (/^#([0-9a-fA-F]{6})$/.test(value)) {
+          picker.value = value;
+        }
+      });
+    });
+
+    lucide.createIcons();
+  </script>
+</body>
+</html>
