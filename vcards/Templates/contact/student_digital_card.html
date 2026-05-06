@@ -1,0 +1,351 @@
+{% load static %}
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if profile_unavailable %}Profile unavailable{% else %}{{ student.name|default:"Digital Student ID" }}{% endif %}</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+    }
+    .heading { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .card-premium {
+      box-shadow: 0 24px 48px rgba(15, 23, 42, 0.12),
+                  0 8px 16px rgba(15, 23, 42, 0.06),
+                  inset 0 1px 1px rgba(255, 255, 255, 0.8);
+    }
+    .btn-primary {
+      box-shadow: 0 8px 16px rgba(251, 146, 60, 0.25);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .btn-primary:hover {
+      box-shadow: 0 12px 24px rgba(251, 146, 60, 0.35);
+      transform: translateY(-2px);
+    }
+    .btn-secondary, .btn-icon, .secondary-action {
+      transition: all 0.3s ease;
+    }
+    .btn-secondary:hover {
+      background-color: rgba(251, 146, 60, 0.08);
+      border-color: rgba(251, 146, 60, 0.4);
+      transform: translateY(-1px);
+    }
+    .btn-icon:hover { transform: scale(1.05); }
+    .expand-panel {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, padding 0.3s ease;
+      transform-origin: top;
+    }
+    .expand-panel.open {
+      max-height: 420px;
+      opacity: 1;
+      padding-top: 20px;
+      padding-bottom: 20px;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(251, 146, 60, 0.12);
+    }
+    .info-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .info-label {
+      flex: 0 0 auto;
+      font-size: 12px;
+      font-weight: 600;
+      color: #b45309;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+    .info-value {
+      min-width: 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #92400e;
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .status-active { background-color: rgba(34, 197, 94, 0.15); color: #15803d; }
+    .qr-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(251, 146, 60, 0.05) 0%, rgba(217, 119, 6, 0.05) 100%);
+      border: 1px solid rgba(251, 146, 60, 0.15);
+      border-radius: 12px;
+    }
+    .qr-frame {
+      width: 108px;
+      height: 108px;
+      background: #ffffff;
+      border: 1px solid rgba(251, 146, 60, 0.18);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(251, 146, 60, 0.16);
+    }
+    .qr-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #92400e;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .feature-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background-color: rgba(251, 146, 60, 0.2);
+      color: #92400e;
+      text-transform: uppercase;
+      letter-spacing: 0.2px;
+    }
+    .secondary-action {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 2px solid rgba(251, 146, 60, 0.2);
+      background-color: transparent;
+      color: #92400e;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .secondary-action:hover {
+      background-color: rgba(251, 146, 60, 0.05);
+      border-color: rgba(251, 146, 60, 0.35);
+    }
+    .action-disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body class="h-full overflow-auto">
+{% if profile_unavailable %}
+  <main class="min-h-full flex items-center justify-center p-6">
+    <section class="w-full max-w-sm rounded-2xl bg-white p-8 text-center shadow-xl border border-slate-100">
+      <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100 text-orange-700">
+        <i data-lucide="lock" style="width:22px;height:22px"></i>
+      </div>
+      <h1 class="heading text-xl font-bold text-slate-900">Profile unavailable</h1>
+      <p class="mt-3 text-sm leading-6 text-slate-600">This digital card is inactive or hidden by the school.</p>
+    </section>
+  </main>
+{% else %}
+  <main class="w-full min-h-full flex items-center justify-center p-4 py-8">
+    <section class="w-full max-w-md card-premium rounded-2xl overflow-hidden bg-white">
+      <div class="relative h-48 overflow-hidden bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
+        {% if cover_photo_url %}
+          <img src="{{ cover_photo_url }}" alt="{{ school_name|default:'School' }} cover" class="w-full h-full object-cover">
+          <div class="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/5"></div>
+        {% endif %}
+        <div class="absolute inset-0 flex flex-col justify-between p-5 z-10">
+          <div class="flex items-start justify-between w-full">
+            <div class="flex items-start gap-3 min-w-0">
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center shadow-lg overflow-hidden">
+                {% if school_logo_url %}
+                  <img src="{{ school_logo_url }}" alt="{{ school_name|default:'School' }} logo" class="w-full h-full object-cover">
+                {% else %}
+                  <i data-lucide="graduation-cap" style="width:24px;height:24px;color:white"></i>
+                {% endif %}
+              </div>
+              <div class="min-w-0">
+                <p class="text-gray-800 heading font-bold text-sm leading-tight break-words">{{ school_name|default:"School Name" }}</p>
+                <p class="text-gray-600 text-xs mt-0.5">Smart Digital ID</p>
+              </div>
+            </div>
+            <button id="info-btn" type="button" aria-label="Show student details" class="btn-icon w-9 h-9 bg-white/80 hover:bg-white rounded-lg flex items-center justify-center text-gray-700 hover:text-gray-900 shadow-sm hover:shadow-md backdrop-blur-sm">
+              <i data-lucide="info" style="width:18px;height:18px"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="relative px-6 pb-6">
+        <div class="absolute -top-16 left-1/2 -translate-x-1/2">
+          <div class="w-32 h-32 rounded-full border-4 border-white bg-gradient-to-br from-orange-300 via-amber-200 to-yellow-300 p-0.5 shadow-2xl card-premium">
+            {% if student_photo_url %}
+              <img src="{{ student_photo_url }}" alt="{{ student.name|default:'Student' }}" class="w-full h-full rounded-full object-cover">
+            {% else %}
+              <div class="w-full h-full rounded-full bg-gradient-to-br from-orange-200 via-amber-100 to-yellow-200 flex items-center justify-center">
+                <span class="heading text-4xl font-extrabold text-orange-700">{{ student.name|default:"S"|slice:":1" }}</span>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="pt-20 text-center mb-5">
+          <h1 class="heading text-2xl font-bold text-gray-900 break-words">{{ student.name|default:"Student Name" }}</h1>
+          <p class="text-gray-600 text-sm mt-2 font-medium">{{ grade_section|default:"Student" }}</p>
+          <div class="flex flex-wrap items-center justify-center gap-2 mt-4">
+            <span class="status-chip status-active"><i data-lucide="user" style="width:12px;height:12px"></i> {{ member_type_label|default:"Student" }}</span>
+            <span class="status-chip status-active"><i data-lucide="check-circle-2" style="width:12px;height:12px"></i> Active</span>
+          </div>
+          <div class="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 rounded-full border border-green-200/50 shadow-sm">
+            <i data-lucide="shield-check" style="width:16px;height:16px;stroke-width:2.5"></i>
+            <span class="text-xs font-semibold">Verified by School</span>
+          </div>
+        </div>
+
+        <div id="expand-panel" class="expand-panel mx-0 bg-gradient-to-br from-orange-50/60 to-amber-50/60 rounded-xl border border-orange-200/40 px-4 mb-5 backdrop-blur-sm">
+          <div class="space-y-0">
+            <div class="info-row"><span class="info-label">{{ parent_label|default:"Emergency Contact" }}</span><span class="info-value">{{ parent_name|default:"Not added" }}</span></div>
+            <div class="info-row"><span class="info-label">Emergency Contact</span><span class="info-value">{{ emergency_contact_phone|default:"Not added" }}</span></div>
+            <div class="info-row"><span class="info-label">Blood Group</span><span class="info-value">{{ blood_group|default:"Not added" }}</span></div>
+            <div class="info-row"><span class="info-label">Address</span><span class="info-value">{{ student_address|default:school_address|default:"Not added" }}</span></div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mb-5">
+          <div class="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl border border-orange-200/40 p-3.5">
+            <div class="flex items-center gap-2.5 mb-2">
+              <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center shadow-md">
+                <i data-lucide="hash" style="width:14px;height:14px;color:white;stroke-width:2.5"></i>
+              </div>
+              <p class="text-xs text-orange-700 font-semibold uppercase tracking-wide">ID</p>
+            </div>
+            <p class="text-sm font-bold text-gray-900 break-words">{{ student_identifier }}</p>
+          </div>
+          <a href="{{ school_website_url|default:'#' }}" {% if school_website_url %}target="_blank" rel="noopener"{% endif %} class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-200/40 p-3.5 {% if not school_website_url %}action-disabled{% endif %}">
+            <div class="flex items-center gap-2.5 mb-2">
+              <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center shadow-md">
+                <i data-lucide="globe" style="width:14px;height:14px;color:white;stroke-width:2.5"></i>
+              </div>
+              <p class="text-xs text-blue-700 font-semibold uppercase tracking-wide">Website</p>
+            </div>
+            <p class="text-sm font-bold text-gray-900 break-words">{{ school_website|default:"Not added" }}</p>
+          </a>
+        </div>
+
+        <a href="{% if emergency_contact_phone %}tel:{{ emergency_contact_phone }}{% else %}#{% endif %}" id="emergency-action" class="w-full flex items-center justify-between py-2.5 px-3 rounded-lg bg-red-50 border border-red-200/40 text-red-700 hover:bg-red-100 transition-all mb-4 {% if not emergency_contact_phone %}action-disabled{% endif %}">
+          <div class="flex items-center gap-2"><i data-lucide="phone-off" style="width:16px;height:16px;stroke-width:2"></i><span class="text-xs font-semibold">Emergency Contact</span></div>
+          <i data-lucide="chevron-right" style="width:14px;height:14px"></i>
+        </a>
+
+        <div class="grid grid-cols-4 gap-2.5 mb-5">
+          <a href="{{ download_vcard_url }}" class="btn-primary flex flex-col items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 text-white font-semibold group transition-all">
+            <i data-lucide="bookmark" style="width:18px;height:18px;stroke-width:2" class="group-hover:scale-110 transition-transform"></i><span class="text-xs">Save</span>
+          </a>
+          <a href="{{ phone_action_url|default:'#' }}" class="btn-secondary flex flex-col items-center justify-center gap-2 py-3 rounded-xl bg-white border-2 border-orange-200 text-orange-600 font-semibold hover:border-orange-300 {% if not phone_action_url %}action-disabled{% endif %}">
+            <i data-lucide="phone" style="width:18px;height:18px;stroke-width:2"></i><span class="text-xs">Call</span>
+          </a>
+          <a href="{{ whatsapp_action_url|default:'#' }}" class="btn-secondary flex flex-col items-center justify-center gap-2 py-3 rounded-xl bg-white border-2 border-green-200 text-green-600 font-semibold hover:border-green-300 {% if not whatsapp_action_url %}action-disabled{% endif %}">
+            <i data-lucide="message-circle" style="width:18px;height:18px;stroke-width:2"></i><span class="text-xs">WhatsApp</span>
+          </a>
+          <a href="{{ navigate_url|default:'#' }}" target="_blank" rel="noopener" class="btn-secondary flex flex-col items-center justify-center gap-2 py-3 rounded-xl bg-white border-2 border-yellow-200 text-amber-600 font-semibold hover:border-yellow-300 {% if not navigate_url %}action-disabled{% endif %}">
+            <i data-lucide="map-pin" style="width:18px;height:18px;stroke-width:2"></i><span class="text-xs">Navigate</span>
+          </a>
+        </div>
+
+        <div class="qr-section mb-5">
+          <div class="qr-frame">
+            {% if qr_code_url %}
+              <img src="{{ qr_code_url }}" alt="QR code for {{ student.name|default:'digital card' }}" class="w-[100px] h-[100px] rounded-lg object-contain">
+            {% else %}
+              <i data-lucide="qr-code" style="width:48px;height:48px;color:#d97706;stroke-width:1.5"></i>
+            {% endif %}
+          </div>
+          <p class="qr-label">Scan to View Profile</p>
+          <span class="feature-badge"><i data-lucide="wifi" style="width:10px;height:10px"></i> NFC & QR Enabled</span>
+        </div>
+
+        <button id="share-profile" type="button" class="secondary-action mb-3">Share Profile</button>
+        <p id="share-status" class="hidden mb-3 text-center text-xs font-semibold text-green-700">Profile link copied</p>
+
+        {% if social_links %}
+          <div class="flex justify-center gap-3 pt-5 border-t border-gray-100">
+            {% for link in social_links %}
+              <a href="{{ link.url }}" target="_blank" rel="noopener" aria-label="{{ link.label }}" class="btn-icon w-9 h-9 rounded-lg {% if link.key == 'instagram' %}bg-gradient-to-br from-pink-500 to-rose-600{% elif link.key == 'facebook' %}bg-gradient-to-br from-blue-600 to-blue-700{% elif link.key == 'whatsapp' %}bg-gradient-to-br from-green-500 to-emerald-600{% else %}bg-gradient-to-br from-blue-700 to-cyan-600{% endif %} text-white flex items-center justify-center hover:shadow-lg transition-all">
+                <i data-lucide="{{ link.icon }}" style="width:16px;height:16px;stroke-width:2"></i>
+              </a>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    </section>
+  </main>
+{% endif %}
+
+<script>
+  const infoButton = document.getElementById('info-btn');
+  const expandPanel = document.getElementById('expand-panel');
+  if (infoButton && expandPanel) {
+    infoButton.addEventListener('click', () => {
+      expandPanel.classList.toggle('open');
+    });
+  }
+
+  const emergencyAction = document.getElementById('emergency-action');
+  if (emergencyAction && expandPanel) {
+    emergencyAction.addEventListener('click', () => {
+      expandPanel.classList.add('open');
+    });
+  }
+
+  const shareButton = document.getElementById('share-profile');
+  const shareStatus = document.getElementById('share-status');
+  if (shareButton) {
+    shareButton.addEventListener('click', async () => {
+      const profileUrl = '{{ public_card_url|escapejs }}' || window.location.href;
+      const shareData = {
+        title: '{{ student.name|default:"Digital Student ID"|escapejs }}',
+        text: '{{ school_name|default:"Digital Student ID"|escapejs }}',
+        url: profileUrl
+      };
+      try {
+        if (navigator.share) {
+          await navigator.share(shareData);
+          return;
+        }
+        await navigator.clipboard.writeText(profileUrl);
+        if (shareStatus) {
+          shareStatus.classList.remove('hidden');
+          setTimeout(() => shareStatus.classList.add('hidden'), 2200);
+        }
+      } catch (error) {
+        if (shareStatus) {
+          shareStatus.textContent = 'Sharing was cancelled';
+          shareStatus.classList.remove('hidden');
+          setTimeout(() => shareStatus.classList.add('hidden'), 2200);
+        }
+      }
+    });
+  }
+
+  if (window.lucide) {
+    lucide.createIcons();
+  }
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 <div class="print-card">
   {% if card.back_theme_key == 'back_official_wave' %}
-    {% include "print/themes/back_official_wave.html" with school_name=card.school_name card_type_label=card.card_type_label terms_lines=card.terms_lines qr_code_url=card.qr_code_url principal_signature_url=card.principal_signature_url %}
+    {% include "print/themes/back_official_wave.html" with school_name=card.school_name card_type_label=card.card_type_label theme_light_primary=card.theme_light_primary theme_secondary=card.theme_secondary theme_ternary=card.theme_ternary terms_lines=card.terms_lines qr_code_url=card.qr_code_url principal_signature_url=card.principal_signature_url %}
   {% else %}
     <div class="corner" style="background: {{ card.theme_primary }};"></div>
     <div class="bottom-wave">

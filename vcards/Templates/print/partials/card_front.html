@@ -1,6 +1,6 @@
 <div class="print-card">
   {% if card.front_theme_key == 'front_official_wave' %}
-    {% include "print/themes/front_official_wave.html" with school_name=card.school_name card_type_label=card.card_type_label card_label=card.card_label member_photo_url=card.member_photo_url member_name=card.member_name member_id_number=card.member_id_number member_dob=card.member_dob member_address_lines=card.member_address_lines %}
+    {% include "print/themes/front_official_wave.html" with school_name=card.school_name card_type_label=card.card_type_label card_label=card.card_label theme_light_primary=card.theme_light_primary theme_secondary=card.theme_secondary theme_ternary=card.theme_ternary member_photo_url=card.member_photo_url member_name=card.member_name member_id_number=card.member_id_number member_dob=card.member_dob member_class_label=card.member_class_label member_section=card.member_section member_address_lines=card.member_address_lines %}
   {% else %}
     <div class="corner" style="background: {{ card.theme_primary }};"></div>
     <div class="bottom-wave">

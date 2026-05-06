@@ -13,6 +13,15 @@
         * {
             font-family: 'Inter', sans-serif;
         }
+
+        button,
+        a,
+        [onclick],
+        input[type="checkbox"],
+        input[type="radio"],
+        select {
+            cursor: pointer;
+        }
         
         .hero-gradient {
             background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #404040 100%);
@@ -253,6 +262,22 @@
         
         .cta-gradient {
             background: linear-gradient(135deg, var(--brand-accent) 0%, var(--brand-primary) 50%, var(--brand-secondary) 100%);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transform: translateY(-6px);
+            transition: max-height 0.55s ease, opacity 0.35s ease, transform 0.35s ease, margin-top 0.35s ease;
+            margin-top: 0;
+        }
+
+        .faq-answer.open {
+            max-height: 420px;
+            opacity: 1;
+            transform: translateY(0);
+            margin-top: 1.5rem;
         }
         
 
@@ -703,7 +728,7 @@
                     </div>
                     <span id="faq-icon-1" class="text-3xl text-cyan-300 transform group-hover:scale-110 transition">+</span>
                 </button>
-                <div id="faq-content-1" class="hidden mt-6 ml-16 text-blue-200 leading-relaxed">
+                <div id="faq-content-1" class="faq-answer ml-16 text-blue-200 leading-relaxed">
                     <p class="mb-4">NFC (Near Field Communication) lets you share info instantly by tapping your card on any modern smartphone.</p>
                     <ul class="space-y-2 text-sm">
                         <li>✔ Works within 4cm range</li>
@@ -728,7 +753,7 @@
                     </div>
                     <span id="faq-icon-2" class="text-3xl text-cyan-300 transform group-hover:scale-110 transition">+</span>
                 </button>
-                <div id="faq-content-2" class="hidden mt-6 ml-16 text-blue-200 leading-relaxed">
+                <div id="faq-content-2" class="faq-answer ml-16 text-blue-200 leading-relaxed">
                     <p>Works with 95% of modern smartphones (iPhone 7+ & Android 2018+). If NFC isn’t available, your QR code still works.</p>
                 </div>
             </div>
@@ -747,7 +772,7 @@
                     </div>
                     <span id="faq-icon-3" class="text-3xl text-cyan-300 transform group-hover:scale-110 transition">+</span>
                 </button>
-                <div id="faq-content-3" class="hidden mt-6 ml-16 text-blue-200 leading-relaxed">
+                <div id="faq-content-3" class="faq-answer ml-16 text-blue-200 leading-relaxed">
                     <p>Yes! Choose from PVC, wood, or metal. Upload your logo, colors, and layout for a card that fits your brand perfectly.</p>
                 </div>
             </div>
@@ -766,7 +791,7 @@
                     </div>
                     <span id="faq-icon-4" class="text-3xl text-cyan-300 transform group-hover:scale-110 transition">+</span>
                 </button>
-                <div id="faq-content-4" class="hidden mt-6 ml-16 text-blue-200 leading-relaxed">
+                <div id="faq-content-4" class="faq-answer ml-16 text-blue-200 leading-relaxed">
                     <p>No charging or batteries needed — the NFC chip is passive and powered by the phone itself. Your card lasts for years.</p>
                 </div>
             </div>
@@ -785,7 +810,7 @@
                     </div>
                     <span id="faq-icon-5" class="text-3xl text-cyan-300 transform group-hover:scale-110 transition">+</span>
                 </button>
-                <div id="faq-content-5" class="hidden mt-6 ml-16 text-blue-200 leading-relaxed">
+                <div id="faq-content-5" class="faq-answer ml-16 text-blue-200 leading-relaxed">
                     <p>Yes, update your profile anytime via dashboard. Changes appear instantly when someone taps your card.</p>
                 </div>
             </div>
@@ -804,7 +829,7 @@
                     </div>
                     <span id="faq-icon-6" class="text-3xl text-cyan-300 transform group-hover:scale-110 transition">+</span>
                 </button>
-                <div id="faq-content-6" class="hidden mt-6 ml-16 text-blue-200 leading-relaxed">
+                <div id="faq-content-6" class="faq-answer ml-16 text-blue-200 leading-relaxed">
                     <p>Standard delivery: 5–7 business days. Express shipping available for faster turnaround.</p>
                 </div>
             </div>
@@ -832,12 +857,12 @@
 function toggleFAQ(id) {
     const content = document.getElementById(`faq-content-${id}`);
     const icon = document.getElementById(`faq-icon-${id}`);
-    if (content.classList.contains("hidden")) {
-        content.classList.remove("hidden");
-        icon.textContent = "×";
-    } else {
-        content.classList.add("hidden");
+    if (content.classList.contains("open")) {
+        content.classList.remove("open");
         icon.textContent = "+";
+    } else {
+        content.classList.add("open");
+        icon.textContent = "−";
     }
 }
 </script>
@@ -1285,6 +1310,7 @@ function toggleFAQ(id) {
             <!-- Chat Input Form -->
             <div class="p-6 border-t border-gray-200 bg-white rounded-b-3xl">
                 <form id="chat-form" class="space-y-4">
+                    {% csrf_token %}
                     <div>
                         <input 
                             type="email" 
@@ -1331,12 +1357,12 @@ function toggleFAQ(id) {
             const content = document.getElementById(`faq-content-${faqNumber}`);
             const icon = document.getElementById(`faq-icon-${faqNumber}`);
             
-            if (content.classList.contains('hidden')) {
-                content.classList.remove('hidden');
-                icon.textContent = '−';
-            } else {
-                content.classList.add('hidden');
+            if (content.classList.contains('open')) {
+                content.classList.remove('open');
                 icon.textContent = '+';
+            } else {
+                content.classList.add('open');
+                icon.textContent = '−';
             }
         }
 
@@ -1587,21 +1613,36 @@ This message was sent from the SkillConnect website contact form.
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
+        function escapeHtml(value) {
+            const div = document.createElement('div');
+            div.textContent = value || '';
+            return div.innerHTML;
+        }
+
+        function getCookie(name) {
+            const tokenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+            if (name === 'csrftoken' && tokenInput?.value) return tokenInput.value;
+            const cookies = document.cookie ? document.cookie.split(';') : [];
+            for (const cookie of cookies) {
+                const [key, ...parts] = cookie.trim().split('=');
+                if (key === name) return decodeURIComponent(parts.join('='));
+            }
+            return '';
+        }
+
         // Add bot response
-        function addBotResponse() {
+        function addBotResponse(reply, aiEnabled = true) {
             const messageDiv = document.createElement('div');
             messageDiv.className = 'mb-4';
+            const label = aiEnabled ? 'AI Assistant' : 'Assistant';
             messageDiv.innerHTML = `
                 <div class="flex items-start">
                     <div class="w-10 h-10 bg-gradient-to-br from-gray-600 to-gray-800 rounded-2xl flex items-center justify-center mr-3 shadow-lg">
-                        <span class="text-lg">🤖</span>
+                        <span class="text-lg">AI</span>
                     </div>
-                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-2xl rounded-tl-sm p-4 shadow-lg max-w-xs">
-                        <p class="text-green-800 text-sm leading-relaxed">
-                            ✅ <strong>Message received!</strong><br><br>
-                            Thanks for reaching out! Our team will review your question and email you a detailed response within 2 hours during business hours.<br><br>
-                            <span class="text-xs opacity-75">📧 Check your inbox soon!</span>
-                        </p>
+                    <div class="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-2xl rounded-tl-sm p-4 shadow-lg max-w-xs">
+                        <div class="mb-1 text-[11px] font-bold uppercase tracking-wider text-gray-500">${label}</div>
+                        <p class="text-gray-800 text-sm leading-relaxed">${escapeHtml(reply).replace(/\n/g, '<br>')}</p>
                     </div>
                 </div>
             `;
@@ -1609,59 +1650,63 @@ This message was sent from the SkillConnect website contact form.
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
+        function addTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'chat-typing';
+            typingDiv.className = 'mb-4';
+            typingDiv.innerHTML = `
+                <div class="flex items-start">
+                    <div class="w-10 h-10 bg-gradient-to-br from-gray-600 to-gray-800 rounded-2xl flex items-center justify-center mr-3 shadow-lg">
+                        <span class="text-lg">AI</span>
+                    </div>
+                    <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-sm p-4 shadow-lg text-sm text-gray-500">Thinking...</div>
+                </div>
+            `;
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
         // Handle form submission
-        chatForm.addEventListener('submit', function(e) {
+        chatForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            
-            const email = document.getElementById('chat-email').value;
-            const message = document.getElementById('chat-message').value;
-            
-            if (email && message) {
-                // Add user message to chat
-                addUserMessage(message, email);
-                
-                // Clear form
-                chatForm.reset();
-                
-                // Add bot response after a short delay
-                setTimeout(() => {
-                    addBotResponse();
-                }, 1000);
-                
-                // Here you would typically send the data to your backend
-                console.log('Chat submission:', { email, message, timestamp: new Date() });
-                
-                // Show success notification
-                setTimeout(() => {
-                    const notification = document.createElement('div');
-                    notification.className = 'fixed top-6 right-6 bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-4 rounded-2xl shadow-2xl z-50 transform translate-x-full transition-all duration-500';
-                    notification.innerHTML = `
-                        <div class="flex items-center">
-                            <span class="mr-3 text-xl">✅</span>
-                            <div>
-                                <div class="font-bold">Message Sent!</div>
-                                <div class="text-sm opacity-90">We'll email you back soon</div>
-                            </div>
-                        </div>
-                    `;
-                    document.body.appendChild(notification);
-                    
-                    // Animate in
-                    setTimeout(() => {
-                        notification.classList.remove('translate-x-full');
-                    }, 100);
-                    
-                    // Remove after 4 seconds
-                    setTimeout(() => {
-                        notification.classList.add('translate-x-full');
-                        setTimeout(() => {
-                            document.body.removeChild(notification);
-                        }, 500);
-                    }, 4000);
-                }, 1500);
+
+            const emailInput = document.getElementById('chat-email');
+            const messageInput = document.getElementById('chat-message');
+            const submitBtn = chatForm.querySelector('button[type="submit"]');
+            const email = emailInput.value.trim();
+            const message = messageInput.value.trim();
+
+            if (!email || !message) return;
+
+            addUserMessage(message, email);
+            messageInput.value = '';
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-60');
+            addTypingIndicator();
+
+            try {
+                const response = await fetch('{% url "ai_chat" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken'),
+                    },
+                    body: JSON.stringify({ email, message }),
+                });
+                const data = await response.json();
+                document.getElementById('chat-typing')?.remove();
+                if (!response.ok) {
+                    addBotResponse(data.error || 'Sorry, I could not process that question right now.', false);
+                } else {
+                    addBotResponse(data.reply, data.ai_enabled);
+                }
+            } catch (error) {
+                document.getElementById('chat-typing')?.remove();
+                addBotResponse('Sorry, the assistant is temporarily unavailable. Please send your question through the contact form or WhatsApp.', false);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-60');
             }
         });
-
         // Show notification badge after 10 seconds if user hasn't interacted
         setTimeout(() => {
             if (!hasInteracted) {

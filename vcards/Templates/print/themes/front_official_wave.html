@@ -97,8 +97,12 @@
   <text x="52" y="163" font-size="5" fill="#444">:</text>
   <text x="58" y="163" font-size="5" fill="#444">{{ member_dob|default:"" }}</text>
 
-  <text x="20" y="172" font-size="5" font-weight="700" fill="#444">Address</text>
+  <text x="20" y="172" font-size="5" font-weight="700" fill="#444">Class</text>
   <text x="52" y="172" font-size="5" fill="#444">:</text>
-  <text x="58" y="172" font-size="5" fill="#444">{{ member_address_lines.0 }}</text>
-  <text x="58" y="179" font-size="5" fill="#444">{{ member_address_lines.1 }}</text>
+  <text x="58" y="172" font-size="5" fill="#444">{{ member_class_label|default:"" }}{% if member_section %} - {{ member_section }}{% endif %}</text>
+
+  <text x="20" y="181" font-size="5" font-weight="700" fill="#444">Address</text>
+  <text x="52" y="181" font-size="5" fill="#444">:</text>
+  <text x="58" y="181" font-size="5" fill="#444">{{ member_address_lines.0 }}</text>
+  <text x="58" y="188" font-size="5" fill="#444">{{ member_address_lines.1 }}</text>
 </svg>

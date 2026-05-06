@@ -136,7 +136,7 @@ class StudentProfile(BaseProfile):
         ('premium', 'Premium'),
     ]
     user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='general')
-    contact_template = models.CharField(max_length=50, default='contact2.html')
+    contact_template = models.CharField(max_length=50, default='student_digital_card.html')
     portfolio_template = models.CharField(max_length=50, default='portfolio1.html')
     print_template = models.CharField(max_length=50, default='print_classic.html')
     print_card_type = models.CharField(max_length=30, default='id_card')
@@ -163,7 +163,7 @@ class StudentProfile(BaseProfile):
 
     @property
     def profile_url(self):
-        return reverse('contact_card', args=[self.id])
+        return reverse('student_contact_card', args=[self.id])
 
     def __str__(self):
         if self.college:

@@ -32,12 +32,12 @@
               <div class="font-semibold uppercase">{{ student.member_type }}</div>
             </div>
             <div class="rounded-2xl bg-white/10 px-4 py-3">
-              <div class="text-slate-300">Contact Card</div>
+              <div class="text-slate-300">Digital ID</div>
               <div class="font-semibold">{% if student.show_contact_card %}Visible{% else %}Hidden{% endif %}</div>
             </div>
             <div class="rounded-2xl bg-white/10 px-4 py-3">
               <div class="text-slate-300">Public Profile</div>
-              <div class="font-semibold">Contact Card</div>
+              <div class="font-semibold">Digital ID</div>
             </div>
             <div class="rounded-2xl bg-white/10 px-4 py-3">
               <div class="text-slate-300">Profile Completion</div>
@@ -47,7 +47,7 @@
 
           <div class="mt-6 space-y-3">
             <a href="{% url 'edit_student_manual' student.id %}" class="block rounded-xl bg-white px-4 py-3 text-center font-semibold text-slate-900">Edit Profile</a>
-            <a href="{% url 'contact_card' student.id %}" class="block rounded-xl border border-white/20 px-4 py-3 text-center font-semibold">Open Contact Card</a>
+            <a href="{% url 'student_contact_card' student.id %}" class="block rounded-xl border border-white/20 px-4 py-3 text-center font-semibold">Open Digital ID</a>
             <a href="{% url 'download_vcard' student.id %}" class="block rounded-xl border border-white/20 px-4 py-3 text-center font-semibold">Download vCard</a>
             <a href="{% url 'logout_student_edit' student.id %}" class="block rounded-xl border border-white/20 px-4 py-3 text-center font-semibold">Logout</a>
           </div>
@@ -56,7 +56,7 @@
         <div class="rounded-3xl bg-white p-6 shadow-lg">
           <h2 class="text-lg font-bold">Access Rules</h2>
           <p class="mt-2 text-sm text-slate-600">
-            Use this dashboard after login to manage your teacher contact card, visibility, and contact information.
+            Use this dashboard after login to manage your digital ID, visibility, and contact information.
           </p>
           <p class="mt-3 text-sm text-slate-600">
             Your edit page is now protected by your profile username and password.
@@ -93,11 +93,11 @@
             <h2 class="text-xl font-bold">Quick Actions</h2>
             <div class="mt-5 grid gap-3">
               <a href="{% url 'edit_student_manual' student.id %}" class="rounded-2xl border border-slate-200 px-4 py-4 hover:bg-slate-50">
-                <div class="font-semibold">Edit contact card content</div>
-                <div class="mt-1 text-sm text-slate-500">Update name, title, bio, links, images, and template settings.</div>
+                <div class="font-semibold">Edit digital ID content</div>
+                <div class="mt-1 text-sm text-slate-500">Update name, title, bio, links, images, and public card settings.</div>
               </a>
-              <a href="{% url 'contact_card' student.id %}" class="rounded-2xl border border-slate-200 px-4 py-4 hover:bg-slate-50">
-                <div class="font-semibold">Preview public contact card</div>
+              <a href="{% url 'student_contact_card' student.id %}" class="rounded-2xl border border-slate-200 px-4 py-4 hover:bg-slate-50">
+                <div class="font-semibold">Preview public digital ID</div>
                 <div class="mt-1 text-sm text-slate-500">Check how your QR/NFC landing page looks to visitors.</div>
               </a>
               <div class="rounded-2xl border border-dashed border-slate-200 px-4 py-4 bg-slate-50">
@@ -123,7 +123,7 @@
                 <span class="font-semibold text-right">{{ student.phone }}</span>
               </div>
               <div class="flex items-start justify-between gap-4 border-b border-slate-100 pb-3">
-                <span class="text-slate-500">Contact Template</span>
+                <span class="text-slate-500">Digital Profile</span>
                 <span class="font-semibold text-right">{{ contact_template_label }}</span>
               </div>
               <div class="flex items-start justify-between gap-4">
@@ -143,8 +143,8 @@
                 <input type="hidden" name="dashboard_action" value="toggle_contact_card">
                 <div class="flex items-center justify-between gap-4">
                   <div>
-                    <div class="font-semibold">Contact Card</div>
-                    <div class="text-sm text-slate-500">Turn the public contact card on or off.</div>
+                    <div class="font-semibold">Digital ID</div>
+                    <div class="text-sm text-slate-500">Turn the public digital card on or off.</div>
                   </div>
                   <button type="submit" class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
                     {% if student.show_contact_card %}Hide{% else %}Show{% endif %}

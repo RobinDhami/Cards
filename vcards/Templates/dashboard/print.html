@@ -39,8 +39,117 @@
     .anim-d5 { animation-delay: 0.25s; }
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-thumb { background: #cdd2dd; border-radius: 3px; }
-    .preview-shell { transition: all 0.2s ease; }
+    .preview-shell {
+      --preview-light: #f7f5f0;
+      --preview-primary: #1a3a5c;
+      --preview-secondary: #1a1a2a;
+      --preview-accent: #c9a84c;
+      position: relative;
+      transition: all 0.2s ease;
+    }
     .preview-shell.landscape { width: 360px !important; height: 240px !important; }
+    .preview-shell::before,
+    .preview-shell::after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+      transition: all 0.2s ease;
+      z-index: 1;
+    }
+    .preview-shell > .relative { z-index: 2; }
+    .theme-front_academic_blue::before,
+    .theme-back_qr_clean::before {
+      inset: 0;
+      background:
+        linear-gradient(90deg, var(--preview-primary) 0 12%, transparent 12%),
+        linear-gradient(180deg, transparent 0 82%, var(--preview-primary) 82% 100%);
+      opacity: .95;
+    }
+    .theme-front_academic_blue::after,
+    .theme-back_qr_clean::after {
+      left: 50%;
+      top: 54px;
+      width: 92px;
+      height: 92px;
+      border: 2px solid var(--preview-accent);
+      border-radius: 999px;
+      transform: translateX(-50%);
+    }
+    .theme-front_modern_green,
+    .theme-back_contact_grid {
+      background:
+        radial-gradient(circle at 20% 12%, rgba(255,255,255,.18), transparent 28%),
+        linear-gradient(145deg, var(--preview-secondary), var(--preview-primary)) !important;
+      color: #f8fafc;
+    }
+    .theme-front_modern_green::before,
+    .theme-back_contact_grid::before {
+      inset: 18px;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 14px;
+    }
+    .theme-front_modern_green::after,
+    .theme-back_contact_grid::after {
+      right: -42px;
+      bottom: 36px;
+      width: 150px;
+      height: 150px;
+      border: 18px solid var(--preview-accent);
+      border-radius: 999px;
+      opacity: .22;
+    }
+    .theme-front_modern_green .text-slate-700,
+    .theme-front_modern_green .text-slate2-500,
+    .theme-front_modern_green .text-slate2-600,
+    .theme-back_contact_grid .text-slate2-500,
+    .theme-back_contact_grid .text-slate2-600,
+    .theme-back_contact_grid .text-slate2-700 { color: #f8fafc !important; }
+    .theme-front_maroon_crest::before,
+    .theme-back_secure_band::before {
+      inset: 10px;
+      border: 3px double var(--preview-primary);
+      border-radius: 12px;
+    }
+    .theme-front_maroon_crest::after,
+    .theme-back_secure_band::after {
+      left: -34px;
+      top: -34px;
+      width: 108px;
+      height: 108px;
+      background: var(--preview-accent);
+      border-radius: 999px;
+      opacity: .85;
+    }
+    .theme-front_prism_shift,
+    .theme-back_prism_shift {
+      background: linear-gradient(135deg, #ffffff 0 48%, var(--preview-light) 48% 100%) !important;
+    }
+    .theme-front_prism_shift::before,
+    .theme-back_prism_shift::before {
+      inset: 0;
+      background:
+        linear-gradient(126deg, transparent 0 56%, var(--preview-primary) 56% 69%, transparent 69%),
+        linear-gradient(138deg, transparent 0 66%, var(--preview-accent) 66% 75%, transparent 75%);
+      opacity: .98;
+    }
+    .theme-front_prism_shift::after,
+    .theme-back_prism_shift::after {
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 42px;
+      background: var(--preview-secondary);
+    }
+    .theme-front_official_wave::before,
+    .theme-back_official_wave::before {
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 62px;
+      background:
+        linear-gradient(135deg, transparent 0 42%, var(--preview-accent) 42% 55%, transparent 55%),
+        var(--preview-secondary);
+    }
   </style>
 </head>
 <body class="h-full bg-slate2-50 text-slate2-800">
@@ -129,10 +238,10 @@
                 <option value="{{ section }}" {% if section == filter_state.section %}selected{% endif %}>{{ section }}</option>
               {% endfor %}
             </select>
-            <select name="print_mode" class="w-full rounded-lg border border-slate2-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-navy-300">
-              <option value="a4" {% if print_options.print_mode == 'a4' %}selected{% endif %}>A4 Grid Preview</option>
-              <option value="single" {% if print_options.print_mode == 'single' %}selected{% endif %}>Single Card Preview</option>
-            </select>
+            <label class="flex items-center justify-between gap-3 rounded-lg border border-slate2-200 px-3 py-2 text-xs text-navy-500">
+              <span class="font-semibold">A4 batch layout</span>
+              <input type="checkbox" name="a4_layout" value="1" class="h-4 w-4 accent-navy-500" {% if print_options.a4_layout %}checked{% endif %}>
+            </label>
           </div>
         </form>
 
@@ -145,6 +254,7 @@
           <input type="hidden" name="section" value="{{ filter_state.section }}">
           <input type="hidden" name="front_design" id="front-design-input" value="{{ print_options.front_design }}">
           <input type="hidden" name="back_design" id="back-design-input" value="{{ print_options.back_design }}">
+          <input type="hidden" name="print_mode" id="print-mode-input" value="{{ print_options.print_mode }}">
 
           <div class="flex flex-col gap-5 xl:flex-row">
             <div class="space-y-5 xl:w-[420px] xl:flex-shrink-0">
@@ -212,12 +322,22 @@
                   </div>
                   <div>
                     <label class="mb-1 block text-[11px] font-medium text-slate2-500">Valid Till</label>
-                    <input type="text" name="valid_till" value="{{ print_options.valid_till }}" class="w-full rounded-lg border border-slate2-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-navy-300" placeholder="Date value">
+                    <div class="flex gap-2">
+                      <input type="text" name="valid_till" id="valid-till-input" value="{{ print_options.valid_till }}" class="w-full rounded-lg border border-slate2-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-navy-300" placeholder="Choose date">
+                      <button type="button" id="open-date-modal" class="rounded-lg border border-slate2-200 px-2.5 text-slate2-500 hover:bg-slate2-50" title="Choose validity date"><i data-lucide="calendar-days" class="h-4 w-4"></i></button>
+                    </div>
                   </div>
                   <div class="col-span-2">
                     <label class="mb-1 block text-[11px] font-medium text-slate2-500">Print Label</label>
                     <input type="text" name="label" value="{{ print_options.label }}" class="w-full rounded-lg border border-slate2-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-navy-300" placeholder="Student Identity Card">
                   </div>
+                  <label class="col-span-2 flex items-start gap-3 rounded-lg border border-slate2-200 bg-slate2-50 px-3 py-3 text-xs text-slate2-600">
+                    <input type="checkbox" id="a4-layout-input" class="mt-0.5 h-4 w-4 accent-navy-500" {% if print_options.a4_layout %}checked{% endif %}>
+                    <span>
+                      <span class="block font-semibold text-navy-500">A4 batch layout</span>
+                      <span class="mt-0.5 block">Checked means many selected cards are arranged on printable A4 sheets. Unchecked means each selected member is prepared as a front/back NFC card pair.</span>
+                    </span>
+                  </label>
                   <div class="col-span-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
                       <label class="mb-1 block text-[11px] font-medium text-slate2-500">Primary</label>
@@ -253,23 +373,23 @@
 
               <div class="anim-in anim-d4 rounded-xl bg-white p-5 card-shadow">
                 <h2 class="mb-1 flex items-center gap-2 text-sm font-semibold text-navy-500"><i data-lucide="palette" class="h-4 w-4 text-gold-500"></i>Card Theme</h2>
-                <p class="mb-3 text-[11px] text-slate2-400">Official wave is the only supported studio design for now.</p>
+                <p class="mb-3 text-[11px] text-slate2-400">Choose separate front and back designs. The live preview and exported cards use the selected palette.</p>
                 <div class="mb-3">
                   <div class="mb-2 text-[11px] font-medium text-slate2-500">Front Design</div>
                   <div class="grid grid-cols-1 gap-2" id="front-themes">
                     {% for option in print_front_design_choices %}
-                      <button type="button" class="theme-card front-theme overflow-hidden rounded-lg border-2 {% if option.value == print_options.front_design %}border-navy-500{% else %}border-slate2-200{% endif %}" data-theme="{{ option.value }}">
+                      <button type="button" class="theme-card front-theme overflow-hidden rounded-lg border-2 {% if option.value == print_options.front_design %}border-navy-500{% else %}border-slate2-200{% endif %}" data-theme="{{ option.value }}" data-primary="{{ option.palette.0 }}" data-light="{{ option.palette.1 }}" data-secondary="{{ option.palette.2 }}" data-accent="{{ option.palette.3 }}">
                         <div class="flex items-center gap-3 bg-slate2-50 p-3 text-left">
-                          <div class="aspect-[3/4] w-14 overflow-hidden rounded-md bg-gradient-to-b from-navy-500 via-navy-400 to-navy-600 p-1">
+                          <div class="aspect-[3/4] w-14 overflow-hidden rounded-md p-1" style="background:linear-gradient(160deg, {{ option.palette.0 }}, {{ option.palette.2 }});">
                             <div class="flex h-full flex-col items-center justify-center">
                               <div class="mb-1 h-5 w-5 rounded-full bg-white/30"></div>
-                              <div class="mb-0.5 h-0.5 w-8 rounded bg-gold-400"></div>
+                              <div class="mb-0.5 h-0.5 w-8 rounded" style="background:{{ option.palette.3 }}"></div>
                               <div class="h-0.5 w-6 rounded bg-white/40"></div>
                             </div>
                           </div>
                           <div>
                             <div class="text-xs font-semibold text-navy-500">{{ option.label }}</div>
-                            <div class="mt-1 text-[11px] text-slate2-400">Recommended official front for school ID printing.</div>
+                            <div class="mt-1 text-[11px] text-slate2-400">{{ option.description }}</div>
                           </div>
                         </div>
                       </button>
@@ -280,19 +400,19 @@
                   <div class="mb-2 text-[11px] font-medium text-slate2-500">Back Design</div>
                   <div class="grid grid-cols-1 gap-2" id="back-themes">
                     {% for option in print_back_design_choices %}
-                      <button type="button" class="theme-card back-theme overflow-hidden rounded-lg border-2 {% if option.value == print_options.back_design %}border-navy-500{% else %}border-slate2-200{% endif %}" data-theme="{{ option.value }}">
+                      <button type="button" class="theme-card back-theme overflow-hidden rounded-lg border-2 {% if option.value == print_options.back_design %}border-navy-500{% else %}border-slate2-200{% endif %}" data-theme="{{ option.value }}" data-primary="{{ option.palette.0 }}" data-light="{{ option.palette.1 }}" data-secondary="{{ option.palette.2 }}" data-accent="{{ option.palette.3 }}">
                         <div class="flex items-center gap-3 bg-slate2-50 p-3 text-left">
-                          <div class="aspect-[3/4] w-14 overflow-hidden rounded-md bg-white p-1">
+                          <div class="aspect-[3/4] w-14 overflow-hidden rounded-md p-1" style="background:{{ option.palette.1 }};">
                             <div class="flex h-full flex-col items-center justify-center gap-0.5">
-                              <div class="h-0.5 w-7 rounded bg-slate2-300"></div>
+                              <div class="h-0.5 w-7 rounded" style="background:{{ option.palette.2 }}"></div>
                               <div class="h-0.5 w-5 rounded bg-slate2-200"></div>
-                              <div class="mt-0.5 h-4 w-4 rounded bg-slate2-100"></div>
+                              <div class="mt-0.5 h-4 w-4 rounded" style="background:{{ option.palette.3 }}"></div>
                               <div class="h-0.5 w-6 rounded bg-slate2-200"></div>
                             </div>
                           </div>
                           <div>
                             <div class="text-xs font-semibold text-navy-500">{{ option.label }}</div>
-                            <div class="mt-1 text-[11px] text-slate2-400">Recommended official back with QR and terms.</div>
+                            <div class="mt-1 text-[11px] text-slate2-400">{{ option.description }}</div>
                           </div>
                         </div>
                       </button>
@@ -313,7 +433,7 @@
                 <div id="preview-area" class="flex flex-wrap justify-center gap-6">
                   <div class="text-center">
                     <div class="mb-2 text-[10px] font-medium uppercase tracking-wider text-slate2-400">Front</div>
-                    <div id="card-front" class="preview-shell id-card overflow-hidden rounded-xl" style="width:240px;height:360px;background-color:{{ print_options.theme_light_primary }};">
+                    <div id="card-front" class="preview-shell theme-{{ print_options.front_design }} id-card overflow-hidden rounded-xl" style="width:240px;height:360px;background-color:{{ print_options.theme_light_primary }};">
                       <div id="preview-front-top" class="absolute left-0 right-0 top-0 h-4" style="background-color:{{ print_options.theme_secondary }};"></div>
                       <div id="preview-front-accent-a" class="absolute left-0 right-0 bottom-8 h-5" style="background-color:{{ print_options.theme_ternary }};"></div>
                       <div id="preview-front-accent-b" class="absolute left-0 right-0 bottom-0 h-8" style="background-color:{{ print_options.theme_secondary }};"></div>
@@ -365,7 +485,7 @@
 
                   <div class="text-center">
                     <div class="mb-2 text-[10px] font-medium uppercase tracking-wider text-slate2-400">Back</div>
-                    <div id="card-back" class="preview-shell id-card overflow-hidden rounded-xl" style="width:240px;height:360px;background-color:{{ print_options.theme_light_primary }};">
+                    <div id="card-back" class="preview-shell theme-{{ print_options.back_design }} id-card overflow-hidden rounded-xl" style="width:240px;height:360px;background-color:{{ print_options.theme_light_primary }};">
                       <div id="preview-back-top" class="absolute left-0 right-0 top-0 h-4" style="background-color:{{ print_options.theme_secondary }};"></div>
                       <div id="preview-back-accent-a" class="absolute left-0 right-0 bottom-8 h-5" style="background-color:{{ print_options.theme_ternary }};"></div>
                       <div id="preview-back-accent-b" class="absolute left-0 right-0 bottom-0 h-8" style="background-color:{{ print_options.theme_secondary }};"></div>
@@ -456,6 +576,36 @@
         </form>
       </main>
 
+      <div id="date-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate2-900/50 p-4">
+        <div class="w-full max-w-md rounded-xl bg-white p-5 shadow-2xl">
+          <div class="mb-4 flex items-start justify-between gap-3">
+            <div>
+              <h3 class="font-display text-lg font-bold text-navy-500">Validity Date</h3>
+              <p class="mt-1 text-xs text-slate2-500">Choose AD with a calendar picker, or enter the BS date printed on the card.</p>
+            </div>
+            <button type="button" id="close-date-modal" class="rounded-lg p-1.5 text-slate2-500 hover:bg-slate2-100"><i data-lucide="x" class="h-4 w-4"></i></button>
+          </div>
+          <div class="grid grid-cols-2 gap-2 rounded-lg bg-slate2-50 p-1">
+            <button type="button" class="date-mode rounded-md px-3 py-2 text-xs font-semibold" data-calendar="ad">AD</button>
+            <button type="button" class="date-mode rounded-md px-3 py-2 text-xs font-semibold" data-calendar="bs">BS</button>
+          </div>
+          <div class="mt-4 space-y-3">
+            <div id="ad-date-panel">
+              <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate2-500">AD Date</label>
+              <input type="date" id="ad-date-input" class="w-full rounded-lg border border-slate2-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy-300">
+            </div>
+            <div id="bs-date-panel">
+              <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate2-500">BS Date</label>
+              <input type="text" id="bs-date-input" class="w-full rounded-lg border border-slate2-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy-300" placeholder="2082-12-25">
+            </div>
+          </div>
+          <div class="mt-5 flex justify-end gap-2">
+            <button type="button" id="cancel-date-modal" class="rounded-lg border border-slate2-200 px-4 py-2 text-xs font-semibold text-slate2-600 hover:bg-slate2-50">Cancel</button>
+            <button type="button" id="apply-date-modal" class="rounded-lg bg-navy-500 px-4 py-2 text-xs font-semibold text-white hover:bg-navy-600">Apply Date</button>
+          </div>
+        </div>
+      </div>
+
       <div id="mobile-nav" class="fixed inset-0 z-50 hidden">
         <div class="absolute inset-0 bg-black/40" id="mobile-nav-bg"></div>
         <div class="absolute bottom-0 left-0 top-0 w-64 overflow-auto bg-navy-500 p-5 text-white">
@@ -531,6 +681,14 @@
       });
     });
 
+    function setPrintModeFromA4() {
+      const checkbox = document.getElementById('a4-layout-input');
+      const hidden = document.getElementById('print-mode-input');
+      if (checkbox && hidden) hidden.value = checkbox.checked ? 'a4' : 'single';
+    }
+
+    document.getElementById('a4-layout-input')?.addEventListener('change', setPrintModeFromA4);
+
     function updatePreviewFromForm() {
       const light = document.querySelector('input[name="theme_light_primary"]')?.value || '#f7f5f0';
       const secondary = document.querySelector('input[name="theme_secondary"]')?.value || '#1a1a2a';
@@ -548,6 +706,12 @@
       document.getElementById('preview-back-accent-b')?.style.setProperty('background-color', secondary);
       document.getElementById('card-front')?.style.setProperty('background-color', light);
       document.getElementById('card-back')?.style.setProperty('background-color', light);
+      document.querySelectorAll('.preview-shell').forEach((card) => {
+        card.style.setProperty('--preview-light', light);
+        card.style.setProperty('--preview-primary', document.querySelector('input[name="theme_primary"]')?.value || '#1a3a5c');
+        card.style.setProperty('--preview-secondary', secondary);
+        card.style.setProperty('--preview-accent', ternary);
+      });
       document.getElementById('card-school-name')?.style.setProperty('color', secondary);
       document.getElementById('card-print-label')?.style.setProperty('background-color', ternary);
       if (document.getElementById('card-print-label')) document.getElementById('card-print-label').textContent = label;
@@ -580,9 +744,37 @@
       field.addEventListener('change', updatePreviewFromForm);
     });
 
+    function applyThemePalette(button) {
+      const fields = {
+        theme_primary: button.dataset.primary,
+        theme_light_primary: button.dataset.light,
+        theme_secondary: button.dataset.secondary,
+        theme_ternary: button.dataset.accent,
+      };
+      Object.entries(fields).forEach(([name, value]) => {
+        if (!value) return;
+        const textInput = document.querySelector(`input[name="${name}"]`);
+        const colorInput = document.querySelector(`input[type="color"][data-color-target="${name}"]`);
+        if (textInput) textInput.value = value;
+        if (colorInput) colorInput.value = value;
+      });
+      updatePreviewFromForm();
+    }
+
+    function setPreviewTheme(cardId, themeKey) {
+      const card = document.getElementById(cardId);
+      if (!card || !themeKey) return;
+      Array.from(card.classList).forEach((className) => {
+        if (className.startsWith('theme-')) card.classList.remove(className);
+      });
+      card.classList.add(`theme-${themeKey}`);
+    }
+
     document.querySelectorAll('.front-theme').forEach((btn) => {
       btn.addEventListener('click', () => {
         document.getElementById('front-design-input').value = btn.dataset.theme;
+        applyThemePalette(btn);
+        setPreviewTheme('card-front', btn.dataset.theme);
         document.querySelectorAll('.front-theme').forEach((b) => {
           b.classList.remove('border-navy-500');
           b.classList.add('border-slate2-200');
@@ -595,6 +787,8 @@
     document.querySelectorAll('.back-theme').forEach((btn) => {
       btn.addEventListener('click', () => {
         document.getElementById('back-design-input').value = btn.dataset.theme;
+        applyThemePalette(btn);
+        setPreviewTheme('card-back', btn.dataset.theme);
         document.querySelectorAll('.back-theme').forEach((b) => {
           b.classList.remove('border-navy-500');
           b.classList.add('border-slate2-200');
@@ -610,6 +804,61 @@
       area.insertBefore(area.lastElementChild, area.firstElementChild);
     });
 
+    const dateModal = document.getElementById('date-modal');
+    const calendarSelect = document.getElementById('calendar-select');
+    const validTillInput = document.getElementById('valid-till-input');
+    const adDateInput = document.getElementById('ad-date-input');
+    const bsDateInput = document.getElementById('bs-date-input');
+
+    function setDateMode(mode) {
+      if (calendarSelect) calendarSelect.value = mode;
+      document.querySelectorAll('.date-mode').forEach((button) => {
+        const active = button.dataset.calendar === mode;
+        button.classList.toggle('bg-navy-500', active);
+        button.classList.toggle('text-white', active);
+        button.classList.toggle('text-slate2-600', !active);
+      });
+      document.getElementById('ad-date-panel')?.classList.toggle('hidden', mode !== 'ad');
+      document.getElementById('bs-date-panel')?.classList.toggle('hidden', mode !== 'bs');
+    }
+
+    function openDateModal() {
+      setDateMode(calendarSelect?.value || 'bs');
+      const currentDate = validTillInput?.value || '';
+      if (calendarSelect?.value === 'ad') {
+        if (adDateInput) adDateInput.value = currentDate;
+      } else if (bsDateInput) {
+        bsDateInput.value = currentDate;
+      }
+      dateModal?.classList.remove('hidden');
+      dateModal?.classList.add('flex');
+    }
+
+    function closeDateModal() {
+      dateModal?.classList.add('hidden');
+      dateModal?.classList.remove('flex');
+    }
+
+    document.getElementById('open-date-modal')?.addEventListener('click', openDateModal);
+    document.getElementById('close-date-modal')?.addEventListener('click', closeDateModal);
+    document.getElementById('cancel-date-modal')?.addEventListener('click', closeDateModal);
+    dateModal?.addEventListener('click', (event) => {
+      if (event.target === dateModal) closeDateModal();
+    });
+    document.querySelectorAll('.date-mode').forEach((button) => {
+      button.addEventListener('click', () => setDateMode(button.dataset.calendar));
+    });
+    document.getElementById('apply-date-modal')?.addEventListener('click', () => {
+      const mode = calendarSelect?.value || 'bs';
+      const value = mode === 'ad' ? adDateInput?.value : bsDateInput?.value;
+      if (value && validTillInput) {
+        validTillInput.value = value;
+        validTillInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      closeDateModal();
+    });
+    calendarSelect?.addEventListener('change', () => setDateMode(calendarSelect.value));
+
     document.getElementById('mobile-menu-btn')?.addEventListener('click', () => {
       document.getElementById('mobile-nav').classList.remove('hidden');
     });
@@ -621,6 +870,10 @@
     });
 
     syncRowState();
+    setPrintModeFromA4();
+    setDateMode(document.getElementById('calendar-select')?.value || 'bs');
+    setPreviewTheme('card-front', document.getElementById('front-design-input')?.value);
+    setPreviewTheme('card-back', document.getElementById('back-design-input')?.value);
     updatePreviewFromForm();
     lucide.createIcons();
   </script>

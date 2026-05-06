@@ -63,6 +63,9 @@ INTERNAL_IPS = [
 ]
 NPM_BIN_PATH = os.environ.get("NPM_BIN_PATH", r"C:\Program Files\nodejs\npm.cmd")
 
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+OPENAI_CHAT_MODEL = os.environ.get("OPENAI_CHAT_MODEL", "gpt-4o-mini")
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

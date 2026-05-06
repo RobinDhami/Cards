@@ -33,11 +33,13 @@ urlpatterns = [
     path('bulk-upload/', bulk_upload, name='bulk_upload'),
     path('dashboard/college/<int:college_id>/add_student/', add_student_to_college, name='add_student_to_college'),
     path('student/<int:student_id>/', contact_card, name='contact_card'),
+    path('student/<int:student_id>/contact-card/', student_digital_contact_card, name='student_contact_card'),
     path('student/<int:student_id>/action/<slug:action>/', track_contact_action, name='track_contact_action'),
     path('student/<int:student_id>/download-vcard/', download_vcard, name='download_vcard'),
     path('student/<int:student_id>/print-preview/', print_card_preview, name='print_card_preview'),
     path('student/<int:student_id>/print-qr.png', print_qr_code, name='print_qr_code'),
     path('student/edit/<int:student_id>',edit_student_manual,name='edit_student_manual'),
+    path('ai-chat/', ai_chat, name='ai_chat'),
     path('send-message/', send_site_message, name='send_message'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

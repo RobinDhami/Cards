@@ -12,12 +12,15 @@ from django.db.models.functions import TruncDate
 from django.template import TemplateDoesNotExist
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 from datetime import timedelta
 from io import BytesIO
+import json
 import textwrap
 from urllib.parse import urlencode
 
 import qrcode
+import requests
 from reportlab.lib.colors import HexColor, white, black
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.utils import ImageReader
@@ -26,12 +29,15 @@ from reportlab.pdfgen import canvas
 from .models import StudentProfile, College, ProfileActivity, Skill
 
 CONTACT_TEMPLATES = {
-    'general': ['contact2.html'],
-    'vip': ['contact2.html'],
-    'premium': ['contact2.html'],
+    'general': ['student_digital_card.html'],
+    'vip': ['student_digital_card.html'],
+    'premium': ['student_digital_card.html'],
 }
 CONTACT_TEMPLATE_META = {
-    'contact2.html': {'label': 'Minimal', 'description': 'Simple and utility-first for clean contact sharing.'},
+    'student_digital_card.html': {
+        'label': 'School Digital ID',
+        'description': 'Mobile-first QR/NFC digital profile for students, teachers, and staff.',
+    },
 }
 PORTFOLIO_TEMPLATES = {}
 PRINT_TEMPLATES = {
@@ -107,8 +113,8 @@ PRINT_BACK_THEMES = {
     },
 }
 
-STUDIO_FRONT_THEME_KEYS = ('front_official_wave',)
-STUDIO_BACK_THEME_KEYS = ('back_official_wave',)
+STUDIO_FRONT_THEME_KEYS = tuple(PRINT_FRONT_THEMES.keys())
+STUDIO_BACK_THEME_KEYS = tuple(PRINT_BACK_THEMES.keys())
 
 LEGACY_PRINT_TEMPLATE_MAP = {
     'print_classic.html': 'front_academic_blue',
@@ -498,6 +504,20 @@ def _parse_print_options(request, school=None):
         front_design = 'front_official_wave'
     if back_design not in STUDIO_BACK_THEME_KEYS:
         back_design = 'back_official_wave'
+    print_mode = request.POST.get('print_mode') or request.GET.get('print_mode') or ''
+    if not print_mode:
+        print_mode = 'a4' if (request.POST.get('a4_layout') or request.GET.get('a4_layout')) else 'single'
+    if print_mode not in {'a4', 'single'}:
+        print_mode = 'single'
+
+    selected_front_theme = PRINT_FRONT_THEMES[front_design]
+    selected_back_theme = PRINT_BACK_THEMES[back_design]
+    default_palette = selected_front_theme.get('palette', [])
+    theme_primary = request.POST.get('theme_primary') or request.GET.get('theme_primary') or (default_palette[0] if len(default_palette) > 0 else None) or (school.theme_primary if school else '#1a3a5c')
+    theme_light_primary = request.POST.get('theme_light_primary') or request.GET.get('theme_light_primary') or (default_palette[1] if len(default_palette) > 1 else None) or (school.theme_light_primary if school else '#f7f5f0')
+    theme_secondary = request.POST.get('theme_secondary') or request.GET.get('theme_secondary') or (default_palette[2] if len(default_palette) > 2 else None) or (school.theme_secondary if school else '#1a1a2a')
+    theme_ternary = request.POST.get('theme_ternary') or request.GET.get('theme_ternary') or (default_palette[3] if len(default_palette) > 3 else None) or (school.theme_ternary if school else '#c9a84c')
+
     return {
         'front_design': front_design,
         'back_design': back_design,
@@ -506,11 +526,14 @@ def _parse_print_options(request, school=None):
         'calendar': request.POST.get('calendar') or request.GET.get('calendar') or 'bs',
         'valid_till': request.POST.get('valid_till') or request.GET.get('valid_till') or '',
         'label': request.POST.get('label') or request.GET.get('label') or '',
-        'theme_primary': request.POST.get('theme_primary') or request.GET.get('theme_primary') or (school.theme_primary if school else '#1a3a5c'),
-        'theme_light_primary': request.POST.get('theme_light_primary') or request.GET.get('theme_light_primary') or (school.theme_light_primary if school else '#f7f5f0'),
-        'theme_secondary': request.POST.get('theme_secondary') or request.GET.get('theme_secondary') or (school.theme_secondary if school else '#1a1a2a'),
-        'theme_ternary': request.POST.get('theme_ternary') or request.GET.get('theme_ternary') or (school.theme_ternary if school else '#c9a84c'),
-        'print_mode': request.POST.get('print_mode') or request.GET.get('print_mode') or 'a4',
+        'theme_primary': theme_primary,
+        'theme_light_primary': theme_light_primary,
+        'theme_secondary': theme_secondary,
+        'theme_ternary': theme_ternary,
+        'print_mode': print_mode,
+        'a4_layout': print_mode == 'a4',
+        'front_theme_label': selected_front_theme['label'],
+        'back_theme_label': selected_back_theme['label'],
     }
 
 
@@ -701,6 +724,86 @@ def home(request):
     return render(request, 'home.html')
 
 
+def _fallback_chat_reply(message):
+    text = (message or '').lower()
+    if 'price' in text or 'cost' in text or 'shipping' in text:
+        return 'Our NFC card pricing and delivery options depend on the card type, quantity, and delivery location. You can check the pricing section or share your quantity and location here so our team can follow up.'
+    if 'nfc' in text or 'phone' in text or 'compatible' in text:
+        return 'SkillConnect cards work by opening a digital contact card when tapped on an NFC-enabled phone. If a phone does not support NFC, the printed QR code can still open the same digital profile.'
+    if 'school' in text or 'student' in text or 'teacher' in text or 'id card' in text:
+        return 'For schools, we can create student and teacher digital profiles, generate QR/NFC-linked ID cards, and print either A4 batches or individual card layouts.'
+    if 'update' in text or 'change' in text or 'edit' in text:
+        return 'Yes, profile information can be updated later from the dashboard. The NFC tap and QR code continue pointing to the live digital profile, so the printed card does not need to be changed for basic profile updates.'
+    return 'Thanks for the question. SkillConnect helps people and schools share contact details through NFC cards, QR codes, and live digital profiles. Please share what you want to do, and I can guide you.'
+
+
+@require_POST
+def ai_chat(request):
+    try:
+        payload = json.loads(request.body.decode('utf-8') or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid chat request.'}, status=400)
+
+    email = (payload.get('email') or '').strip()
+    message = (payload.get('message') or '').strip()
+    if not email or not message:
+        return JsonResponse({'error': 'Email and message are required.'}, status=400)
+    if len(message) > 1200:
+        return JsonResponse({'error': 'Please keep your question under 1200 characters.'}, status=400)
+
+    fallback_reply = _fallback_chat_reply(message)
+    if not settings.OPENAI_API_KEY:
+        return JsonResponse({
+            'reply': fallback_reply,
+            'ai_enabled': False,
+        })
+
+    try:
+        response = requests.post(
+            'https://api.openai.com/v1/responses',
+            headers={
+                'Authorization': f'Bearer {settings.OPENAI_API_KEY}',
+                'Content-Type': 'application/json',
+            },
+            json={
+                'model': settings.OPENAI_CHAT_MODEL,
+                'input': [
+                    {
+                        'role': 'system',
+                        'content': (
+                            'You are the SkillConnect website assistant. Answer customers clearly and briefly. '
+                            'SkillConnect sells NFC-enabled cards, QR-linked digital contact cards, school ID card '
+                            'printing tools, student/teacher profile dashboards, and live profile updates. '
+                            'Do not promise exact pricing or delivery dates unless the customer provides details. '
+                            'Ask for contact details or tell them the team can follow up when needed.'
+                        ),
+                    },
+                    {
+                        'role': 'user',
+                        'content': f'Customer email: {email}\nCustomer question: {message}',
+                    },
+                ],
+                'temperature': 0.4,
+                'max_output_tokens': 220,
+            },
+            timeout=20,
+        )
+        response.raise_for_status()
+        data = response.json()
+        reply = (data.get('output_text') or '').strip()
+        if not reply:
+            output = data.get('output') or []
+            reply = ''.join(
+                part.get('text', '')
+                for item in output
+                for part in item.get('content', [])
+                if part.get('type') in {'output_text', 'text'}
+            ).strip()
+        return JsonResponse({'reply': reply or fallback_reply, 'ai_enabled': True})
+    except requests.RequestException:
+        return JsonResponse({'reply': fallback_reply, 'ai_enabled': False})
+
+
 def dashboard_login(request):
     if request.user.is_authenticated:
         return redirect('admin_dashboard')
@@ -742,7 +845,79 @@ def _normalize_public_url(url):
 
 
 def _build_public_contact_url(request, student):
-    return request.build_absolute_uri(reverse('contact_card', args=[student.id]))
+    return request.build_absolute_uri(reverse('student_contact_card', args=[student.id]))
+
+
+def _media_url(file_field):
+    return file_field.url if file_field else ''
+
+
+def _google_maps_url(address):
+    if not address:
+        return ''
+    return f'https://www.google.com/maps/search/?api=1&{urlencode({"query": address})}'
+
+
+def _school_card_context(request, student):
+    school = student.college
+    school_name = school.name if school else ''
+    school_address = school.address if school and school.address else ''
+    school_website_url = _normalize_public_url(school.website) if school else ''
+    school_phone = school.phone if school else ''
+    school_logo_url = _media_url(school.logo) if school else ''
+    school_map_url = _google_maps_url(school_address)
+
+    member_type_label = student.get_member_type_display() if student.member_type else 'Student'
+    grade_label = student.get_academic_level_display() if student.academic_level else (student.role or member_type_label)
+    grade_section = grade_label
+    if student.section:
+        grade_section = f'{grade_label} - Section {student.section}'
+
+    website_url = _normalize_public_url(student.website) or school_website_url
+    direct_map_url = _normalize_public_url(student.map_url) or _google_maps_url(student.address) or school_map_url
+    navigate_url = _build_tracked_action_url(student.id, 'map') if (student.map_url or student.address) else direct_map_url
+
+    social_links = []
+    if student.instagram:
+        social_links.append({'key': 'instagram', 'url': _build_tracked_action_url(student.id, 'social-instagram'), 'label': 'Instagram', 'icon': 'instagram'})
+    if student.facebook:
+        social_links.append({'key': 'facebook', 'url': _build_tracked_action_url(student.id, 'social-facebook'), 'label': 'Facebook', 'icon': 'facebook'})
+    if student.whatsapp:
+        social_links.append({'key': 'whatsapp', 'url': _build_tracked_action_url(student.id, 'whatsapp'), 'label': 'WhatsApp', 'icon': 'message-circle'})
+    if student.linkedin:
+        social_links.append({'key': 'linkedin', 'url': _build_tracked_action_url(student.id, 'social-linkedin'), 'label': 'LinkedIn', 'icon': 'linkedin'})
+
+    return {
+        'student': student,
+        'school_name': school_name,
+        'school_website': school.website if school and school.website else '',
+        'school_website_url': school_website_url,
+        'school_phone': school_phone,
+        'school_address': school_address,
+        'school_logo_url': school_logo_url,
+        'cover_photo_url': _media_url(student.cover_photo),
+        'student_photo_url': _media_url(student.profile_photo),
+        'member_type_label': member_type_label,
+        'grade_label': grade_label,
+        'section_label': student.section,
+        'grade_section': grade_section,
+        'student_identifier': student.unique_identifier or student.roll_number or f'STU-{student.id}',
+        'parent_label': 'Parent / Guardian' if student.member_type == 'student' else 'Emergency Contact',
+        'parent_name': student.emergency_contact_name,
+        'emergency_contact_name': student.emergency_contact_name,
+        'emergency_contact_phone': student.emergency_contact_phone,
+        'blood_group': student.blood_group,
+        'student_address': student.address,
+        'website_url': website_url,
+        'map_url': direct_map_url,
+        'navigate_url': navigate_url,
+        'phone_action_url': _build_tracked_action_url(student.id, 'phone') if student.phone else '',
+        'whatsapp_action_url': _build_tracked_action_url(student.id, 'whatsapp') if student.whatsapp else '',
+        'download_vcard_url': reverse('download_vcard', args=[student.id]),
+        'qr_code_url': reverse('print_qr_code', args=[student.id]),
+        'public_card_url': _build_public_contact_url(request, student),
+        'social_links': social_links,
+    }
 
 
 def _extract_role_from_post(request, profile_category, fallback=''):
@@ -957,11 +1132,60 @@ def admin_dashboard(request):
         return redirect('dashboard_login')
 
     school, schools = _resolve_dashboard_school(request, required=False)
-    total_schools = College.objects.count()
-    total_students = StudentProfile.objects.filter(profile_category='school', member_type='student').count()
-    total_teachers = StudentProfile.objects.filter(profile_category='school', member_type='teacher').count()
     school_members = _school_member_queryset(school) if school else StudentProfile.objects.none()
-    recent_activities = ProfileActivity.objects.select_related('student', 'student__college')[:8]
+
+    if role == 'super_admin':
+        total_schools = College.objects.count()
+        total_students = StudentProfile.objects.filter(profile_category='school', member_type='student').count()
+        total_teachers = StudentProfile.objects.filter(profile_category='school', member_type='teacher').count()
+        recent_activities = ProfileActivity.objects.select_related('student', 'student__college')[:8]
+    else:
+        total_schools = 1 if school else 0
+        total_students = school_members.filter(member_type='student').count() if school else 0
+        total_teachers = school_members.filter(member_type='teacher').count() if school else 0
+        recent_activities = ProfileActivity.objects.select_related('student', 'student__college').filter(
+            student__college=school
+        )[:8] if school else ProfileActivity.objects.none()
+
+    dashboard_features = [
+        {
+            'title': 'Student Records',
+            'description': 'Add, filter, edit, reset passwords, and open public contact cards.',
+            'icon': 'graduation-cap',
+            'url': f"{reverse('dashboard_students')}{_build_dashboard_query(school)}" if school else '',
+        },
+        {
+            'title': 'Teachers / Staff',
+            'description': 'Manage staff profiles, dashboard access, and school-facing contact details.',
+            'icon': 'briefcase',
+            'url': f"{reverse('dashboard_teachers')}{_build_dashboard_query(school)}" if school else '',
+        },
+        {
+            'title': 'ID Card Studio',
+            'description': 'Batch select members, preview cards, and export print-ready PDFs.',
+            'icon': 'printer',
+            'url': f"{reverse('dashboard_print')}{_build_dashboard_query(school)}" if school else '',
+        },
+        {
+            'title': 'Bulk Upload',
+            'description': 'Import students or staff from CSV/XLSX files with school defaults applied.',
+            'icon': 'upload-cloud',
+            'url': f"{reverse('dashboard_bulk_upload')}{_build_dashboard_query(school)}" if school else '',
+        },
+        {
+            'title': 'School Settings',
+            'description': 'Update branding, admin login, principal details, and print colors.',
+            'icon': 'settings',
+            'url': f"{reverse('dashboard_settings')}{_build_dashboard_query(school)}" if school else '',
+        },
+    ]
+    if role == 'super_admin':
+        dashboard_features.insert(0, {
+            'title': 'Super Admin Controls',
+            'description': 'Create schools, assign school admins, switch workspaces, and remove schools.',
+            'icon': 'shield-check',
+            'url': reverse('admin_dashboard'),
+        })
 
     context = {
         **_school_dashboard_context(request, 'home', school, schools),
@@ -973,6 +1197,7 @@ def admin_dashboard(request):
         'school_member_count': school_members.count() if school else 0,
         'recent_activities': recent_activities,
         'schools': schools,
+        'dashboard_features': dashboard_features,
     }
     return render(request, 'dashboard/home.html', context)
 
@@ -1223,8 +1448,24 @@ def dashboard_print(request):
         'filter_state': filter_state,
         'sections': _unique_sections_for_school(school),
         'academic_level_choices': [{'value': value, 'label': label} for value, label in ACADEMIC_LEVEL_CHOICES],
-        'print_front_design_choices': [{'value': key, 'label': PRINT_FRONT_THEMES[key]['label']} for key in STUDIO_FRONT_THEME_KEYS],
-        'print_back_design_choices': [{'value': key, 'label': PRINT_BACK_THEMES[key]['label']} for key in STUDIO_BACK_THEME_KEYS],
+        'print_front_design_choices': [
+            {
+                'value': key,
+                'label': PRINT_FRONT_THEMES[key]['label'],
+                'description': PRINT_FRONT_THEMES[key]['description'],
+                'palette': PRINT_FRONT_THEMES[key]['palette'],
+            }
+            for key in STUDIO_FRONT_THEME_KEYS
+        ],
+        'print_back_design_choices': [
+            {
+                'value': key,
+                'label': PRINT_BACK_THEMES[key]['label'],
+                'description': PRINT_BACK_THEMES[key]['description'],
+                'palette': PRINT_BACK_THEMES[key]['palette'],
+            }
+            for key in STUDIO_BACK_THEME_KEYS
+        ],
         'print_orientations': PRINT_ORIENTATIONS,
         'print_card_types': PRINT_CARD_TYPES,
         'print_options': print_options,
@@ -1429,7 +1670,7 @@ def student_owner_dashboard(request, student_id):
 
     recent_activities = student.activities.all()[:8]
     nfc_qr_status = 'Live' if student.show_contact_card else 'Hidden'
-    public_card_url = f"/student/{student.id}/"
+    public_card_url = reverse('student_contact_card', args=[student.id])
 
     context = {
         'student': student,
@@ -1440,7 +1681,7 @@ def student_owner_dashboard(request, student_id):
         'recent_activities': recent_activities,
         'nfc_qr_status': nfc_qr_status,
         'public_card_url': public_card_url,
-        'contact_template_label': CONTACT_TEMPLATE_META.get(student.contact_template, {}).get('label', student.contact_template),
+        'contact_template_label': CONTACT_TEMPLATE_META['student_digital_card.html']['label'],
         'print_template_label': _get_print_template_label(student),
     }
     return render(request, 'student_owner_dashboard.html', context)
@@ -1598,84 +1839,25 @@ def send_profile_message(request, id):
         )
     return redirect('contact_card', student_id=id)
 
-def contact_card(request, student_id):
+
+def student_digital_contact_card(request, student_id):
     student = get_object_or_404(StudentProfile, pk=student_id)
     if not student.show_contact_card and not _can_manage_profile(request.user, student):
-        messages.error(request, 'This contact card is not public right now.')
-        return redirect('dashboard_login')
+        return render(
+            request,
+            'contact/student_digital_card.html',
+            {'profile_unavailable': True},
+            status=403,
+        )
+
     student.views += 1
     student.save(update_fields=['views'])
-    _log_profile_activity(student, 'view', 'contact-card')
-    social_stack = [item.strip() for item in student.social_stack.split(',') if item.strip()] if student.social_stack else []
-    requested_template = student.contact_template or 'contact2.html'
-    template_name = f'contact/{requested_template}'
-    website_url = _normalize_public_url(student.website)
-    map_url = _normalize_public_url(student.map_url)
-    if not map_url and student.address:
-        map_url = f"https://www.google.com/maps/search/?api=1&query={student.address.replace(' ', '+')}"
+    _log_profile_activity(student, 'view', 'student-digital-card')
+    return render(request, 'contact/student_digital_card.html', _school_card_context(request, student))
 
-    social_links = []
-    social_config = {
-        'linkedin': {'url': student.linkedin, 'label': 'LinkedIn', 'icon': 'linkedin', 'fa_class': 'fa-brands fa-linkedin-in'},
-        'twitter': {'url': student.twitter, 'label': 'Twitter', 'icon': 'twitter', 'fa_class': 'fa-brands fa-x-twitter'},
-        'instagram': {'url': student.instagram, 'label': 'Instagram', 'icon': 'instagram', 'fa_class': 'fa-brands fa-instagram'},
-        'facebook': {'url': student.facebook, 'label': 'Facebook', 'icon': 'users', 'fa_class': 'fa-brands fa-facebook-f'},
-        'messenger': {'url': student.messenger, 'label': 'Messenger', 'icon': 'message-circle', 'fa_class': 'fa-brands fa-facebook-messenger'},
-        'youtube': {'url': student.youtube, 'label': 'YouTube', 'icon': 'youtube', 'fa_class': 'fa-brands fa-youtube'},
-        'tiktok': {'url': student.tiktok, 'label': 'TikTok', 'icon': 'music', 'fa_class': 'fa-brands fa-tiktok'},
-        'github': {'url': student.github, 'label': 'GitHub', 'icon': 'github', 'fa_class': 'fa-brands fa-github'},
-        'figma': {'url': student.figma, 'label': 'Figma', 'icon': 'pen-tool', 'fa_class': 'fa-brands fa-figma'},
-        'upwork': {'url': student.upwork, 'label': 'Upwork', 'icon': 'briefcase', 'fa_class': 'fa-solid fa-briefcase'},
-    }
-    for key in social_stack:
-        if key == 'whatsapp':
-            if student.whatsapp:
-                social_links.append({
-                    'key': 'whatsapp',
-                    'url': f'https://wa.me/{student.whatsapp}',
-                    'tracked_url': _build_tracked_action_url(student.id, 'whatsapp'),
-                    'label': 'WhatsApp',
-                    'icon': 'message-circle',
-                    'fa_class': 'fa-brands fa-whatsapp',
-                })
-            continue
 
-        config = social_config.get(key)
-        if config and config['url']:
-            social_links.append({
-                'key': key,
-                'url': config['url'],
-                'tracked_url': _build_tracked_action_url(student.id, f'social-{key}'),
-                'label': config['label'],
-                'icon': config['icon'],
-                'fa_class': config['fa_class'],
-            })
-
-    context = {
-        'student': student,
-        'social_stack': social_stack,
-        'social_links': social_links,
-        'display_organization': student.organization_name or (student.college.name if student.college else ''),
-        'school_name': student.college.name if student.college else '',
-        'school_phone': student.college.phone if student.college else '',
-        'school_address': student.college.address if student.college else '',
-        'school_logo_url': student.college.logo.url if student.college and student.college.logo else '',
-        'member_unique_id': student.unique_identifier,
-        'emergency_contact_name': student.emergency_contact_name,
-        'emergency_contact_phone': student.emergency_contact_phone,
-        'website_url': website_url,
-        'map_url': map_url,
-        'phone_action_url': _build_tracked_action_url(student.id, 'phone'),
-        'email_action_url': _build_tracked_action_url(student.id, 'email'),
-        'website_action_url': _build_tracked_action_url(student.id, 'website'),
-        'map_action_url': _build_tracked_action_url(student.id, 'map'),
-        'whatsapp_action_url': _build_tracked_action_url(student.id, 'whatsapp'),
-        'contact_template_meta': CONTACT_TEMPLATE_META,
-    }
-    try:
-        return render(request, template_name, context)
-    except TemplateDoesNotExist:
-        return render(request, 'contact/contact2.html', context)
+def contact_card(request, student_id):
+    return student_digital_contact_card(request, student_id)
 
 
 def download_vcard(request, student_id):
@@ -1783,7 +1965,7 @@ def edit_student_manual(request, student_id):
     managed_school = _get_managed_school(request.user)
     can_manage_school_fields = _is_super_admin(request.user) or bool(managed_school and managed_school.id == student.college_id)
 
-    contact_templates = CONTACT_TEMPLATES.get(student.user_type, ['contact2.html'])
+    contact_templates = CONTACT_TEMPLATES.get(student.user_type, ['student_digital_card.html'])
     portfolio_templates = PORTFOLIO_TEMPLATES.get(student.user_type, [])
 
     if request.method == 'POST':
@@ -1827,7 +2009,7 @@ def edit_student_manual(request, student_id):
         if request.FILES.get('cv'):
             student.cv = request.FILES['cv']
 
-        student.contact_template = request.POST.get('contact_template', student.contact_template)
+        student.contact_template = 'student_digital_card.html'
         student.print_card_type = request.POST.get('print_card_type', student.print_card_type or 'id_card')
         student.print_orientation = request.POST.get('print_orientation', student.print_orientation or 'portrait')
         student.print_front_design = request.POST.get('print_front_design', _get_front_design_value(student))

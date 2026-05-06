@@ -163,7 +163,7 @@
                           <a href="{% url 'edit_student_manual' student.id %}" class="btn-action rounded-lg p-1.5 hover:bg-navy-100" title="Edit">
                             <i data-lucide="edit-3" class="h-3.5 w-3.5 text-navy-400"></i>
                           </a>
-                          <a href="{% url 'contact_card' student.id %}" class="btn-action rounded-lg p-1.5 hover:bg-gold-100" title="Card">
+                          <a href="{% url 'student_contact_card' student.id %}" class="btn-action rounded-lg p-1.5 hover:bg-gold-100" title="Digital Card">
                             <i data-lucide="credit-card" class="h-3.5 w-3.5 text-gold-500"></i>
                           </a>
                           <form method="post" action="{% url 'delete_student_profile' student.id %}" class="inline">
