@@ -16,9 +16,15 @@ from django.views.decorators.http import require_POST
 from datetime import timedelta
 from io import BytesIO
 import json
+import re
 import textwrap
 from urllib.parse import urlencode
+from zipfile import ZIP_DEFLATED, ZipFile
 
+from openpyxl import Workbook
+from openpyxl.drawing.image import Image as OpenPyXLImage
+from openpyxl.styles import Alignment, Font, PatternFill
+from openpyxl.utils import get_column_letter
 import qrcode
 import requests
 from reportlab.lib.colors import HexColor, white, black
@@ -576,6 +582,103 @@ def _resolve_selected_members(request, school):
     return members, filter_state
 
 
+def _build_print_data_workbook(request, school, members):
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = 'Print Data'
+    headers = [
+        'QR Preview',
+        'QR File',
+        'Digital Profile URL',
+        'Name',
+        'DOB',
+        'ID Number',
+        'Member Type',
+        'Class / Grade',
+        'Section',
+        'Roll Number',
+        'Phone',
+        'Email',
+        'Blood Group',
+        'Emergency Contact Name',
+        'Emergency Contact Phone',
+        'Address',
+        'School Name',
+        'School Phone',
+        'School Address',
+    ]
+    sheet.append(headers)
+    header_fill = PatternFill('solid', fgColor='1E3A5F')
+    for cell in sheet[1]:
+        cell.font = Font(bold=True, color='FFFFFF')
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+
+    qr_assets = []
+    image_buffers = []
+    for row_index, member in enumerate(members, start=2):
+        profile_url = _build_public_contact_url(request, member)
+        qr_bytes = _build_qr_png_bytes(profile_url)
+        member_code = _safe_export_name(member.unique_identifier or member.roll_number or str(member.id), f'member_{member.id}')
+        qr_filename = f'qr_codes/{member_code}_{_safe_export_name(member.name)}.png'
+        qr_assets.append((qr_filename, qr_bytes))
+
+        row = [
+            '',
+            qr_filename,
+            profile_url,
+            member.name,
+            _format_member_dob(member),
+            member.unique_identifier or member.roll_number or f'STU-{member.id}',
+            member.get_member_type_display(),
+            member.get_academic_level_display() if member.academic_level else '',
+            member.section,
+            member.roll_number,
+            member.phone,
+            member.email,
+            member.blood_group,
+            member.emergency_contact_name,
+            member.emergency_contact_phone,
+            member.address,
+            school.name if school else '',
+            school.phone if school else '',
+            school.address if school else '',
+        ]
+        sheet.append(row)
+        sheet.row_dimensions[row_index].height = 68
+        qr_buffer = BytesIO(qr_bytes)
+        image_buffers.append(qr_buffer)
+        qr_image = OpenPyXLImage(qr_buffer)
+        qr_image.width = 78
+        qr_image.height = 78
+        sheet.add_image(qr_image, f'A{row_index}')
+
+    widths = [14, 34, 46, 26, 18, 22, 18, 18, 12, 16, 18, 28, 14, 26, 22, 34, 26, 18, 34]
+    for index, width in enumerate(widths, start=1):
+        sheet.column_dimensions[get_column_letter(index)].width = width
+    for row in sheet.iter_rows(min_row=2):
+        for cell in row:
+            cell.alignment = Alignment(vertical='center', wrap_text=True)
+
+    instructions = workbook.create_sheet('Printer Notes')
+    instructions.append(['Purpose', 'This package gives the printing team raw data and QR assets. They can decide the physical card design.'])
+    instructions.append(['QR behavior', 'Each QR opens the member digital profile / portfolio URL.'])
+    instructions.append(['QR files', 'PNG files are included in the qr_codes folder inside this ZIP.'])
+    instructions.append(['Suggested printed fields', 'Name, DOB, ID Number, Class / Grade, Section, QR code.'])
+    instructions.append(['School', school.name if school else ''])
+    instructions.append(['Exported at', timezone.now().strftime('%Y-%m-%d %H:%M')])
+    instructions.column_dimensions['A'].width = 24
+    instructions.column_dimensions['B'].width = 90
+    for row in instructions.iter_rows():
+        for cell in row:
+            cell.alignment = Alignment(vertical='top', wrap_text=True)
+        row[0].font = Font(bold=True)
+
+    output = BytesIO()
+    workbook.save(output)
+    return output.getvalue(), qr_assets
+
+
 def _draw_card_front_pdf(pdf, card, x, y, width, height):
     primary = HexColor(card['theme_primary'])
     secondary = HexColor(card['theme_secondary'])
@@ -848,6 +951,21 @@ def _build_public_contact_url(request, student):
     return request.build_absolute_uri(reverse('student_contact_card', args=[student.id]))
 
 
+def _safe_export_name(value, fallback='member'):
+    cleaned = re.sub(r'[^A-Za-z0-9_-]+', '_', value or '').strip('_')
+    return cleaned[:80] or fallback
+
+
+def _build_qr_png_bytes(url):
+    qr = qrcode.QRCode(version=1, box_size=10, border=2)
+    qr.add_data(url)
+    qr.make(fit=True)
+    image = qr.make_image(fill_color='black', back_color='white')
+    buffer = BytesIO()
+    image.save(buffer, format='PNG')
+    return buffer.getvalue()
+
+
 def _media_url(file_field):
     return file_field.url if file_field else ''
 
@@ -1034,14 +1152,7 @@ def profile(request, student_id):
 
 def print_qr_code(request, student_id):
     student = get_object_or_404(StudentProfile, pk=student_id)
-    qr = qrcode.QRCode(version=1, box_size=10, border=2)
-    qr.add_data(_build_public_contact_url(request, student))
-    qr.make(fit=True)
-    image = qr.make_image(fill_color='black', back_color='white')
-    buffer = BytesIO()
-    image.save(buffer, format='PNG')
-    buffer.seek(0)
-    return HttpResponse(buffer.getvalue(), content_type='image/png')
+    return HttpResponse(_build_qr_png_bytes(_build_public_contact_url(request, student)), content_type='image/png')
 
 
 @login_required
@@ -1165,6 +1276,12 @@ def admin_dashboard(request):
             'description': 'Batch select members, preview cards, and export print-ready PDFs.',
             'icon': 'printer',
             'url': f"{reverse('dashboard_print')}{_build_dashboard_query(school)}" if school else '',
+        },
+        {
+            'title': 'QR Data Export',
+            'description': 'Filter members and download Excel data with QR PNG assets for outside printing.',
+            'icon': 'qr-code',
+            'url': f"{reverse('dashboard_qr_export')}{_build_dashboard_query(school)}" if school else '',
         },
         {
             'title': 'Bulk Upload',
@@ -1476,6 +1593,33 @@ def dashboard_print(request):
 
 
 @login_required
+def dashboard_qr_export(request):
+    role = _get_user_role(request.user)
+    if role not in {'super_admin', 'school_admin'}:
+        messages.error(request, 'You do not have access to QR data export.')
+        return redirect('dashboard_login')
+
+    school, schools = _resolve_dashboard_school(request, required=True)
+    if not school:
+        messages.error(request, 'Create a school first to export QR data.')
+        return redirect('admin_dashboard')
+
+    members, filter_state = _filtered_print_queryset(request, school)
+    context = {
+        **_school_dashboard_context(request, 'qr_export', school, schools),
+        'college': school,
+        'members': members,
+        'member_count': members.count(),
+        'school_student_total': _school_member_queryset(school, 'student').count(),
+        'school_teacher_total': _school_member_queryset(school, 'teacher').count(),
+        'filter_state': filter_state,
+        'sections': _unique_sections_for_school(school),
+        'academic_level_choices': [{'value': value, 'label': label} for value, label in ACADEMIC_LEVEL_CHOICES],
+    }
+    return render(request, 'dashboard/qr_export.html', context)
+
+
+@login_required
 def dashboard_print_preview(request):
     role = _get_user_role(request.user)
     if role not in {'super_admin', 'school_admin'}:
@@ -1529,6 +1673,42 @@ def dashboard_print_export_pdf(request):
     cards = [_build_card_context(request, member, options) for member in members]
     filename = f"{school.name.replace(' ', '_').lower()}_id_cards.pdf"
     return _build_pdf_response(cards, options['print_mode'], filename)
+
+
+@login_required
+def dashboard_qr_export_download(request):
+    role = _get_user_role(request.user)
+    if role not in {'super_admin', 'school_admin'}:
+        messages.error(request, 'You do not have access to QR data export.')
+        return redirect('dashboard_login')
+
+    school, _ = _resolve_dashboard_school(request, required=True)
+    if not school:
+        messages.error(request, 'Select a school before exporting QR data.')
+        return redirect('admin_dashboard')
+
+    members, _ = _resolve_selected_members(request, school)
+    if not members:
+        messages.error(request, 'Select at least one student or teacher before exporting QR data.')
+        return redirect(f"{reverse('dashboard_qr_export')}{_build_dashboard_query(school)}")
+
+    workbook_bytes, qr_assets = _build_print_data_workbook(request, school, members)
+    school_slug = _safe_export_name(school.name, 'school').lower()
+    filename = f'{school_slug}_qr_print_data.zip'
+    zip_buffer = BytesIO()
+    with ZipFile(zip_buffer, 'w', ZIP_DEFLATED) as archive:
+        archive.writestr(f'{school_slug}_print_data.xlsx', workbook_bytes)
+        archive.writestr('README.txt', (
+            'QR print data package\n\n'
+            'Use the Excel file for member data. Use the PNG files in qr_codes/ for card artwork.\n'
+            'Each QR opens the public digital profile for that student, teacher, or staff member.\n'
+        ))
+        for qr_filename, qr_bytes in qr_assets:
+            archive.writestr(qr_filename, qr_bytes)
+
+    response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
 
 
 def add_user(request):

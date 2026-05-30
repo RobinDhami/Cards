@@ -4,6 +4,7 @@ from django.conf.urls.static import static
 from django.urls import include, path
 from django.contrib import admin
 from vcards.views import *
+from vcards.views import dashboard_qr_export, dashboard_qr_export_download
 
 urlpatterns = [
     path('',home,name='home'),
@@ -16,8 +17,10 @@ urlpatterns = [
     path('dashboard/teachers/', dashboard_teachers, name='dashboard_teachers'),
     path('dashboard/settings/', dashboard_settings, name='dashboard_settings'),
     path('dashboard/print/', dashboard_print, name='dashboard_print'),
+    path('dashboard/qr-export/', dashboard_qr_export, name='dashboard_qr_export'),
     path('dashboard/print/preview/', dashboard_print_preview, name='dashboard_print_preview'),
     path('dashboard/print/export-pdf/', dashboard_print_export_pdf, name='dashboard_print_export_pdf'),
+    path('dashboard/qr-export/download/', dashboard_qr_export_download, name='dashboard_qr_export_download'),
     path('dashboard/bulk-upload/', dashboard_bulk_upload, name='dashboard_bulk_upload'),
     path('dashboard/create/', add_user, name='add_user'),
     path('dashboard/college_details/<int:college_id>/', college_details, name='college_details'),

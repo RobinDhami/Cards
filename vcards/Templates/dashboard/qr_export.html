@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Data Export</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: { 50:'#f0f3f9', 100:'#dce3f0', 200:'#b8c7e1', 300:'#8ba3cc', 400:'#5d7db5', 500:'#1e3a5f', 600:'#1a3254', 700:'#152a47', 800:'#0f1f35', 900:'#0a1524' },
+            gold: { 50:'#fdf9ef', 100:'#faf0d4', 200:'#f4dfa8', 300:'#edc96f', 400:'#d4a843', 500:'#b8922e', 600:'#967525', 700:'#74591d', 800:'#5a4418', 900:'#3f3012' },
+            slate2: { 50:'#f8f9fb', 100:'#f1f3f7', 200:'#e4e7ee', 300:'#cdd2dd', 400:'#9ca5b8', 500:'#6b7689', 600:'#535c6e', 700:'#3e4555', 800:'#2a303c', 900:'#1a1e27' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'DM Sans', sans-serif; }
+    .font-display { font-family: 'Playfair Display', serif; }
+    .card-shadow { box-shadow: 0 1px 3px rgba(30,58,95,0.08), 0 4px 12px rgba(30,58,95,0.04); }
+    .row-selected { background: #f0f3f9; }
+  </style>
+</head>
+<body class="h-full overflow-auto bg-slate2-50 text-slate2-800">
+  <div class="flex min-h-full">
+    {% include "dashboard/_sidebar.html" %}
+
+    <div class="flex min-h-full flex-1 flex-col overflow-auto">
+      <header class="flex shrink-0 items-center justify-between border-b border-slate2-200 bg-white px-4 py-3 sm:px-6">
+        <div class="flex items-center gap-3">
+          <button id="mobile-menu-btn" class="rounded-lg p-1.5 hover:bg-slate2-100 lg:hidden"><i data-lucide="menu" class="h-5 w-5"></i></button>
+          <div>
+            <h1 class="font-display text-lg font-bold text-navy-500 sm:text-xl">QR Data Export</h1>
+            <p class="hidden text-xs text-slate2-400 sm:block">Download member data and QR assets for outside card printing</p>
+          </div>
+        </div>
+        <div class="hidden items-center gap-2 rounded-lg bg-navy-50 px-3 py-2 text-xs font-semibold text-navy-500 sm:flex">
+          <i data-lucide="school" class="h-4 w-4"></i>{{ current_school.name }}
+        </div>
+      </header>
+
+      <main class="flex-1 space-y-5 p-4 sm:p-6">
+        {% if messages %}
+          <div class="space-y-3">
+            {% for message in messages %}
+              <div class="rounded-xl border px-4 py-3 text-sm {% if message.tags == 'error' %}border-red-200 bg-red-50 text-red-700{% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-700{% else %}border-emerald-200 bg-emerald-50 text-emerald-700{% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <section class="grid gap-3 md:grid-cols-3">
+          <div class="rounded-xl bg-white p-4 card-shadow">
+            <div class="text-xs text-slate2-400">Filtered Records</div>
+            <div class="mt-1 text-2xl font-bold text-navy-500">{{ member_count }}</div>
+          </div>
+          <div class="rounded-xl bg-white p-4 card-shadow">
+            <div class="text-xs text-slate2-400">Students</div>
+            <div class="mt-1 text-2xl font-bold text-navy-500">{{ school_student_total }}</div>
+          </div>
+          <div class="rounded-xl bg-white p-4 card-shadow">
+            <div class="text-xs text-slate2-400">Teachers / Staff</div>
+            <div class="mt-1 text-2xl font-bold text-gold-500">{{ school_teacher_total }}</div>
+          </div>
+        </section>
+
+        <form method="get" class="rounded-xl bg-white p-5 card-shadow">
+          {% if current_school %}<input type="hidden" name="school" value="{{ current_school.id }}">{% endif %}
+          <div class="grid grid-cols-1 gap-3 lg:grid-cols-5">
+            <div class="relative lg:col-span-2">
+              <i data-lucide="search" class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate2-400"></i>
+              <input type="text" name="q" value="{{ filter_state.q }}" placeholder="Search name, ID, role, phone" class="w-full rounded-lg border border-slate2-200 pl-9 pr-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-navy-300">
+            </div>
+            <select name="member_type" class="w-full rounded-lg border border-slate2-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-navy-300">
+              <option value="all" {% if filter_state.member_type == 'all' %}selected{% endif %}>All Members</option>
+              <option value="student" {% if filter_state.member_type == 'student' %}selected{% endif %}>Students</option>
+              <option value="teacher" {% if filter_state.member_type == 'teacher' %}selected{% endif %}>Teachers</option>
+            </select>
+            <select name="academic_level" class="w-full rounded-lg border border-slate2-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-navy-300">
+              <option value="">All Classes</option>
+              {% for option in academic_level_choices %}
+                <option value="{{ option.value }}" {% if option.value == filter_state.academic_level %}selected{% endif %}>{{ option.label }}</option>
+              {% endfor %}
+            </select>
+            <select name="section" class="w-full rounded-lg border border-slate2-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-navy-300">
+              <option value="">All Sections</option>
+              {% for section in sections %}
+                <option value="{{ section }}" {% if section == filter_state.section %}selected{% endif %}>{{ section }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-navy-500 px-4 py-2 text-xs font-semibold text-white hover:bg-navy-600"><i data-lucide="filter" class="h-3.5 w-3.5"></i>Apply Filters</button>
+            <a href="{% url 'dashboard_qr_export' %}{{ nav_school_query }}" class="inline-flex items-center gap-2 rounded-lg border border-slate2-200 px-4 py-2 text-xs font-semibold text-slate2-600 hover:bg-slate2-50"><i data-lucide="rotate-ccw" class="h-3.5 w-3.5"></i>Reset</a>
+          </div>
+        </form>
+
+        <form method="post" action="{% url 'dashboard_qr_export_download' %}" class="rounded-xl bg-white p-5 card-shadow">
+          {% csrf_token %}
+          {% if current_school %}<input type="hidden" name="school" value="{{ current_school.id }}">{% endif %}
+          <input type="hidden" name="q" value="{{ filter_state.q }}">
+          <input type="hidden" name="member_type" value="{{ filter_state.member_type }}">
+          <input type="hidden" name="academic_level" value="{{ filter_state.academic_level }}">
+          <input type="hidden" name="section" value="{{ filter_state.section }}">
+
+          <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div class="text-sm font-semibold text-navy-500">Select records to export</div>
+              <div class="mt-1 text-xs text-slate2-400"><span id="selected-count">0</span> selected. The ZIP includes Excel data and QR PNG files.</div>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button type="submit" class="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700"><i data-lucide="download" class="mr-1 inline h-3.5 w-3.5"></i>Download Selected</button>
+              <button type="submit" name="select_filtered" value="1" class="rounded-lg border border-navy-500 px-4 py-2 text-xs font-semibold text-navy-500 hover:bg-navy-50"><i data-lucide="archive" class="mr-1 inline h-3.5 w-3.5"></i>Download Filtered</button>
+            </div>
+          </div>
+
+          <div class="overflow-hidden rounded-xl border border-slate2-200">
+            <div class="overflow-x-auto">
+              <table class="w-full min-w-[850px] text-sm">
+                <thead>
+                  <tr class="border-b border-slate2-200 bg-slate2-50">
+                    <th class="px-5 py-3.5 text-left" style="width:48px;"><input type="checkbox" id="master-checkbox" class="h-4 w-4 accent-navy-500"></th>
+                    <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-navy-400">Name</th>
+                    <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-navy-400">ID</th>
+                    <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-navy-400">Type</th>
+                    <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-navy-400">Class</th>
+                    <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-navy-400">Section</th>
+                    <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-navy-400">Contact</th>
+                    <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-navy-400">QR URL</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for member in members %}
+                    <tr class="member-row border-b border-slate2-100 hover:bg-slate2-50">
+                      <td class="px-5 py-4"><input type="checkbox" name="selected_ids" value="{{ member.id }}" class="member-checkbox h-4 w-4 accent-navy-500"></td>
+                      <td class="px-5 py-4">
+                        <div class="font-semibold text-navy-500">{{ member.name }}</div>
+                        <div class="text-xs text-slate2-400">{{ member.role|default:member.get_member_type_display }}</div>
+                      </td>
+                      <td class="px-5 py-4 text-xs text-slate2-600">{{ member.unique_identifier|default:member.roll_number|default:"-" }}</td>
+                      <td class="px-5 py-4 text-xs text-slate2-500">{{ member.get_member_type_display }}</td>
+                      <td class="px-5 py-4 text-xs text-slate2-500">{{ member.get_academic_level_display|default:"-" }}</td>
+                      <td class="px-5 py-4 text-xs text-slate2-500">{{ member.section|default:"-" }}</td>
+                      <td class="px-5 py-4">
+                        <div class="text-xs text-navy-500">{{ member.phone }}</div>
+                        <div class="text-xs text-slate2-400">{{ member.email }}</div>
+                      </td>
+                      <td class="px-5 py-4 text-xs">
+                        <a href="{% url 'student_contact_card' member.id %}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Open profile</a>
+                      </td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="8" class="px-5 py-12 text-center text-sm text-slate2-400">No members match the current filters.</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </form>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    function syncSelection() {
+      const checked = document.querySelectorAll('.member-checkbox:checked');
+      const selectedCount = document.getElementById('selected-count');
+      if (selectedCount) selectedCount.textContent = checked.length;
+      document.querySelectorAll('.member-checkbox').forEach((checkbox) => {
+        checkbox.closest('.member-row')?.classList.toggle('row-selected', checkbox.checked);
+      });
+    }
+
+    document.getElementById('master-checkbox')?.addEventListener('change', (event) => {
+      document.querySelectorAll('.member-checkbox').forEach((checkbox) => {
+        checkbox.checked = event.target.checked;
+      });
+      syncSelection();
+    });
+
+    document.querySelectorAll('.member-checkbox').forEach((checkbox) => {
+      checkbox.addEventListener('change', syncSelection);
+    });
+
+    if (window.lucide) lucide.createIcons();
+  </script>
+</body>
+</html>
