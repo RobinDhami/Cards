@@ -31,6 +31,18 @@
     <a href="{% url 'dashboard_qr_export' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'qr_export' %}bg-white/12 text-white font-medium{% else %}text-navy-200 hover:bg-white/8 hover:text-white{% endif %}">
       <i data-lucide="qr-code" class="h-4 w-4 {% if active_module == 'qr_export' %}text-gold-400{% endif %}"></i>QR Data Export
     </a>
+    <a href="{% url 'dashboard_accounts' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'accounts' %}bg-white/12 text-white font-medium{% else %}text-navy-200 hover:bg-white/8 hover:text-white{% endif %}">
+      <i data-lucide="wallet" class="h-4 w-4 {% if active_module == 'accounts' %}text-gold-400{% endif %}"></i>Student Accounts
+    </a>
+    <a href="{% url 'dashboard_counter_payment' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'counter' %}bg-white/12 text-white font-medium{% else %}text-navy-200 hover:bg-white/8 hover:text-white{% endif %}">
+      <i data-lucide="credit-card" class="h-4 w-4 {% if active_module == 'counter' %}text-gold-400{% endif %}"></i>Counter Payment
+    </a>
+    <a href="{% url 'dashboard_library' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'library' %}bg-white/12 text-white font-medium{% else %}text-navy-200 hover:bg-white/8 hover:text-white{% endif %}">
+      <i data-lucide="library" class="h-4 w-4 {% if active_module == 'library' %}text-gold-400{% endif %}"></i>Library
+    </a>
+    <a href="{% url 'dashboard_records' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'records' %}bg-white/12 text-white font-medium{% else %}text-navy-200 hover:bg-white/8 hover:text-white{% endif %}">
+      <i data-lucide="list-filter" class="h-4 w-4 {% if active_module == 'records' %}text-gold-400{% endif %}"></i>Records
+    </a>
     <a href="{% url 'dashboard_bulk_upload' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'bulk_upload' %}bg-white/12 text-white font-medium{% else %}text-navy-200 hover:bg-white/8 hover:text-white{% endif %}">
       <i data-lucide="upload-cloud" class="h-4 w-4 {% if active_module == 'bulk_upload' %}text-gold-400{% endif %}"></i>Bulk Upload
     </a>

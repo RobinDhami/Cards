@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
 from django.urls import reverse
+from django.utils import timezone
 
 # Skill
 class Skill(models.Model):
@@ -40,6 +41,7 @@ class BaseProfile(models.Model):
     password = models.CharField(max_length=128)
     profile_photo = models.ImageField(upload_to='profile_photos/', blank=True, null=True)
     cover_photo = models.ImageField(upload_to='cover_photos/', blank=True, null=True)
+    birth_certificate = models.FileField(upload_to='birth_certificates/', blank=True, null=True)
     skills = models.ManyToManyField(Skill, blank=True)
     cv = models.FileField(upload_to='cvs/', blank=True, null=True)
     show_portfolio = models.BooleanField(default=True)
@@ -128,6 +130,8 @@ class StudentProfile(BaseProfile):
     about_intro = models.TextField(blank=True, null=True)
     about_featured = models.TextField(blank=True, null=True)
     about_current = models.TextField(blank=True, null=True)
+    additional_info_heading = models.CharField(max_length=120, blank=True, default='')
+    additional_info_description = models.TextField(blank=True, default='')
     social_stack = models.CharField(max_length=255, blank=True, default="")  # e.g. "linkedin,instagram,github"
 
     USER_TYPE_CHOICES = [
@@ -190,3 +194,131 @@ class ProfileActivity(models.Model):
 
     def __str__(self):
         return f"{self.student.name} - {self.event_type} ({self.action or 'n/a'})"
+
+
+class StudentWallet(models.Model):
+    student = models.OneToOneField(StudentProfile, on_delete=models.CASCADE, related_name='wallet')
+    balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.student.name} wallet - Rs. {self.balance}"
+
+
+class StudentCard(models.Model):
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='cards')
+    card_uid = models.CharField(max_length=120, unique=True)
+    card_number = models.CharField(max_length=80, blank=True, default='')
+    is_active = models.BooleanField(default=True)
+    issued_date = models.DateField(default=timezone.localdate)
+    lost_or_blocked = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['student'],
+                condition=models.Q(is_active=True, lost_or_blocked=False),
+                name='one_active_card_per_student',
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.student.name} - {self.card_uid}"
+
+
+class WalletTopUp(models.Model):
+    PAYMENT_METHOD_CHOICES = [
+        ('cash', 'Cash'),
+        ('bank', 'Bank'),
+        ('online', 'Online'),
+        ('other', 'Other'),
+    ]
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='wallet_topups')
+    wallet = models.ForeignKey(StudentWallet, on_delete=models.CASCADE, related_name='topups')
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='cash')
+    received_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True, related_name='received_wallet_topups')
+    note = models.TextField(blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.student.name} top-up Rs. {self.amount}"
+
+
+class WalletTransaction(models.Model):
+    TRANSACTION_TYPE_CHOICES = [
+        ('topup', 'Top-up'),
+        ('cafeteria', 'Cafeteria'),
+        ('stationery', 'Stationery'),
+        ('bus', 'Bus Fare'),
+        ('library_fine', 'Library Fine'),
+        ('refund', 'Refund'),
+    ]
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='wallet_transactions')
+    wallet = models.ForeignKey(StudentWallet, on_delete=models.CASCADE, related_name='transactions')
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    transaction_type = models.CharField(max_length=30, choices=TRANSACTION_TYPE_CHOICES)
+    description = models.CharField(max_length=255, blank=True, default='')
+    counter_name = models.CharField(max_length=120, blank=True, default='')
+    processed_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True, related_name='processed_wallet_transactions')
+    balance_before = models.DecimalField(max_digits=12, decimal_places=2)
+    balance_after = models.DecimalField(max_digits=12, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.student.name} {self.transaction_type} Rs. {self.amount}"
+
+
+class LibraryBook(models.Model):
+    title = models.CharField(max_length=255)
+    author = models.CharField(max_length=255, blank=True, default='')
+    isbn = models.CharField(max_length=50, blank=True, default='')
+    category = models.CharField(max_length=100, blank=True, default='')
+    book_code = models.CharField(max_length=80, unique=True)
+    total_copies = models.PositiveIntegerField(default=1)
+    available_copies = models.PositiveIntegerField(default=1)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.title} ({self.book_code})"
+
+
+class LibraryBorrowRecord(models.Model):
+    STATUS_CHOICES = [
+        ('borrowed', 'Borrowed'),
+        ('returned', 'Returned'),
+        ('overdue', 'Overdue'),
+        ('lost', 'Lost'),
+    ]
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='library_records')
+    book = models.ForeignKey(LibraryBook, on_delete=models.CASCADE, related_name='borrow_records')
+    issued_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True, related_name='issued_library_books')
+    issue_date = models.DateField(default=timezone.localdate)
+    due_date = models.DateField()
+    return_date = models.DateField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='borrowed')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    @property
+    def days_remaining(self):
+        return (self.due_date - timezone.localdate()).days
+
+    @property
+    def overdue_days(self):
+        return max(0, -self.days_remaining)
+
+    def __str__(self):
+        return f"{self.student.name} - {self.book.title}"

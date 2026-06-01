@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{{ student.name }} | Teacher Dashboard</title>
+  <title>{{ student.name }} | Profile Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="min-h-screen bg-slate-100 text-slate-900">
@@ -19,7 +19,7 @@
     <div class="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
       <aside class="space-y-6">
         <div class="rounded-3xl bg-slate-900 p-6 text-white shadow-xl">
-          <p class="text-sm uppercase tracking-[0.2em] text-slate-300 mb-2">Teacher Dashboard</p>
+          <p class="text-sm uppercase tracking-[0.2em] text-slate-300 mb-2">Profile Dashboard</p>
           <h1 class="text-3xl font-bold leading-tight">{{ student.name }}</h1>
           <p class="mt-2 text-sm text-slate-300">{{ display_organization }}</p>
           {% if student.role %}

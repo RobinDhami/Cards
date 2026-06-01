@@ -27,14 +27,14 @@
   </script>
   <style>
     html, body { height: 100%; margin: 0; }
-    body { font-family: 'DM Sans', sans-serif; }
+    body { font-family: 'DM Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
     .font-display { font-family: 'Playfair Display', serif; }
     .form-input {
       width: 100%;
-      padding: 10px 14px;
+      padding: 12px 14px;
       border: 1.5px solid #dde1ea;
       border-radius: 10px;
-      font-size: 14px;
+      font-size: 16px;
       font-family: 'DM Sans', sans-serif;
       background: #fff;
       color: #1a2d5a;
@@ -57,13 +57,105 @@
     }
     .section-card {
       background: #fff;
-      border-radius: 16px;
+      border-radius: 14px;
       box-shadow: 0 1px 4px rgba(15,29,61,0.06), 0 4px 16px rgba(15,29,61,0.04);
       padding: 28px 28px 24px;
       border: 1px solid #eef0f5;
     }
     @media (max-width: 640px) {
       .section-card { padding: 20px 16px 18px; }
+    }
+    @media (min-width: 641px) {
+      .form-input { font-size: 14px; }
+    }
+    .profile-preview-card {
+      overflow: hidden;
+      border-radius: 14px;
+      background: #fff;
+      border: 1px solid #eef0f5;
+      box-shadow: 0 1px 4px rgba(15,29,61,0.06), 0 4px 16px rgba(15,29,61,0.04);
+    }
+    .cover-preview {
+      position: relative;
+      height: 176px;
+      background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 52%, #eef2ff 100%);
+      overflow: hidden;
+    }
+    .cover-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .cover-preview::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(15,29,61,0.04), rgba(15,29,61,0.28));
+      pointer-events: none;
+    }
+    .profile-avatar-wrap {
+      position: relative;
+      margin-top: -52px;
+      padding: 0 18px 18px;
+      display: flex;
+      align-items: flex-end;
+      gap: 14px;
+    }
+    .profile-avatar {
+      width: 108px;
+      height: 108px;
+      border-radius: 999px;
+      border: 5px solid #fff;
+      background: linear-gradient(135deg, #fbbf24, #fed7aa);
+      overflow: hidden;
+      box-shadow: 0 10px 24px rgba(15,29,61,0.18);
+      flex: 0 0 auto;
+    }
+    .profile-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .photo-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(15,29,61,0.1);
+      background: rgba(255,255,255,0.92);
+      color: #0f1d3d;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 10px 13px;
+      box-shadow: 0 6px 18px rgba(15,29,61,0.12);
+      cursor: pointer;
+    }
+    .cover-action {
+      position: absolute;
+      right: 12px;
+      bottom: 12px;
+      z-index: 2;
+    }
+    .avatar-action {
+      position: absolute;
+      left: 92px;
+      bottom: 22px;
+      z-index: 2;
+      width: 38px;
+      height: 38px;
+      padding: 0;
+      border-radius: 999px;
+    }
+    @media (max-width: 520px) {
+      .cover-preview { height: 148px; }
+      .profile-avatar-wrap { margin-top: -46px; padding: 0 14px 16px; }
+      .profile-avatar { width: 96px; height: 96px; border-width: 4px; }
+      .avatar-action { left: 82px; bottom: 20px; }
+      .photo-action span { display: none; }
+      .cover-action { width: 40px; height: 40px; padding: 0; }
     }
     .upload-zone {
       border: 2px dashed #dde1ea;
@@ -133,10 +225,42 @@
         </div>
       {% endif %}
 
+      <div class="profile-preview-card" style="animation: fadeUp 0.35s ease both">
+        <div class="cover-preview" id="cover-preview" onclick="document.getElementById('file-cover').click()">
+          {% if student.cover_photo %}
+            <img id="cover-preview-img" src="{{ student.cover_photo.url }}" alt="{{ student.name }} cover photo">
+          {% else %}
+            <img id="cover-preview-img" src="" alt="" class="hidden">
+          {% endif %}
+          <button type="button" class="photo-action cover-action" onclick="event.stopPropagation(); document.getElementById('file-cover').click()">
+            <i data-lucide="image-plus" class="h-4 w-4"></i><span>Change cover</span>
+          </button>
+        </div>
+        <div class="profile-avatar-wrap">
+          <div class="profile-avatar" onclick="document.getElementById('file-profile').click()">
+            {% if student.profile_photo %}
+              <img id="profile-preview-img" src="{{ student.profile_photo.url }}" alt="{{ student.name }} profile photo">
+            {% else %}
+              <img id="profile-preview-img" src="" alt="" class="hidden">
+              <div id="profile-preview-fallback" class="flex h-full w-full items-center justify-center text-4xl font-bold text-navy">{{ student.name|default:"S"|slice:":1" }}</div>
+            {% endif %}
+          </div>
+          <button type="button" class="photo-action avatar-action" aria-label="Change profile photo" onclick="document.getElementById('file-profile').click()">
+            <i data-lucide="camera" class="h-4 w-4"></i>
+          </button>
+          <div class="min-w-0 flex-1 pb-1">
+            <h2 class="truncate text-lg font-bold text-navy">{{ student.name }}</h2>
+            <p class="mt-1 text-sm text-slate-500">Match your profile and cover photos before saving.</p>
+          </div>
+        </div>
+        <input type="file" id="file-profile" name="profile_photo" accept="image/*" class="hidden" onchange="handleImagePreview(this,'profile-preview-img','profile-preview-fallback','profile-file-name')">
+        <input type="file" id="file-cover" name="cover_photo" accept="image/*" class="hidden" onchange="handleImagePreview(this,'cover-preview-img',null,'cover-file-name')">
+      </div>
+
       <div class="section-card" style="animation: fadeUp 0.4s ease both">
         <div class="mb-5 flex items-center gap-2">
           <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-navy"><i data-lucide="user" class="h-4 w-4 text-gold"></i></div>
-          <h2 class="text-base font-semibold text-navy">Identity</h2>
+          <h2 class="text-base font-semibold text-navy">Profile Basics</h2>
         </div>
         <div class="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
           <div>
@@ -148,7 +272,7 @@
             <input class="form-input" name="username" value="{{ student.username }}" placeholder="Username">
           </div>
           <div>
-            <label class="form-label">Unique ID</label>
+            <label class="form-label">IEMIS No.</label>
             <input class="form-input" value="{{ student.unique_identifier }}" readonly>
           </div>
           {% if can_manage_school_fields %}
@@ -255,6 +379,27 @@
             <input class="form-input" type="tel" name="emergency_contact_phone" value="{{ student.emergency_contact_phone|default:'' }}" placeholder="Phone">
           </div>
           <div class="sm:col-span-2">
+            <div class="rounded-xl border border-amber-100 bg-amber-50/60 p-4">
+              <div class="mb-3 flex items-center gap-2">
+                <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-gold shadow-sm"><i data-lucide="info" class="h-4 w-4"></i></div>
+                <div>
+                  <h3 class="text-sm font-semibold text-navy">Custom Additional Info</h3>
+                  <p class="text-xs text-slate-500">Optional note shown inside the profile info menu.</p>
+                </div>
+              </div>
+              <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label class="form-label">Heading</label>
+                  <input class="form-input" name="additional_info_heading" value="{{ student.additional_info_heading|default:'' }}" placeholder="Transport, Allergy, House, Note">
+                </div>
+                <div>
+                  <label class="form-label">Description</label>
+                  <textarea class="form-input" rows="2" name="additional_info_description" placeholder="Write the detail students or visitors should see">{{ student.additional_info_description|default:'' }}</textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="sm:col-span-2">
             <label class="form-label">Map / Navigation Link</label>
             <div class="relative">
               <input class="form-input pr-10" name="map_url" value="{{ student.map_url|default:'' }}" placeholder="Google Maps link">
@@ -346,42 +491,40 @@
       <div class="section-card" style="animation: fadeUp 0.7s ease both">
         <div class="mb-5 flex items-center gap-2">
           <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-navy"><i data-lucide="upload" class="h-4 w-4 text-gold"></i></div>
-          <h2 class="text-base font-semibold text-navy">Files</h2>
+          <h2 class="text-base font-semibold text-navy">Uploads</h2>
         </div>
         <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div>
             <label class="form-label">Profile Photo</label>
             <div class="upload-zone {% if student.profile_photo %}has-file{% endif %}" id="zone-profile" onclick="document.getElementById('file-profile').click()">
               <i data-lucide="camera" class="mx-auto mb-2 h-6 w-6 text-gold"></i>
-              <p class="text-xs text-slate-400" id="zone-profile-text">{% if student.profile_photo %}{{ student.profile_photo.name }}{% else %}Click to upload{% endif %}</p>
-              <input type="file" id="file-profile" name="profile_photo" accept="image/*" class="hidden" onchange="handleFile(this,'zone-profile','zone-profile-text')">
+              <p class="text-xs text-slate-400" id="profile-file-name">{% if student.profile_photo %}{{ student.profile_photo.name }}{% else %}Tap preview above or here{% endif %}</p>
             </div>
           </div>
           <div>
             <label class="form-label">Cover Photo</label>
             <div class="upload-zone {% if student.cover_photo %}has-file{% endif %}" id="zone-cover" onclick="document.getElementById('file-cover').click()">
               <i data-lucide="image" class="mx-auto mb-2 h-6 w-6 text-gold"></i>
-              <p class="text-xs text-slate-400" id="zone-cover-text">{% if student.cover_photo %}{{ student.cover_photo.name }}{% else %}Click to upload{% endif %}</p>
-              <input type="file" id="file-cover" name="cover_photo" accept="image/*" class="hidden" onchange="handleFile(this,'zone-cover','zone-cover-text')">
+              <p class="text-xs text-slate-400" id="cover-file-name">{% if student.cover_photo %}{{ student.cover_photo.name }}{% else %}Tap preview above or here{% endif %}</p>
             </div>
           </div>
           <div>
-            <label class="form-label">CV / Resume</label>
-            <div class="upload-zone {% if student.cv %}has-file{% endif %}" id="zone-cv" onclick="document.getElementById('file-cv').click()">
-              <i data-lucide="file-text" class="mx-auto mb-2 h-6 w-6 text-gold"></i>
-              <p class="text-xs text-slate-400" id="zone-cv-text">{% if student.cv %}{{ student.cv.name }}{% else %}Click to upload{% endif %}</p>
-              <input type="file" id="file-cv" name="cv" accept=".pdf,.doc,.docx" class="hidden" onchange="handleFile(this,'zone-cv','zone-cv-text')">
+            <label class="form-label">DOB Certificate</label>
+            <div class="upload-zone {% if student.birth_certificate %}has-file{% endif %}" id="zone-cv" onclick="document.getElementById('file-cv').click()">
+              <i data-lucide="file-badge" class="mx-auto mb-2 h-6 w-6 text-gold"></i>
+              <p class="text-xs text-slate-400" id="zone-cv-text">{% if student.birth_certificate %}{{ student.birth_certificate.name }}{% else %}Upload birth / DOB certificate{% endif %}</p>
+              <input type="file" id="file-cv" name="birth_certificate" accept=".pdf,image/*" class="hidden" onchange="handleFile(this,'zone-cv','zone-cv-text')">
             </div>
           </div>
         </div>
       </div>
 
-      <div class="flex flex-col gap-3 pb-8 pt-2 sm:flex-row" style="animation: fadeUp 0.8s ease both">
-        <button type="submit" id="btn-save" class="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gold px-8 py-3 font-semibold text-navy shadow-md transition-all hover:bg-yellow-600 sm:flex-none">
-          <i data-lucide="check-circle" class="h-4 w-4"></i> <span id="btn-save-text">Save Student Data</span>
+      <div class="sticky bottom-0 z-30 -mx-4 flex flex-col gap-3 border-t border-slate-200 bg-white/95 px-4 py-3 shadow-[0_-10px_24px_rgba(15,29,61,0.08)] backdrop-blur sm:static sm:mx-0 sm:flex-row sm:border-0 sm:bg-transparent sm:px-0 sm:pb-8 sm:pt-2 sm:shadow-none" style="animation: fadeUp 0.8s ease both">
+        <button type="submit" id="btn-save" class="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gold px-8 py-3.5 font-semibold text-navy shadow-md transition-all hover:bg-yellow-600 sm:flex-none">
+          <i data-lucide="check-circle" class="h-4 w-4"></i> <span id="btn-save-text">Save Changes</span>
         </button>
-        <a id="btn-back" href="{% if student.college_id %}{% url 'college_details' student.college_id %}{% else %}{% url 'admin_dashboard' %}{% endif %}" class="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-8 py-3 font-semibold text-navy shadow-sm transition-all hover:bg-slate-100 sm:flex-none">
-          <i data-lucide="arrow-left" class="h-4 w-4"></i> <span id="btn-back-text">Back</span>
+        <a id="btn-back" href="{% url 'student_contact_card' student.id %}" class="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-8 py-3.5 font-semibold text-navy shadow-sm transition-all hover:bg-slate-100 sm:flex-none">
+          <i data-lucide="eye" class="h-4 w-4"></i> <span id="btn-back-text">Preview</span>
         </a>
       </div>
     </form>
@@ -397,12 +540,27 @@
   </style>
   <script>
     function handleFile(input, zoneId, textId) {
-      const zone = document.getElementById(zoneId);
-      const text = document.getElementById(textId);
+      const zone = zoneId ? document.getElementById(zoneId) : null;
+      const text = textId ? document.getElementById(textId) : null;
       if (input.files && input.files[0]) {
-        text.textContent = input.files[0].name;
-        zone.classList.add('has-file');
+        if (text) text.textContent = input.files[0].name;
+        if (zone) zone.classList.add('has-file');
       }
+    }
+
+    function handleImagePreview(input, imgId, fallbackId, fileNameId) {
+      handleFile(input, input.id === 'file-profile' ? 'zone-profile' : 'zone-cover', fileNameId);
+      const file = input.files && input.files[0];
+      const img = document.getElementById(imgId);
+      const fallback = fallbackId ? document.getElementById(fallbackId) : null;
+      if (!file || !img) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        img.src = event.target.result;
+        img.classList.remove('hidden');
+        if (fallback) fallback.classList.add('hidden');
+      }
+      reader.readAsDataURL(file);
     }
 
     function syncAcademicSection() {

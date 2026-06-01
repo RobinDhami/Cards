@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse, HttpResponse
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.http import JsonResponse, HttpResponse, FileResponse
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -7,13 +8,16 @@ from django.core.mail import send_mail
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth.models import User
 from django.conf import settings
+from django.db import transaction
 from django.db.models import Count, Q
 from django.db.models.functions import TruncDate
 from django.template import TemplateDoesNotExist
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
 from datetime import timedelta
+from decimal import Decimal, InvalidOperation
 from io import BytesIO
 import json
 import re
@@ -32,7 +36,11 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
 
-from .models import StudentProfile, College, ProfileActivity, Skill
+from .models import (
+    StudentProfile, College, ProfileActivity, Skill,
+    StudentWallet, StudentCard, WalletTopUp, WalletTransaction,
+    LibraryBook, LibraryBorrowRecord,
+)
 
 CONTACT_TEMPLATES = {
     'general': ['student_digital_card.html'],
@@ -163,7 +171,7 @@ def _student_edit_session_key(student_id):
 
 
 def _profile_supports_self_service(student):
-    return bool(student and student.member_type == 'teacher')
+    return bool(student and student.member_type in {'student', 'teacher'})
 
 
 def _is_student_edit_authorized(request, student_id):
@@ -202,7 +210,7 @@ def _get_user_role(user):
         return 'school_admin'
     owned_profile = _get_owned_profile(user)
     if owned_profile and _profile_supports_self_service(owned_profile):
-        return 'teacher'
+        return owned_profile.member_type or 'student'
     return 'public'
 
 
@@ -237,6 +245,126 @@ def _require_profile_access(request, student):
         return None
     messages.error(request, 'You do not have permission to access this profile.')
     return redirect('dashboard_login')
+
+
+def _can_view_private_student_data(request, student):
+    return bool(
+        _can_manage_profile(request.user, student)
+        or _is_student_edit_authorized(request, student.id)
+    )
+
+
+def _parse_positive_amount(raw_amount):
+    try:
+        amount = Decimal(str(raw_amount)).quantize(Decimal('0.01'))
+    except (InvalidOperation, TypeError, ValueError):
+        raise ValueError('Invalid amount')
+    if amount <= 0:
+        raise ValueError('Amount must be greater than 0')
+    return amount
+
+
+def _class_section_label(student):
+    grade = student.get_academic_level_display() if student.academic_level else (student.role or student.get_member_type_display())
+    if student.section:
+        return f'{grade} - Section {student.section}'
+    return grade
+
+
+def _wallet_error(message):
+    return {'success': False, 'message': message}
+
+
+def _wallet_success(transaction, deducted=None):
+    amount = deducted if deducted is not None else transaction.amount
+    return {
+        'success': True,
+        'student_name': transaction.student.name,
+        'class_section': _class_section_label(transaction.student),
+        'old_balance': str(transaction.balance_before),
+        'deducted': str(amount),
+        'new_balance': str(transaction.balance_after),
+        'transaction_id': f'TXN-{transaction.id}',
+    }
+
+
+def _ensure_wallet(student):
+    wallet, _ = StudentWallet.objects.get_or_create(student=student)
+    return wallet
+
+
+def _top_up_wallet(student, amount, payment_method='cash', received_by=None, note=''):
+    amount = _parse_positive_amount(amount)
+    with transaction.atomic():
+        wallet = StudentWallet.objects.select_for_update().get_or_create(student=student)[0]
+        if not wallet.is_active:
+            raise ValueError('Wallet is inactive')
+        before = wallet.balance
+        wallet.balance = before + amount
+        wallet.save(update_fields=['balance', 'updated_at'])
+        topup = WalletTopUp.objects.create(
+            student=student,
+            wallet=wallet,
+            amount=amount,
+            payment_method=payment_method or 'cash',
+            received_by=received_by if received_by and received_by.is_authenticated else None,
+            note=note or '',
+        )
+        wallet_transaction = WalletTransaction.objects.create(
+            student=student,
+            wallet=wallet,
+            amount=amount,
+            transaction_type='topup',
+            description=note or 'Wallet top-up',
+            counter_name='Accounts',
+            processed_by=received_by if received_by and received_by.is_authenticated else None,
+            balance_before=before,
+            balance_after=wallet.balance,
+        )
+    return topup, wallet_transaction
+
+
+def _process_card_payment(card_uid, amount, transaction_type, counter_name='', description='', processed_by=None):
+    amount = _parse_positive_amount(amount)
+    allowed_types = {value for value, _ in WalletTransaction.TRANSACTION_TYPE_CHOICES}
+    if transaction_type not in allowed_types or transaction_type in {'topup', 'refund'}:
+        raise ValueError('Invalid payment type')
+    with transaction.atomic():
+        card = (
+            StudentCard.objects.select_related('student')
+            .select_for_update()
+            .filter(card_uid=card_uid)
+            .first()
+        )
+        if not card:
+            raise ValueError('Card not found')
+        if not card.is_active or card.lost_or_blocked:
+            raise ValueError('Card blocked')
+        student = card.student
+        if not student.show_contact_card:
+            raise ValueError('Student inactive')
+        wallet = StudentWallet.objects.select_for_update().filter(student=student).first()
+        if not wallet:
+            raise ValueError('Wallet not found')
+        if not wallet.is_active:
+            raise ValueError('Wallet is inactive')
+        if wallet.balance < amount:
+            raise ValueError('Insufficient balance')
+        before = wallet.balance
+        wallet.balance = before - amount
+        wallet.save(update_fields=['balance', 'updated_at'])
+        wallet_transaction = WalletTransaction.objects.create(
+            student=student,
+            wallet=wallet,
+            amount=amount,
+            transaction_type=transaction_type,
+            description=description or transaction_type.replace('_', ' ').title(),
+            counter_name=counter_name or '',
+            processed_by=processed_by if processed_by and processed_by.is_authenticated else None,
+            balance_before=before,
+            balance_after=wallet.balance,
+        )
+    return wallet_transaction
 
 
 def _ensure_unique_username(base_username, exclude_user_id=None):
@@ -992,6 +1120,7 @@ def _school_card_context(request, student):
         grade_section = f'{grade_label} - Section {student.section}'
 
     website_url = _normalize_public_url(student.website) or school_website_url
+    website_display = student.website or (school.website if school and school.website else '')
     direct_map_url = _normalize_public_url(student.map_url) or _google_maps_url(student.address) or school_map_url
     navigate_url = _build_tracked_action_url(student.id, 'map') if (student.map_url or student.address) else direct_map_url
 
@@ -1004,6 +1133,13 @@ def _school_card_context(request, student):
         social_links.append({'key': 'whatsapp', 'url': _build_tracked_action_url(student.id, 'whatsapp'), 'label': 'WhatsApp', 'icon': 'message-circle'})
     if student.linkedin:
         social_links.append({'key': 'linkedin', 'url': _build_tracked_action_url(student.id, 'social-linkedin'), 'label': 'LinkedIn', 'icon': 'linkedin'})
+
+    private_visible = _can_view_private_student_data(request, student)
+    wallet = StudentWallet.objects.filter(student=student).first()
+    recent_transactions = WalletTransaction.objects.filter(student=student)[:3]
+    borrowed_records = LibraryBorrowRecord.objects.filter(student=student, status__in=['borrowed', 'overdue']).select_related('book')
+    returned_count = LibraryBorrowRecord.objects.filter(student=student, status='returned').count()
+    next_due = borrowed_records.order_by('due_date').first()
 
     return {
         'student': student,
@@ -1025,16 +1161,32 @@ def _school_card_context(request, student):
         'emergency_contact_name': student.emergency_contact_name,
         'emergency_contact_phone': student.emergency_contact_phone,
         'blood_group': student.blood_group,
+        'additional_info_heading': student.additional_info_heading,
+        'additional_info_description': student.additional_info_description,
         'student_address': student.address,
         'website_url': website_url,
+        'website_display': website_display,
         'map_url': direct_map_url,
         'navigate_url': navigate_url,
         'phone_action_url': _build_tracked_action_url(student.id, 'phone') if student.phone else '',
         'whatsapp_action_url': _build_tracked_action_url(student.id, 'whatsapp') if student.whatsapp else '',
         'download_vcard_url': reverse('download_vcard', args=[student.id]),
+        'edit_profile_url': f"{reverse('edit_student_auth', args=[student.id])}?{urlencode({'next': reverse('edit_student_manual', args=[student.id])})}",
         'qr_code_url': reverse('print_qr_code', args=[student.id]),
         'public_card_url': _build_public_contact_url(request, student),
         'social_links': social_links,
+        'private_visible': private_visible,
+        'wallet_balance_display': f'Rs. {wallet.balance}' if private_visible and wallet else 'Rs. ****',
+        'recent_wallet_transactions': recent_transactions,
+        'library_borrowed_display': f'{borrowed_records.count()} Borrowed' if private_visible else '** Borrowed',
+        'library_summary_display': (
+            f'{returned_count} returned'
+            + (f' - {next_due.days_remaining} days left' if next_due else '')
+            if private_visible else 'Login required to view library status.'
+        ),
+        'library_deadline_display': f'Return deadline: {next_due.due_date}' if private_visible and next_due else 'Return deadline: hidden',
+        'birth_certificate_url': reverse('view_birth_certificate', args=[student.id]),
+        'has_birth_certificate': bool(student.birth_certificate),
     }
 
 
@@ -1153,6 +1305,17 @@ def profile(request, student_id):
 def print_qr_code(request, student_id):
     student = get_object_or_404(StudentProfile, pk=student_id)
     return HttpResponse(_build_qr_png_bytes(_build_public_contact_url(request, student)), content_type='image/png')
+
+
+def view_birth_certificate(request, student_id):
+    student = get_object_or_404(StudentProfile, pk=student_id)
+    if not _can_view_private_student_data(request, student):
+        messages.error(request, 'Login required to view birth certificate.')
+        return redirect('edit_student_auth', student_id=student.id)
+    if not student.birth_certificate:
+        messages.error(request, 'Birth certificate has not been uploaded.')
+        return redirect('student_contact_card', student_id=student.id)
+    return FileResponse(student.birth_certificate.open('rb'), as_attachment=False)
 
 
 @login_required
@@ -1711,6 +1874,349 @@ def dashboard_qr_export_download(request):
     return response
 
 
+def _json_body(request):
+    if request.content_type and 'application/json' in request.content_type:
+        try:
+            return json.loads(request.body.decode('utf-8') or '{}')
+        except json.JSONDecodeError:
+            return {}
+    return request.POST
+
+
+@csrf_exempt
+@require_POST
+def api_card_lookup(request):
+    payload = _json_body(request)
+    card_uid = (payload.get('card_uid') or '').strip()
+    card = StudentCard.objects.select_related('student').filter(card_uid=card_uid).first()
+    if not card:
+        return JsonResponse(_wallet_error('Card not found'), status=404)
+    return JsonResponse({
+        'success': True,
+        'student_id': card.student_id,
+        'student_name': card.student.name,
+        'class_section': _class_section_label(card.student),
+        'card_blocked': card.lost_or_blocked or not card.is_active,
+    })
+
+
+@csrf_exempt
+@require_POST
+def api_wallet_topup(request):
+    if not request.user.is_authenticated:
+        return JsonResponse(_wallet_error('Login required'), status=403)
+    payload = _json_body(request)
+    student_id = payload.get('student_id') or payload.get('student')
+    student = StudentProfile.objects.filter(id=student_id).first()
+    if not student:
+        return JsonResponse(_wallet_error('Student not found'), status=404)
+    try:
+        _, wallet_transaction = _top_up_wallet(
+            student,
+            payload.get('amount'),
+            payload.get('payment_method', 'cash'),
+            request.user,
+            payload.get('note', ''),
+        )
+    except ValueError as error:
+        return JsonResponse(_wallet_error(str(error)), status=400)
+    response = _wallet_success(wallet_transaction, deducted=wallet_transaction.amount)
+    response['topup'] = str(wallet_transaction.amount)
+    return JsonResponse(response)
+
+
+@csrf_exempt
+@require_POST
+def api_wallet_pay(request):
+    payload = _json_body(request)
+    try:
+        wallet_transaction = _process_card_payment(
+            payload.get('card_uid', ''),
+            payload.get('amount'),
+            payload.get('transaction_type'),
+            payload.get('counter_name', ''),
+            payload.get('description', ''),
+            request.user,
+        )
+    except ValueError as error:
+        status = 402 if str(error) == 'Insufficient balance' else 400
+        return JsonResponse(_wallet_error(str(error)), status=status)
+    return JsonResponse(_wallet_success(wallet_transaction))
+
+
+def api_wallet_balance(request, student_id):
+    student = get_object_or_404(StudentProfile, pk=student_id)
+    if not _can_view_private_student_data(request, student):
+        return JsonResponse({'success': True, 'balance': 'Rs. ****', 'masked': True})
+    wallet = _ensure_wallet(student)
+    return JsonResponse({'success': True, 'balance': str(wallet.balance), 'masked': False})
+
+
+def api_wallet_transactions(request, student_id):
+    student = get_object_or_404(StudentProfile, pk=student_id)
+    qs = WalletTransaction.objects.filter(student=student)[:20]
+    if not _can_view_private_student_data(request, student):
+        return JsonResponse({
+            'success': True,
+            'masked': True,
+            'transactions': [
+                {
+                    'transaction_type': item.transaction_type,
+                    'amount': 'Rs. **',
+                    'created_at': item.created_at.isoformat(),
+                }
+                for item in qs[:5]
+            ],
+        })
+    return JsonResponse({
+        'success': True,
+        'masked': False,
+        'transactions': [
+            {
+                'id': item.id,
+                'transaction_type': item.transaction_type,
+                'amount': str(item.amount),
+                'description': item.description,
+                'counter_name': item.counter_name,
+                'balance_after': str(item.balance_after),
+                'created_at': item.created_at.isoformat(),
+            }
+            for item in qs
+        ],
+    })
+
+
+@csrf_exempt
+@require_POST
+def api_library_borrow(request):
+    if not request.user.is_authenticated:
+        return JsonResponse(_wallet_error('Login required'), status=403)
+    payload = _json_body(request)
+    student = StudentProfile.objects.filter(id=payload.get('student_id')).first()
+    if not student and payload.get('card_uid'):
+        card = StudentCard.objects.select_related('student').filter(card_uid=payload.get('card_uid'), is_active=True, lost_or_blocked=False).first()
+        student = card.student if card else None
+    book = LibraryBook.objects.filter(id=payload.get('book_id')).first()
+    if not student:
+        return JsonResponse(_wallet_error('Student not found'), status=404)
+    if not book:
+        return JsonResponse(_wallet_error('Book not found'), status=404)
+    try:
+        due_date = timezone.datetime.fromisoformat(payload.get('due_date')).date()
+    except (TypeError, ValueError):
+        due_date = timezone.localdate() + timedelta(days=14)
+    with transaction.atomic():
+        book = LibraryBook.objects.select_for_update().get(pk=book.pk)
+        if not book.is_active or book.available_copies <= 0:
+            return JsonResponse(_wallet_error('Book is not available'), status=400)
+        book.available_copies -= 1
+        book.save(update_fields=['available_copies', 'updated_at'])
+        record = LibraryBorrowRecord.objects.create(
+            student=student,
+            book=book,
+            issued_by=request.user if request.user.is_authenticated else None,
+            due_date=due_date,
+        )
+    return JsonResponse({'success': True, 'record_id': record.id, 'book': book.title, 'due_date': due_date.isoformat()})
+
+
+@csrf_exempt
+@require_POST
+def api_library_return(request):
+    if not request.user.is_authenticated:
+        return JsonResponse(_wallet_error('Login required'), status=403)
+    payload = _json_body(request)
+    record = LibraryBorrowRecord.objects.select_related('book').filter(id=payload.get('record_id')).first()
+    if not record:
+        return JsonResponse(_wallet_error('Borrow record not found'), status=404)
+    with transaction.atomic():
+        record = LibraryBorrowRecord.objects.select_for_update().select_related('book').get(pk=record.pk)
+        if record.status == 'returned':
+            return JsonResponse(_wallet_error('Book already returned'), status=400)
+        record.status = 'returned'
+        record.return_date = timezone.localdate()
+        record.save(update_fields=['status', 'return_date', 'updated_at'])
+        book = LibraryBook.objects.select_for_update().get(pk=record.book_id)
+        book.available_copies = min(book.total_copies, book.available_copies + 1)
+        book.save(update_fields=['available_copies', 'updated_at'])
+    return JsonResponse({'success': True, 'record_id': record.id, 'return_date': record.return_date.isoformat()})
+
+
+def api_library_status(request, student_id):
+    student = get_object_or_404(StudentProfile, pk=student_id)
+    borrowed = LibraryBorrowRecord.objects.filter(student=student, status__in=['borrowed', 'overdue'])
+    returned_count = LibraryBorrowRecord.objects.filter(student=student, status='returned').count()
+    if not _can_view_private_student_data(request, student):
+        return JsonResponse({
+            'success': True,
+            'masked': True,
+            'borrowed': '** Borrowed',
+            'summary': 'Login required to view library status.',
+            'return_deadline': 'hidden',
+        })
+    next_due = borrowed.order_by('due_date').first()
+    days = next_due.days_remaining if next_due else None
+    return JsonResponse({
+        'success': True,
+        'masked': False,
+        'borrowed_count': borrowed.count(),
+        'returned_count': returned_count,
+        'days_remaining': days,
+        'return_deadline': next_due.due_date.isoformat() if next_due else '',
+    })
+
+
+@login_required
+def dashboard_accounts(request):
+    school, schools = _resolve_dashboard_school(request, required=True)
+    if not school:
+        return redirect('admin_dashboard')
+    if request.method == 'POST':
+        student = get_object_or_404(StudentProfile, pk=request.POST.get('student'), college=school)
+        if request.POST.get('account_action') == 'register_card':
+            try:
+                StudentCard.objects.create(
+                    student=student,
+                    card_uid=request.POST.get('card_uid', '').strip(),
+                    card_number=request.POST.get('card_number', '').strip(),
+                    is_active=True,
+                )
+                _ensure_wallet(student)
+                messages.success(request, f'Card registered for {student.name}.')
+            except Exception as error:
+                messages.error(request, f'Could not register card: {error}')
+        else:
+            try:
+                _top_up_wallet(student, request.POST.get('amount'), request.POST.get('payment_method', 'cash'), request.user, request.POST.get('note', ''))
+                messages.success(request, f'Wallet topped up for {student.name}.')
+            except ValueError as error:
+                messages.error(request, str(error))
+        return redirect(f"{reverse('dashboard_accounts')}{_build_dashboard_query(school)}")
+    students = StudentProfile.objects.filter(college=school).order_by('name')
+    wallets = StudentWallet.objects.filter(student__college=school).select_related('student')
+    topups = WalletTopUp.objects.filter(student__college=school).select_related('student', 'received_by')[:25]
+    return render(request, 'dashboard/accounts.html', {
+        **_school_dashboard_context(request, 'accounts', school, schools),
+        'students': students,
+        'wallets': wallets,
+        'cards': StudentCard.objects.filter(student__college=school).select_related('student')[:50],
+        'topups': topups,
+        'payment_methods': WalletTopUp.PAYMENT_METHOD_CHOICES,
+    })
+
+
+@login_required
+def dashboard_counter_payment(request):
+    school, schools = _resolve_dashboard_school(request, required=True)
+    if not school:
+        return redirect('admin_dashboard')
+    result = None
+    if request.method == 'POST':
+        try:
+            wallet_transaction = _process_card_payment(
+                request.POST.get('card_uid', ''),
+                request.POST.get('amount'),
+                request.POST.get('transaction_type'),
+                request.POST.get('counter_name', ''),
+                request.POST.get('description', ''),
+                request.user,
+            )
+            if wallet_transaction.student.college_id != school.id:
+                messages.error(request, 'This card does not belong to the selected school.')
+            else:
+                result = _wallet_success(wallet_transaction)
+                messages.success(request, 'Payment deducted successfully.')
+        except ValueError as error:
+            messages.error(request, str(error))
+    return render(request, 'dashboard/counter_payment.html', {
+        **_school_dashboard_context(request, 'counter', school, schools),
+        'transaction_types': [
+            choice for choice in WalletTransaction.TRANSACTION_TYPE_CHOICES
+            if choice[0] in {'cafeteria', 'stationery', 'bus', 'library_fine'}
+        ],
+        'result': result,
+    })
+
+
+@login_required
+def dashboard_library(request):
+    school, schools = _resolve_dashboard_school(request, required=True)
+    if not school:
+        return redirect('admin_dashboard')
+    if request.method == 'POST':
+        action = request.POST.get('library_action')
+        if action == 'add_book':
+            total = int(request.POST.get('total_copies') or 1)
+            LibraryBook.objects.create(
+                title=request.POST.get('title', '').strip(),
+                author=request.POST.get('author', '').strip(),
+                isbn=request.POST.get('isbn', '').strip(),
+                category=request.POST.get('category', '').strip(),
+                book_code=request.POST.get('book_code', '').strip(),
+                total_copies=total,
+                available_copies=int(request.POST.get('available_copies') or total),
+            )
+            messages.success(request, 'Book added.')
+        elif action == 'borrow':
+            student = StudentProfile.objects.filter(pk=request.POST.get('student'), college=school).first()
+            book = LibraryBook.objects.filter(pk=request.POST.get('book')).first()
+            if not student or not book:
+                messages.error(request, 'Choose a student and book.')
+            else:
+                due_date = request.POST.get('due_date') or (timezone.localdate() + timedelta(days=14)).isoformat()
+                with transaction.atomic():
+                    book = LibraryBook.objects.select_for_update().get(pk=book.pk)
+                    if book.available_copies <= 0:
+                        messages.error(request, 'Book is not available.')
+                    else:
+                        book.available_copies -= 1
+                        book.save(update_fields=['available_copies', 'updated_at'])
+                        LibraryBorrowRecord.objects.create(student=student, book=book, issued_by=request.user, due_date=due_date)
+                        messages.success(request, 'Book issued.')
+        elif action == 'return':
+            record = LibraryBorrowRecord.objects.filter(pk=request.POST.get('record'), student__college=school).first()
+            if record:
+                with transaction.atomic():
+                    record = LibraryBorrowRecord.objects.select_for_update().select_related('book').get(pk=record.pk)
+                    if record.status != 'returned':
+                        record.status = 'returned'
+                        record.return_date = timezone.localdate()
+                        record.save(update_fields=['status', 'return_date', 'updated_at'])
+                        book = LibraryBook.objects.select_for_update().get(pk=record.book_id)
+                        book.available_copies = min(book.total_copies, book.available_copies + 1)
+                        book.save(update_fields=['available_copies', 'updated_at'])
+                        messages.success(request, 'Book returned.')
+        return redirect(f"{reverse('dashboard_library')}{_build_dashboard_query(school)}")
+    return render(request, 'dashboard/library.html', {
+        **_school_dashboard_context(request, 'library', school, schools),
+        'students': StudentProfile.objects.filter(college=school).order_by('name'),
+        'books': LibraryBook.objects.filter(is_active=True).order_by('title'),
+        'records': LibraryBorrowRecord.objects.filter(student__college=school).select_related('student', 'book')[:50],
+    })
+
+
+@login_required
+def dashboard_records(request):
+    school, schools = _resolve_dashboard_school(request, required=True)
+    if not school:
+        return redirect('admin_dashboard')
+    txns = WalletTransaction.objects.filter(student__college=school).select_related('student')
+    records = LibraryBorrowRecord.objects.filter(student__college=school).select_related('student', 'book')
+    txn_type = request.GET.get('transaction_type')
+    if txn_type:
+        txns = txns.filter(transaction_type=txn_type)
+    q = request.GET.get('q', '').strip()
+    if q:
+        txns = txns.filter(Q(student__name__icontains=q) | Q(counter_name__icontains=q))
+        records = records.filter(Q(student__name__icontains=q) | Q(book__title__icontains=q) | Q(book__book_code__icontains=q))
+    return render(request, 'dashboard/records.html', {
+        **_school_dashboard_context(request, 'records', school, schools),
+        'transactions': txns[:100],
+        'library_records': records[:100],
+        'transaction_types': WalletTransaction.TRANSACTION_TYPE_CHOICES,
+    })
+
+
 def add_user(request):
     messages.error(request, 'Independent profile creation is disabled in the school identity platform.')
     return redirect('admin_dashboard')
@@ -1718,23 +2224,26 @@ def add_user(request):
 
 def edit_student_auth(request, student_id):
     student = get_object_or_404(StudentProfile, id=student_id)
+    next_url = request.GET.get('next') or request.POST.get('next') or ''
+    if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        next_url = ''
     if not _profile_supports_self_service(student):
         messages.error(request, 'Students are managed by the school. Please contact your school administrator for profile changes.')
         return redirect('contact_card', student_id=student.id)
     if _can_manage_profile(request.user, student):
         request.session[_student_edit_session_key(student.id)] = True
-        return redirect('student_owner_dashboard', student_id=student.id)
+        return redirect(next_url or reverse('student_owner_dashboard', args=[student.id]))
     if _is_student_edit_authorized(request, student.id):
-        return redirect('student_owner_dashboard', student_id=student.id)
+        return redirect(next_url or reverse('student_owner_dashboard', args=[student.id]))
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '')
         if username == student.username and check_password(password, student.password):
             request.session[_student_edit_session_key(student.id)] = True
             messages.success(request, 'Login successful. You can now manage this profile.')
-            return redirect('student_owner_dashboard', student_id=student.id)
+            return redirect(next_url or reverse('student_owner_dashboard', args=[student.id]))
         messages.error(request, 'Invalid username or password.')
-    return render(request, 'edit_student_auth.html', {'student': student})
+    return render(request, 'edit_student_auth.html', {'student': student, 'next_url': next_url})
 
 
 def logout_student_edit(request, student_id):
@@ -2161,6 +2670,8 @@ def edit_student_manual(request, student_id):
         student.emergency_contact_phone = request.POST.get('emergency_contact_phone', student.emergency_contact_phone)
         student.map_url = request.POST.get('map_url', student.map_url)
         student.blood_group = request.POST.get('blood_group', student.blood_group)
+        student.additional_info_heading = request.POST.get('additional_info_heading', student.additional_info_heading)
+        student.additional_info_description = request.POST.get('additional_info_description', student.additional_info_description)
         student.gender = request.POST.get('gender', student.gender)
         student.about_intro = request.POST.get('about_intro', student.about_intro)
         student.about_featured = request.POST.get('about_featured', student.about_featured)
@@ -2188,6 +2699,8 @@ def edit_student_manual(request, student_id):
             student.cover_photo = request.FILES['cover_photo']
         if request.FILES.get('cv'):
             student.cv = request.FILES['cv']
+        if request.FILES.get('birth_certificate'):
+            student.birth_certificate = request.FILES['birth_certificate']
 
         student.contact_template = 'student_digital_card.html'
         student.print_card_type = request.POST.get('print_card_type', student.print_card_type or 'id_card')
