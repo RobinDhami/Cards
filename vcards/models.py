@@ -196,17 +196,6 @@ class ProfileActivity(models.Model):
         return f"{self.student.name} - {self.event_type} ({self.action or 'n/a'})"
 
 
-class StudentWallet(models.Model):
-    student = models.OneToOneField(StudentProfile, on_delete=models.CASCADE, related_name='wallet')
-    balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"{self.student.name} wallet - Rs. {self.balance}"
-
-
 class StudentCard(models.Model):
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='cards')
     card_uid = models.CharField(max_length=120, unique=True)
@@ -228,52 +217,6 @@ class StudentCard(models.Model):
 
     def __str__(self):
         return f"{self.student.name} - {self.card_uid}"
-
-
-class WalletTopUp(models.Model):
-    PAYMENT_METHOD_CHOICES = [
-        ('cash', 'Cash'),
-        ('bank', 'Bank'),
-        ('online', 'Online'),
-        ('other', 'Other'),
-    ]
-    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='wallet_topups')
-    wallet = models.ForeignKey(StudentWallet, on_delete=models.CASCADE, related_name='topups')
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
-    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='cash')
-    received_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True, related_name='received_wallet_topups')
-    note = models.TextField(blank=True, default='')
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.student.name} top-up Rs. {self.amount}"
-
-
-class WalletTransaction(models.Model):
-    TRANSACTION_TYPE_CHOICES = [
-        ('topup', 'Top-up'),
-        ('cafeteria', 'Cafeteria'),
-        ('stationery', 'Stationery'),
-        ('bus', 'Bus Fare'),
-        ('library_fine', 'Library Fine'),
-        ('refund', 'Refund'),
-    ]
-    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='wallet_transactions')
-    wallet = models.ForeignKey(StudentWallet, on_delete=models.CASCADE, related_name='transactions')
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
-    transaction_type = models.CharField(max_length=30, choices=TRANSACTION_TYPE_CHOICES)
-    description = models.CharField(max_length=255, blank=True, default='')
-    counter_name = models.CharField(max_length=120, blank=True, default='')
-    processed_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True, related_name='processed_wallet_transactions')
-    balance_before = models.DecimalField(max_digits=12, decimal_places=2)
-    balance_after = models.DecimalField(max_digits=12, decimal_places=2)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['-created_at']
-
-    def __str__(self):
-        return f"{self.student.name} {self.transaction_type} Rs. {self.amount}"
 
 
 class LibraryBook(models.Model):

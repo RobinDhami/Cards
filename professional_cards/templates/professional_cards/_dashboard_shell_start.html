@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Professional Cards{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    html, body { height: 100%; margin: 0; font-family: 'DM Sans', sans-serif; }
+    .font-display { font-family: 'Playfair Display', serif; }
+  </style>
+</head>
+<body class="h-full bg-slate-50 text-slate-800">
+  <div class="flex h-full">
+    {% include "dashboard/_sidebar.html" %}
+    <div class="flex min-w-0 flex-1 flex-col">
+      <header class="flex flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
+        <div>
+          <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-teal-700">Tap2Connect</p>
+          <h1 class="font-display text-xl font-bold text-slate-900">{% block heading %}Professional Cards{% endblock %}</h1>
+        </div>
+        {% block header_actions %}{% endblock %}
+      </header>
+      <main class="flex-1 overflow-auto p-4 sm:p-6">
+        {% if messages %}
+          <div class="mb-4 space-y-2">
+            {% for message in messages %}
+              <div class="rounded-lg border px-4 py-3 text-sm {% if message.tags == 'error' %}border-red-200 bg-red-50 text-red-700{% else %}border-emerald-200 bg-emerald-50 text-emerald-700{% endif %}">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}

@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'vcards',
+    'professional_cards',
     'rest_framework',
     'corsheaders',
     'tailwind',

@@ -1,598 +1,738 @@
 {% load static %}
-<!doctype html>
-<html lang="en" class="h-full">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% if profile_unavailable %}Profile unavailable{% else %}{{ student.name|default:"Digital Student ID" }}{% endif %}</title>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% if profile_unavailable %}Profile unavailable{% else %}{{ student.name|default:"Professional Student Digital Profile" }}{% endif %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { min-height: 100%; }
+    :root {
+      --page: #f5f6f8;
+      --surface: #ffffff;
+      --ink: #101114;
+      --ink-2: #30333a;
+      --muted: #6f7580;
+      --faint: #a0a6b1;
+      --line: rgba(16, 17, 20, 0.08);
+      --line-strong: rgba(16, 17, 20, 0.14);
+      --gold: #a9793f;
+      --gold-soft: #f4eee5;
+      --green: #0f7b5f;
+      --red: #d94841;
+    }
     body {
-      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background:
-        radial-gradient(circle at 50% -10%, rgba(251, 146, 60, 0.2), transparent 34%),
-        linear-gradient(135deg, #f8fafc 0%, #fff7ed 48%, #eef2ff 100%);
+        radial-gradient(circle at 14% 8%, rgba(36, 107, 253, 0.08), transparent 34%),
+        radial-gradient(circle at 88% 92%, rgba(16, 17, 20, 0.06), transparent 32%),
+        linear-gradient(135deg, #fbfcfe 0%, var(--page) 100%);
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
     }
-    .heading { font-family: 'Plus Jakarta Sans', sans-serif; }
-    .card-premium {
-      border: 1px solid rgba(255, 255, 255, 0.86);
-      box-shadow: 0 28px 70px rgba(15, 23, 42, 0.18),
-                  0 10px 26px rgba(251, 146, 60, 0.1),
-                  inset 0 1px 1px rgba(255, 255, 255, 0.85);
-    }
-    .btn-primary {
-      box-shadow: 0 8px 16px rgba(251, 146, 60, 0.25);
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .btn-primary:hover {
-      box-shadow: 0 12px 24px rgba(251, 146, 60, 0.35);
-      transform: translateY(-2px);
-    }
-    .btn-secondary, .btn-icon, .secondary-action, .quick-action {
-      transition: all 0.3s ease;
-    }
-    .btn-secondary:hover {
-      background-color: rgba(251, 146, 60, 0.08);
-      border-color: rgba(251, 146, 60, 0.4);
-      transform: translateY(-1px);
-    }
-    .btn-icon:hover { transform: scale(1.05); }
-    .hero-cover {
+    button { cursor: pointer; font: inherit; }
+    a { color: inherit; }
+    .phone { width: min(100%, 414px); }
+    .profile-app {
       position: relative;
-      height: 230px;
       overflow: hidden;
-      background:
-        radial-gradient(circle at 15% 12%, rgba(255,255,255,0.65), transparent 28%),
-        linear-gradient(135deg, #f97316 0%, #d97706 45%, #0f766e 100%);
+      border-radius: 34px;
+      background: var(--surface);
+      border: 1px solid rgba(16,17,20,0.06);
+      box-shadow: 0 28px 80px rgba(16, 17, 20, 0.14);
     }
-    .hero-cover::after {
+    .cover {
+      position: relative;
+      min-height: 250px;
+      padding: 18px;
+      background:
+        linear-gradient(180deg, rgba(10, 12, 16, 0.08), rgba(10, 12, 16, 0.72)),
+        var(--cover-image, url("https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=1200&q=80")) center/cover no-repeat;
+    }
+    .cover::after {
       content: "";
       position: absolute;
-      inset: 0;
-      background:
-        linear-gradient(to bottom, rgba(15,23,42,0.22), rgba(15,23,42,0.05) 42%, rgba(255,255,255,0.96) 100%);
+      left: 0;
+      right: 0;
+      bottom: -1px;
+      height: 110px;
+      background: linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.82) 62%, #fff 100%);
       pointer-events: none;
     }
-    .school-badge {
-      border: 1px solid rgba(255,255,255,0.36);
-      background: rgba(255,255,255,0.16);
-      backdrop-filter: blur(12px);
-    }
-    .profile-ring {
-      background:
-        linear-gradient(#fff, #fff) padding-box,
-        linear-gradient(135deg, #fb923c, #facc15, #14b8a6) border-box;
-      border: 5px solid transparent;
-      box-shadow: 0 18px 36px rgba(15,23,42,0.2);
-    }
-    .top-menu {
-      position: fixed;
-      top: 76px;
-      right: max(16px, calc((100vw - 448px) / 2 + 20px));
-      width: min(320px, calc(100vw - 40px));
-      max-height: 0;
-      overflow: hidden;
-      opacity: 0;
-      transform: translateY(-6px);
-      transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, transform 0.25s ease;
-      z-index: 40;
-    }
-    .top-menu.open {
-      max-height: calc(100vh - 96px);
-      overflow-y: auto;
-      opacity: 1;
-      transform: translateY(0);
-    }
-    @media (max-width: 520px) {
-      .top-menu {
-        top: 68px;
-        right: 14px;
-        width: calc(100vw - 28px);
-      }
-    }
-    .expand-panel {
-      max-height: 0;
-      overflow: hidden;
-      opacity: 0;
-      transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, padding 0.3s ease;
-      transform-origin: top;
-    }
-    .expand-panel.open {
-      max-height: 420px;
-      opacity: 1;
-      padding-top: 20px;
-      padding-bottom: 20px;
-    }
-    .info-row {
+    .topbar {
+      position: relative;
+      z-index: 5;
       display: flex;
+      justify-content: space-between;
       align-items: flex-start;
-      gap: 12px;
-      padding: 12px;
-      border: 1px solid rgba(251, 146, 60, 0.13);
-      border-radius: 13px;
-      background: rgba(255, 255, 255, 0.72);
-      box-shadow: 0 6px 16px rgba(146, 64, 14, 0.05);
+      gap: 14px;
     }
-    .info-row + .info-row { margin-top: 9px; }
-    .info-icon {
-      width: 34px;
-      height: 34px;
-      flex: 0 0 auto;
-      border-radius: 11px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #ffffff;
-      background: linear-gradient(135deg, #fb923c, #d97706);
-      box-shadow: 0 8px 16px rgba(251, 146, 60, 0.22);
-    }
-    .info-copy { min-width: 0; flex: 1; }
-    .info-label {
-      font-size: 12px;
-      font-weight: 800;
-      color: #b45309;
-      letter-spacing: 0.4px;
-      text-transform: uppercase;
-    }
-    .info-value {
-      min-width: 0;
-      margin-top: 2px;
-      font-size: 14px;
-      font-weight: 700;
-      color: #111827;
-      text-align: left;
-      overflow-wrap: anywhere;
-    }
-    .info-card-shell {
-      border: 1px solid rgba(255,255,255,0.9);
-      background:
-        radial-gradient(circle at 100% 0%, rgba(251, 191, 36, 0.2), transparent 36%),
-        linear-gradient(135deg, rgba(255,255,255,0.96), rgba(255,247,237,0.96));
-    }
-    .custom-info-card {
-      border-radius: 15px;
-      border: 1px solid rgba(251, 146, 60, 0.22);
-      background: linear-gradient(135deg, #fff7ed, #fffbeb);
-      padding: 14px;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.85), 0 8px 18px rgba(146,64,14,0.08);
-    }
-    .identity-panel {
+    .brand { min-width: 0; display: flex; align-items: center; gap: 11px; color: #fff; }
+    .school-mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
       overflow: hidden;
-      border-radius: 18px;
-      border: 1px solid rgba(251, 146, 60, 0.18);
-      background:
-        radial-gradient(circle at 100% 0%, rgba(20, 184, 166, 0.12), transparent 32%),
-        linear-gradient(135deg, rgba(255, 247, 237, 0.98) 0%, rgba(255, 255, 255, 0.98) 100%);
-      box-shadow: 0 16px 32px rgba(251, 146, 60, 0.12);
+      background: rgba(17,17,17,0.45);
+      border: 1px solid rgba(255,255,255,0.24);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.16);
     }
-    .identity-content { padding: 16px; }
-    .identity-row {
-      display: flex;
-      align-items: center;
-      gap: 13px;
-      min-width: 0;
+    .school-mark img { width: 100%; height: 100%; object-fit: cover; }
+    .brand-label {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.62);
+      margin-bottom: 4px;
     }
-    .identity-row + .identity-row {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid rgba(251, 146, 60, 0.14);
+    .school-name {
+      max-width: 230px;
+      font-size: 17px;
+      line-height: 1.15;
+      font-weight: 800;
+      letter-spacing: -0.35px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    .identity-icon {
+    .top-actions { display: flex; gap: 8px; flex: 0 0 auto; }
+    .icon-button {
       width: 42px;
       height: 42px;
-      flex: 0 0 auto;
-      border-radius: 12px;
-      display: flex;
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 50%;
+      background: rgba(17,17,17,0.38);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      text-decoration: none;
+      backdrop-filter: blur(18px);
+      transition: transform 0.18s ease, background 0.18s ease;
+    }
+    .icon-button:hover { transform: translateY(-1px); background: rgba(17,17,17,0.55); }
+    .profile-summary { position: relative; z-index: 6; margin: -94px 18px 0; padding-bottom: 16px; }
+    .summary-card {
+      position: relative;
+      padding: 72px 18px 18px;
+      border-radius: 28px;
+      background: rgba(255,255,255,0.94);
+      border: 1px solid rgba(16,17,20,0.06);
+      box-shadow: 0 18px 52px rgba(16, 17, 20, 0.12);
+      backdrop-filter: blur(24px);
+    }
+    .avatar-ring {
+      position: absolute;
+      left: 50%;
+      top: -54px;
+      transform: translateX(-50%);
+      width: 108px;
+      height: 108px;
+      border-radius: 50%;
+      padding: 4px;
+      background: #fff;
+      border: 1px solid rgba(16,17,20,0.08);
+      box-shadow: 0 16px 40px rgba(16,17,20,0.16);
+    }
+    .avatar {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 3px solid #fff;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 50% 32%, #c6c9cf 0 18%, transparent 19%),
+        radial-gradient(circle at 50% 86%, #a7abb3 0 38%, transparent 39%),
+        linear-gradient(145deg, #f0f1f3, #d9dde3);
+      color: #636872;
+      font-size: 34px;
+      font-weight: 900;
+    }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .intro { text-align: center; margin-bottom: 14px; }
+    .intro h1 {
+      font-size: 25px;
+      line-height: 1.06;
+      font-weight: 850;
+      letter-spacing: -0.75px;
+      margin-bottom: 7px;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #fb923c 0%, #d97706 100%);
-      color: #ffffff;
-      box-shadow: 0 8px 18px rgba(251, 146, 60, 0.22);
-    }
-    .identity-kicker {
-      font-size: 10px;
-      font-weight: 800;
-      color: #b45309;
-      letter-spacing: 0.7px;
-      text-transform: uppercase;
-    }
-    .identity-value {
-      margin-top: 4px;
-      font-size: 15px;
-      font-weight: 800;
-      line-height: 1.25;
-      color: #111827;
+      gap: 8px;
       overflow-wrap: anywhere;
     }
-    .identity-link {
-      color: #1d4ed8;
-      text-decoration: none;
+    .active-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #16a34a;
+      box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+      flex: 0 0 auto;
     }
-    .identity-link:hover { color: #92400e; }
-    .status-chip {
-      display: inline-flex;
+    .intro p { color: var(--muted); font-size: 14px; font-weight: 650; }
+    .contact-actions {
+      width: fit-content;
+      margin: 0 auto 16px;
+      display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 4px 10px;
-      border-radius: 999px;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-    }
-    .status-active { background-color: rgba(34, 197, 94, 0.12); color: #15803d; border: 1px solid rgba(34,197,94,0.18); }
-    .quick-action {
-      min-height: 74px;
+      padding: 6px;
       border-radius: 18px;
-      border: 1px solid rgba(15,23,42,0.08);
-      background: rgba(255,255,255,0.84);
-      box-shadow: 0 10px 24px rgba(15,23,42,0.07);
-      backdrop-filter: blur(10px);
+      background: #f4f5f7;
+      border: 1px solid rgba(16,17,20,0.06);
     }
-    .quick-action:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(15,23,42,0.1); }
-    .qr-section {
+    .contact-action {
+      width: 46px;
+      height: 42px;
+      border: 0;
+      border-radius: 13px;
+      background: transparent;
+      color: #343842;
       display: grid;
-      grid-template-columns: auto 1fr;
-      align-items: center;
-      gap: 14px;
-      padding: 14px;
-      background:
-        linear-gradient(135deg, rgba(15, 23, 42, 0.94), rgba(67, 56, 202, 0.84));
-      border: 1px solid rgba(255,255,255,0.16);
-      border-radius: 18px;
-      box-shadow: 0 16px 34px rgba(15,23,42,0.18);
+      place-items: center;
+      text-decoration: none;
+      transition: background 0.16s ease, color 0.16s ease, transform 0.16s ease;
     }
-    .qr-frame {
-      width: 112px;
-      height: 112px;
-      background: #ffffff;
-      border: 1px solid rgba(251, 146, 60, 0.18);
-      border-radius: 16px;
+    .contact-action:hover { transform: translateY(-1px); background: #fff; color: var(--ink); box-shadow: 0 8px 20px rgba(16,17,20,0.08); }
+    .contact-action.disabled { opacity: 0.38; pointer-events: none; }
+    .primary-actions { display: grid; grid-template-columns: 1fr 48px; gap: 10px; }
+    .share-button {
+      height: 50px;
+      border: none;
+      border-radius: 15px;
+      background: #101114;
+      color: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+      gap: 9px;
+      font-size: 14px;
+      font-weight: 750;
+      box-shadow: 0 12px 26px rgba(16,17,20,0.16);
+      transition: 0.18s ease;
     }
-    .qr-label {
-      font-size: 13px;
-      font-weight: 800;
-      color: #ffffff;
+    .share-button:hover { transform: translateY(-1px); background: #27272a; }
+    .details-button {
+      width: 48px;
+      height: 50px;
+      border-radius: 15px;
+      border: 1px solid rgba(16,17,20,0.08);
+      background: #f7f8fa;
+      color: var(--ink-2);
+      display: grid;
+      place-items: center;
+      transition: 0.18s ease;
+    }
+    .details-button:hover { transform: translateY(-1px); border-color: var(--line-strong); }
+    .content { padding: 0 18px 20px; }
+    .section { margin-bottom: 16px; }
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 2px;
+      margin-bottom: 10px;
+    }
+    .section-title { color: var(--ink); font-size: 14px; font-weight: 900; letter-spacing: -0.3px; }
+    .service-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .wallet-card, .library-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 132px;
+      border-radius: 22px;
+      padding: 15px;
+      border: 1px solid var(--line);
+      background: #fff;
+      box-shadow: 0 8px 24px rgba(16,17,20,0.05);
+    }
+    .wallet-card {
+      color: #fff;
+      background:
+        radial-gradient(circle at 88% 16%, rgba(255,255,255,0.18), transparent 30%),
+        linear-gradient(135deg, #111111, #2c2c31);
+      border-color: rgba(255,255,255,0.08);
+    }
+    .wallet-card::after {
+      content: "";
+      position: absolute;
+      width: 135px;
+      height: 135px;
+      right: -70px;
+      bottom: -74px;
+      border: 24px solid rgba(255,255,255,0.045);
+      border-radius: 50%;
+    }
+    .service-top {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .service-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      color: var(--gold);
+      background: var(--gold-soft);
+      flex: 0 0 auto;
+    }
+    .wallet-card .service-icon { color: #fff; background: rgba(255,255,255,0.12); }
+    .login-toggle {
+      height: 30px;
+      border: 0;
+      border-radius: 999px;
+      padding: 0 11px;
+      background: #fff;
+      color: var(--ink);
+      font-size: 10px;
+      font-weight: 850;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
-    }
-    .feature-badge {
+      text-decoration: none;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      position: relative;
+      z-index: 3;
+    }
+    .privacy-note {
+      position: relative;
+      z-index: 2;
+      margin-top: 10px;
+      color: rgba(255,255,255,0.58);
       font-size: 10px;
-      font-weight: 700;
-      padding: 3px 8px;
+      font-weight: 650;
+      line-height: 1.35;
+    }
+    .service-status {
+      height: 26px;
+      padding: 0 9px;
+      display: inline-flex;
+      align-items: center;
       border-radius: 999px;
-      background-color: rgba(255, 255, 255, 0.12);
-      color: #fde68a;
+      background: rgba(255,255,255,0.11);
+      color: rgba(255,255,255,0.78);
+      font-size: 10px;
+      font-weight: 850;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
-      letter-spacing: 0.2px;
     }
-    .secondary-action {
-      width: 100%;
-      padding: 14px 16px;
-      border-radius: 16px;
-      border: 1px solid rgba(251, 146, 60, 0.22);
-      background: linear-gradient(135deg, #fff7ed, #ffffff);
-      color: #92400e;
-      font-weight: 800;
+    .wallet-balance { position: relative; z-index: 2; margin-bottom: 14px; }
+    .wallet-balance span, .library-meta span {
+      display: block;
+      color: rgba(255,255,255,0.62);
+      font-size: 10px;
+      font-weight: 850;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .wallet-balance strong {
+      display: block;
+      color: #fff;
+      font-size: 27px;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: -0.9px;
+    }
+    .wallet-actions {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .mini-action {
+      height: 36px;
+      border: 0;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 850;
+      backdrop-filter: blur(12px);
+    }
+    .mini-action.primary {
+      background: #fff;
+      color: var(--ink);
+    }
+    .library-meta { margin-bottom: 14px; }
+    .library-meta span { color: var(--faint); }
+    .library-meta strong {
+      display: block;
+      color: var(--ink);
+      font-size: 23px;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: -0.6px;
+      margin-bottom: 6px;
+    }
+    .library-meta p { color: var(--muted); font-size: 12px; line-height: 1.35; font-weight: 600; }
+    .library-progress { height: 8px; border-radius: 999px; background: #ececec; overflow: hidden; margin-bottom: 9px; }
+    .library-progress span { display: block; width: {% if private_visible %}62%{% else %}0%{% endif %}; height: 100%; border-radius: inherit; background: var(--gold); }
+    .library-note { color: var(--muted); font-size: 11px; font-weight: 700; }
+    .socials { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; padding-top: 2px; }
+    .social {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      background: #fff;
+      border: 1px solid var(--line);
+      text-decoration: none;
+      transition: 0.18s ease;
+    }
+    .social svg { display: block; }
+    .social:hover { color: var(--ink); transform: translateY(-2px); border-color: var(--line-strong); }
+    .drawer {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      align-items: end;
+      justify-content: center;
+      padding: 14px;
+      background: linear-gradient(180deg, rgba(17,17,17,0.06), rgba(17,17,17,0.42));
+    }
+    .drawer.show { display: flex; }
+    .drawer-panel {
+      width: min(100%, 430px);
+      max-height: 78vh;
+      overflow-y: auto;
+      border-radius: 30px;
+      background: rgba(255,255,255,0.95);
+      border: 1px solid rgba(255,255,255,0.74);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.24);
+      backdrop-filter: blur(24px);
+      padding: 18px;
+      animation: rise 0.22s ease;
+    }
+    @keyframes rise {
+      from { transform: translateY(18px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .drawer-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .drawer-head h2 { font-size: 21px; letter-spacing: -0.6px; line-height: 1.15; margin-bottom: 5px; }
+    .drawer-head p { color: var(--muted); font-size: 13px; line-height: 1.4; }
+    .drawer-actions { display: flex; gap: 8px; flex: 0 0 auto; }
+    .ghost-btn, .solid-btn {
+      height: 38px;
+      border-radius: 999px;
+      padding: 0 14px;
+      font-size: 12px;
+      font-weight: 850;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ghost-btn { border: 1px solid var(--line); background: #fff; color: var(--ink-2); }
+    .solid-btn { border: 0; background: var(--ink); color: #fff; }
+    .detail-list { overflow: hidden; border-radius: 22px; border: 1px solid var(--line); background: #fff; }
+    .detail-row { display: grid; grid-template-columns: 1fr 1.3fr; gap: 14px; padding: 14px; }
+    .detail-row + .detail-row { border-top: 1px solid var(--line); }
+    .detail-label {
+      color: var(--faint);
+      font-size: 11px;
+      font-weight: 850;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .detail-value {
+      min-width: 0;
+      color: var(--ink);
       font-size: 13px;
-      cursor: pointer;
-      box-shadow: 0 10px 22px rgba(251,146,60,0.12);
+      font-weight: 750;
+      text-align: right;
+      overflow-wrap: anywhere;
     }
-    .secondary-action:hover {
-      background-color: rgba(251, 146, 60, 0.05);
-      border-color: rgba(251, 146, 60, 0.35);
-    }
-    .action-disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      z-index: 140;
+      transform: translate(-50%, 12px);
+      opacity: 0;
       pointer-events: none;
+      padding: 12px 16px;
+      border-radius: 999px;
+      background: #101114;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      box-shadow: 0 14px 34px rgba(16,17,20,0.18);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .unavailable-card {
+      width: min(100%, 390px);
+      border-radius: 28px;
+      background: #fff;
+      border: 1px solid var(--line);
+      box-shadow: 0 24px 70px rgba(16,17,20,0.13);
+      padding: 28px;
+      text-align: center;
+    }
+    .unavailable-card h1 { font-size: 24px; margin-bottom: 10px; }
+    .unavailable-card p { color: var(--muted); font-size: 14px; line-height: 1.5; }
+    @media (max-width: 430px) {
+      body { padding: 0; align-items: stretch; }
+      .phone { width: 100%; }
+      .profile-app { min-height: 100vh; border-radius: 0; }
     }
   </style>
 </head>
-<body class="h-full overflow-auto">
+<body>
 {% if profile_unavailable %}
-  <main class="min-h-full flex items-center justify-center p-6">
-    <section class="w-full max-w-sm rounded-2xl bg-white p-8 text-center shadow-xl border border-slate-100">
-      <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100 text-orange-700">
-        <i data-lucide="lock" style="width:22px;height:22px"></i>
-      </div>
-      <h1 class="heading text-xl font-bold text-slate-900">Profile unavailable</h1>
-      <p class="mt-3 text-sm leading-6 text-slate-600">This digital card is inactive or hidden by the school.</p>
-    </section>
-  </main>
+  <section class="unavailable-card">
+    <h1>Profile unavailable</h1>
+    <p>This digital card is inactive or hidden by the school.</p>
+  </section>
 {% else %}
-  <main class="w-full min-h-full flex items-center justify-center p-4 py-8">
-    <section class="w-full max-w-md card-premium rounded-[28px] overflow-hidden bg-white/92 backdrop-blur">
-      <div class="hero-cover">
-        {% if cover_photo_url %}
-          <img src="{{ cover_photo_url }}" alt="{{ school_name|default:'School' }} cover" class="w-full h-full object-cover">
-        {% endif %}
-        <div class="absolute inset-0 flex flex-col justify-between p-5 z-10">
-          <div class="flex items-start justify-between w-full">
-            <div class="flex items-start gap-3 min-w-0">
-              <div class="school-badge w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden">
-                {% if school_logo_url %}
-                  <img src="{{ school_logo_url }}" alt="{{ school_name|default:'School' }} logo" class="w-full h-full object-cover">
-                {% else %}
-                  <i data-lucide="graduation-cap" style="width:24px;height:24px;color:white"></i>
-                {% endif %}
-              </div>
-              <div class="min-w-0">
-                <p class="text-white heading font-bold text-sm leading-tight break-words drop-shadow-md">{{ school_name|default:"School Name" }}</p>
-              </div>
+  <div class="phone">
+    <article class="profile-app">
+      <header class="cover" {% if cover_photo_url %}style='--cover-image: url("{{ cover_photo_url }}");'{% endif %}>
+        <div class="topbar">
+          <div class="brand">
+            <div class="school-mark">
+              {% if school_logo_url %}
+                <img src="{{ school_logo_url }}" alt="{{ school_name|default:'School' }} logo">
+              {% else %}
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 9.5 12 4l9 5.5-9 5.5L3 9.5Z" stroke="currentColor" stroke-width="1.8"/><path d="M7 12v4.5c0 1.3 2.2 2.5 5 2.5s5-1.2 5-2.5V12" stroke="currentColor" stroke-width="1.8"/></svg>
+              {% endif %}
             </div>
-            <button id="info-btn" type="button" aria-label="Show profile options" aria-expanded="false" class="btn-icon w-10 h-10 bg-white/85 hover:bg-white rounded-2xl flex items-center justify-center text-gray-800 hover:text-gray-900 shadow-sm hover:shadow-md backdrop-blur-sm">
-              <i data-lucide="info" style="width:18px;height:18px"></i>
+            <div>
+              <div class="brand-label">Verified School</div>
+              <div class="school-name">{{ school_name|default:"School Name" }}</div>
+            </div>
+          </div>
+          <div class="top-actions">
+            <a class="icon-button" href="{{ edit_profile_url }}" aria-label="Edit profile photos">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m13.5 6.5 4 4M4 20h4l10.5-10.5a2.8 2.8 0 0 0-4-4L4 16v4Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+          </div>
+        </div>
+      </header>
+
+      <section class="profile-summary">
+        <div class="summary-card">
+          <div class="avatar-ring">
+            <div class="avatar">
+              {% if student_photo_url %}
+                <img src="{{ student_photo_url }}" alt="{{ student.name|default:'Student' }}">
+              {% else %}
+                {{ student.name|default:"S"|slice:":1" }}
+              {% endif %}
+            </div>
+          </div>
+          <div class="intro">
+            <h1>{{ student.name|default:"Student Name" }} <span class="active-dot" aria-label="Active"></span></h1>
+            <p>{{ grade_section|default:member_type_label|default:"Student" }}</p>
+          </div>
+
+          <nav class="contact-actions" aria-label="Profile actions">
+            <a href="{{ whatsapp_action_url|default:'#' }}" class="contact-action{% if not whatsapp_action_url %} disabled{% endif %}" aria-label="WhatsApp">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M16.7 13.4c-.3-.2-1.7-.8-1.9-.9-.3-.1-.5-.2-.7.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-1.7-.8-2.8-1.8-3.6-3.3-.2-.3 0-.5.1-.6l.5-.6c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5s-.7-1.7-1-2.3c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 5 4.3.7.3 1.2.5 1.7.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.3-.1-.2-.3-.3-.6-.5Z" fill="currentColor"/><path d="M12 21a9 9 0 0 1-4.5-1.2L3 21l1.2-4.4A9 9 0 1 1 12 21Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+            </a>
+            <a href="{% if student.email %}mailto:{{ student.email }}{% elif website_url %}{{ website_url }}{% else %}#{% endif %}" class="contact-action{% if not student.email and not website_url %} disabled{% endif %}" aria-label="Email or website">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16v12H4V6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m4.5 7 7.5 6 7.5-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+            <a href="{{ birth_certificate_url }}" class="contact-action{% if not has_birth_certificate %} disabled{% endif %}" aria-label="Birth certificate">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 3h7l4 4v14H7V3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3v5h5M9.5 13h5M9.5 17h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </a>
+          </nav>
+
+          <div class="primary-actions">
+            <button class="share-button" id="shareBtn" type="button">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8.5 12.5 15 16M15 8 8.5 11.5M18 9.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm12 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              Share Profile
+            </button>
+            <button class="details-button" id="detailsBtn" type="button" aria-label="Student details">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 11v5M12 7.5h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
             </button>
           </div>
-          <div id="top-menu" class="top-menu">
-            <div class="info-card-shell rounded-2xl p-4 shadow-2xl backdrop-blur-md">
-              <div class="mb-4 flex items-center justify-between gap-3">
-                <div class="flex min-w-0 items-center gap-3">
-                  <div class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-lg">
-                    <i data-lucide="sparkles" style="width:19px;height:19px"></i>
-                  </div>
-                  <div class="min-w-0">
-                    <p class="heading text-sm font-bold text-gray-900">Additional Info</p>
-                    <p class="truncate text-xs font-medium text-orange-700">{{ student.name|default:"Student" }}</p>
-                  </div>
+        </div>
+      </section>
+
+      <main class="content">
+        <section class="section">
+          <div class="section-head">
+            <h2 class="section-title">Private services</h2>
+          </div>
+          <div class="service-grid">
+            <article class="wallet-card">
+              <div class="service-top">
+                <div class="service-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16v14H4V7Zm2-4h12v4H6V3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M16 14h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
                 </div>
-                <a href="{{ edit_profile_url }}" class="inline-flex items-center gap-1.5 rounded-lg bg-orange-500 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-orange-600">
-                  <i data-lucide="pencil" style="width:13px;height:13px"></i>Edit
-                </a>
-              </div>
-              <div class="space-y-0">
-                <div class="info-row">
-                  <span class="info-icon"><i data-lucide="users" style="width:16px;height:16px"></i></span>
-                  <span class="info-copy"><span class="info-label">{{ parent_label|default:"Guardian" }}</span><span class="info-value block">{{ parent_name|default:"Not added" }}</span></span>
-                </div>
-                <div class="info-row">
-                  <span class="info-icon"><i data-lucide="phone-call" style="width:16px;height:16px"></i></span>
-                  <span class="info-copy"><span class="info-label">Emergency Phone</span><span class="info-value block">{{ emergency_contact_phone|default:"Not added" }}</span></span>
-                </div>
-                <div class="info-row">
-                  <span class="info-icon"><i data-lucide="droplets" style="width:16px;height:16px"></i></span>
-                  <span class="info-copy"><span class="info-label">Blood Group</span><span class="info-value block">{{ blood_group|default:"Not added" }}</span></span>
-                </div>
-                <div class="info-row">
-                  <span class="info-icon"><i data-lucide="map-pin" style="width:16px;height:16px"></i></span>
-                  <span class="info-copy"><span class="info-label">Address</span><span class="info-value block">{{ student_address|default:school_address|default:"Not added" }}</span></span>
-                </div>
-                {% if additional_info_heading or additional_info_description %}
-                  <div class="pt-4">
-                    <div class="custom-info-card text-left">
-                      {% if additional_info_heading %}
-                        <p class="text-xs font-bold uppercase tracking-wide text-orange-700">{{ additional_info_heading }}</p>
-                      {% endif %}
-                      {% if additional_info_description %}
-                        <p class="mt-1 text-sm font-semibold leading-5 text-orange-900">{{ additional_info_description }}</p>
-                      {% endif %}
-                    </div>
-                  </div>
+                {% if private_visible %}
+                  <span class="service-status">Logged in</span>
+                {% else %}
+                  <a class="login-toggle" href="{{ edit_profile_url }}">Login</a>
                 {% endif %}
               </div>
-            </div>
+              <div class="wallet-balance">
+                <span>Usable balance</span>
+                <strong>{% if private_visible %}Rs. 1,250{% else %}Rs. ****{% endif %}</strong>
+              </div>
+              <div class="wallet-actions">
+                <button class="mini-action primary" type="button">Top Up</button>
+                <button class="mini-action" type="button">Tap to Pay</button>
+              </div>
+              <p class="privacy-note">{% if private_visible %}Balance visible only in logged-in session.{% else %}Login required to view balance.{% endif %}</p>
+            </article>
+
+            <article class="library-card">
+              <div class="service-top">
+                <div class="service-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v15H8a3 3 0 0 1-3-3V4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 4v15a3 3 0 0 0 3 3M9 8h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                </div>
+              </div>
+              <div class="library-meta">
+                <span>Library</span>
+                <strong>{{ library_borrowed_display }}</strong>
+                <p>{{ library_summary_display }}</p>
+              </div>
+              <div class="library-progress"><span></span></div>
+              <p class="library-note">{{ library_deadline_display }}</p>
+            </article>
           </div>
+        </section>
+
+        <nav class="socials" aria-label="Social links">
+          {% if social_links %}
+          {% for link in social_links %}
+            {% if link.key != 'whatsapp' %}
+            <a href="{{ link.url }}" target="_blank" rel="noopener" class="social" aria-label="{{ link.label }}">
+              {% if link.key == 'facebook' %}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 8h2V5h-2c-2.2 0-4 1.8-4 4v2H8v3h2v7h3v-7h2.4l.6-3h-3V9c0-.55.45-1 1-1Z"/></svg>
+              {% elif link.key == 'instagram' %}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5" stroke="currentColor" stroke-width="2"/><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="currentColor" stroke-width="2"/><path d="M17.5 6.8h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+              {% elif link.key == 'twitter' %}
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.9 2h3.1l-6.8 7.8L23.2 22h-6.3l-4.9-7.4L6.3 22H3.2l7.3-8.4L2.8 2h6.4l4.5 6.8L18.9 2Zm-1.1 17.9h1.7L8.2 4H6.4l11.4 15.9Z"/></svg>
+              {% elif link.key == 'linkedin' %}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.94 8.5H3.75V20h3.19V8.5ZM5.35 3a1.85 1.85 0 1 0 0 3.7 1.85 1.85 0 0 0 0-3.7ZM20.25 13.47c0-3.08-1.64-5.06-4.3-5.06-1.98 0-2.86 1.09-3.36 1.86V8.5H9.54V20h3.18v-5.7c0-1.5.28-2.95 2.14-2.95 1.83 0 1.85 1.72 1.85 3.05V20h3.19v-6.53h.35Z"/></svg>
+              {% elif link.key == 'youtube' %}
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.6 7.2a3 3 0 0 0-2.1-2.1C17.6 4.5 12 4.5 12 4.5s-5.6 0-7.5.6a3 3 0 0 0-2.1 2.1A31.2 31.2 0 0 0 2 12a31.2 31.2 0 0 0 .4 4.8 3 3 0 0 0 2.1 2.1c1.9.6 7.5.6 7.5.6s5.6 0 7.5-.6a3 3 0 0 0 2.1-2.1A31.2 31.2 0 0 0 22 12a31.2 31.2 0 0 0-.4-4.8ZM10 15.4V8.6l5.8 3.4L10 15.4Z"/></svg>
+              {% elif link.key == 'tiktok' %}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.2 3c.4 2.5 1.8 4 4.3 4.2v3.4a8.1 8.1 0 0 1-4.2-1.2v6.4a6.2 6.2 0 1 1-5.4-6.1v3.5a2.8 2.8 0 1 0 2 2.7V3h3.3Z"/></svg>
+              {% elif link.key == 'github' %}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.5-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 0 1.6 1.1 1.6 1.1.9 1.5 2.4 1.1 3 .8.1-.7.4-1.1.7-1.3-2.2-.3-4.6-1.1-4.6-5a3.9 3.9 0 0 1 1-2.7 3.6 3.6 0 0 1 .1-2.7s.9-.3 2.8 1a9.6 9.6 0 0 1 5.2 0c1.9-1.3 2.8-1 2.8-1a3.6 3.6 0 0 1 .1 2.7 3.9 3.9 0 0 1 1 2.7c0 3.9-2.4 4.7-4.6 5 .4.3.8 1 .8 2.1V21c0 .3.2.6.8.5A10 10 0 0 0 12 2Z"/></svg>
+              {% elif link.key == 'figma' %}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 2h4v8H8a4 4 0 0 1 0-8Zm4 0h4a4 4 0 0 1 0 8h-4V2Zm0 8h4a4 4 0 1 1-4 4v-4Zm-4 0h4v8H8a4 4 0 0 1 0-8Zm0 8h4v2a4 4 0 1 1-4-4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+              {% elif link.key == 'upwork' %}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 7v5.4a3.6 3.6 0 0 0 7.2 0V7M12.2 12.4c1.3 1.2 2.7 1.8 4.1 1.8A3.2 3.2 0 1 0 13.4 9l-3.1 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              {% elif link.key == 'messenger' %}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3C6.7 3 3 6.8 3 11.6c0 2.7 1.2 5.1 3.2 6.7V22l3.3-1.8c.8.2 1.6.3 2.5.3 5.3 0 9-3.8 9-8.6S17.3 3 12 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m7.5 14 3-3 2.5 2 3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              {% else %}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM3.6 9h16.8M3.6 15h16.8M12 3c2.2 2.5 3.2 5.5 3.2 9S14.2 18.5 12 21c-2.2-2.5-3.2-5.5-3.2-9S9.8 5.5 12 3Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              {% endif %}
+            </a>
+            {% endif %}
+          {% endfor %}
+          {% else %}
+            <a href="#" class="social" aria-label="Facebook"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 8h2V5h-2c-2.2 0-4 1.8-4 4v2H8v3h2v7h3v-7h2.4l.6-3h-3V9c0-.55.45-1 1-1Z"/></svg></a>
+            <a href="#" class="social" aria-label="Instagram"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5" stroke="currentColor" stroke-width="2"/><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="currentColor" stroke-width="2"/><path d="M17.5 6.8h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></a>
+            <a href="#" class="social" aria-label="X"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.9 2h3.1l-6.8 7.8L23.2 22h-6.3l-4.9-7.4L6.3 22H3.2l7.3-8.4L2.8 2h6.4l4.5 6.8L18.9 2Zm-1.1 17.9h1.7L8.2 4H6.4l11.4 15.9Z"/></svg></a>
+            <a href="#" class="social" aria-label="LinkedIn"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.94 8.5H3.75V20h3.19V8.5ZM5.35 3a1.85 1.85 0 1 0 0 3.7 1.85 1.85 0 0 0 0-3.7ZM20.25 13.47c0-3.08-1.64-5.06-4.3-5.06-1.98 0-2.86 1.09-3.36 1.86V8.5H9.54V20h3.18v-5.7c0-1.5.28-2.95 2.14-2.95 1.83 0 1.85 1.72 1.85 3.05V20h3.19v-6.53h.35Z"/></svg></a>
+          {% endif %}
+        </nav>
+      </main>
+    </article>
+  </div>
+
+  <div class="drawer" id="detailsDrawer">
+    <section class="drawer-panel">
+      <div class="drawer-head">
+        <div>
+          <h2>Student details</h2>
+          <p>Private school information is separated from the public profile.</p>
+        </div>
+        <div class="drawer-actions">
+          <button class="ghost-btn" id="closeDrawer" type="button">Close</button>
+          <a class="solid-btn" href="{{ edit_profile_url }}">Edit</a>
         </div>
       </div>
 
-      <div class="relative px-6 pb-6">
-        <div class="absolute -top-20 left-1/2 -translate-x-1/2">
-          <div class="profile-ring w-36 h-36 rounded-full p-1">
-            {% if student_photo_url %}
-              <img src="{{ student_photo_url }}" alt="{{ student.name|default:'Student' }}" class="w-full h-full rounded-full object-cover">
-            {% else %}
-              <div class="w-full h-full rounded-full bg-gradient-to-br from-orange-200 via-amber-100 to-yellow-200 flex items-center justify-center">
-                <span class="heading text-4xl font-extrabold text-orange-700">{{ student.name|default:"S"|slice:":1" }}</span>
-              </div>
-            {% endif %}
-          </div>
-        </div>
-
-        <div class="pt-24 text-center mb-5">
-          <h1 class="heading text-[1.7rem] font-extrabold leading-tight text-gray-950 break-words">{{ student.name|default:"Student Name" }}</h1>
-          <p class="text-gray-600 text-sm mt-2 font-medium">{{ grade_section|default:"Student" }}</p>
-          <div class="flex flex-wrap items-center justify-center gap-2 mt-4">
-            <span class="status-chip status-active"><i data-lucide="user" style="width:12px;height:12px"></i> {{ member_type_label|default:"Student" }}</span>
-            <span class="status-chip status-active"><i data-lucide="check-circle-2" style="width:12px;height:12px"></i> Active</span>
-          </div>
-          <div class="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-white text-green-700 rounded-full border border-green-200/70 shadow-sm">
-            <i data-lucide="shield-check" style="width:16px;height:16px;stroke-width:2.5"></i>
-            <span class="text-xs font-semibold">Verified by School</span>
-          </div>
-        </div>
-
-        <div id="expand-panel" class="hidden"></div>
-
-        <div class="identity-panel mb-5">
-          <div class="identity-content">
-            <div class="identity-row">
-              <div class="identity-icon">
-                <i data-lucide="badge-check" style="width:20px;height:20px;stroke-width:2.4"></i>
-              </div>
-              <div class="min-w-0 flex-1">
-                <p class="identity-kicker">IEMIS No.</p>
-                <p class="identity-value">{{ student_identifier }}</p>
-              </div>
-            </div>
-            <div class="identity-row">
-              <div class="identity-icon">
-                <i data-lucide="globe-2" style="width:20px;height:20px;stroke-width:2.4"></i>
-              </div>
-              <div class="min-w-0 flex-1">
-                <p class="identity-kicker">Website</p>
-                {% if website_url %}
-                  <a href="{{ website_url }}" target="_blank" rel="noopener" class="identity-value identity-link block">{{ website_display|default:website_url }}</a>
-                {% else %}
-                  <p class="identity-value text-gray-500">Not added</p>
-                {% endif %}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <a href="{% if emergency_contact_phone %}tel:{{ emergency_contact_phone }}{% else %}#{% endif %}" id="emergency-action" class="w-full flex items-center justify-between py-3 px-4 rounded-2xl bg-gradient-to-r from-red-50 to-orange-50 border border-red-200/50 text-red-700 hover:bg-red-100 transition-all mb-4 shadow-sm {% if not emergency_contact_phone %}action-disabled{% endif %}">
-          <div class="flex items-center gap-2"><i data-lucide="phone-off" style="width:16px;height:16px;stroke-width:2"></i><span class="text-xs font-semibold">Emergency Contact</span></div>
-          <i data-lucide="chevron-right" style="width:14px;height:14px"></i>
-        </a>
-
-        <div class="grid grid-cols-5 gap-2 mb-5">
-          <a href="{{ download_vcard_url }}" class="quick-action btn-primary flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-orange-500 to-amber-600 text-white font-semibold group transition-all">
-            <i data-lucide="bookmark" style="width:18px;height:18px;stroke-width:2" class="group-hover:scale-110 transition-transform"></i><span class="text-xs">Save</span>
-          </a>
-          <a href="{{ phone_action_url|default:'#' }}" class="quick-action btn-secondary flex flex-col items-center justify-center gap-2 text-orange-600 font-semibold hover:border-orange-300 {% if not phone_action_url %}action-disabled{% endif %}">
-            <i data-lucide="phone" style="width:18px;height:18px;stroke-width:2"></i><span class="text-xs">Call</span>
-          </a>
-          <a href="{{ whatsapp_action_url|default:'#' }}" class="quick-action btn-secondary flex flex-col items-center justify-center gap-2 text-green-600 font-semibold hover:border-green-300 {% if not whatsapp_action_url %}action-disabled{% endif %}">
-            <i data-lucide="message-circle" style="width:18px;height:18px;stroke-width:2"></i><span class="text-xs">WhatsApp</span>
-          </a>
-          <a href="{{ navigate_url|default:'#' }}" target="_blank" rel="noopener" class="quick-action btn-secondary flex flex-col items-center justify-center gap-2 text-amber-600 font-semibold hover:border-yellow-300 {% if not navigate_url %}action-disabled{% endif %}">
-            <i data-lucide="map-pin" style="width:18px;height:18px;stroke-width:2"></i><span class="text-xs">Navigate</span>
-          </a>
-          <a href="{{ birth_certificate_url }}" class="quick-action btn-secondary flex flex-col items-center justify-center gap-2 text-indigo-600 font-semibold">
-            <i data-lucide="file-badge" style="width:18px;height:18px;stroke-width:2"></i><span class="text-xs">DOB</span>
-          </a>
-        </div>
-
-        <div class="mb-5 grid gap-3">
-          <div class="rounded-2xl bg-slate-950 p-4 text-white shadow-lg">
-            <div class="flex items-center justify-between gap-3">
-              <div class="flex items-center gap-3">
-                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10"><i data-lucide="wallet" class="h-5 w-5"></i></div>
-                <div>
-                  <div class="text-xs font-bold uppercase tracking-wide text-white/55">Card Balance</div>
-                  <div class="mt-1 text-2xl font-extrabold">{{ wallet_balance_display }}</div>
-                </div>
-              </div>
-              {% if not private_visible %}<span class="rounded-full bg-white/10 px-3 py-1 text-[10px] font-bold uppercase text-white/70">Login</span>{% endif %}
-            </div>
-            <div class="mt-3 space-y-2">
-              {% for item in recent_wallet_transactions|slice:":2" %}
-                <div class="flex items-center justify-between rounded-xl bg-white/8 px-3 py-2 text-xs">
-                  <span>{{ item.get_transaction_type_display }}</span>
-                  <span>{% if private_visible %}Rs. {{ item.amount }}{% else %}Rs. **{% endif %}</span>
-                </div>
-              {% empty %}
-                <div class="rounded-xl bg-white/8 px-3 py-2 text-xs text-white/65">No recent daily-use transactions.</div>
-              {% endfor %}
-            </div>
-          </div>
-          <div class="rounded-2xl border border-orange-200/50 bg-orange-50 p-4 shadow-sm">
-            <div class="flex items-center gap-3">
-              <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-orange-700 shadow-sm"><i data-lucide="book-open" class="h-5 w-5"></i></div>
-              <div>
-                <div class="text-xs font-bold uppercase tracking-wide text-orange-700">Library</div>
-                <div class="mt-1 text-lg font-extrabold text-slate-950">{{ library_borrowed_display }}</div>
-                <div class="mt-1 text-xs font-semibold text-slate-500">{{ library_summary_display }}</div>
-                <div class="mt-1 text-xs font-bold text-orange-700">{{ library_deadline_display }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="qr-section mb-5">
-          <div class="qr-frame">
-            {% if qr_code_url %}
-              <img src="{{ qr_code_url }}" alt="QR code for {{ student.name|default:'digital card' }}" class="w-[100px] h-[100px] rounded-lg object-contain">
-            {% else %}
-              <i data-lucide="qr-code" style="width:48px;height:48px;color:#d97706;stroke-width:1.5"></i>
-            {% endif %}
-          </div>
-          <div>
-            <p class="qr-label">Scan to View Profile</p>
-            <p class="mt-1 text-xs leading-5 text-white/70">Use this QR or NFC card to open the live student profile.</p>
-            <span class="feature-badge mt-3"><i data-lucide="wifi" style="width:10px;height:10px"></i> NFC & QR Enabled</span>
-          </div>
-        </div>
-
-        <button id="share-profile" type="button" class="secondary-action mb-3 inline-flex items-center justify-center gap-2"><i data-lucide="share-2" style="width:16px;height:16px"></i>Share Profile</button>
-        <p id="share-status" class="hidden mb-3 text-center text-xs font-semibold text-green-700">Profile link copied</p>
-
-        {% if social_links %}
-          <div class="flex justify-center gap-3 pt-5 border-t border-gray-100">
-            {% for link in social_links %}
-              <a href="{{ link.url }}" target="_blank" rel="noopener" aria-label="{{ link.label }}" class="btn-icon w-9 h-9 rounded-lg {% if link.key == 'instagram' %}bg-gradient-to-br from-pink-500 to-rose-600{% elif link.key == 'facebook' %}bg-gradient-to-br from-blue-600 to-blue-700{% elif link.key == 'whatsapp' %}bg-gradient-to-br from-green-500 to-emerald-600{% else %}bg-gradient-to-br from-blue-700 to-cyan-600{% endif %} text-white flex items-center justify-center hover:shadow-lg transition-all">
-                <i data-lucide="{{ link.icon }}" style="width:16px;height:16px;stroke-width:2"></i>
-              </a>
-            {% endfor %}
-          </div>
+      <div class="detail-list">
+        <div class="detail-row"><span class="detail-label">IEMIS No.</span><strong class="detail-value">{{ student_identifier|default:"Not added" }}</strong></div>
+        <div class="detail-row"><span class="detail-label">Website</span><strong class="detail-value">{% if website_url %}<a href="{{ website_url }}" target="_blank" rel="noopener">{{ website_display|default:website_url }}</a>{% else %}Not added{% endif %}</strong></div>
+        <div class="detail-row"><span class="detail-label">{{ parent_label|default:"Guardian" }}</span><strong class="detail-value">{{ parent_name|default:"Not added" }}</strong></div>
+        <div class="detail-row"><span class="detail-label">Emergency Phone</span><strong class="detail-value">{{ emergency_contact_phone|default:"Not added" }}</strong></div>
+        <div class="detail-row"><span class="detail-label">Blood Group</span><strong class="detail-value">{{ blood_group|default:"Not added" }}</strong></div>
+        <div class="detail-row"><span class="detail-label">Address</span><strong class="detail-value">{{ student_address|default:school_address|default:"Not added" }}</strong></div>
+        {% if additional_info_heading or additional_info_description %}
+          <div class="detail-row"><span class="detail-label">{{ additional_info_heading|default:"Additional Info" }}</span><strong class="detail-value">{{ additional_info_description|default:"Not added" }}</strong></div>
         {% endif %}
       </div>
     </section>
-  </main>
-{% endif %}
+  </div>
 
-<script>
-  const infoButton = document.getElementById('info-btn');
-  const topMenu = document.getElementById('top-menu');
-  if (infoButton && topMenu) {
-    infoButton.addEventListener('click', () => {
-      topMenu.classList.toggle('open');
-      infoButton.setAttribute('aria-expanded', topMenu.classList.contains('open') ? 'true' : 'false');
+  <div class="toast" id="toast">Saved</div>
+
+  <script>
+    const detailsDrawer = document.getElementById("detailsDrawer");
+    const detailsBtn = document.getElementById("detailsBtn");
+    const closeDrawer = document.getElementById("closeDrawer");
+    const shareBtn = document.getElementById("shareBtn");
+    const toast = document.getElementById("toast");
+    const profileUrl = "{{ public_card_url|escapejs }}";
+    const shareTitle = "{{ student.name|default:'Student Profile'|escapejs }}";
+    const shareText = "View the verified student profile for {{ student.name|default:'this student'|escapejs }}.";
+
+    function showToast(message) {
+      if (!toast) return;
+      toast.textContent = message;
+      toast.classList.add("show");
+      window.setTimeout(() => toast.classList.remove("show"), 2200);
+    }
+
+    detailsBtn?.addEventListener("click", () => detailsDrawer?.classList.add("show"));
+    closeDrawer?.addEventListener("click", () => detailsDrawer?.classList.remove("show"));
+    detailsDrawer?.addEventListener("click", (event) => {
+      if (event.target === detailsDrawer) detailsDrawer.classList.remove("show");
     });
-  }
 
-  const emergencyAction = document.getElementById('emergency-action');
-  if (emergencyAction && topMenu) {
-    emergencyAction.addEventListener('click', (event) => {
-      if (emergencyAction.classList.contains('action-disabled')) {
-        event.preventDefault();
-      }
-      topMenu.classList.add('open');
-      infoButton?.setAttribute('aria-expanded', 'true');
-    });
-  }
-
-  document.addEventListener('click', (event) => {
-    if (!topMenu || !infoButton || topMenu.contains(event.target) || infoButton.contains(event.target)) return;
-    topMenu.classList.remove('open');
-    infoButton.setAttribute('aria-expanded', 'false');
-  });
-
-  const shareButton = document.getElementById('share-profile');
-  const shareStatus = document.getElementById('share-status');
-  if (shareButton) {
-    shareButton.addEventListener('click', async () => {
-      const profileUrl = '{{ public_card_url|escapejs }}' || window.location.href;
-      const shareData = {
-        title: '{{ student.name|default:"Digital Student ID"|escapejs }}',
-        text: '{{ school_name|default:"Digital Student ID"|escapejs }}',
-        url: profileUrl
-      };
+    shareBtn?.addEventListener("click", async () => {
+      const shareData = { title: shareTitle, text: shareText, url: profileUrl || window.location.href };
       try {
         if (navigator.share) {
           await navigator.share(shareData);
           return;
         }
-        await navigator.clipboard.writeText(profileUrl);
-        if (shareStatus) {
-          shareStatus.classList.remove('hidden');
-          setTimeout(() => shareStatus.classList.add('hidden'), 2200);
-        }
+        await navigator.clipboard.writeText(shareData.url);
+        showToast("Profile link copied");
       } catch (error) {
-        if (shareStatus) {
-          shareStatus.textContent = 'Sharing was cancelled';
-          shareStatus.classList.remove('hidden');
-          setTimeout(() => shareStatus.classList.add('hidden'), 2200);
-        }
+        showToast("Sharing was cancelled");
       }
     });
-  }
-
-  if (window.lucide) {
-    lucide.createIcons();
-  }
-</script>
+  </script>
+{% endif %}
 </body>
 </html>

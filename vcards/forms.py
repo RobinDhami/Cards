@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import LibraryBook, StudentCard, StudentProfile, WalletTopUp
+from .models import LibraryBook, StudentCard, StudentProfile
 
 
 class StudentProfileForm(forms.ModelForm):
@@ -37,12 +37,6 @@ class StudentCardForm(forms.ModelForm):
     class Meta:
         model = StudentCard
         fields = ['student', 'card_uid', 'card_number', 'is_active', 'lost_or_blocked']
-
-
-class WalletTopUpForm(forms.ModelForm):
-    class Meta:
-        model = WalletTopUp
-        fields = ['student', 'amount', 'payment_method', 'note']
 
 
 class LibraryBookForm(forms.ModelForm):

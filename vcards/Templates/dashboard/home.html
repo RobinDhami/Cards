@@ -90,6 +90,7 @@
           <a href="{% url 'admin_dashboard' %}{{ nav_school_query }}" class="block rounded-lg bg-white/10 px-3 py-2 font-medium">Dashboard</a>
           {% if is_super_admin %}
             <a href="{% url 'admin_dashboard' %}{{ nav_school_query }}" class="block rounded-lg px-3 py-2 text-navy-200">Schools</a>
+            <a href="{% url 'professional_cards:list' %}" class="block rounded-lg px-3 py-2 text-navy-200">Professional Cards</a>
           {% endif %}
           <a href="{% url 'dashboard_students' %}{{ nav_school_query }}" class="block rounded-lg px-3 py-2 text-navy-200">Students</a>
           <a href="{% url 'dashboard_teachers' %}{{ nav_school_query }}" class="block rounded-lg px-3 py-2 text-navy-200">Teachers / Staff</a>

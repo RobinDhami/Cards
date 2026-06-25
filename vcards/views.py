@@ -17,7 +17,6 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from datetime import timedelta
-from decimal import Decimal, InvalidOperation
 from io import BytesIO
 import json
 import re
@@ -38,8 +37,7 @@ from reportlab.pdfgen import canvas
 
 from .models import (
     StudentProfile, College, ProfileActivity, Skill,
-    StudentWallet, StudentCard, WalletTopUp, WalletTransaction,
-    LibraryBook, LibraryBorrowRecord,
+    StudentCard, LibraryBook, LibraryBorrowRecord,
 )
 
 CONTACT_TEMPLATES = {
@@ -254,16 +252,6 @@ def _can_view_private_student_data(request, student):
     )
 
 
-def _parse_positive_amount(raw_amount):
-    try:
-        amount = Decimal(str(raw_amount)).quantize(Decimal('0.01'))
-    except (InvalidOperation, TypeError, ValueError):
-        raise ValueError('Invalid amount')
-    if amount <= 0:
-        raise ValueError('Amount must be greater than 0')
-    return amount
-
-
 def _class_section_label(student):
     grade = student.get_academic_level_display() if student.academic_level else (student.role or student.get_member_type_display())
     if student.section:
@@ -271,100 +259,8 @@ def _class_section_label(student):
     return grade
 
 
-def _wallet_error(message):
+def _api_error(message):
     return {'success': False, 'message': message}
-
-
-def _wallet_success(transaction, deducted=None):
-    amount = deducted if deducted is not None else transaction.amount
-    return {
-        'success': True,
-        'student_name': transaction.student.name,
-        'class_section': _class_section_label(transaction.student),
-        'old_balance': str(transaction.balance_before),
-        'deducted': str(amount),
-        'new_balance': str(transaction.balance_after),
-        'transaction_id': f'TXN-{transaction.id}',
-    }
-
-
-def _ensure_wallet(student):
-    wallet, _ = StudentWallet.objects.get_or_create(student=student)
-    return wallet
-
-
-def _top_up_wallet(student, amount, payment_method='cash', received_by=None, note=''):
-    amount = _parse_positive_amount(amount)
-    with transaction.atomic():
-        wallet = StudentWallet.objects.select_for_update().get_or_create(student=student)[0]
-        if not wallet.is_active:
-            raise ValueError('Wallet is inactive')
-        before = wallet.balance
-        wallet.balance = before + amount
-        wallet.save(update_fields=['balance', 'updated_at'])
-        topup = WalletTopUp.objects.create(
-            student=student,
-            wallet=wallet,
-            amount=amount,
-            payment_method=payment_method or 'cash',
-            received_by=received_by if received_by and received_by.is_authenticated else None,
-            note=note or '',
-        )
-        wallet_transaction = WalletTransaction.objects.create(
-            student=student,
-            wallet=wallet,
-            amount=amount,
-            transaction_type='topup',
-            description=note or 'Wallet top-up',
-            counter_name='Accounts',
-            processed_by=received_by if received_by and received_by.is_authenticated else None,
-            balance_before=before,
-            balance_after=wallet.balance,
-        )
-    return topup, wallet_transaction
-
-
-def _process_card_payment(card_uid, amount, transaction_type, counter_name='', description='', processed_by=None):
-    amount = _parse_positive_amount(amount)
-    allowed_types = {value for value, _ in WalletTransaction.TRANSACTION_TYPE_CHOICES}
-    if transaction_type not in allowed_types or transaction_type in {'topup', 'refund'}:
-        raise ValueError('Invalid payment type')
-    with transaction.atomic():
-        card = (
-            StudentCard.objects.select_related('student')
-            .select_for_update()
-            .filter(card_uid=card_uid)
-            .first()
-        )
-        if not card:
-            raise ValueError('Card not found')
-        if not card.is_active or card.lost_or_blocked:
-            raise ValueError('Card blocked')
-        student = card.student
-        if not student.show_contact_card:
-            raise ValueError('Student inactive')
-        wallet = StudentWallet.objects.select_for_update().filter(student=student).first()
-        if not wallet:
-            raise ValueError('Wallet not found')
-        if not wallet.is_active:
-            raise ValueError('Wallet is inactive')
-        if wallet.balance < amount:
-            raise ValueError('Insufficient balance')
-        before = wallet.balance
-        wallet.balance = before - amount
-        wallet.save(update_fields=['balance', 'updated_at'])
-        wallet_transaction = WalletTransaction.objects.create(
-            student=student,
-            wallet=wallet,
-            amount=amount,
-            transaction_type=transaction_type,
-            description=description or transaction_type.replace('_', ' ').title(),
-            counter_name=counter_name or '',
-            processed_by=processed_by if processed_by and processed_by.is_authenticated else None,
-            balance_before=before,
-            balance_after=wallet.balance,
-        )
-    return wallet_transaction
 
 
 def _ensure_unique_username(base_username, exclude_user_id=None):
@@ -1125,18 +1021,24 @@ def _school_card_context(request, student):
     navigate_url = _build_tracked_action_url(student.id, 'map') if (student.map_url or student.address) else direct_map_url
 
     social_links = []
-    if student.instagram:
-        social_links.append({'key': 'instagram', 'url': _build_tracked_action_url(student.id, 'social-instagram'), 'label': 'Instagram', 'icon': 'instagram'})
-    if student.facebook:
-        social_links.append({'key': 'facebook', 'url': _build_tracked_action_url(student.id, 'social-facebook'), 'label': 'Facebook', 'icon': 'facebook'})
-    if student.whatsapp:
-        social_links.append({'key': 'whatsapp', 'url': _build_tracked_action_url(student.id, 'whatsapp'), 'label': 'WhatsApp', 'icon': 'message-circle'})
-    if student.linkedin:
-        social_links.append({'key': 'linkedin', 'url': _build_tracked_action_url(student.id, 'social-linkedin'), 'label': 'LinkedIn', 'icon': 'linkedin'})
+    social_link_fields = [
+        ('facebook', student.facebook, 'social-facebook', 'Facebook'),
+        ('instagram', student.instagram, 'social-instagram', 'Instagram'),
+        ('twitter', student.twitter, 'social-twitter', 'X'),
+        ('linkedin', student.linkedin, 'social-linkedin', 'LinkedIn'),
+        ('youtube', student.youtube, 'social-youtube', 'YouTube'),
+        ('tiktok', student.tiktok, 'social-tiktok', 'TikTok'),
+        ('github', student.github, 'social-github', 'GitHub'),
+        ('figma', student.figma, 'social-figma', 'Figma'),
+        ('upwork', student.upwork, 'social-upwork', 'Upwork'),
+        ('messenger', student.messenger, 'social-messenger', 'Messenger'),
+        ('website', website_url, 'website', 'Website'),
+    ]
+    for key, value, action, label in social_link_fields:
+        if value:
+            social_links.append({'key': key, 'url': _build_tracked_action_url(student.id, action), 'label': label})
 
     private_visible = _can_view_private_student_data(request, student)
-    wallet = StudentWallet.objects.filter(student=student).first()
-    recent_transactions = WalletTransaction.objects.filter(student=student)[:3]
     borrowed_records = LibraryBorrowRecord.objects.filter(student=student, status__in=['borrowed', 'overdue']).select_related('book')
     returned_count = LibraryBorrowRecord.objects.filter(student=student, status='returned').count()
     next_due = borrowed_records.order_by('due_date').first()
@@ -1176,8 +1078,6 @@ def _school_card_context(request, student):
         'public_card_url': _build_public_contact_url(request, student),
         'social_links': social_links,
         'private_visible': private_visible,
-        'wallet_balance_display': f'Rs. {wallet.balance}' if private_visible and wallet else 'Rs. ****',
-        'recent_wallet_transactions': recent_transactions,
         'library_borrowed_display': f'{borrowed_records.count()} Borrowed' if private_visible else '** Borrowed',
         'library_summary_display': (
             f'{returned_count} returned'
@@ -1441,9 +1341,9 @@ def admin_dashboard(request):
             'url': f"{reverse('dashboard_print')}{_build_dashboard_query(school)}" if school else '',
         },
         {
-            'title': 'QR Data Export',
-            'description': 'Filter members and download Excel data with QR PNG assets for outside printing.',
-            'icon': 'qr-code',
+            'title': 'Data Center',
+            'description': 'Download print data, QR PNG assets, and manage school data workflows.',
+            'icon': 'database',
             'url': f"{reverse('dashboard_qr_export')}{_build_dashboard_query(school)}" if school else '',
         },
         {
@@ -1465,6 +1365,12 @@ def admin_dashboard(request):
             'description': 'Create schools, assign school admins, switch workspaces, and remove schools.',
             'icon': 'shield-check',
             'url': reverse('admin_dashboard'),
+        })
+        dashboard_features.insert(1, {
+            'title': 'Professional Cards',
+            'description': 'Create public Tap2Connect profiles, QR codes, vCards, and premium professional pages.',
+            'icon': 'badge-check',
+            'url': reverse('professional_cards:list'),
         })
 
     context = {
@@ -1759,12 +1665,12 @@ def dashboard_print(request):
 def dashboard_qr_export(request):
     role = _get_user_role(request.user)
     if role not in {'super_admin', 'school_admin'}:
-        messages.error(request, 'You do not have access to QR data export.')
+        messages.error(request, 'You do not have access to the data center.')
         return redirect('dashboard_login')
 
     school, schools = _resolve_dashboard_school(request, required=True)
     if not school:
-        messages.error(request, 'Create a school first to export QR data.')
+        messages.error(request, 'Create a school first to manage data exports.')
         return redirect('admin_dashboard')
 
     members, filter_state = _filtered_print_queryset(request, school)
@@ -1842,29 +1748,30 @@ def dashboard_print_export_pdf(request):
 def dashboard_qr_export_download(request):
     role = _get_user_role(request.user)
     if role not in {'super_admin', 'school_admin'}:
-        messages.error(request, 'You do not have access to QR data export.')
+        messages.error(request, 'You do not have access to the data center.')
         return redirect('dashboard_login')
 
     school, _ = _resolve_dashboard_school(request, required=True)
     if not school:
-        messages.error(request, 'Select a school before exporting QR data.')
+        messages.error(request, 'Select a school before exporting data.')
         return redirect('admin_dashboard')
 
     members, _ = _resolve_selected_members(request, school)
     if not members:
-        messages.error(request, 'Select at least one student or teacher before exporting QR data.')
+        messages.error(request, 'Select at least one student or teacher before exporting data.')
         return redirect(f"{reverse('dashboard_qr_export')}{_build_dashboard_query(school)}")
 
     workbook_bytes, qr_assets = _build_print_data_workbook(request, school, members)
     school_slug = _safe_export_name(school.name, 'school').lower()
-    filename = f'{school_slug}_qr_print_data.zip'
+    filename = f'{school_slug}_card_print_data.zip'
     zip_buffer = BytesIO()
     with ZipFile(zip_buffer, 'w', ZIP_DEFLATED) as archive:
         archive.writestr(f'{school_slug}_print_data.xlsx', workbook_bytes)
         archive.writestr('README.txt', (
-            'QR print data package\n\n'
-            'Use the Excel file for member data. Use the PNG files in qr_codes/ for card artwork.\n'
+            'Card print data package\n\n'
+            'Use the Excel file for student and staff data. Use the PNG files in qr_codes/ for the QR artwork printed on cards.\n'
             'Each QR opens the public digital profile for that student, teacher, or staff member.\n'
+            'The package is intended for internal printing teams or outside card printers.\n'
         ))
         for qr_filename, qr_bytes in qr_assets:
             archive.writestr(qr_filename, qr_bytes)
@@ -1890,7 +1797,7 @@ def api_card_lookup(request):
     card_uid = (payload.get('card_uid') or '').strip()
     card = StudentCard.objects.select_related('student').filter(card_uid=card_uid).first()
     if not card:
-        return JsonResponse(_wallet_error('Card not found'), status=404)
+        return JsonResponse(_api_error('Card not found'), status=404)
     return JsonResponse({
         'success': True,
         'student_id': card.student_id,
@@ -1899,98 +1806,11 @@ def api_card_lookup(request):
         'card_blocked': card.lost_or_blocked or not card.is_active,
     })
 
-
-@csrf_exempt
-@require_POST
-def api_wallet_topup(request):
-    if not request.user.is_authenticated:
-        return JsonResponse(_wallet_error('Login required'), status=403)
-    payload = _json_body(request)
-    student_id = payload.get('student_id') or payload.get('student')
-    student = StudentProfile.objects.filter(id=student_id).first()
-    if not student:
-        return JsonResponse(_wallet_error('Student not found'), status=404)
-    try:
-        _, wallet_transaction = _top_up_wallet(
-            student,
-            payload.get('amount'),
-            payload.get('payment_method', 'cash'),
-            request.user,
-            payload.get('note', ''),
-        )
-    except ValueError as error:
-        return JsonResponse(_wallet_error(str(error)), status=400)
-    response = _wallet_success(wallet_transaction, deducted=wallet_transaction.amount)
-    response['topup'] = str(wallet_transaction.amount)
-    return JsonResponse(response)
-
-
-@csrf_exempt
-@require_POST
-def api_wallet_pay(request):
-    payload = _json_body(request)
-    try:
-        wallet_transaction = _process_card_payment(
-            payload.get('card_uid', ''),
-            payload.get('amount'),
-            payload.get('transaction_type'),
-            payload.get('counter_name', ''),
-            payload.get('description', ''),
-            request.user,
-        )
-    except ValueError as error:
-        status = 402 if str(error) == 'Insufficient balance' else 400
-        return JsonResponse(_wallet_error(str(error)), status=status)
-    return JsonResponse(_wallet_success(wallet_transaction))
-
-
-def api_wallet_balance(request, student_id):
-    student = get_object_or_404(StudentProfile, pk=student_id)
-    if not _can_view_private_student_data(request, student):
-        return JsonResponse({'success': True, 'balance': 'Rs. ****', 'masked': True})
-    wallet = _ensure_wallet(student)
-    return JsonResponse({'success': True, 'balance': str(wallet.balance), 'masked': False})
-
-
-def api_wallet_transactions(request, student_id):
-    student = get_object_or_404(StudentProfile, pk=student_id)
-    qs = WalletTransaction.objects.filter(student=student)[:20]
-    if not _can_view_private_student_data(request, student):
-        return JsonResponse({
-            'success': True,
-            'masked': True,
-            'transactions': [
-                {
-                    'transaction_type': item.transaction_type,
-                    'amount': 'Rs. **',
-                    'created_at': item.created_at.isoformat(),
-                }
-                for item in qs[:5]
-            ],
-        })
-    return JsonResponse({
-        'success': True,
-        'masked': False,
-        'transactions': [
-            {
-                'id': item.id,
-                'transaction_type': item.transaction_type,
-                'amount': str(item.amount),
-                'description': item.description,
-                'counter_name': item.counter_name,
-                'balance_after': str(item.balance_after),
-                'created_at': item.created_at.isoformat(),
-            }
-            for item in qs
-        ],
-    })
-
-
 @csrf_exempt
 @require_POST
 def api_library_borrow(request):
     if not request.user.is_authenticated:
-        return JsonResponse(_wallet_error('Login required'), status=403)
+        return JsonResponse(_api_error('Login required'), status=403)
     payload = _json_body(request)
     student = StudentProfile.objects.filter(id=payload.get('student_id')).first()
     if not student and payload.get('card_uid'):
@@ -1998,9 +1818,9 @@ def api_library_borrow(request):
         student = card.student if card else None
     book = LibraryBook.objects.filter(id=payload.get('book_id')).first()
     if not student:
-        return JsonResponse(_wallet_error('Student not found'), status=404)
+        return JsonResponse(_api_error('Student not found'), status=404)
     if not book:
-        return JsonResponse(_wallet_error('Book not found'), status=404)
+        return JsonResponse(_api_error('Book not found'), status=404)
     try:
         due_date = timezone.datetime.fromisoformat(payload.get('due_date')).date()
     except (TypeError, ValueError):
@@ -2008,7 +1828,7 @@ def api_library_borrow(request):
     with transaction.atomic():
         book = LibraryBook.objects.select_for_update().get(pk=book.pk)
         if not book.is_active or book.available_copies <= 0:
-            return JsonResponse(_wallet_error('Book is not available'), status=400)
+            return JsonResponse(_api_error('Book is not available'), status=400)
         book.available_copies -= 1
         book.save(update_fields=['available_copies', 'updated_at'])
         record = LibraryBorrowRecord.objects.create(
@@ -2024,15 +1844,15 @@ def api_library_borrow(request):
 @require_POST
 def api_library_return(request):
     if not request.user.is_authenticated:
-        return JsonResponse(_wallet_error('Login required'), status=403)
+        return JsonResponse(_api_error('Login required'), status=403)
     payload = _json_body(request)
     record = LibraryBorrowRecord.objects.select_related('book').filter(id=payload.get('record_id')).first()
     if not record:
-        return JsonResponse(_wallet_error('Borrow record not found'), status=404)
+        return JsonResponse(_api_error('Borrow record not found'), status=404)
     with transaction.atomic():
         record = LibraryBorrowRecord.objects.select_for_update().select_related('book').get(pk=record.pk)
         if record.status == 'returned':
-            return JsonResponse(_wallet_error('Book already returned'), status=400)
+            return JsonResponse(_api_error('Book already returned'), status=400)
         record.status = 'returned'
         record.return_date = timezone.localdate()
         record.save(update_fields=['status', 'return_date', 'updated_at'])
@@ -2067,78 +1887,6 @@ def api_library_status(request, student_id):
 
 
 @login_required
-def dashboard_accounts(request):
-    school, schools = _resolve_dashboard_school(request, required=True)
-    if not school:
-        return redirect('admin_dashboard')
-    if request.method == 'POST':
-        student = get_object_or_404(StudentProfile, pk=request.POST.get('student'), college=school)
-        if request.POST.get('account_action') == 'register_card':
-            try:
-                StudentCard.objects.create(
-                    student=student,
-                    card_uid=request.POST.get('card_uid', '').strip(),
-                    card_number=request.POST.get('card_number', '').strip(),
-                    is_active=True,
-                )
-                _ensure_wallet(student)
-                messages.success(request, f'Card registered for {student.name}.')
-            except Exception as error:
-                messages.error(request, f'Could not register card: {error}')
-        else:
-            try:
-                _top_up_wallet(student, request.POST.get('amount'), request.POST.get('payment_method', 'cash'), request.user, request.POST.get('note', ''))
-                messages.success(request, f'Wallet topped up for {student.name}.')
-            except ValueError as error:
-                messages.error(request, str(error))
-        return redirect(f"{reverse('dashboard_accounts')}{_build_dashboard_query(school)}")
-    students = StudentProfile.objects.filter(college=school).order_by('name')
-    wallets = StudentWallet.objects.filter(student__college=school).select_related('student')
-    topups = WalletTopUp.objects.filter(student__college=school).select_related('student', 'received_by')[:25]
-    return render(request, 'dashboard/accounts.html', {
-        **_school_dashboard_context(request, 'accounts', school, schools),
-        'students': students,
-        'wallets': wallets,
-        'cards': StudentCard.objects.filter(student__college=school).select_related('student')[:50],
-        'topups': topups,
-        'payment_methods': WalletTopUp.PAYMENT_METHOD_CHOICES,
-    })
-
-
-@login_required
-def dashboard_counter_payment(request):
-    school, schools = _resolve_dashboard_school(request, required=True)
-    if not school:
-        return redirect('admin_dashboard')
-    result = None
-    if request.method == 'POST':
-        try:
-            wallet_transaction = _process_card_payment(
-                request.POST.get('card_uid', ''),
-                request.POST.get('amount'),
-                request.POST.get('transaction_type'),
-                request.POST.get('counter_name', ''),
-                request.POST.get('description', ''),
-                request.user,
-            )
-            if wallet_transaction.student.college_id != school.id:
-                messages.error(request, 'This card does not belong to the selected school.')
-            else:
-                result = _wallet_success(wallet_transaction)
-                messages.success(request, 'Payment deducted successfully.')
-        except ValueError as error:
-            messages.error(request, str(error))
-    return render(request, 'dashboard/counter_payment.html', {
-        **_school_dashboard_context(request, 'counter', school, schools),
-        'transaction_types': [
-            choice for choice in WalletTransaction.TRANSACTION_TYPE_CHOICES
-            if choice[0] in {'cafeteria', 'stationery', 'bus', 'library_fine'}
-        ],
-        'result': result,
-    })
-
-
-@login_required
 def dashboard_library(request):
     school, schools = _resolve_dashboard_school(request, required=True)
     if not school:
@@ -2157,6 +1905,21 @@ def dashboard_library(request):
                 available_copies=int(request.POST.get('available_copies') or total),
             )
             messages.success(request, 'Book added.')
+        elif action == 'register_card':
+            student = StudentProfile.objects.filter(pk=request.POST.get('student'), college=school).first()
+            if not student:
+                messages.error(request, 'Choose a student for this card.')
+            else:
+                try:
+                    StudentCard.objects.create(
+                        student=student,
+                        card_uid=request.POST.get('card_uid', '').strip(),
+                        card_number=request.POST.get('card_number', '').strip(),
+                        is_active=True,
+                    )
+                    messages.success(request, 'Library card registered.')
+                except Exception as error:
+                    messages.error(request, f'Could not register card: {error}')
         elif action == 'borrow':
             student = StudentProfile.objects.filter(pk=request.POST.get('student'), college=school).first()
             book = LibraryBook.objects.filter(pk=request.POST.get('book')).first()
@@ -2190,30 +1953,9 @@ def dashboard_library(request):
     return render(request, 'dashboard/library.html', {
         **_school_dashboard_context(request, 'library', school, schools),
         'students': StudentProfile.objects.filter(college=school).order_by('name'),
+        'cards': StudentCard.objects.filter(student__college=school).select_related('student')[:50],
         'books': LibraryBook.objects.filter(is_active=True).order_by('title'),
         'records': LibraryBorrowRecord.objects.filter(student__college=school).select_related('student', 'book')[:50],
-    })
-
-
-@login_required
-def dashboard_records(request):
-    school, schools = _resolve_dashboard_school(request, required=True)
-    if not school:
-        return redirect('admin_dashboard')
-    txns = WalletTransaction.objects.filter(student__college=school).select_related('student')
-    records = LibraryBorrowRecord.objects.filter(student__college=school).select_related('student', 'book')
-    txn_type = request.GET.get('transaction_type')
-    if txn_type:
-        txns = txns.filter(transaction_type=txn_type)
-    q = request.GET.get('q', '').strip()
-    if q:
-        txns = txns.filter(Q(student__name__icontains=q) | Q(counter_name__icontains=q))
-        records = records.filter(Q(student__name__icontains=q) | Q(book__title__icontains=q) | Q(book__book_code__icontains=q))
-    return render(request, 'dashboard/records.html', {
-        **_school_dashboard_context(request, 'records', school, schools),
-        'transactions': txns[:100],
-        'library_records': records[:100],
-        'transaction_types': WalletTransaction.TRANSACTION_TYPE_CHOICES,
     })
 
 
