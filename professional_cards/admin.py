@@ -31,9 +31,9 @@ class ProfessionalDocumentInline(admin.TabularInline):
 
 @admin.register(ProfessionalProfile)
 class ProfessionalProfileAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'designation', 'company_name', 'is_active', 'is_verified', 'updated_at')
-    list_filter = ('is_active', 'is_verified', 'template_name', 'industry')
-    search_fields = ('full_name', 'company_name', 'designation', 'email', 'phone')
+    list_display = ('full_name', 'profile_type', 'profession', 'designation', 'company_name', 'is_active', 'is_verified', 'updated_at')
+    list_filter = ('profile_type', 'is_active', 'is_verified', 'template_name', 'industry')
+    search_fields = ('full_name', 'company_name', 'designation', 'profession', 'email', 'phone')
     prepopulated_fields = {'slug': ('full_name',)}
     inlines = [
         ProfessionalServiceInline,

@@ -14,12 +14,15 @@ from django.db.models.functions import TruncDate
 from django.template import TemplateDoesNotExist
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.text import slugify
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from datetime import timedelta
 from io import BytesIO
 import json
 import re
+import secrets
+import string
 import textwrap
 from urllib.parse import urlencode
 from zipfile import ZIP_DEFLATED, ZipFile
@@ -37,7 +40,7 @@ from reportlab.pdfgen import canvas
 
 from .models import (
     StudentProfile, College, ProfileActivity, Skill,
-    StudentCard, LibraryBook, LibraryBorrowRecord,
+    StudentCard,
 )
 
 CONTACT_TEMPLATES = {
@@ -58,10 +61,20 @@ PRINT_TEMPLATES = {
     'front_maroon_crest': {'label': 'Noble Arch', 'description': 'Refined premium front with a formal institutional look.'},
     'front_prism_shift': {'label': 'Prism Shift', 'description': 'Bold geometric front with a cleaner contemporary school feel.'},
     'front_official_wave': {'label': 'Official Wave', 'description': 'Formal school front with soft waves and school branding.'},
+    'front_banner_qr': {'label': 'Banner QR', 'description': 'Strong title banner with a compact QR verification area.'},
+    'front_corner_crest': {'label': 'Corner Crest', 'description': 'Clean white credential with a confident corner-brand treatment.'},
+    'front_identity_band': {'label': 'Identity Band', 'description': 'Information-led layout with a crisp institutional title band.'},
+    'front_photo_qr': {'label': 'Photo + QR', 'description': 'Balanced portrait and QR layout for fast visual verification.'},
+    'front_compact_header': {'label': 'Compact Header', 'description': 'Space-efficient school header with structured student details.'},
+    'front_full_brand': {'label': 'Full Brand', 'description': 'High-impact school branding with a large identity header.'},
 }
 
 PRINT_CARD_TYPES = [
     {'value': 'id_card', 'label': 'ID Card'},
+    {'value': 'pickup_card', 'label': 'Pick-Up Card'},
+    {'value': 'outpass', 'label': 'Outpass'},
+    {'value': 'collector_card', 'label': "Collector's Card"},
+    {'value': 'custom', 'label': 'Custom'},
 ]
 
 PRINT_ORIENTATIONS = [
@@ -95,6 +108,36 @@ PRINT_FRONT_THEMES = {
         'description': 'Formal school front with soft waves, circular portrait, and a document-style signature overlay.',
         'palette': ['#1e3a8a', '#ffffff', '#1f2937', '#f97316'],
     },
+    'front_banner_qr': {
+        'label': 'Banner QR',
+        'description': 'Digital Nepal-inspired title banner, centered portrait, and quick QR verification.',
+        'palette': ['#1550af', '#ffffff', '#172033', '#f1b51c'],
+    },
+    'front_corner_crest': {
+        'label': 'Corner Crest',
+        'description': 'Layered corner geometry with a traditional school crest and clear white information space.',
+        'palette': ['#0f4c81', '#ffffff', '#172033', '#22a06b'],
+    },
+    'front_identity_band': {
+        'label': 'Identity Band',
+        'description': 'A strong institutional band with a structured student-information column.',
+        'palette': ['#7a263a', '#ffffff', '#242424', '#d7a92f'],
+    },
+    'front_photo_qr': {
+        'label': 'Photo + QR',
+        'description': 'Side-by-side portrait and QR composition designed for rapid verification.',
+        'palette': ['#134987', '#f8fafc', '#1f2937', '#8ac440'],
+    },
+    'front_compact_header': {
+        'label': 'Compact Header',
+        'description': 'Compact logo-and-contact header that leaves more room for complete student details.',
+        'palette': ['#1550af', '#ffffff', '#262f3e', '#ec5b2a'],
+    },
+    'front_full_brand': {
+        'label': 'Full Brand',
+        'description': 'Full-width school identity header with a modern centered student portrait.',
+        'palette': ['#123b70', '#ffffff', '#172033', '#d8a61c'],
+    },
 }
 
 PRINT_BACK_THEMES = {
@@ -122,6 +165,21 @@ PRINT_BACK_THEMES = {
         'label': 'Official Wave Back',
         'description': 'Formal back with QR, school contact, and clear terms-style note section.',
         'palette': ['#1e3a8a', '#ffffff', '#1f2937', '#f97316'],
+    },
+    'back_school_seal': {
+        'label': 'School Seal',
+        'description': 'Minimal Digital Nepal-style back centered on the official school seal.',
+        'palette': ['#1550af', '#ffffff', '#172033', '#f1b51c'],
+    },
+    'back_qr_registration': {
+        'label': 'QR Registration',
+        'description': 'Large QR verification back with registration and validity details.',
+        'palette': ['#134987', '#ffffff', '#1f2937', '#8ac440'],
+    },
+    'back_rules_return': {
+        'label': 'Rules & Return',
+        'description': 'Return instructions, school contacts, terms, signature, and a compact QR code.',
+        'palette': ['#7a263a', '#ffffff', '#242424', '#d7a92f'],
     },
 }
 
@@ -197,6 +255,16 @@ def _get_owned_profile(user):
     if not user.is_authenticated:
         return None
     return StudentProfile.objects.filter(auth_user=user).first()
+
+
+def _get_owned_professional_profile(user):
+    if not user.is_authenticated:
+        return None
+    try:
+        from professional_cards.models import ProfessionalProfile
+    except ImportError:
+        return None
+    return ProfessionalProfile.objects.filter(owner=user).first()
 
 
 def _get_user_role(user):
@@ -311,9 +379,41 @@ def _sync_school_admin_user(college, username, raw_password):
 
 
 def _generate_profile_password(name):
-    clean_name = ''.join(ch for ch in (name or 'user') if ch.isalpha()) or 'user'
-    first_three = clean_name[:3]
-    return f'{first_three.upper()}@@123{first_three.lower()}'
+    alphabet = string.ascii_letters + string.digits
+    random_part = ''.join(secrets.choice(alphabet) for _ in range(10))
+    return f'T2C-{random_part}'
+
+
+def _school_username_prefix(school):
+    configured = (school.student_username_prefix or '').strip()
+    source = configured or school.name
+    normalized = slugify(source).replace('-', '.')
+    normalized = re.sub(r'[^a-z0-9.]+', '', normalized).strip('.')
+    return (normalized or f'school{school.id}')[:80]
+
+
+def _ensure_available_profile_username(base, student=None):
+    base = (base or 'student').strip()[:140].rstrip('.')
+    candidate = base
+    counter = 2
+    profile_query = StudentProfile.objects.all()
+    user_query = User.objects.all()
+    if student and student.pk:
+        profile_query = profile_query.exclude(pk=student.pk)
+        if student.auth_user_id:
+            user_query = user_query.exclude(pk=student.auth_user_id)
+    while profile_query.filter(username=candidate).exists() or user_query.filter(username=candidate).exists():
+        candidate = f'{base[:135]}.{counter}'
+        counter += 1
+    return candidate
+
+
+def _suggest_school_username(school, name='', roll_number='', student=None):
+    suffix_source = (roll_number or '').strip() or (name or '').strip() or 'student'
+    suffix = slugify(suffix_source).replace('-', '.')
+    suffix = re.sub(r'[^a-z0-9.]+', '', suffix).strip('.') or 'student'
+    base = f'{_school_username_prefix(school)}.{suffix}'[:140].rstrip('.')
+    return _ensure_available_profile_username(base, student)
 
 
 def _build_dashboard_query(school=None):
@@ -357,6 +457,113 @@ def _school_member_queryset(school, member_type=None):
     if member_type:
         queryset = queryset.filter(member_type=member_type)
     return queryset
+
+
+def _school_analytics(school):
+    members = _school_member_queryset(school)
+    students = members.filter(member_type='student')
+    activities = ProfileActivity.objects.filter(student__college=school)
+    active_cards = StudentCard.objects.filter(
+        student__college=school,
+        is_active=True,
+        lost_or_blocked=False,
+    )
+
+    class_count_map = {
+        row['academic_level']: row['total']
+        for row in (
+            students.exclude(academic_level='')
+            .order_by()
+            .values('academic_level')
+            .annotate(total=Count('id'))
+        )
+    }
+    class_rows = [
+        {'key': key, 'label': label, 'total': class_count_map[key]}
+        for key, label in StudentProfile.ACADEMIC_LEVEL_CHOICES
+        if key in class_count_map
+    ]
+    largest_class = max((row['total'] for row in class_rows), default=1)
+    for row in class_rows:
+        row['percentage'] = round((row['total'] / largest_class) * 100)
+
+    activity_counts = {
+        row['event_type']: row['total']
+        for row in activities.values('event_type').annotate(total=Count('id'))
+    }
+    views = activity_counts.get('view', 0)
+    contacts = activity_counts.get('contact', 0)
+    downloads = activity_counts.get('download', 0)
+    total_engagement = views + contacts + downloads
+    safe_total = total_engagement or 1
+    view_percentage = round((views / safe_total) * 100)
+    contact_percentage = round((contacts / safe_total) * 100)
+    download_percentage = max(0, 100 - view_percentage - contact_percentage) if total_engagement else 0
+    view_stop = view_percentage
+    contact_stop = min(100, view_percentage + contact_percentage)
+
+    today = timezone.localdate()
+    start_day = today - timedelta(days=6)
+    daily_counts = {
+        row['day']: row['total']
+        for row in (
+            activities.filter(created_at__date__gte=start_day)
+            .annotate(day=TruncDate('created_at'))
+            .values('day')
+            .annotate(total=Count('id'))
+        )
+    }
+    daily_engagement = []
+    max_daily = max(daily_counts.values(), default=1)
+    for index in range(7):
+        day = start_day + timedelta(days=index)
+        total = daily_counts.get(day, 0)
+        x = round(7 + (index * (86 / 6)), 1)
+        y = round(88 - ((total / max_daily) * 68), 1)
+        daily_engagement.append({
+            'label': day.strftime('%a'),
+            'date_label': day.strftime('%b %d'),
+            'total': total,
+            'x': x,
+            'y': y,
+        })
+
+    student_count = students.count()
+    live_count = students.filter(show_contact_card=True).count()
+    active_card_count = active_cards.count()
+    return {
+        'members': members,
+        'students': students,
+        'student_count': student_count,
+        'teacher_count': members.filter(member_type='teacher').count(),
+        'live_count': live_count,
+        'active_card_count': active_card_count,
+        'profile_views': views,
+        'contact_actions': contacts,
+        'vcard_downloads': downloads,
+        'total_engagement': total_engagement,
+        'live_coverage': round((live_count / student_count) * 100) if student_count else 0,
+        'card_coverage': round((active_card_count / student_count) * 100) if student_count else 0,
+        'class_rows': class_rows,
+        'activity_mix': [
+            {'label': 'Profile views', 'value': views, 'percentage': view_percentage, 'color': '#0b4bcb'},
+            {'label': 'Contact actions', 'value': contacts, 'percentage': contact_percentage, 'color': '#16a269'},
+            {'label': 'vCard downloads', 'value': downloads, 'percentage': download_percentage, 'color': '#f59e0b'},
+        ],
+        'donut_style': (
+            f'conic-gradient(#0b4bcb 0 {view_stop}%, '
+            f'#16a269 {view_stop}% {contact_stop}%, '
+            f'#f59e0b {contact_stop}% 100%)'
+            if total_engagement else '#e8edf5'
+        ),
+        'daily_engagement': daily_engagement,
+        'engagement_points': ' '.join(f"{row['x']},{row['y']}" for row in daily_engagement),
+        'top_profiles': (
+            students.annotate(interactions=Count('activities'))
+            .order_by('-interactions', 'name')[:5]
+        ),
+        'recent_activities': activities.select_related('student')[:8],
+    }
 
 
 def _apply_student_filters(queryset, request):
@@ -853,15 +1060,13 @@ def home(request):
 
 def _fallback_chat_reply(message):
     text = (message or '').lower()
-    if 'price' in text or 'cost' in text or 'shipping' in text:
-        return 'Our NFC card pricing and delivery options depend on the card type, quantity, and delivery location. You can check the pricing section or share your quantity and location here so our team can follow up.'
     if 'nfc' in text or 'phone' in text or 'compatible' in text:
-        return 'SkillConnect cards work by opening a digital contact card when tapped on an NFC-enabled phone. If a phone does not support NFC, the printed QR code can still open the same digital profile.'
+        return 'Tap2Connect cards work by opening a digital contact card when tapped on an NFC-enabled phone. If a phone does not support NFC, the printed QR code can still open the same digital profile.'
     if 'school' in text or 'student' in text or 'teacher' in text or 'id card' in text:
         return 'For schools, we can create student and teacher digital profiles, generate QR/NFC-linked ID cards, and print either A4 batches or individual card layouts.'
     if 'update' in text or 'change' in text or 'edit' in text:
         return 'Yes, profile information can be updated later from the dashboard. The NFC tap and QR code continue pointing to the live digital profile, so the printed card does not need to be changed for basic profile updates.'
-    return 'Thanks for the question. SkillConnect helps people and schools share contact details through NFC cards, QR codes, and live digital profiles. Please share what you want to do, and I can guide you.'
+    return 'Thanks for the question. Tap2Connect helps people and schools share contact details through NFC cards, QR codes, and live digital profiles. Please share what you want to do, and I can guide you.'
 
 
 @require_POST
@@ -898,10 +1103,9 @@ def ai_chat(request):
                     {
                         'role': 'system',
                         'content': (
-                            'You are the SkillConnect website assistant. Answer customers clearly and briefly. '
-                            'SkillConnect sells NFC-enabled cards, QR-linked digital contact cards, school ID card '
+                            'You are the Tap2Connect website assistant. Answer customers clearly and briefly. '
+                            'Tap2Connect provides NFC-enabled cards, QR-linked digital contact cards, school ID card '
                             'printing tools, student/teacher profile dashboards, and live profile updates. '
-                            'Do not promise exact pricing or delivery dates unless the customer provides details. '
                             'Ask for contact details or tell them the team can follow up when needed.'
                         ),
                     },
@@ -933,6 +1137,9 @@ def ai_chat(request):
 
 def dashboard_login(request):
     if request.user.is_authenticated:
+        professional_profile = _get_owned_professional_profile(request.user)
+        if professional_profile:
+            return redirect('professional_cards:owner_edit', slug=professional_profile.slug)
         return redirect('admin_dashboard')
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
@@ -943,9 +1150,17 @@ def dashboard_login(request):
         else:
             role = _get_user_role(user)
             if role == 'public':
+                professional_profile = _get_owned_professional_profile(user)
+                if professional_profile:
+                    login(request, user)
+                    return redirect('professional_cards:owner_edit', slug=professional_profile.slug)
                 messages.error(request, 'This account does not have dashboard access.')
                 return render(request, 'auth/login.html')
             login(request, user)
+            owned_profile = _get_owned_profile(user)
+            if owned_profile and role in {'student', 'teacher'}:
+                request.session[_student_edit_session_key(owned_profile.id)] = True
+                return redirect('student_owner_dashboard', student_id=owned_profile.id)
             return redirect('admin_dashboard')
     return render(request, 'auth/login.html')
 
@@ -1015,10 +1230,15 @@ def _school_card_context(request, student):
     if student.section:
         grade_section = f'{grade_label} - Section {student.section}'
 
+    can_view_private_details = _can_view_private_student_data(request, student)
     website_url = _normalize_public_url(student.website) or school_website_url
     website_display = student.website or (school.website if school and school.website else '')
-    direct_map_url = _normalize_public_url(student.map_url) or _google_maps_url(student.address) or school_map_url
-    navigate_url = _build_tracked_action_url(student.id, 'map') if (student.map_url or student.address) else direct_map_url
+    student_map_url = (
+        _normalize_public_url(student.map_url) or _google_maps_url(student.address)
+        if can_view_private_details else ''
+    )
+    direct_map_url = student_map_url or school_map_url
+    navigate_url = _build_tracked_action_url(student.id, 'map') if direct_map_url else ''
 
     social_links = []
     social_link_fields = [
@@ -1038,10 +1258,7 @@ def _school_card_context(request, student):
         if value:
             social_links.append({'key': key, 'url': _build_tracked_action_url(student.id, action), 'label': label})
 
-    private_visible = _can_view_private_student_data(request, student)
-    borrowed_records = LibraryBorrowRecord.objects.filter(student=student, status__in=['borrowed', 'overdue']).select_related('book')
-    returned_count = LibraryBorrowRecord.objects.filter(student=student, status='returned').count()
-    next_due = borrowed_records.order_by('due_date').first()
+    public_skills = list(student.skills.order_by('name'))
 
     return {
         'student': student,
@@ -1065,7 +1282,7 @@ def _school_card_context(request, student):
         'blood_group': student.blood_group,
         'additional_info_heading': student.additional_info_heading,
         'additional_info_description': student.additional_info_description,
-        'student_address': student.address,
+        'student_address': student.address if can_view_private_details else '',
         'website_url': website_url,
         'website_display': website_display,
         'map_url': direct_map_url,
@@ -1077,16 +1294,21 @@ def _school_card_context(request, student):
         'qr_code_url': reverse('print_qr_code', args=[student.id]),
         'public_card_url': _build_public_contact_url(request, student),
         'social_links': social_links,
-        'private_visible': private_visible,
-        'library_borrowed_display': f'{borrowed_records.count()} Borrowed' if private_visible else '** Borrowed',
-        'library_summary_display': (
-            f'{returned_count} returned'
-            + (f' - {next_due.days_remaining} days left' if next_due else '')
-            if private_visible else 'Login required to view library status.'
+        'public_intro': student.about_intro or student.bio or '',
+        'public_featured': student.about_featured or '',
+        'public_current': student.about_current or '',
+        'public_skills': public_skills,
+        'show_about_section': bool(
+            student.about_intro
+            or student.bio
+            or student.about_featured
+            or student.about_current
+            or public_skills
         ),
-        'library_deadline_display': f'Return deadline: {next_due.due_date}' if private_visible and next_due else 'Return deadline: hidden',
+        'about_section_title': 'About & Availability' if student.member_type == 'teacher' else 'About & Current Focus',
+        'can_view_private_details': can_view_private_details,
         'birth_certificate_url': reverse('view_birth_certificate', args=[student.id]),
-        'has_birth_certificate': bool(student.birth_certificate),
+        'has_birth_certificate': bool(student.birth_certificate and can_view_private_details),
     }
 
 
@@ -1296,7 +1518,10 @@ def print_card_preview(request, student_id):
 @login_required
 def admin_dashboard(request):
     role = _get_user_role(request.user)
-    if role == 'teacher':
+    professional_profile = _get_owned_professional_profile(request.user)
+    if professional_profile and role == 'public':
+        return redirect('professional_cards:owner_edit', slug=professional_profile.slug)
+    if role in {'student', 'teacher'}:
         owned_profile = _get_owned_profile(request.user)
         if owned_profile:
             request.session[_student_edit_session_key(owned_profile.id)] = True
@@ -1306,86 +1531,47 @@ def admin_dashboard(request):
         return redirect('dashboard_login')
 
     school, schools = _resolve_dashboard_school(request, required=False)
-    school_members = _school_member_queryset(school) if school else StudentProfile.objects.none()
-
-    if role == 'super_admin':
-        total_schools = College.objects.count()
-        total_students = StudentProfile.objects.filter(profile_category='school', member_type='student').count()
-        total_teachers = StudentProfile.objects.filter(profile_category='school', member_type='teacher').count()
-        recent_activities = ProfileActivity.objects.select_related('student', 'student__college')[:8]
-    else:
-        total_schools = 1 if school else 0
-        total_students = school_members.filter(member_type='student').count() if school else 0
-        total_teachers = school_members.filter(member_type='teacher').count() if school else 0
-        recent_activities = ProfileActivity.objects.select_related('student', 'student__college').filter(
-            student__college=school
-        )[:8] if school else ProfileActivity.objects.none()
-
-    dashboard_features = [
-        {
-            'title': 'Student Records',
-            'description': 'Add, filter, edit, reset passwords, and open public contact cards.',
-            'icon': 'graduation-cap',
-            'url': f"{reverse('dashboard_students')}{_build_dashboard_query(school)}" if school else '',
-        },
-        {
-            'title': 'Teachers / Staff',
-            'description': 'Manage staff profiles, dashboard access, and school-facing contact details.',
-            'icon': 'briefcase',
-            'url': f"{reverse('dashboard_teachers')}{_build_dashboard_query(school)}" if school else '',
-        },
-        {
-            'title': 'ID Card Studio',
-            'description': 'Batch select members, preview cards, and export print-ready PDFs.',
-            'icon': 'printer',
-            'url': f"{reverse('dashboard_print')}{_build_dashboard_query(school)}" if school else '',
-        },
-        {
-            'title': 'Data Center',
-            'description': 'Download print data, QR PNG assets, and manage school data workflows.',
-            'icon': 'database',
-            'url': f"{reverse('dashboard_qr_export')}{_build_dashboard_query(school)}" if school else '',
-        },
-        {
-            'title': 'Bulk Upload',
-            'description': 'Import students or staff from CSV/XLSX files with school defaults applied.',
-            'icon': 'upload-cloud',
-            'url': f"{reverse('dashboard_bulk_upload')}{_build_dashboard_query(school)}" if school else '',
-        },
-        {
-            'title': 'School Settings',
-            'description': 'Update branding, admin login, principal details, and print colors.',
-            'icon': 'settings',
-            'url': f"{reverse('dashboard_settings')}{_build_dashboard_query(school)}" if school else '',
-        },
-    ]
-    if role == 'super_admin':
-        dashboard_features.insert(0, {
-            'title': 'Super Admin Controls',
-            'description': 'Create schools, assign school admins, switch workspaces, and remove schools.',
-            'icon': 'shield-check',
-            'url': reverse('admin_dashboard'),
-        })
-        dashboard_features.insert(1, {
-            'title': 'Professional Cards',
-            'description': 'Create public Tap2Connect profiles, QR codes, vCards, and premium professional pages.',
-            'icon': 'badge-check',
-            'url': reverse('professional_cards:list'),
-        })
-
+    analytics = _school_analytics(school) if school else None
     context = {
         **_school_dashboard_context(request, 'home', school, schools),
-        'total_schools': total_schools,
-        'total_students': total_students,
-        'total_teachers': total_teachers,
-        'school_student_count': school_members.filter(member_type='student').count() if school else 0,
-        'school_teacher_count': school_members.filter(member_type='teacher').count() if school else 0,
-        'school_member_count': school_members.count() if school else 0,
-        'recent_activities': recent_activities,
-        'schools': schools,
-        'dashboard_features': dashboard_features,
+        'analytics': analytics,
     }
     return render(request, 'dashboard/home.html', context)
+
+
+@login_required
+def dashboard_schools(request):
+    if not _is_super_admin(request.user):
+        messages.error(request, 'Only super admins can manage schools.')
+        return redirect('admin_dashboard')
+
+    schools = College.objects.select_related('admin_user').annotate(
+        student_total=Count(
+            'students',
+            filter=Q(students__profile_category='school', students__member_type='student'),
+            distinct=True,
+        ),
+        live_total=Count(
+            'students',
+            filter=Q(
+                students__profile_category='school',
+                students__member_type='student',
+                students__show_contact_card=True,
+            ),
+            distinct=True,
+        ),
+    ).order_by('name')
+    context = {
+        **_school_dashboard_context(request, 'schools', None, schools),
+        'schools': schools,
+        'school_count': schools.count(),
+        'student_count': StudentProfile.objects.filter(
+            profile_category='school',
+            member_type='student',
+        ).count(),
+        'admin_count': College.objects.exclude(admin_user=None).count(),
+    }
+    return render(request, 'dashboard/schools.html', context)
 
 
 @login_required
@@ -1409,6 +1595,7 @@ def dashboard_students(request):
         'section_filter': section,
         'search_query': search,
         'sections': _unique_sections_for_school(school),
+        'student_username_prefix': _school_username_prefix(school),
         'academic_level_choices': [{'value': value, 'label': label} for value, label in ACADEMIC_LEVEL_CHOICES],
     }
     return render(request, 'dashboard/students.html', context)
@@ -1459,6 +1646,50 @@ def dashboard_teachers(request):
 
 
 @login_required
+def dashboard_reports(request):
+    role = _get_user_role(request.user)
+    if role not in {'super_admin', 'school_admin'}:
+        messages.error(request, 'You do not have access to reports.')
+        return redirect('dashboard_login')
+
+    school, schools = _resolve_dashboard_school(request, required=True)
+    if not school:
+        messages.error(request, 'Create a school first to view reports.')
+        return redirect('admin_dashboard')
+
+    analytics = _school_analytics(school)
+    members = analytics['members']
+    students = analytics['students']
+    activities = ProfileActivity.objects.filter(student__college=school)
+    last_30_days = timezone.now() - timedelta(days=30)
+    recent_activities = activities.filter(created_at__gte=last_30_days)
+
+    activity_breakdown = {
+        item['event_type']: item['total']
+        for item in recent_activities.values('event_type').annotate(total=Count('id'))
+    }
+    top_profiles = (
+        students.annotate(interactions=Count('activities'))
+        .order_by('-interactions', 'name')[:6]
+    )
+    context = {
+        **_school_dashboard_context(request, 'reports', school, schools),
+        'member_count': members.count(),
+        'student_count': students.count(),
+        'live_profile_count': students.filter(show_contact_card=True).count(),
+        'active_card_count': analytics['active_card_count'],
+        'interaction_count': recent_activities.count(),
+        'profile_views': activity_breakdown.get('view', 0),
+        'contact_actions': activity_breakdown.get('contact', 0),
+        'vcard_downloads': activity_breakdown.get('download', 0),
+        'class_rows': analytics['class_rows'],
+        'top_profiles': top_profiles,
+        'recent_activities': recent_activities.select_related('student')[:8],
+    }
+    return render(request, 'dashboard/reports.html', context)
+
+
+@login_required
 def dashboard_settings(request):
     role = _get_user_role(request.user)
     if role not in {'super_admin', 'school_admin'}:
@@ -1478,6 +1709,10 @@ def dashboard_settings(request):
         school.website = request.POST.get('website', school.website)
         school.email = request.POST.get('email', school.email)
         school.phone = request.POST.get('phone', school.phone)
+        school.student_username_prefix = request.POST.get(
+            'student_username_prefix',
+            school.student_username_prefix,
+        ).strip()
         school.theme_primary = request.POST.get('theme_primary', school.theme_primary or '#1a3a5c')
         school.theme_light_primary = request.POST.get('theme_light_primary', school.theme_light_primary or '#f7f5f0')
         school.theme_secondary = request.POST.get('theme_secondary', school.theme_secondary or '#1a1a2a')
@@ -1492,6 +1727,11 @@ def dashboard_settings(request):
         if admin_username:
             _sync_school_admin_user(school, admin_username, admin_password)
         school.save()
+        StudentProfile.objects.filter(
+            college=school,
+            profile_category='school',
+            member_type='student',
+        ).update(organization_name=school.name)
         messages.success(request, 'School settings updated successfully.')
         return redirect(f"{reverse('dashboard_settings')}{_build_dashboard_query(school)}")
 
@@ -1499,6 +1739,7 @@ def dashboard_settings(request):
         **_school_dashboard_context(request, 'settings', school, schools),
         'college': school,
         'admin_username': school.admin_user.username if school.admin_user else '',
+        'effective_student_username_prefix': _school_username_prefix(school),
     }
     return render(request, 'dashboard/settings.html', context)
 
@@ -1556,13 +1797,19 @@ def dashboard_bulk_upload(request):
                 skipped_rows.append(index + 2)
                 continue
 
-            username_seed = str(row.get('username') or name.lower().replace(' ', ''))[:120]
+            username_seed = str(row.get('username') or '').strip()
+            roll_number = str(row.get('roll_number', '')).strip()
+            generated_username = (
+                _ensure_available_profile_username(username_seed)
+                if username_seed else
+                _suggest_school_username(selected_school, name, roll_number)
+            )
             raw_password = _generate_profile_password(name)
             student = StudentProfile(
                 name=name,
                 phone=phone,
                 email=str(row.get('email', '')).strip(),
-                username=_ensure_unique_username(username_seed or f'member{index + 1}'),
+                username=generated_username,
                 college=selected_school,
                 profile_category='school',
                 member_type=role_type,
@@ -1573,7 +1820,7 @@ def dashboard_bulk_upload(request):
                 map_url=str(row.get('map_url', '')).strip() or None,
                 academic_level=str(row.get('academic_level', '')).strip(),
                 section=str(row.get('section', '')).strip(),
-                roll_number=str(row.get('roll_number', '')).strip(),
+                roll_number=roll_number,
                 blood_group=str(row.get('blood_group', '')).strip(),
                 gender=str(row.get('gender', '')).strip(),
                 organization_name=selected_school.name,
@@ -1806,159 +2053,6 @@ def api_card_lookup(request):
         'card_blocked': card.lost_or_blocked or not card.is_active,
     })
 
-@csrf_exempt
-@require_POST
-def api_library_borrow(request):
-    if not request.user.is_authenticated:
-        return JsonResponse(_api_error('Login required'), status=403)
-    payload = _json_body(request)
-    student = StudentProfile.objects.filter(id=payload.get('student_id')).first()
-    if not student and payload.get('card_uid'):
-        card = StudentCard.objects.select_related('student').filter(card_uid=payload.get('card_uid'), is_active=True, lost_or_blocked=False).first()
-        student = card.student if card else None
-    book = LibraryBook.objects.filter(id=payload.get('book_id')).first()
-    if not student:
-        return JsonResponse(_api_error('Student not found'), status=404)
-    if not book:
-        return JsonResponse(_api_error('Book not found'), status=404)
-    try:
-        due_date = timezone.datetime.fromisoformat(payload.get('due_date')).date()
-    except (TypeError, ValueError):
-        due_date = timezone.localdate() + timedelta(days=14)
-    with transaction.atomic():
-        book = LibraryBook.objects.select_for_update().get(pk=book.pk)
-        if not book.is_active or book.available_copies <= 0:
-            return JsonResponse(_api_error('Book is not available'), status=400)
-        book.available_copies -= 1
-        book.save(update_fields=['available_copies', 'updated_at'])
-        record = LibraryBorrowRecord.objects.create(
-            student=student,
-            book=book,
-            issued_by=request.user if request.user.is_authenticated else None,
-            due_date=due_date,
-        )
-    return JsonResponse({'success': True, 'record_id': record.id, 'book': book.title, 'due_date': due_date.isoformat()})
-
-
-@csrf_exempt
-@require_POST
-def api_library_return(request):
-    if not request.user.is_authenticated:
-        return JsonResponse(_api_error('Login required'), status=403)
-    payload = _json_body(request)
-    record = LibraryBorrowRecord.objects.select_related('book').filter(id=payload.get('record_id')).first()
-    if not record:
-        return JsonResponse(_api_error('Borrow record not found'), status=404)
-    with transaction.atomic():
-        record = LibraryBorrowRecord.objects.select_for_update().select_related('book').get(pk=record.pk)
-        if record.status == 'returned':
-            return JsonResponse(_api_error('Book already returned'), status=400)
-        record.status = 'returned'
-        record.return_date = timezone.localdate()
-        record.save(update_fields=['status', 'return_date', 'updated_at'])
-        book = LibraryBook.objects.select_for_update().get(pk=record.book_id)
-        book.available_copies = min(book.total_copies, book.available_copies + 1)
-        book.save(update_fields=['available_copies', 'updated_at'])
-    return JsonResponse({'success': True, 'record_id': record.id, 'return_date': record.return_date.isoformat()})
-
-
-def api_library_status(request, student_id):
-    student = get_object_or_404(StudentProfile, pk=student_id)
-    borrowed = LibraryBorrowRecord.objects.filter(student=student, status__in=['borrowed', 'overdue'])
-    returned_count = LibraryBorrowRecord.objects.filter(student=student, status='returned').count()
-    if not _can_view_private_student_data(request, student):
-        return JsonResponse({
-            'success': True,
-            'masked': True,
-            'borrowed': '** Borrowed',
-            'summary': 'Login required to view library status.',
-            'return_deadline': 'hidden',
-        })
-    next_due = borrowed.order_by('due_date').first()
-    days = next_due.days_remaining if next_due else None
-    return JsonResponse({
-        'success': True,
-        'masked': False,
-        'borrowed_count': borrowed.count(),
-        'returned_count': returned_count,
-        'days_remaining': days,
-        'return_deadline': next_due.due_date.isoformat() if next_due else '',
-    })
-
-
-@login_required
-def dashboard_library(request):
-    school, schools = _resolve_dashboard_school(request, required=True)
-    if not school:
-        return redirect('admin_dashboard')
-    if request.method == 'POST':
-        action = request.POST.get('library_action')
-        if action == 'add_book':
-            total = int(request.POST.get('total_copies') or 1)
-            LibraryBook.objects.create(
-                title=request.POST.get('title', '').strip(),
-                author=request.POST.get('author', '').strip(),
-                isbn=request.POST.get('isbn', '').strip(),
-                category=request.POST.get('category', '').strip(),
-                book_code=request.POST.get('book_code', '').strip(),
-                total_copies=total,
-                available_copies=int(request.POST.get('available_copies') or total),
-            )
-            messages.success(request, 'Book added.')
-        elif action == 'register_card':
-            student = StudentProfile.objects.filter(pk=request.POST.get('student'), college=school).first()
-            if not student:
-                messages.error(request, 'Choose a student for this card.')
-            else:
-                try:
-                    StudentCard.objects.create(
-                        student=student,
-                        card_uid=request.POST.get('card_uid', '').strip(),
-                        card_number=request.POST.get('card_number', '').strip(),
-                        is_active=True,
-                    )
-                    messages.success(request, 'Library card registered.')
-                except Exception as error:
-                    messages.error(request, f'Could not register card: {error}')
-        elif action == 'borrow':
-            student = StudentProfile.objects.filter(pk=request.POST.get('student'), college=school).first()
-            book = LibraryBook.objects.filter(pk=request.POST.get('book')).first()
-            if not student or not book:
-                messages.error(request, 'Choose a student and book.')
-            else:
-                due_date = request.POST.get('due_date') or (timezone.localdate() + timedelta(days=14)).isoformat()
-                with transaction.atomic():
-                    book = LibraryBook.objects.select_for_update().get(pk=book.pk)
-                    if book.available_copies <= 0:
-                        messages.error(request, 'Book is not available.')
-                    else:
-                        book.available_copies -= 1
-                        book.save(update_fields=['available_copies', 'updated_at'])
-                        LibraryBorrowRecord.objects.create(student=student, book=book, issued_by=request.user, due_date=due_date)
-                        messages.success(request, 'Book issued.')
-        elif action == 'return':
-            record = LibraryBorrowRecord.objects.filter(pk=request.POST.get('record'), student__college=school).first()
-            if record:
-                with transaction.atomic():
-                    record = LibraryBorrowRecord.objects.select_for_update().select_related('book').get(pk=record.pk)
-                    if record.status != 'returned':
-                        record.status = 'returned'
-                        record.return_date = timezone.localdate()
-                        record.save(update_fields=['status', 'return_date', 'updated_at'])
-                        book = LibraryBook.objects.select_for_update().get(pk=record.book_id)
-                        book.available_copies = min(book.total_copies, book.available_copies + 1)
-                        book.save(update_fields=['available_copies', 'updated_at'])
-                        messages.success(request, 'Book returned.')
-        return redirect(f"{reverse('dashboard_library')}{_build_dashboard_query(school)}")
-    return render(request, 'dashboard/library.html', {
-        **_school_dashboard_context(request, 'library', school, schools),
-        'students': StudentProfile.objects.filter(college=school).order_by('name'),
-        'cards': StudentCard.objects.filter(student__college=school).select_related('student')[:50],
-        'books': LibraryBook.objects.filter(is_active=True).order_by('title'),
-        'records': LibraryBorrowRecord.objects.filter(student__college=school).select_related('student', 'book')[:50],
-    })
-
-
 def add_user(request):
     messages.error(request, 'Independent profile creation is disabled in the school identity platform.')
     return redirect('admin_dashboard')
@@ -1976,11 +2070,16 @@ def edit_student_auth(request, student_id):
         request.session[_student_edit_session_key(student.id)] = True
         return redirect(next_url or reverse('student_owner_dashboard', args=[student.id]))
     if _is_student_edit_authorized(request, student.id):
+        if not request.user.is_authenticated and student.auth_user_id:
+            login(request, student.auth_user, backend='django.contrib.auth.backends.ModelBackend')
         return redirect(next_url or reverse('student_owner_dashboard', args=[student.id]))
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '')
         if username == student.username and check_password(password, student.password):
+            profile_user = _sync_profile_auth_user(student, password)
+            student.save(update_fields=['auth_user', 'username'])
+            login(request, profile_user, backend='django.contrib.auth.backends.ModelBackend')
             request.session[_student_edit_session_key(student.id)] = True
             messages.success(request, 'Login successful. You can now manage this profile.')
             return redirect(next_url or reverse('student_owner_dashboard', args=[student.id]))
@@ -1990,7 +2089,10 @@ def edit_student_auth(request, student_id):
 
 def logout_student_edit(request, student_id):
     request.session.pop(_student_edit_session_key(student_id), None)
-    messages.success(request, 'You have been logged out from teacher profile management.')
+    student = get_object_or_404(StudentProfile, pk=student_id)
+    if request.user.is_authenticated and request.user.id == student.auth_user_id:
+        logout(request)
+    messages.success(request, 'You have been logged out from profile management.')
     return redirect('contact_card', student_id=student_id)
 
 
@@ -2006,6 +2108,86 @@ def edit_student(request, student_id):
 
 
 @login_required
+def student_credentials(request, student_id):
+    student = get_object_or_404(StudentProfile, pk=student_id)
+    permission_response = _require_profile_access(request, student)
+    if permission_response:
+        return permission_response
+    if not student.college:
+        messages.error(request, 'This profile is not assigned to a school.')
+        return redirect('admin_dashboard')
+
+    suggested_username = _suggest_school_username(
+        student.college,
+        student.name,
+        student.roll_number or student.unique_identifier,
+        student,
+    )
+    if request.method == 'POST':
+        new_username = request.POST.get('username', '').strip()
+        new_password = request.POST.get('new_password', '')
+        if not new_username:
+            messages.error(request, 'Username is required.')
+        elif (
+            StudentProfile.objects.exclude(pk=student.pk).filter(username=new_username).exists()
+            or User.objects.exclude(pk=student.auth_user_id).filter(username=new_username).exists()
+        ):
+            messages.error(request, 'That username is already in use.')
+        elif new_password and len(new_password) < 8:
+            messages.error(request, 'New passwords must be at least 8 characters long.')
+        else:
+            student.username = new_username
+            if new_password:
+                student.password = new_password
+            student.save()
+            if student.auth_user_id or new_password:
+                _sync_profile_auth_user(student, new_password or None)
+                student.save(update_fields=['auth_user', 'username'])
+            messages.success(request, f'Login credentials updated for {student.name}.')
+            return redirect(f"{reverse('student_credentials', args=[student.id])}{_build_dashboard_query(student.college)}")
+
+    return render(request, 'dashboard/student_credentials.html', {
+        **_school_dashboard_context(request, 'students', student.college, College.objects.order_by('name')),
+        'student': student,
+        'suggested_username': suggested_username,
+        'username_prefix': _school_username_prefix(student.college),
+    })
+
+
+@login_required
+@require_POST
+def assign_school_usernames(request):
+    role = _get_user_role(request.user)
+    if role not in {'super_admin', 'school_admin'}:
+        messages.error(request, 'You do not have access to student credentials.')
+        return redirect('dashboard_login')
+    school, _ = _resolve_dashboard_school(request, required=True)
+    if not school:
+        messages.error(request, 'Select a school before assigning usernames.')
+        return redirect('admin_dashboard')
+
+    updated = 0
+    for student in _school_member_queryset(school, 'student').order_by('id'):
+        suffix = student.roll_number or student.unique_identifier or student.name
+        new_username = _suggest_school_username(school, student.name, suffix, student)
+        if student.username == new_username:
+            continue
+        student.username = new_username
+        student.save(update_fields=['username'])
+        if student.auth_user_id:
+            _sync_profile_auth_user(student)
+            student.save(update_fields=['auth_user', 'username'])
+        updated += 1
+
+    messages.success(
+        request,
+        f'{updated} student username{"" if updated == 1 else "s"} updated to the school format.',
+    )
+    return redirect(f"{reverse('dashboard_students')}{_build_dashboard_query(school)}")
+
+
+@login_required
+@require_POST
 def reset_student_password(request, student_id):
     student = get_object_or_404(StudentProfile, pk=student_id)
     permission_response = _require_profile_access(request, student)
@@ -2200,13 +2382,21 @@ def add_student_to_college(request, college_id):
     role_type = request.GET.get('role_type', 'student')
     default_role = 'Teacher' if role_type == 'teacher' else 'Student'
     if request.method == 'POST':
-        raw_password = _generate_profile_password(request.POST.get('name'))
+        student_name = request.POST.get('name', '').strip()
+        roll_number = request.POST.get('roll_number', '').strip()
+        requested_username = request.POST.get('username', '').strip()
+        assigned_username = (
+            _ensure_available_profile_username(requested_username)
+            if requested_username else
+            _suggest_school_username(college, student_name, roll_number)
+        )
+        raw_password = _generate_profile_password(student_name)
         member_type = _extract_member_type_from_post(request, role_type)
         student = StudentProfile(
-            name=request.POST['name'],
+            name=student_name,
             phone=request.POST['phone'],
             email=request.POST['email'],
-            username=request.POST['username'],
+            username=assigned_username,
             college=college,
             profile_category='school',
             member_type=member_type,
@@ -2218,7 +2408,7 @@ def add_student_to_college(request, college_id):
             map_url=request.POST.get('map_url') or '',
             academic_level=request.POST.get('academic_level', ''),
             section=request.POST.get('section', ''),
-            roll_number=request.POST.get('roll_number', ''),
+            roll_number=roll_number,
             blood_group=request.POST.get('blood_group', ''),
             gender=request.POST.get('gender', ''),
             organization_name=request.POST.get('organization_name') or college.name,
@@ -2255,6 +2445,8 @@ def add_student_to_college(request, college_id):
         'student_role_choices': ['Student', 'Class Monitor', 'Head Boy', 'Head Girl', 'Sports Captain'],
         'role_type': role_type,
         'default_role': default_role,
+        'student_username_prefix': _school_username_prefix(college),
+        'username_example': f"{_school_username_prefix(college)}.001",
         'academic_level_choices': ACADEMIC_LEVEL_CHOICES,
         'gender_choices': GENDER_CHOICES,
     })
@@ -2317,12 +2509,18 @@ END:VCARD
 def track_contact_action(request, student_id, action):
     student = get_object_or_404(StudentProfile, pk=student_id)
     website_url = _normalize_public_url(student.website)
+    can_view_private_details = _can_view_private_student_data(request, student)
+    school_map_url = _google_maps_url(student.college.address) if student.college else ''
+    map_target = (
+        _normalize_public_url(student.map_url) or _google_maps_url(student.address)
+        if can_view_private_details else school_map_url
+    )
 
     action_targets = {
         'phone': f'tel:{student.phone}' if student.phone else '',
         'email': f'mailto:{student.email}' if student.email else '',
         'website': website_url,
-        'map': _normalize_public_url(student.map_url) or (f'https://www.google.com/maps/search/?api=1&query={student.address.replace(" ", "+")}' if student.address else ''),
+        'map': map_target,
         'whatsapp': f'https://wa.me/{student.whatsapp}' if student.whatsapp else '',
         'social-linkedin': student.linkedin or '',
         'social-instagram': student.instagram or '',
@@ -2344,7 +2542,9 @@ def track_contact_action(request, student_id, action):
     student.contact_clicks += 1
     student.save(update_fields=['contact_clicks'])
     _log_profile_activity(student, 'contact', action)
-    return redirect(target)
+    response = HttpResponse(status=302)
+    response['Location'] = target
+    return response
 
 
 def send_site_message(request):
@@ -2358,9 +2558,9 @@ def send_site_message(request):
         message = request.POST.get('message')
         priority = 'Yes' if request.POST.get('priority') else 'No'
 
-        subject = f"SkillConnect Contact: {contact_type} - {full_name}"
+        subject = f"Tap2Connect Contact: {contact_type} - {full_name}"
         body = f"""
-Contact Form Submission - SkillConnect
+Contact Form Submission - Tap2Connect
 
 Contact Type: {contact_type}
 Name: {full_name}
@@ -2374,7 +2574,7 @@ Message:
 {message}
 
 ---
-This message was sent from the SkillConnect website contact form.
+This message was sent from the Tap2Connect website contact form.
         """.strip()
 
         send_mail(
@@ -2472,6 +2672,7 @@ def edit_student_manual(request, student_id):
         'colleges': College.objects.all(),
         'can_manage_school_fields': can_manage_school_fields,
         'skills': Skill.objects.all(),
+        'selected_skill_names': ', '.join(student.skills.order_by('name').values_list('name', flat=True)),
         'selected_socials': [item.strip() for item in student.social_stack.split(',') if item.strip()],
         'social_choices': SOCIAL_CHOICES,  # <-- add this
         'school_role_choices': SCHOOL_ROLE_CHOICES,

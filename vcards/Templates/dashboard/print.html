@@ -4,11 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>School ID Card Studio</title>
+  {% include "partials/tap2connect_favicon.html" %}
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
       theme: {
@@ -23,12 +24,11 @@
     }
   </script>
   <style>
-    body { font-family: 'DM Sans', sans-serif; }
-    .font-display { font-family: 'Playfair Display', serif; }
+    body { font-family: 'Inter', sans-serif; background:#fff; }
+    .font-display { font-family: 'Inter', sans-serif; }
     .theme-card { transition: all 0.2s ease; }
-    .theme-card:hover { transform: translateY(-2px); }
-    .card-shadow { box-shadow: 0 1px 3px rgba(30,58,95,0.08), 0 4px 12px rgba(30,58,95,0.04); }
-    .card-shadow-lg { box-shadow: 0 4px 16px rgba(30,58,95,0.1), 0 8px 32px rgba(30,58,95,0.06); }
+    .theme-card:hover { border-color:#93c5fd; background:#f8fbff; }
+    .card-shadow, .card-shadow-lg { box-shadow:none; border:1px solid #e5e7eb; }
     .id-card { box-shadow: 0 2px 12px rgba(0,0,0,0.15); }
     @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
     .anim-in { animation: fadeUp 0.4s ease both; }
@@ -150,9 +150,102 @@
         linear-gradient(135deg, transparent 0 42%, var(--preview-accent) 42% 55%, transparent 55%),
         var(--preview-secondary);
     }
+    .theme-front_banner_qr::before {
+      inset:0 0 auto;
+      height:42px;
+      background:var(--preview-primary);
+    }
+    .theme-front_banner_qr::after {
+      right:15px;
+      top:86px;
+      width:52px;
+      height:52px;
+      border:7px solid #fff;
+      outline:2px solid var(--preview-primary);
+      background:repeating-linear-gradient(45deg,#111 0 3px,#fff 3px 6px);
+    }
+    .theme-front_corner_crest::before {
+      left:0; top:0; width:92px; height:92px;
+      background:linear-gradient(135deg,var(--preview-primary) 0 48%,transparent 49%);
+    }
+    .theme-front_corner_crest::after {
+      right:0; bottom:0; width:100%; height:42px;
+      background:linear-gradient(165deg,transparent 0 35%,var(--preview-accent) 36% 48%,var(--preview-primary) 49%);
+    }
+    .theme-front_identity_band::before {
+      left:0; right:0; top:78px; height:36px;
+      background:var(--preview-primary);
+    }
+    .theme-front_identity_band::after {
+      left:20px; right:20px; bottom:18px; height:3px;
+      background:var(--preview-accent);
+    }
+    .theme-front_photo_qr::before {
+      inset:0;
+      background:linear-gradient(90deg,var(--preview-light) 0 64%,var(--preview-primary) 64% 100%);
+    }
+    .theme-front_photo_qr::after {
+      right:18px; top:122px; width:54px; height:54px;
+      border:6px solid #fff;
+      background:repeating-linear-gradient(45deg,#111 0 3px,#fff 3px 6px);
+    }
+    .theme-front_compact_header::before {
+      inset:0 0 auto; height:76px;
+      border-bottom:5px solid var(--preview-accent);
+      background:var(--preview-primary);
+    }
+    .theme-front_compact_header::after {
+      left:0; bottom:0; width:100%; height:28px;
+      background:var(--preview-secondary);
+    }
+    .theme-front_full_brand::before {
+      inset:0 0 auto; height:112px;
+      background:var(--preview-primary);
+      clip-path:polygon(0 0,100% 0,100% 76%,50% 100%,0 76%);
+    }
+    .theme-front_full_brand::after {
+      left:50%; top:72px; width:82px; height:82px;
+      transform:translateX(-50%);
+      border:5px solid #fff; border-radius:999px;
+      outline:2px solid var(--preview-accent);
+    }
+    .theme-back_school_seal::before {
+      left:50%; top:74px; width:120px; height:120px;
+      transform:translateX(-50%);
+      border:2px solid var(--preview-primary); border-radius:999px;
+      box-shadow:inset 0 0 0 9px var(--preview-light);
+    }
+    .theme-back_qr_registration::before {
+      left:50%; top:70px; width:132px; height:132px;
+      transform:translateX(-50%);
+      border:10px solid #fff; outline:2px solid var(--preview-primary);
+      background:repeating-linear-gradient(45deg,#111 0 4px,#fff 4px 8px);
+    }
+    .theme-back_rules_return::before {
+      left:0; right:0; top:0; height:44px;
+      background:var(--preview-primary);
+    }
+    .theme-back_rules_return::after {
+      left:18px; right:18px; bottom:24px; height:2px;
+      background:var(--preview-accent);
+    }
+    .theme-thumb {
+      position:relative; overflow:hidden; border:1px solid #dbe1ea; background:#fff;
+    }
+    .theme-thumb::before,.theme-thumb::after { content:""; position:absolute; pointer-events:none; }
+    .theme-thumb::before { inset:0 0 auto; height:18%; background:var(--thumb-primary); }
+    .theme-thumb::after { inset:auto 0 0; height:15%; background:var(--thumb-accent); }
+    .theme-thumb-front_modern_green,.theme-thumb-back_contact_grid { background:var(--thumb-secondary); }
+    .theme-thumb-front_corner_crest::before { width:44%; height:50%; clip-path:polygon(0 0,100% 0,0 100%); }
+    .theme-thumb-front_identity_band::before { top:30%; height:14%; }
+    .theme-thumb-front_photo_qr::before { inset:0 0 0 66%; height:auto; }
+    .theme-thumb-front_full_brand::before { height:38%; clip-path:polygon(0 0,100% 0,100% 70%,50% 100%,0 70%); }
+    .theme-thumb-back_school_seal::before { left:33%; top:25%; width:34%; height:34%; border-radius:999px; }
+    .theme-thumb-back_qr_registration::before { left:31%; top:22%; width:38%; height:40%; background:repeating-linear-gradient(45deg,#111 0 2px,#fff 2px 4px); }
+    .theme-thumb-back_rules_return::before { height:16%; }
   </style>
 </head>
-<body class="h-full bg-slate2-50 text-slate2-800">
+<body class="h-full bg-white text-slate2-800">
   <div id="app" class="flex h-full overflow-auto">
     {% include "dashboard/_sidebar.html" %}
 
@@ -161,17 +254,23 @@
         <div class="flex items-center gap-3">
           <button id="mobile-menu-btn" class="rounded-lg p-1.5 hover:bg-slate2-100 lg:hidden"><i data-lucide="menu" class="h-5 w-5"></i></button>
           <div>
-            <h1 class="font-display text-lg font-bold text-navy-500 sm:text-xl">Generate and Print ID Cards</h1>
-            <p class="hidden text-xs text-slate2-400 sm:block">Design, preview and batch-print student identification cards</p>
+            <div class="text-xs text-slate-500">Home <span class="mx-1.5 text-slate-300">/</span> Generate ID Card</div>
+            <h1 class="mt-0.5 text-lg font-semibold text-slate-900">Student ID Card Studio</h1>
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <button class="relative rounded-lg p-2 hover:bg-slate2-100"><i data-lucide="bell" class="h-4.5 w-4.5 text-slate2-500"></i><span class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500"></span></button>
-          <button class="rounded-lg p-2 hover:bg-slate2-100"><i data-lucide="help-circle" class="h-4.5 w-4.5 text-slate2-500"></i></button>
+          <a href="{% url 'dashboard_qr_export' %}{{ nav_school_query }}" class="hidden items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 sm:inline-flex">
+            <i data-lucide="qr-code" class="h-3.5 w-3.5"></i>QR/NFC Export
+          </a>
+          <div class="hidden text-right sm:block">
+            <div class="text-xs font-semibold text-slate-900">{{ request.user.first_name|default:request.user.username }}</div>
+            <div class="text-[11px] text-slate-500">{% if is_super_admin %}Super Admin{% else %}School Admin{% endif %}</div>
+          </div>
+          <div class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-700">{{ request.user.first_name|default:request.user.username|slice:":2"|upper }}</div>
         </div>
       </header>
 
-      <main class="flex-1 space-y-5 p-4 sm:p-6">
+      <main class="flex-1 space-y-4 bg-white p-4 sm:p-6">
         {% if messages %}
           <div class="space-y-3">
             {% for message in messages %}
@@ -182,33 +281,24 @@
           </div>
         {% endif %}
 
-        <div class="anim-in flex flex-wrap items-center gap-4 rounded-xl bg-white p-4 card-shadow">
-          <div class="flex min-w-[200px] flex-1 items-center gap-3">
-            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-navy-50"><i data-lucide="school" class="h-5 w-5 text-navy-500"></i></div>
-            <div>
-              <div class="text-xs font-medium text-slate2-400">Selected School</div>
-              <div class="font-semibold text-navy-500">{{ current_school.name }}</div>
-            </div>
+        <div class="anim-in flex flex-wrap items-center gap-4 rounded-lg bg-white p-5 card-shadow">
+          <div class="flex h-16 w-16 flex-none items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white">
+            {% if current_school.logo %}
+              <img src="{{ current_school.logo.url }}" alt="{{ current_school.name }}" class="h-full w-full object-contain p-1.5">
+            {% else %}
+              <i data-lucide="school" class="h-7 w-7 text-blue-700"></i>
+            {% endif %}
           </div>
-          <div class="flex gap-5 text-center">
-            <div>
-              <div class="text-lg font-bold text-navy-500">{{ school_student_total }}</div>
-              <div class="text-[11px] text-slate2-400">Total Students</div>
+          <div class="min-w-[240px] flex-1">
+            <div class="text-base font-bold text-blue-800">{{ current_school.name }}</div>
+            <div class="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-600">
+              {% if current_school.address %}<span class="inline-flex items-center gap-1.5"><i data-lucide="map-pin" class="h-3.5 w-3.5"></i>{{ current_school.address }}</span>{% endif %}
+              {% if current_school.phone %}<span class="inline-flex items-center gap-1.5"><i data-lucide="phone" class="h-3.5 w-3.5"></i>{{ current_school.phone }}</span>{% endif %}
+              {% if current_school.email %}<span class="inline-flex items-center gap-1.5"><i data-lucide="mail" class="h-3.5 w-3.5"></i>{{ current_school.email }}</span>{% endif %}
+              {% if current_school.website %}<span class="inline-flex items-center gap-1.5"><i data-lucide="globe-2" class="h-3.5 w-3.5"></i>{{ current_school.website }}</span>{% endif %}
             </div>
-            <div class="w-px bg-slate2-200"></div>
-            <div>
-              <div class="text-lg font-bold text-gold-500">{{ school_teacher_total }}</div>
-              <div class="text-[11px] text-slate2-400">Teachers / Staff</div>
-            </div>
-            <div class="w-px bg-slate2-200"></div>
-            <div>
-              <div class="text-lg font-bold text-emerald-600">{{ member_count }}</div>
-              <div class="text-[11px] text-slate2-400">Filtered</div>
-            </div>
+            {% if current_school.slogan %}<div class="mt-2 text-xs text-slate-600"><span class="font-semibold">Slogan:</span> “{{ current_school.slogan }}”</div>{% endif %}
           </div>
-          {% if is_super_admin %}
-            <a href="{% url 'admin_dashboard' %}{{ nav_school_query }}" class="ml-auto flex items-center gap-1 text-sm font-medium text-navy-500 hover:text-navy-600"><i data-lucide="repeat" class="h-3.5 w-3.5"></i>Change</a>
-          {% endif %}
         </div>
 
         <form method="get" class="anim-in anim-d1 rounded-xl bg-white p-5 card-shadow">
@@ -371,49 +461,38 @@
                 </div>
               </div>
 
-              <div class="anim-in anim-d4 rounded-xl bg-white p-5 card-shadow">
-                <h2 class="mb-1 flex items-center gap-2 text-sm font-semibold text-navy-500"><i data-lucide="palette" class="h-4 w-4 text-gold-500"></i>Card Theme</h2>
-                <p class="mb-3 text-[11px] text-slate2-400">Choose separate front and back designs. The live preview and exported cards use the selected palette.</p>
+              <div class="anim-in anim-d4 rounded-lg bg-white p-5 card-shadow">
+                <h2 class="mb-1 flex items-center gap-2 text-sm font-semibold text-slate-900"><i data-lucide="layout-template" class="h-4 w-4 text-blue-700"></i>Design Library</h2>
+                <p class="mb-4 text-[11px] text-slate2-500">All general Digital Nepal patterns plus Tap2Connect’s stronger QR/NFC designs. Front and back are selected independently.</p>
                 <div class="mb-3">
-                  <div class="mb-2 text-[11px] font-medium text-slate2-500">Front Design</div>
-                  <div class="grid grid-cols-1 gap-2" id="front-themes">
+                  <div class="mb-2 flex items-center justify-between text-[11px] font-semibold text-slate-700"><span>Front Designs</span><span class="font-normal text-slate-400">{{ print_front_design_choices|length }} designs</span></div>
+                  <div class="grid grid-cols-2 gap-2" id="front-themes">
                     {% for option in print_front_design_choices %}
-                      <button type="button" class="theme-card front-theme overflow-hidden rounded-lg border-2 {% if option.value == print_options.front_design %}border-navy-500{% else %}border-slate2-200{% endif %}" data-theme="{{ option.value }}" data-primary="{{ option.palette.0 }}" data-light="{{ option.palette.1 }}" data-secondary="{{ option.palette.2 }}" data-accent="{{ option.palette.3 }}">
-                        <div class="flex items-center gap-3 bg-slate2-50 p-3 text-left">
-                          <div class="aspect-[3/4] w-14 overflow-hidden rounded-md p-1" style="background:linear-gradient(160deg, {{ option.palette.0 }}, {{ option.palette.2 }});">
-                            <div class="flex h-full flex-col items-center justify-center">
-                              <div class="mb-1 h-5 w-5 rounded-full bg-white/30"></div>
-                              <div class="mb-0.5 h-0.5 w-8 rounded" style="background:{{ option.palette.3 }}"></div>
-                              <div class="h-0.5 w-6 rounded bg-white/40"></div>
-                            </div>
+                      <button type="button" class="theme-card front-theme overflow-hidden rounded-lg border-2 bg-white {% if option.value == print_options.front_design %}border-blue-700{% else %}border-slate2-200{% endif %}" data-theme="{{ option.value }}" data-primary="{{ option.palette.0 }}" data-light="{{ option.palette.1 }}" data-secondary="{{ option.palette.2 }}" data-accent="{{ option.palette.3 }}">
+                        <div class="p-2 text-left">
+                          <div class="theme-thumb theme-thumb-{{ option.value }} mx-auto aspect-[3/4] w-16 rounded" style="--thumb-primary:{{ option.palette.0 }};--thumb-light:{{ option.palette.1 }};--thumb-secondary:{{ option.palette.2 }};--thumb-accent:{{ option.palette.3 }};background-color:{{ option.palette.1 }};">
+                            <div class="absolute left-1/2 top-[26%] h-6 w-5 -translate-x-1/2 rounded-sm border border-slate-300 bg-slate-100"></div>
+                            <div class="absolute left-[18%] right-[18%] top-[56%] h-px bg-slate-300"></div>
+                            <div class="absolute left-[23%] right-[23%] top-[64%] h-px bg-slate-200"></div>
                           </div>
-                          <div>
-                            <div class="text-xs font-semibold text-navy-500">{{ option.label }}</div>
-                            <div class="mt-1 text-[11px] text-slate2-400">{{ option.description }}</div>
-                          </div>
+                          <div class="mt-2 truncate text-[11px] font-semibold text-slate-800">{{ option.label }}</div>
                         </div>
                       </button>
                     {% endfor %}
                   </div>
                 </div>
                 <div>
-                  <div class="mb-2 text-[11px] font-medium text-slate2-500">Back Design</div>
-                  <div class="grid grid-cols-1 gap-2" id="back-themes">
+                  <div class="mb-2 mt-4 flex items-center justify-between text-[11px] font-semibold text-slate-700"><span>Back Designs</span><span class="font-normal text-slate-400">{{ print_back_design_choices|length }} designs</span></div>
+                  <div class="grid grid-cols-2 gap-2" id="back-themes">
                     {% for option in print_back_design_choices %}
-                      <button type="button" class="theme-card back-theme overflow-hidden rounded-lg border-2 {% if option.value == print_options.back_design %}border-navy-500{% else %}border-slate2-200{% endif %}" data-theme="{{ option.value }}" data-primary="{{ option.palette.0 }}" data-light="{{ option.palette.1 }}" data-secondary="{{ option.palette.2 }}" data-accent="{{ option.palette.3 }}">
-                        <div class="flex items-center gap-3 bg-slate2-50 p-3 text-left">
-                          <div class="aspect-[3/4] w-14 overflow-hidden rounded-md p-1" style="background:{{ option.palette.1 }};">
-                            <div class="flex h-full flex-col items-center justify-center gap-0.5">
-                              <div class="h-0.5 w-7 rounded" style="background:{{ option.palette.2 }}"></div>
-                              <div class="h-0.5 w-5 rounded bg-slate2-200"></div>
-                              <div class="mt-0.5 h-4 w-4 rounded" style="background:{{ option.palette.3 }}"></div>
-                              <div class="h-0.5 w-6 rounded bg-slate2-200"></div>
-                            </div>
+                      <button type="button" class="theme-card back-theme overflow-hidden rounded-lg border-2 bg-white {% if option.value == print_options.back_design %}border-blue-700{% else %}border-slate2-200{% endif %}" data-theme="{{ option.value }}" data-primary="{{ option.palette.0 }}" data-light="{{ option.palette.1 }}" data-secondary="{{ option.palette.2 }}" data-accent="{{ option.palette.3 }}">
+                        <div class="p-2 text-left">
+                          <div class="theme-thumb theme-thumb-{{ option.value }} mx-auto aspect-[3/4] w-16 rounded" style="--thumb-primary:{{ option.palette.0 }};--thumb-light:{{ option.palette.1 }};--thumb-secondary:{{ option.palette.2 }};--thumb-accent:{{ option.palette.3 }};background-color:{{ option.palette.1 }};">
+                            <div class="absolute left-[18%] right-[18%] top-[34%] h-px bg-slate-300"></div>
+                            <div class="absolute left-[23%] right-[23%] top-[43%] h-px bg-slate-200"></div>
+                            <div class="absolute bottom-[24%] left-1/2 h-5 w-5 -translate-x-1/2 border border-slate-300 bg-white"></div>
                           </div>
-                          <div>
-                            <div class="text-xs font-semibold text-navy-500">{{ option.label }}</div>
-                            <div class="mt-1 text-[11px] text-slate2-400">{{ option.description }}</div>
-                          </div>
+                          <div class="mt-2 truncate text-[11px] font-semibold text-slate-800">{{ option.label }}</div>
                         </div>
                       </button>
                     {% endfor %}
@@ -608,21 +687,16 @@
 
       <div id="mobile-nav" class="fixed inset-0 z-50 hidden">
         <div class="absolute inset-0 bg-black/40" id="mobile-nav-bg"></div>
-        <div class="absolute bottom-0 left-0 top-0 w-64 overflow-auto bg-navy-500 p-5 text-white">
+        <div class="absolute bottom-0 left-0 top-0 w-64 overflow-auto border-r border-slate-200 bg-white p-5 text-slate-700">
           <div class="mb-5 flex items-center justify-between">
-            <div class="font-bold">Menu</div><button id="close-mobile-nav" class="rounded p-1 hover:bg-navy-400"><i data-lucide="x" class="h-5 w-5"></i></button>
+            <div class="font-bold text-slate-950">School workspace</div><button id="close-mobile-nav" class="rounded p-1 hover:bg-slate-100"><i data-lucide="x" class="h-5 w-5"></i></button>
           </div>
           <nav class="space-y-1 text-sm">
-            <a href="{% url 'admin_dashboard' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-navy-200 hover:bg-navy-400/30"><i data-lucide="layout-dashboard" class="h-4 w-4"></i>Dashboard</a>
-            {% if is_super_admin %}
-              <a href="{% url 'admin_dashboard' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-navy-200 hover:bg-navy-400/30"><i data-lucide="school" class="h-4 w-4"></i>Schools</a>
-            {% endif %}
-            <a href="{% url 'dashboard_students' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-navy-200 hover:bg-navy-400/30"><i data-lucide="users" class="h-4 w-4"></i>Students</a>
-            <a href="{% url 'dashboard_teachers' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-navy-200 hover:bg-navy-400/30"><i data-lucide="briefcase" class="h-4 w-4"></i>Teachers / Staff</a>
-            <a href="{% url 'dashboard_print' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg bg-navy-400/40 px-3 py-2.5 font-medium text-white"><i data-lucide="printer" class="h-4 w-4 text-gold-400"></i>ID Card Studio</a>
-            <a href="{% url 'dashboard_bulk_upload' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-navy-200 hover:bg-navy-400/30"><i data-lucide="upload-cloud" class="h-4 w-4"></i>Bulk Upload</a>
-            <a href="{% url 'dashboard_settings' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-navy-200 hover:bg-navy-400/30"><i data-lucide="settings" class="h-4 w-4"></i>Settings</a>
-            <a href="{% url 'dashboard_logout' %}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-navy-200 hover:bg-navy-400/30"><i data-lucide="log-out" class="h-4 w-4"></i>Logout</a>
+            <a href="{% url 'admin_dashboard' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-slate-50"><i data-lucide="layout-grid" class="h-4 w-4"></i>Overview</a>
+            <a href="{% url 'dashboard_students' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-slate-50"><i data-lucide="users" class="h-4 w-4"></i>Students</a>
+            <a href="{% url 'dashboard_print' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg bg-blue-50 px-3 py-2.5 font-semibold text-blue-700"><i data-lucide="credit-card" class="h-4 w-4 flex-none"></i>ID Card Studio</a>
+            <a href="{% url 'dashboard_reports' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-slate-50"><i data-lucide="bar-chart-3" class="h-4 w-4"></i>Reports</a>
+            <a href="{% url 'dashboard_settings' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-slate-50"><i data-lucide="settings" class="h-4 w-4"></i>Settings</a>
           </nav>
         </div>
       </div>
@@ -776,11 +850,11 @@
         applyThemePalette(btn);
         setPreviewTheme('card-front', btn.dataset.theme);
         document.querySelectorAll('.front-theme').forEach((b) => {
-          b.classList.remove('border-navy-500');
+          b.classList.remove('border-blue-700');
           b.classList.add('border-slate2-200');
         });
         btn.classList.remove('border-slate2-200');
-        btn.classList.add('border-navy-500');
+        btn.classList.add('border-blue-700');
       });
     });
 
@@ -790,11 +864,11 @@
         applyThemePalette(btn);
         setPreviewTheme('card-back', btn.dataset.theme);
         document.querySelectorAll('.back-theme').forEach((b) => {
-          b.classList.remove('border-navy-500');
+          b.classList.remove('border-blue-700');
           b.classList.add('border-slate2-200');
         });
         btn.classList.remove('border-slate2-200');
-        btn.classList.add('border-navy-500');
+        btn.classList.add('border-blue-700');
       });
     });
 

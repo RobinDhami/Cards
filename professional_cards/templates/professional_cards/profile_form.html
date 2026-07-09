@@ -1,10 +1,10 @@
 {% include "professional_cards/_dashboard_shell_start.html" %}
 <form method="post" enctype="multipart/form-data" class="space-y-5">
   {% csrf_token %}
-  <div class="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+  <div class="flex flex-col gap-3 rounded-xl border border-slate2-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between lg:p-5">
     <div>
-      <div class="text-xs font-semibold uppercase tracking-wider text-slate-400">{% if mode == "create" %}New Professional Card{% else %}Editing{% endif %}</div>
-      <div class="font-display text-xl font-bold text-slate-900">{{ profile.full_name|default:"Professional Profile" }}</div>
+      <div class="text-[11px] font-semibold uppercase tracking-wider text-navy-400">{% if mode == "create" %}New Networking Card{% else %}Editing{% endif %}</div>
+      <div class="font-display text-xl font-bold text-navy-500">{{ profile.full_name|default:"Networking Profile" }}</div>
       {% if public_url %}
         <a href="{{ public_url }}" target="_blank" class="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-teal-700">
           <i data-lucide="external-link" class="h-3.5 w-3.5"></i>{{ public_url }}
@@ -12,21 +12,135 @@
       {% endif %}
     </div>
     <div class="flex gap-2">
-      <a href="{% url 'professional_cards:list' %}" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50">Back</a>
-      <button class="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800">Save Profile</button>
+      {% if is_profile_owner_editor %}
+        {% if public_url %}<a href="{{ public_url }}" class="btn-action rounded-lg border border-slate2-200 px-4 py-2 text-[13px] font-semibold text-navy-500 hover:bg-slate2-50">View Card</a>{% endif %}
+      {% else %}
+        <a href="{% url 'professional_cards:list' %}" class="btn-action rounded-lg border border-slate2-200 px-4 py-2 text-[13px] font-semibold text-navy-500 hover:bg-slate2-50">Back</a>
+      {% endif %}
+      <button class="btn-action rounded-lg bg-navy-500 px-4 py-2 text-[13px] font-semibold text-white hover:bg-navy-600">Save Profile</button>
     </div>
   </div>
 
   {% if form.errors %}
     <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ form.errors }}</div>
   {% endif %}
+  <datalist id="profession-options">
+    {% for profession in profession_suggestions %}
+      <option value="{{ profession }}"></option>
+    {% endfor %}
+  </datalist>
+
+  <section class="rounded-xl border border-slate2-200 bg-white p-5 shadow-sm">
+    <h2 class="font-display text-lg font-bold text-navy-500">Profile Login</h2>
+    <p class="mt-1 text-sm text-slate-500">These credentials let the card owner log in from the public profile menu and update their own content.</p>
+    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+      <label class="block">
+        <span class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">{{ form.login_username.label }}</span>
+        {{ form.login_username }}
+        {% if form.login_username.help_text %}<span class="mt-1 block text-xs text-slate-400">{{ form.login_username.help_text }}</span>{% endif %}
+        {% for error in form.login_username.errors %}<span class="mt-1 block text-xs text-red-600">{{ error }}</span>{% endfor %}
+      </label>
+      <label class="block">
+        <span class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">{{ form.login_password.label }}</span>
+        {{ form.login_password }}
+        {% if form.login_password.help_text %}<span class="mt-1 block text-xs text-slate-400">{{ form.login_password.help_text }}</span>{% endif %}
+        {% for error in form.login_password.errors %}<span class="mt-1 block text-xs text-red-600">{{ error }}</span>{% endfor %}
+      </label>
+    </div>
+  </section>
+
+  <section class="rounded-xl border-2 border-teal-200 bg-white p-5 shadow-sm">
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="grid h-9 w-9 place-items-center rounded-lg bg-teal-50 text-teal-700">
+            <i data-lucide="layout-template" class="h-5 w-5"></i>
+          </span>
+          <div>
+            <h2 class="font-display text-lg font-bold text-navy-500">Card Design</h2>
+            <p class="text-sm text-slate-500">Switch the public profile layout without losing any profile data.</p>
+          </div>
+        </div>
+      </div>
+      <span class="rounded-full bg-teal-50 px-3 py-1 text-xs font-bold text-teal-700">Template selector</span>
+    </div>
+
+    <div class="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
+      <label class="block">
+        <span class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">{{ form.template_name.label }}</span>
+        {{ form.template_name }}
+        <span class="mt-2 block text-xs text-slate-500">Choose a template, click <strong>Save Profile</strong>, then open <strong>View Card</strong> to see the change.</span>
+      </label>
+      <label class="block">
+        <span class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">{{ form.accent_color.label }}</span>
+        {{ form.accent_color }}
+        <span class="mt-2 block text-xs text-slate-500">Used by Modern Identity for buttons, icons, and highlights.</span>
+      </label>
+    </div>
+
+    <div class="mt-4 grid gap-3 sm:grid-cols-2">
+      <div class="rounded-xl border border-slate2-200 bg-slate2-50 p-4">
+        <div class="flex items-center gap-2 font-semibold text-navy-500"><i data-lucide="briefcase" class="h-4 w-4 text-gold-600"></i>Professional Premium</div>
+        <p class="mt-2 text-xs leading-5 text-slate-500">Classic networking card with services, portfolio, recommendations, documents, and contact actions.</p>
+      </div>
+      <div class="rounded-xl border border-teal-200 bg-teal-50/60 p-4">
+        <div class="flex items-center gap-2 font-semibold text-navy-500"><i data-lucide="badge-check" class="h-4 w-4 text-teal-700"></i>Modern Identity</div>
+        <p class="mt-2 text-xs leading-5 text-slate-500">Editorial identity card with organization branding, credential ID, current focus, skills, and profile snapshot.</p>
+      </div>
+    </div>
+  </section>
 
   <div class="grid gap-5 lg:grid-cols-3">
-    <section class="space-y-4 rounded-lg border border-slate-200 bg-white p-5 lg:col-span-2">
-      <h2 class="font-display text-lg font-bold text-slate-900">Profile Details</h2>
+    <section class="space-y-4 rounded-xl border border-slate2-200 bg-white p-5 shadow-sm lg:col-span-2">
+      <h2 class="font-display text-lg font-bold text-navy-500">Profile Details</h2>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div class="rounded-xl border border-slate2-200 bg-slate2-50 p-4">
+          <div class="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">Profile Photo</div>
+              <div class="text-xs text-navy-400">Shown as the round photo on the public card.</div>
+            </div>
+            <div class="h-16 w-16 overflow-hidden rounded-full border-2 border-white bg-white shadow-sm">
+              {% if profile.profile_photo %}
+                <img src="{{ profile.profile_photo.url }}" alt="{{ profile.full_name }} profile photo" class="h-full w-full object-cover">
+              {% else %}
+                <div class="flex h-full w-full items-center justify-center bg-navy-100 text-lg font-bold text-navy-400">{{ profile.full_name|default:"N"|slice:":1"|upper }}</div>
+              {% endif %}
+            </div>
+          </div>
+          <input type="file" name="profile_photo" id="id_profile_photo" accept="image/*" class="w-full rounded-lg border border-dashed border-slate2-300 bg-white px-3 py-2 text-sm">
+          {% if profile.profile_photo %}
+            <label class="delete-toggle mt-3 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50">
+              <input type="checkbox" name="profile_photo-clear" id="profile_photo-clear_id" class="h-4 w-4 rounded border-red-200">
+              <i data-lucide="trash-2" class="h-4 w-4"></i>Delete current photo
+            </label>
+          {% endif %}
+        </div>
+
+        <div class="rounded-xl border border-slate2-200 bg-slate2-50 p-4">
+          <div class="mb-3">
+            <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">Cover Photo</div>
+            <div class="text-xs text-navy-400">Shown as the top banner on the public card.</div>
+          </div>
+          <div class="mb-3 h-24 overflow-hidden rounded-lg border border-white bg-white shadow-sm">
+            {% if profile.cover_photo %}
+              <img src="{{ profile.cover_photo.url }}" alt="{{ profile.full_name }} cover photo" class="h-full w-full object-cover">
+            {% else %}
+              <div class="h-full w-full bg-gradient-to-r from-navy-500 to-navy-700"></div>
+            {% endif %}
+          </div>
+          <input type="file" name="cover_photo" id="id_cover_photo" accept="image/*" class="w-full rounded-lg border border-dashed border-slate2-300 bg-white px-3 py-2 text-sm">
+          {% if profile.cover_photo %}
+            <label class="delete-toggle mt-3 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50">
+              <input type="checkbox" name="cover_photo-clear" id="cover_photo-clear_id" class="h-4 w-4 rounded border-red-200">
+              <i data-lucide="trash-2" class="h-4 w-4"></i>Delete current cover
+            </label>
+          {% endif %}
+        </div>
+      </div>
       <div class="grid gap-4 sm:grid-cols-2">
         {% for field in form.visible_fields %}
-          {% if field.name != "about" and field.name != "office_address" and field.name != "is_verified" and field.name != "is_active" %}
+          {% if field.name != "about" and field.name != "office_address" and field.name != "is_verified" and field.name != "is_active" and field.name != "login_username" and field.name != "login_password" and field.name != "profile_photo" and field.name != "cover_photo" and field.name != "google_maps_url" and field.name != "show_map_on_profile" and field.name != "template_name" and field.name != "accent_color" %}
             <label class="block">
               <span class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">{{ field.label }}</span>
               {{ field }}
@@ -44,16 +158,32 @@
         <span class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">{{ form.office_address.label }}</span>
         {{ form.office_address }}
       </label>
+      <div class="rounded-xl border border-slate2-200 bg-slate2-50 p-4">
+        <div class="grid gap-4 sm:grid-cols-2">
+          <label class="block">
+            <span class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">{{ form.google_maps_url.label }}</span>
+            {{ form.google_maps_url }}
+            <span class="mt-1 block text-xs text-navy-400">Paste a Google Maps share link or business location URL.</span>
+          </label>
+          <label class="flex items-center gap-2 self-end rounded-lg bg-white px-3 py-2 text-sm font-semibold text-navy-600">
+            {{ form.show_map_on_profile }}
+            Show map button on public profile
+          </label>
+        </div>
+        <p class="mt-2 text-xs text-navy-400">Keep this off if the owner wants to store a location privately but not show it to public visitors.</p>
+      </div>
       <div class="flex flex-wrap gap-4">
-        <label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">{{ form.is_active }} Active</label>
-        <label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">{{ form.is_verified }} Verified</label>
+        {% if not is_profile_owner_editor %}
+          <label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">{{ form.is_active }} Active</label>
+          <label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">{{ form.is_verified }} Verified</label>
+        {% endif %}
       </div>
     </section>
 
     <aside class="space-y-4">
       {% if public_url %}
-        <div class="rounded-lg border border-slate-200 bg-white p-5">
-          <h2 class="font-display text-lg font-bold text-slate-900">QR & Link</h2>
+        <div class="rounded-xl border border-slate2-200 bg-white p-5 shadow-sm">
+          <h2 class="font-display text-lg font-bold text-navy-500">QR & Link</h2>
           <img src="{% url 'professional_cards:qr_code' profile.slug %}" alt="QR code for {{ profile.full_name }}" class="mt-4 h-44 w-44 rounded-lg border border-slate-200 bg-white p-2">
           <div class="mt-3 break-all rounded-lg bg-slate-50 p-3 text-xs text-slate-600">{{ public_url }}</div>
           <div class="mt-3 flex gap-2">
@@ -62,50 +192,117 @@
           </div>
         </div>
       {% endif %}
-      <div class="rounded-lg border border-slate-200 bg-white p-5 text-sm text-slate-600">
-        <h2 class="font-display text-lg font-bold text-slate-900">Template</h2>
-        <p class="mt-2">Currently using the premium professional template. More professional templates can be added through the `template_name` choices later.</p>
+      <div class="rounded-xl border border-slate2-200 bg-white p-5 text-sm text-slate-600 shadow-sm">
+        <h2 class="font-display text-lg font-bold text-navy-500">Template</h2>
+        <p class="mt-2">Choose <strong>Professional Premium</strong> for the classic networking layout or <strong>Modern Identity</strong> for the richer editorial card with current focus, skills, profile snapshot, and credential details.</p>
       </div>
     </aside>
   </div>
 
-  <section class="rounded-lg border border-slate-200 bg-white p-5">
-    <h2 class="font-display text-lg font-bold text-slate-900">Services</h2>
+  <section class="rounded-xl border border-slate2-200 bg-white p-5 shadow-sm">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <h2 class="font-display text-lg font-bold text-navy-500">Skills / Services</h2>
+        <p class="mt-1 text-sm text-navy-400">Add services, skills, or strengths and choose the icon that best represents each one.</p>
+      </div>
+      <button type="button" data-add-formset="services" class="btn-action inline-flex items-center justify-center gap-2 rounded-lg bg-gold-500 px-4 py-2 text-[13px] font-semibold text-white shadow-sm hover:bg-gold-600">
+        <i data-lucide="plus" class="h-4 w-4"></i>Add Service
+      </button>
+    </div>
     {{ formsets.services.management_form }}
-    <div class="mt-4 space-y-3">
+    <div id="services-list" class="mt-4 space-y-3">
       {% for service_form in formsets.services.forms %}
-        <div class="grid gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3 sm:grid-cols-5">
+        <div class="formset-row grid gap-3 rounded-lg border border-slate2-200 bg-slate2-50 p-4 sm:grid-cols-5">
           {% for hidden in service_form.hidden_fields %}{{ hidden }}{% endfor %}
-          <label class="sm:col-span-2"><span class="mb-1 block text-xs font-semibold text-slate-500">Title</span>{{ service_form.title }}</label>
+          <label class="sm:col-span-2"><span class="mb-1 block text-xs font-semibold text-slate-500">Service / Skill</span>{{ service_form.title }}</label>
           <label><span class="mb-1 block text-xs font-semibold text-slate-500">Icon</span>{{ service_form.icon }}</label>
           <label><span class="mb-1 block text-xs font-semibold text-slate-500">Order</span>{{ service_form.display_order }}</label>
-          <label class="flex items-end gap-2 text-xs font-semibold text-red-600">{{ service_form.DELETE }} Delete</label>
+          <label class="delete-toggle flex cursor-pointer items-center justify-center gap-2 self-end rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50">
+            {{ service_form.DELETE }}<i data-lucide="trash-2" class="h-4 w-4"></i><span>Remove</span>
+          </label>
           <label class="sm:col-span-5"><span class="mb-1 block text-xs font-semibold text-slate-500">Description</span>{{ service_form.description }}</label>
         </div>
       {% endfor %}
     </div>
+    <div id="services-empty" class="mt-4 hidden rounded-xl border-2 border-dashed border-slate2-200 bg-slate2-50 px-6 py-10 text-center">
+      <i data-lucide="briefcase" class="mx-auto mb-3 h-8 w-8 text-slate2-300"></i>
+      <p class="text-sm font-semibold text-navy-500">No services added yet</p>
+      <p class="mt-1 text-xs text-navy-400">Add skills, services, or strengths for this card.</p>
+      <button type="button" data-add-formset="services" class="btn-action mt-4 inline-flex items-center gap-2 rounded-lg bg-gold-500 px-4 py-2 text-[13px] font-semibold text-white hover:bg-gold-600">
+        <i data-lucide="plus" class="h-4 w-4"></i>Add Service
+      </button>
+    </div>
+    <button type="button" data-add-formset="services" class="btn-action mt-4 inline-flex items-center gap-2 rounded-lg border border-gold-200 px-3 py-2 text-[13px] font-semibold text-gold-600 hover:bg-gold-50">
+      <i data-lucide="plus" class="h-4 w-4"></i>Add another service
+    </button>
+    <template id="services-empty-form">
+      <div class="formset-row grid gap-3 rounded-lg border border-slate2-200 bg-slate2-50 p-4 sm:grid-cols-5">
+        {% for hidden in formsets.services.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
+        <label class="sm:col-span-2"><span class="mb-1 block text-xs font-semibold text-slate-500">Service / Skill</span>{{ formsets.services.empty_form.title }}</label>
+        <label><span class="mb-1 block text-xs font-semibold text-slate-500">Icon</span>{{ formsets.services.empty_form.icon }}</label>
+        <label><span class="mb-1 block text-xs font-semibold text-slate-500">Order</span>{{ formsets.services.empty_form.display_order }}</label>
+        <label class="delete-toggle flex cursor-pointer items-center justify-center gap-2 self-end rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50">
+          {{ formsets.services.empty_form.DELETE }}<i data-lucide="trash-2" class="h-4 w-4"></i><span>Remove</span>
+        </label>
+        <label class="sm:col-span-5"><span class="mb-1 block text-xs font-semibold text-slate-500">Description</span>{{ formsets.services.empty_form.description }}</label>
+      </div>
+    </template>
   </section>
 
-  <section class="rounded-lg border border-slate-200 bg-white p-5">
-    <h2 class="font-display text-lg font-bold text-slate-900">Portfolio</h2>
+  <section class="rounded-xl border border-slate2-200 bg-white p-5 shadow-sm">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <h2 class="font-display text-lg font-bold text-navy-500">Portfolio / Highlights</h2>
+        <p class="mt-1 text-sm text-navy-400">Add projects, achievements, case studies, certificates, or work samples.</p>
+      </div>
+      <button type="button" data-add-formset="portfolio" class="btn-action inline-flex items-center justify-center gap-2 rounded-lg bg-gold-500 px-4 py-2 text-[13px] font-semibold text-white shadow-sm hover:bg-gold-600">
+        <i data-lucide="plus" class="h-4 w-4"></i>Add Portfolio Item
+      </button>
+    </div>
     {{ formsets.portfolio.management_form }}
-    <div class="mt-4 space-y-3">
+    <div id="portfolio-list" class="mt-4 space-y-3">
       {% for item_form in formsets.portfolio.forms %}
-        <div class="grid gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3 sm:grid-cols-5">
+        <div class="formset-row grid gap-3 rounded-lg border border-slate2-200 bg-slate2-50 p-4 sm:grid-cols-5">
           {% for hidden in item_form.hidden_fields %}{{ hidden }}{% endfor %}
           <label class="sm:col-span-2"><span class="mb-1 block text-xs font-semibold text-slate-500">Title</span>{{ item_form.title }}</label>
           <label class="sm:col-span-2"><span class="mb-1 block text-xs font-semibold text-slate-500">Link</span>{{ item_form.link }}</label>
           <label><span class="mb-1 block text-xs font-semibold text-slate-500">Order</span>{{ item_form.display_order }}</label>
           <label class="sm:col-span-2"><span class="mb-1 block text-xs font-semibold text-slate-500">Image</span>{{ item_form.image }}</label>
-          <label class="flex items-end gap-2 text-xs font-semibold text-red-600">{{ item_form.DELETE }} Delete</label>
+          <label class="delete-toggle flex cursor-pointer items-center justify-center gap-2 self-end rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50">
+            {{ item_form.DELETE }}<i data-lucide="trash-2" class="h-4 w-4"></i><span>Remove</span>
+          </label>
           <label class="sm:col-span-5"><span class="mb-1 block text-xs font-semibold text-slate-500">Description</span>{{ item_form.description }}</label>
         </div>
       {% endfor %}
     </div>
+    <div id="portfolio-empty" class="mt-4 hidden rounded-xl border-2 border-dashed border-slate2-200 bg-slate2-50 px-6 py-10 text-center">
+      <i data-lucide="image" class="mx-auto mb-3 h-8 w-8 text-slate2-300"></i>
+      <p class="text-sm font-semibold text-navy-500">No portfolio items added yet</p>
+      <p class="mt-1 text-xs text-navy-400">Add work samples, projects, or achievements.</p>
+      <button type="button" data-add-formset="portfolio" class="btn-action mt-4 inline-flex items-center gap-2 rounded-lg bg-gold-500 px-4 py-2 text-[13px] font-semibold text-white hover:bg-gold-600">
+        <i data-lucide="plus" class="h-4 w-4"></i>Add Portfolio Item
+      </button>
+    </div>
+    <button type="button" data-add-formset="portfolio" class="btn-action mt-4 inline-flex items-center gap-2 rounded-lg border border-gold-200 px-3 py-2 text-[13px] font-semibold text-gold-600 hover:bg-gold-50">
+      <i data-lucide="plus" class="h-4 w-4"></i>Add another portfolio item
+    </button>
+    <template id="portfolio-empty-form">
+      <div class="formset-row grid gap-3 rounded-lg border border-slate2-200 bg-slate2-50 p-4 sm:grid-cols-5">
+        {% for hidden in formsets.portfolio.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
+        <label class="sm:col-span-2"><span class="mb-1 block text-xs font-semibold text-slate-500">Title</span>{{ formsets.portfolio.empty_form.title }}</label>
+        <label class="sm:col-span-2"><span class="mb-1 block text-xs font-semibold text-slate-500">Link</span>{{ formsets.portfolio.empty_form.link }}</label>
+        <label><span class="mb-1 block text-xs font-semibold text-slate-500">Order</span>{{ formsets.portfolio.empty_form.display_order }}</label>
+        <label class="sm:col-span-2"><span class="mb-1 block text-xs font-semibold text-slate-500">Image</span>{{ formsets.portfolio.empty_form.image }}</label>
+        <label class="delete-toggle flex cursor-pointer items-center justify-center gap-2 self-end rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50">
+          {{ formsets.portfolio.empty_form.DELETE }}<i data-lucide="trash-2" class="h-4 w-4"></i><span>Remove</span>
+        </label>
+        <label class="sm:col-span-5"><span class="mb-1 block text-xs font-semibold text-slate-500">Description</span>{{ formsets.portfolio.empty_form.description }}</label>
+      </div>
+    </template>
   </section>
 
-  <section class="rounded-lg border border-slate-200 bg-white p-5">
-    <h2 class="font-display text-lg font-bold text-slate-900">Testimonials</h2>
+  <section class="rounded-xl border border-slate2-200 bg-white p-5 shadow-sm">
+    <h2 class="font-display text-lg font-bold text-slate-900">Recommendations / Testimonials</h2>
     {{ formsets.testimonials.management_form }}
     <div class="mt-4 space-y-3">
       {% for testimonial_form in formsets.testimonials.forms %}
@@ -115,14 +312,16 @@
           <label class="sm:col-span-2"><span class="mb-1 block text-xs font-semibold text-slate-500">Role / Company</span>{{ testimonial_form.client_role }}</label>
           <label><span class="mb-1 block text-xs font-semibold text-slate-500">Rating</span>{{ testimonial_form.rating }}</label>
           <label><span class="mb-1 block text-xs font-semibold text-slate-500">Order</span>{{ testimonial_form.display_order }}</label>
-          <label class="flex items-end gap-2 text-xs font-semibold text-red-600">{{ testimonial_form.DELETE }} Delete</label>
+          <label class="delete-toggle flex cursor-pointer items-center justify-center gap-2 self-end rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50">
+            {{ testimonial_form.DELETE }}<i data-lucide="trash-2" class="h-4 w-4"></i><span>Remove</span>
+          </label>
           <label class="sm:col-span-5"><span class="mb-1 block text-xs font-semibold text-slate-500">Review</span>{{ testimonial_form.review_text }}</label>
         </div>
       {% endfor %}
     </div>
   </section>
 
-  <section class="rounded-lg border border-slate-200 bg-white p-5">
+  <section class="rounded-xl border border-slate2-200 bg-white p-5 shadow-sm">
     <h2 class="font-display text-lg font-bold text-slate-900">Documents</h2>
     {{ formsets.documents.management_form }}
     <div class="mt-4 space-y-3">
@@ -133,16 +332,71 @@
           <label><span class="mb-1 block text-xs font-semibold text-slate-500">Type</span>{{ document_form.document_type }}</label>
           <label><span class="mb-1 block text-xs font-semibold text-slate-500">Order</span>{{ document_form.display_order }}</label>
           <label class="flex items-end gap-2 text-xs font-semibold text-slate-700">{{ document_form.is_public }} Public</label>
-          <label class="flex items-end gap-2 text-xs font-semibold text-red-600">{{ document_form.DELETE }} Delete</label>
+          <label class="delete-toggle flex cursor-pointer items-center justify-center gap-2 self-end rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50">
+            {{ document_form.DELETE }}<i data-lucide="trash-2" class="h-4 w-4"></i><span>Remove</span>
+          </label>
           <label class="sm:col-span-3"><span class="mb-1 block text-xs font-semibold text-slate-500">File</span>{{ document_form.file }}</label>
         </div>
       {% endfor %}
     </div>
   </section>
 
-  <div class="sticky bottom-0 flex justify-end gap-2 border-t border-slate-200 bg-white/95 p-3">
-    <a href="{% url 'professional_cards:list' %}" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold">Cancel</a>
-    <button class="rounded-lg bg-teal-700 px-5 py-2 text-sm font-semibold text-white">Save Profile</button>
+  <div class="sticky bottom-0 z-20 flex justify-end gap-2 border-t border-slate2-200 bg-white/95 p-3 shadow-[0_-6px_20px_rgba(16,34,59,.06)]">
+    {% if is_profile_owner_editor and public_url %}
+      <a href="{{ public_url }}" class="btn-action rounded-lg border border-slate2-200 px-4 py-2 text-[13px] font-semibold text-navy-500 hover:bg-slate2-50">View Card</a>
+    {% else %}
+      <a href="{% url 'professional_cards:list' %}" class="btn-action rounded-lg border border-slate2-200 px-4 py-2 text-[13px] font-semibold text-navy-500 hover:bg-slate2-50">Cancel</a>
+    {% endif %}
+    <button class="btn-action rounded-lg bg-navy-500 px-5 py-2 text-[13px] font-semibold text-white hover:bg-navy-600">Save Profile</button>
   </div>
 </form>
+<script>
+  function updateEmptyState(prefix) {
+    const list = document.getElementById(`${prefix}-list`);
+    const empty = document.getElementById(`${prefix}-empty`);
+    if (!list || !empty) return;
+    const visibleRows = [...list.querySelectorAll('.formset-row')].filter(row => row.style.display !== 'none');
+    empty.classList.toggle('hidden', visibleRows.length > 0);
+  }
+
+  function addFormsetRow(prefix) {
+    const totalInput = document.getElementById(`id_${prefix}-TOTAL_FORMS`);
+    const list = document.getElementById(`${prefix}-list`);
+    const template = document.getElementById(`${prefix}-empty-form`);
+    if (!totalInput || !list || !template) return;
+    const index = parseInt(totalInput.value || '0', 10);
+    const html = template.innerHTML.replace(/__prefix__/g, index);
+    list.insertAdjacentHTML('beforeend', html);
+    totalInput.value = index + 1;
+    const row = list.lastElementChild;
+    const orderInput = row?.querySelector(`input[name="${prefix}-${index}-display_order"]`);
+    if (orderInput && !orderInput.value) orderInput.value = index + 1;
+    updateEmptyState(prefix);
+    lucide.createIcons();
+  }
+
+  document.querySelectorAll('[data-add-formset]').forEach(button => {
+    button.addEventListener('click', () => addFormsetRow(button.dataset.addFormset));
+  });
+
+  document.querySelectorAll('.delete-toggle input[type="checkbox"]').forEach(input => {
+    input.classList.add('sr-only');
+  });
+
+  document.querySelectorAll('input[type="checkbox"][name$="-DELETE"], input[type="checkbox"][name$="-clear"]').forEach(input => {
+    input.addEventListener('change', () => {
+      const row = input.closest('.formset-row');
+      if (row) row.classList.toggle('opacity-50', input.checked);
+      const label = input.closest('.delete-toggle');
+      if (label) {
+        label.classList.toggle('bg-red-50', input.checked);
+        label.classList.toggle('ring-2', input.checked);
+        label.classList.toggle('ring-red-200', input.checked);
+      }
+    });
+  });
+
+  updateEmptyState('services');
+  updateEmptyState('portfolio');
+</script>
 {% include "professional_cards/_dashboard_shell_end.html" %}

@@ -1,6 +1,28 @@
       </main>
     </div>
+    {% if not is_profile_owner_editor %}
+      <div id="mobile-overlay" class="fixed inset-0 z-40 hidden bg-black/40 lg:hidden" onclick="closeMobileSidebar()"></div>
+      <aside id="mobile-sidebar" class="fixed bottom-0 left-0 top-0 z-50 hidden w-64 overflow-auto bg-navy-500 text-white lg:hidden"></aside>
+    {% endif %}
   </div>
-  <script>lucide.createIcons();</script>
+  <script>
+    function openMobileSidebar() {
+      const source = document.getElementById('sidebar');
+      const target = document.getElementById('mobile-sidebar');
+      if (!source || !target) return;
+      target.innerHTML = source.innerHTML;
+      target.classList.remove('hidden');
+      document.getElementById('mobile-overlay')?.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeMobileSidebar() {
+      document.getElementById('mobile-sidebar')?.classList.add('hidden');
+      document.getElementById('mobile-overlay')?.classList.add('hidden');
+    }
+
+    document.getElementById('mobile-menu-btn')?.addEventListener('click', openMobileSidebar);
+    lucide.createIcons();
+  </script>
 </body>
 </html>

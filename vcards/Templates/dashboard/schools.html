@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schools · Tap2Connect</title>
+  {% include "partials/tap2connect_favicon.html" %}
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing:border-box; }
+    html, body { min-height:100%; margin:0; font-family:Inter, sans-serif; background:#f7f9fc; color:#10213d; }
+    .panel { border:1px solid #e2e8f0; border-radius:10px; background:#fff; }
+    input:focus { outline:3px solid rgba(11,75,203,.12); border-color:#0b4bcb; }
+  </style>
+</head>
+<body>
+  <div class="flex min-h-screen">
+    {% include "dashboard/_sidebar.html" %}
+    <div class="min-w-0 flex-1">
+      <header class="sticky top-0 z-20 flex min-h-[72px] items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6">
+        <div class="flex items-center gap-3">
+          <button id="mobile-menu-btn" type="button" class="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 lg:hidden"><i data-lucide="menu" class="h-4 w-4"></i></button>
+          <div><h1 class="text-xl font-semibold tracking-tight text-slate-950">Schools</h1><p class="mt-0.5 text-[11px] text-slate-500">Create institutions and assign their administrators</p></div>
+        </div>
+        <button id="open-create-school" type="button" class="inline-flex items-center gap-2 rounded-lg bg-blue-700 px-4 py-2.5 text-xs font-semibold text-white hover:bg-blue-800"><i data-lucide="plus" class="h-4 w-4"></i>Add school</button>
+      </header>
+
+      <main class="mx-auto max-w-[1440px] space-y-4 p-4 sm:p-6">
+        {% if messages %}
+          <div class="space-y-2">{% for message in messages %}<div class="rounded-lg border px-4 py-3 text-sm {% if message.tags == 'error' %}border-red-200 bg-red-50 text-red-700{% else %}border-emerald-200 bg-emerald-50 text-emerald-700{% endif %}">{{ message }}</div>{% endfor %}</div>
+        {% endif %}
+
+        <section class="grid gap-3 sm:grid-cols-3">
+          <article class="panel p-5"><div class="flex items-center justify-between text-xs text-slate-500"><span>Institutions</span><i data-lucide="school" class="h-4 w-4 text-blue-700"></i></div><div class="mt-2 text-2xl font-semibold text-slate-950">{{ school_count }}</div><p class="mt-1 text-[10px] text-slate-500">Active school workspaces</p></article>
+          <article class="panel p-5"><div class="flex items-center justify-between text-xs text-slate-500"><span>Students managed</span><i data-lucide="users" class="h-4 w-4 text-emerald-600"></i></div><div class="mt-2 text-2xl font-semibold text-slate-950">{{ student_count }}</div><p class="mt-1 text-[10px] text-slate-500">Across every institution</p></article>
+          <article class="panel p-5"><div class="flex items-center justify-between text-xs text-slate-500"><span>School admins</span><i data-lucide="shield-check" class="h-4 w-4 text-violet-600"></i></div><div class="mt-2 text-2xl font-semibold text-slate-950">{{ admin_count }}</div><p class="mt-1 text-[10px] text-slate-500">Assigned administrator accounts</p></article>
+        </section>
+
+        <section class="panel overflow-hidden">
+          <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+            <div><h2 class="text-sm font-semibold text-slate-950">Institution directory</h2><p class="mt-1 text-[11px] text-slate-500">Each administrator is restricted to their assigned school workspace.</p></div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[820px] text-left">
+              <thead class="bg-slate-50 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                <tr><th class="px-5 py-3">School</th><th class="px-5 py-3">Administrator</th><th class="px-5 py-3 text-center">Students</th><th class="px-5 py-3 text-center">Live IDs</th><th class="px-5 py-3 text-right">Actions</th></tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                {% for school in schools %}
+                  <tr class="hover:bg-slate-50">
+                    <td class="px-5 py-4">
+                      <div class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 flex-none items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white">{% if school.logo %}<img src="{{ school.logo.url }}" alt="" class="h-full w-full object-contain p-1">{% else %}<i data-lucide="school" class="h-4 w-4 text-blue-700"></i>{% endif %}</div>
+                        <div class="min-w-0"><div class="truncate text-xs font-semibold text-slate-900">{{ school.name }}</div><div class="mt-1 truncate text-[10px] text-slate-500">{{ school.address|default:"Address not added" }}</div></div>
+                      </div>
+                    </td>
+                    <td class="px-5 py-4"><div class="text-xs font-medium text-slate-700">{{ school.admin_user.username|default:"Not assigned" }}</div><div class="mt-1 text-[10px] text-slate-500">{{ school.email|default:"No school email" }}</div></td>
+                    <td class="px-5 py-4 text-center text-xs font-semibold text-slate-700">{{ school.student_total }}</td>
+                    <td class="px-5 py-4 text-center"><span class="rounded-md bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700">{{ school.live_total }} live</span></td>
+                    <td class="px-5 py-4">
+                      <div class="flex justify-end gap-2">
+                        <a href="{% url 'admin_dashboard' %}?school={{ school.id }}" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-[11px] font-semibold text-slate-700 hover:bg-white"><i data-lucide="layout-grid" class="h-3.5 w-3.5"></i>Open</a>
+                        <a href="{% url 'dashboard_settings' %}?school={{ school.id }}" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-[11px] font-semibold text-slate-700 hover:bg-white"><i data-lucide="settings" class="h-3.5 w-3.5"></i>Settings</a>
+                      </div>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="5" class="px-5 py-14 text-center text-sm text-slate-500">Create your first school workspace to begin.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div id="create-school-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/45 p-4">
+    <section class="w-full max-w-2xl rounded-xl bg-white shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="create-school-title">
+      <header class="flex items-start justify-between border-b border-slate-200 px-6 py-5">
+        <div><h2 id="create-school-title" class="text-lg font-semibold text-slate-950">Create school workspace</h2><p class="mt-1 text-xs text-slate-500">The assigned administrator will only access this institution.</p></div>
+        <button id="close-create-school" type="button" aria-label="Close" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><i data-lucide="x" class="h-4 w-4"></i></button>
+      </header>
+      <form method="post" action="{% url 'add_college' %}" enctype="multipart/form-data" class="space-y-5 p-6">
+        {% csrf_token %}
+        <div class="grid gap-4 sm:grid-cols-2">
+          <label class="text-xs font-medium text-slate-700">School name <span class="text-red-500">*</span><input required name="name" class="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm" placeholder="Everest Valley College"></label>
+          <label class="text-xs font-medium text-slate-700">School email<input type="email" name="email" class="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm" placeholder="office@school.edu"></label>
+          <label class="text-xs font-medium text-slate-700">Phone<input name="phone" class="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm" placeholder="+977"></label>
+          <label class="text-xs font-medium text-slate-700">Address<input name="address" class="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm" placeholder="City, Province"></label>
+          <label class="text-xs font-medium text-slate-700">Admin username <span class="text-red-500">*</span><input required name="admin_username" autocomplete="off" class="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm"></label>
+          <label class="text-xs font-medium text-slate-700">Temporary password <span class="text-red-500">*</span><input required type="password" name="admin_password" autocomplete="new-password" class="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm"></label>
+        </div>
+        <div class="flex justify-end gap-2 border-t border-slate-200 pt-5">
+          <button id="cancel-create-school" type="button" class="rounded-lg border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-700">Cancel</button>
+          <button type="submit" class="rounded-lg bg-blue-700 px-4 py-2.5 text-xs font-semibold text-white">Create workspace</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <div id="mobile-overlay" class="fixed inset-0 z-40 hidden bg-slate-950/40 lg:hidden"></div>
+  <aside id="mobile-sidebar" class="fixed bottom-0 left-0 top-0 z-50 hidden w-72 overflow-auto bg-white shadow-2xl lg:hidden"></aside>
+  <script>
+    const modal = document.getElementById('create-school-modal');
+    function openModal() { modal?.classList.remove('hidden'); modal?.classList.add('flex'); }
+    function closeModal() { modal?.classList.add('hidden'); modal?.classList.remove('flex'); }
+    document.getElementById('open-create-school')?.addEventListener('click', openModal);
+    document.getElementById('close-create-school')?.addEventListener('click', closeModal);
+    document.getElementById('cancel-create-school')?.addEventListener('click', closeModal);
+    modal?.addEventListener('click', event => { if (event.target === modal) closeModal(); });
+
+    function openMobileSidebar() {
+      const source = document.getElementById('sidebar');
+      const target = document.getElementById('mobile-sidebar');
+      if (!source || !target) return;
+      target.innerHTML = source.innerHTML;
+      target.classList.remove('hidden');
+      document.getElementById('mobile-overlay')?.classList.remove('hidden');
+      lucide.createIcons();
+    }
+    function closeMobileSidebar() {
+      document.getElementById('mobile-sidebar')?.classList.add('hidden');
+      document.getElementById('mobile-overlay')?.classList.add('hidden');
+    }
+    document.getElementById('mobile-menu-btn')?.addEventListener('click', openMobileSidebar);
+    document.getElementById('mobile-overlay')?.addEventListener('click', closeMobileSidebar);
+    lucide.createIcons();
+  </script>
+</body>
+</html>

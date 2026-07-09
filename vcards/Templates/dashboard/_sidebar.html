@@ -1,61 +1,82 @@
-<aside id="sidebar" class="hidden w-64 flex-shrink-0 flex-col text-white lg:flex" style="min-height:100%; background-color:#1e3a5f">
-  <div class="border-b border-white/10 p-5">
+<aside id="sidebar" class="hidden w-60 flex-shrink-0 flex-col border-r border-slate-200 bg-white text-slate-700 lg:flex" style="min-height:100%">
+  <div class="border-b border-slate-200 px-5 py-5">
     <div class="flex items-center gap-3">
-      <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gold-400">
-        <i data-lucide="graduation-cap" class="h-5 w-5 text-navy-900"></i>
-      </div>
-      <div>
-        <div class="font-display text-sm font-bold leading-tight">{{ current_school.name|default:"School Workspace"|truncatechars:18 }}</div>
-        <div class="text-[11px] uppercase tracking-widest text-navy-200 opacity-70">Admin Portal</div>
-      </div>
+      {% if current_school %}
+        <div class="flex h-10 w-10 flex-none items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white">
+          {% if current_school.logo %}
+          <img src="{{ current_school.logo.url }}" alt="{{ current_school.name }}" class="h-full w-full object-contain p-1">
+          {% else %}
+            <i data-lucide="graduation-cap" class="h-5 w-5 text-blue-700"></i>
+          {% endif %}
+        </div>
+        <div class="min-w-0">
+          <div class="truncate text-sm font-bold text-slate-900">{{ current_school.name }}</div>
+          <div class="mt-0.5 text-[11px] text-slate-500">School administration</div>
+          <div class="mt-1 flex items-center gap-1 text-[9px] font-medium text-slate-400">
+            <span>by</span>
+            {% include "partials/tap2connect_logo.html" with logo_width="48px" logo_height="17px" logo_radius="3px" logo_alt="Tap2Connect platform" %}
+          </div>
+        </div>
+      {% else %}
+        {% include "partials/tap2connect_logo.html" with logo_width="78px" logo_height="29px" logo_radius="5px" %}
+        <div class="min-w-0">
+          <div class="truncate text-sm font-bold text-slate-900">Tap2Connect</div>
+          <div class="mt-0.5 text-[11px] text-slate-500">Platform administration</div>
+        </div>
+      {% endif %}
     </div>
   </div>
+
   <nav class="flex-1 space-y-1 overflow-auto px-3 py-4 text-sm">
-    <a href="{% url 'admin_dashboard' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'home' %}bg-white/12 text-white font-medium{% else %}text-navy-200 hover:bg-white/8 hover:text-white{% endif %}">
-      <i data-lucide="layout-dashboard" class="h-4 w-4 {% if active_module == 'home' %}text-gold-400{% endif %}"></i>Dashboard
+    <a href="{% url 'admin_dashboard' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'home' %}bg-blue-700 font-semibold text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+      <i data-lucide="layout-grid" class="h-4 w-4 flex-none"></i>Overview
     </a>
     {% if is_super_admin %}
-      <a href="{% url 'admin_dashboard' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition text-navy-200 hover:bg-white/8 hover:text-white">
-        <i data-lucide="school" class="h-4 w-4"></i>Schools
-      </a>
-      <a href="{% url 'professional_cards:list' %}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'professional_cards' %}bg-white/12 text-white font-medium{% else %}text-navy-200 hover:bg-white/8 hover:text-white{% endif %}">
-        <i data-lucide="badge-check" class="h-4 w-4 {% if active_module == 'professional_cards' %}text-gold-400{% endif %}"></i>Professional Cards
+      <a href="{% url 'dashboard_schools' %}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'schools' %}bg-blue-700 font-semibold text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+        <i data-lucide="school" class="h-4 w-4 flex-none"></i>Schools
       </a>
     {% endif %}
-    <a href="{% url 'dashboard_students' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'students' %}bg-white/12 text-white font-medium{% else %}text-navy-200 hover:bg-white/8 hover:text-white{% endif %}">
-      <i data-lucide="users" class="h-4 w-4 {% if active_module == 'students' %}text-gold-400{% endif %}"></i>Students
+    <a href="{% url 'dashboard_students' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'students' %}bg-blue-700 font-semibold text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+      <i data-lucide="users" class="h-4 w-4 flex-none"></i>Students
     </a>
-    <a href="{% url 'dashboard_teachers' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'teachers' %}bg-white/12 text-white font-medium{% else %}text-navy-200 hover:bg-white/8 hover:text-white{% endif %}">
-      <i data-lucide="briefcase" class="h-4 w-4 {% if active_module == 'teachers' %}text-gold-400{% endif %}"></i>Teachers / Staff
+    <a href="{% url 'dashboard_print' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'print' %}bg-blue-700 font-semibold text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+      <i data-lucide="credit-card" class="h-4 w-4 flex-none"></i>ID Card Studio
     </a>
-    <a href="{% url 'dashboard_print' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'print' %}bg-white/12 text-white font-medium{% else %}text-navy-200 hover:bg-white/8 hover:text-white{% endif %}">
-      <i data-lucide="printer" class="h-4 w-4 {% if active_module == 'print' %}text-gold-400{% endif %}"></i>ID Card Studio
+    {% if is_super_admin %}
+      <a href="{% url 'professional_cards:list' %}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'professional_cards' %}bg-blue-700 font-semibold text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+        <i data-lucide="badge-check" class="h-4 w-4 flex-none"></i>Professional Cards
+      </a>
+    {% endif %}
+    <a href="{% url 'dashboard_reports' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'reports' %}bg-blue-700 font-semibold text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+      <i data-lucide="bar-chart-3" class="h-4 w-4 flex-none"></i>Reports
     </a>
-    <a href="{% url 'dashboard_qr_export' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'qr_export' %}bg-white/12 text-white font-medium{% else %}text-navy-200 hover:bg-white/8 hover:text-white{% endif %}">
-      <i data-lucide="database" class="h-4 w-4 {% if active_module == 'qr_export' %}text-gold-400{% endif %}"></i>Data Center
-    </a>
-    <a href="{% url 'dashboard_library' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'library' %}bg-white/12 text-white font-medium{% else %}text-navy-200 hover:bg-white/8 hover:text-white{% endif %}">
-      <i data-lucide="library" class="h-4 w-4 {% if active_module == 'library' %}text-gold-400{% endif %}"></i>Library
-    </a>
-    <a href="{% url 'dashboard_bulk_upload' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'bulk_upload' %}bg-white/12 text-white font-medium{% else %}text-navy-200 hover:bg-white/8 hover:text-white{% endif %}">
-      <i data-lucide="upload-cloud" class="h-4 w-4 {% if active_module == 'bulk_upload' %}text-gold-400{% endif %}"></i>Bulk Upload
-    </a>
-    <a href="{% url 'dashboard_settings' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'settings' %}bg-white/12 text-white font-medium{% else %}text-navy-200 hover:bg-white/8 hover:text-white{% endif %}">
-      <i data-lucide="settings" class="h-4 w-4 {% if active_module == 'settings' %}text-gold-400{% endif %}"></i>Settings
+    <a href="{% url 'dashboard_settings' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'settings' %}bg-blue-700 font-semibold text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+      <i data-lucide="settings" class="h-4 w-4 flex-none"></i>Settings
     </a>
   </nav>
-  <div class="border-t border-white/10 p-4 space-y-3">
-    <a href="{% url 'dashboard_logout' %}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-navy-200 transition hover:bg-white/8 hover:text-white">
-      <i data-lucide="log-out" class="h-4 w-4"></i>Logout
-    </a>
-    <div class="flex items-center gap-3">
-      <div class="flex h-8 w-8 items-center justify-center rounded-full bg-navy-600 text-xs font-semibold text-gold-400">
-        {{ request.user.first_name|default:request.user.username|slice:":2"|upper }}
+
+  <div class="border-t border-slate-200 p-3">
+    <details class="group relative">
+      <summary class="flex cursor-pointer list-none items-center gap-3 rounded-lg px-2 py-2 transition hover:bg-slate-50">
+        <div class="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-700">
+          {{ request.user.first_name|default:request.user.username|slice:":2"|upper }}
+        </div>
+        <div class="min-w-0 flex-1 text-xs">
+          <div class="truncate font-semibold text-slate-900">{{ request.user.first_name|default:request.user.username }}</div>
+          <div class="text-slate-500">{% if is_super_admin %}Super Admin{% else %}School Admin{% endif %}</div>
+        </div>
+        <i data-lucide="chevron-up" class="h-4 w-4 flex-none text-slate-400 transition group-open:rotate-180"></i>
+      </summary>
+      <div class="absolute bottom-[calc(100%+8px)] left-0 right-0 z-50 rounded-lg border border-slate-200 bg-white p-2 shadow-xl">
+        <div class="border-b border-slate-100 px-3 py-2">
+          <div class="truncate text-[11px] font-semibold text-slate-900">{{ request.user.username }}</div>
+          <div class="mt-0.5 text-[10px] text-slate-500">Signed-in account</div>
+        </div>
+        <a href="{% url 'dashboard_logout' %}" class="mt-1 flex items-center gap-2 rounded-md px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50">
+          <i data-lucide="log-out" class="h-4 w-4"></i>
+          Sign out
+        </a>
       </div>
-      <div class="text-xs">
-        <div class="font-medium text-white">{{ request.user.first_name|default:"Admin User" }}</div>
-        <div class="text-navy-300">{% if is_super_admin %}Super Admin{% else %}School Admin{% endif %}</div>
-      </div>
-    </div>
+    </details>
   </div>
 </aside>

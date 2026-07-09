@@ -1,9 +1,11 @@
+{% load static %}
 <!doctype html>
 <html lang="en" class="h-full">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Add {{ role_type|title }} — SchoolCard Admin</title>
+  <title>Add {{ role_type|title }} — Tap2Connect Admin</title>
+  {% include "partials/tap2connect_favicon.html" %}
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -64,18 +66,16 @@
   <div class="flex h-full overflow-auto" id="app-root">
     <aside class="desktop-sidebar flex w-60 flex-shrink-0 flex-col bg-navy-700" style="min-height:100%">
       <div class="flex items-center gap-3 border-b border-white/10 p-5">
-        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gold-400">
-          <i data-lucide="graduation-cap" class="h-5 w-5 text-navy-800"></i>
-        </div>
+        {% include "partials/tap2connect_logo.html" with logo_width="86px" logo_height="31px" logo_radius="5px" %}
         <div>
-          <div class="text-sm font-bold tracking-wide text-white">SchoolCard</div>
+          <div class="text-sm font-bold tracking-wide text-white">Tap2Connect</div>
           <div class="text-[0.65rem] uppercase tracking-widest text-navy-300">Admin Panel</div>
         </div>
       </div>
       <nav class="flex-1 space-y-0.5 p-3">
         <a href="{% url 'admin_dashboard' %}?school={{ college.id }}" class="sidebar-link"><i data-lucide="layout-dashboard" class="h-4 w-4"></i>Dashboard</a>
         {% if is_super_admin %}
-          <a href="{% url 'admin_dashboard' %}?school={{ college.id }}" class="sidebar-link"><i data-lucide="building" class="h-4 w-4"></i>Schools</a>
+          <a href="{% url 'dashboard_schools' %}" class="sidebar-link"><i data-lucide="building" class="h-4 w-4"></i>Schools</a>
         {% endif %}
         <a href="{% url 'dashboard_students' %}?school={{ college.id }}" class="sidebar-link active"><i data-lucide="users" class="h-4 w-4"></i>Students</a>
         <a href="{% url 'dashboard_teachers' %}?school={{ college.id }}" class="sidebar-link"><i data-lucide="briefcase" class="h-4 w-4"></i>Teachers</a>
@@ -195,7 +195,8 @@
               <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label class="form-label">Username <span class="text-red-500">*</span></label>
-                  <input type="text" name="username" class="form-input-style" placeholder="e.g. aarav.sharma.2025" required>
+                  <input type="text" id="student-username" name="username" class="form-input-style" placeholder="{{ username_example }}" autocomplete="off">
+                  <p class="mt-1.5 text-xs text-navy-300">Generated from the school name and roll number. You may replace it before saving.</p>
                 </div>
                 <div>
                   <label class="form-label">School Role <span class="text-red-500">*</span></label>
@@ -362,9 +363,9 @@
   <div id="mobile-overlay" class="fixed inset-0 z-40 hidden bg-black/40" onclick="closeMobileMenu()"></div>
   <aside id="mobile-sidebar" class="fixed left-0 top-0 bottom-0 z-50 w-64 -translate-x-full bg-navy-700 transition-transform duration-200">
     <div class="flex items-center gap-3 border-b border-white/10 p-5">
-      <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gold-400"><i data-lucide="graduation-cap" class="h-5 w-5 text-navy-800"></i></div>
+      {% include "partials/tap2connect_logo.html" with logo_width="86px" logo_height="31px" logo_radius="5px" %}
       <div>
-        <div class="text-sm font-bold text-white">SchoolCard</div>
+        <div class="text-sm font-bold text-white">Tap2Connect</div>
         <div class="text-[0.65rem] uppercase tracking-widest text-navy-300">Admin Panel</div>
       </div>
       <button onclick="closeMobileMenu()" class="ml-auto text-white/60 hover:text-white"><i data-lucide="x" class="h-5 w-5"></i></button>
@@ -372,7 +373,7 @@
     <nav class="space-y-0.5 p-3">
       <a href="{% url 'admin_dashboard' %}?school={{ college.id }}" class="sidebar-link"><i data-lucide="layout-dashboard" class="h-4 w-4"></i>Dashboard</a>
       {% if is_super_admin %}
-        <a href="{% url 'admin_dashboard' %}?school={{ college.id }}" class="sidebar-link"><i data-lucide="building" class="h-4 w-4"></i>Schools</a>
+        <a href="{% url 'dashboard_schools' %}" class="sidebar-link"><i data-lucide="building" class="h-4 w-4"></i>Schools</a>
       {% endif %}
       <a href="{% url 'dashboard_students' %}?school={{ college.id }}" class="sidebar-link active"><i data-lucide="users" class="h-4 w-4"></i>Students</a>
       <a href="{% url 'dashboard_teachers' %}?school={{ college.id }}" class="sidebar-link"><i data-lucide="briefcase" class="h-4 w-4"></i>Teachers</a>
@@ -382,6 +383,30 @@
   </aside>
 
   <script>
+    const usernamePrefix = "{{ student_username_prefix|escapejs }}";
+    const usernameInput = document.getElementById('student-username');
+    const nameInput = document.querySelector('input[name="name"]');
+    const rollInput = document.querySelector('input[name="roll_number"]');
+    let usernameEdited = false;
+
+    function usernamePart(value) {
+      return (value || '')
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '.')
+        .replace(/^\.+|\.+$/g, '');
+    }
+
+    function suggestUsername() {
+      if (!usernameInput || usernameEdited) return;
+      const suffix = usernamePart(rollInput?.value) || usernamePart(nameInput?.value);
+      usernameInput.value = suffix ? `${usernamePrefix}.${suffix}` : '';
+    }
+
+    usernameInput?.addEventListener('input', () => { usernameEdited = Boolean(usernameInput.value.trim()); });
+    nameInput?.addEventListener('input', suggestUsername);
+    rollInput?.addEventListener('input', suggestUsername);
+
     function handleUpload(input, zoneId, previewId) {
       const zone = document.getElementById(zoneId);
       const preview = document.getElementById(previewId);

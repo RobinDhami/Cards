@@ -7,6 +7,14 @@ from django.utils.text import slugify
 class ProfessionalProfile(models.Model):
     TEMPLATE_CHOICES = [
         ('professional_premium', 'Professional Premium'),
+        ('modern_identity', 'Modern Identity'),
+    ]
+    PROFILE_TYPE_CHOICES = [
+        ('student', 'Student'),
+        ('professional', 'Professional'),
+        ('entrepreneur', 'Entrepreneur'),
+        ('creator', 'Creator'),
+        ('other', 'Other'),
     ]
 
     owner = models.ForeignKey(
@@ -16,15 +24,51 @@ class ProfessionalProfile(models.Model):
         blank=True,
         null=True,
     )
+    profile_type = models.CharField(max_length=30, choices=PROFILE_TYPE_CHOICES, default='professional')
     full_name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=180, unique=True, help_text='Used for the public profile URL.')
     profile_photo = models.ImageField(upload_to='professional_profiles/photos/', blank=True, null=True)
     cover_photo = models.ImageField(upload_to='professional_profiles/covers/', blank=True, null=True)
+    profession = models.CharField(max_length=160, blank=True, default='')
     designation = models.CharField(max_length=160, blank=True, default='')
     company_name = models.CharField(max_length=180, blank=True, default='')
+    organization_logo = models.ImageField(
+        upload_to='professional_profiles/organization_logos/',
+        blank=True,
+        null=True,
+    )
+    organization_tagline = models.CharField(
+        max_length=180,
+        blank=True,
+        default='',
+        help_text='A short line shown below the company, college, or organization name.',
+    )
+    profile_identifier_label = models.CharField(
+        max_length=60,
+        blank=True,
+        default='Profile ID',
+        help_text='For example: Employee ID, Member ID, Registration No., or Creator ID.',
+    )
+    profile_identifier = models.CharField(max_length=120, blank=True, default='')
     industry = models.CharField(max_length=120, blank=True, default='')
+    academic_section = models.CharField(
+        max_length=80,
+        blank=True,
+        default='',
+        help_text='Optional class, batch, cohort, or section for student profiles.',
+    )
     short_tagline = models.CharField(max_length=255, blank=True, default='')
     about = models.TextField(blank=True, default='')
+    current_focus = models.TextField(
+        blank=True,
+        default='',
+        help_text='What you are currently building, learning, offering, or working toward.',
+    )
+    featured_interest = models.TextField(
+        blank=True,
+        default='',
+        help_text='A featured specialty, interest, initiative, or professional goal.',
+    )
     phone = models.CharField(max_length=40, blank=True, default='')
     whatsapp_number = models.CharField(max_length=40, blank=True, default='')
     email = models.EmailField(blank=True, default='')
@@ -37,6 +81,7 @@ class ProfessionalProfile(models.Model):
     booking_url = models.URLField(blank=True, default='')
     office_address = models.TextField(blank=True, default='')
     google_maps_url = models.URLField(blank=True, default='')
+    show_map_on_profile = models.BooleanField(default=False)
     business_hours = models.CharField(max_length=180, blank=True, default='')
     years_of_experience = models.PositiveIntegerField(blank=True, null=True)
     location = models.CharField(max_length=160, blank=True, default='')

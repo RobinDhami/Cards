@@ -2,737 +2,627 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% if profile_unavailable %}Profile unavailable{% else %}{{ student.name|default:"Professional Student Digital Profile" }}{% endif %}</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if profile_unavailable %}Profile unavailable{% else %}{{ student.name|default:"Student Digital ID" }}{% endif %}</title>
+  {% include "partials/tap2connect_favicon.html" %}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { box-sizing: border-box; }
     :root {
-      --page: #f5f6f8;
-      --surface: #ffffff;
-      --ink: #101114;
-      --ink-2: #30333a;
-      --muted: #6f7580;
-      --faint: #a0a6b1;
-      --line: rgba(16, 17, 20, 0.08);
-      --line-strong: rgba(16, 17, 20, 0.14);
-      --gold: #a9793f;
-      --gold-soft: #f4eee5;
-      --green: #0f7b5f;
-      --red: #d94841;
+      --page: #f4f7fc;
+      --surface: #fff;
+      --ink: #10254f;
+      --muted: #63708a;
+      --line: #dfe5ef;
+      --indigo: #3154d7;
+      --indigo-dark: #173b99;
+      --indigo-soft: #eef2ff;
+      --green: #17a673;
+      --shadow: 0 24px 70px rgba(18, 45, 94, .12);
     }
+    html { scroll-behavior: smooth; }
     body {
+      margin: 0;
       min-height: 100vh;
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      padding: 22px 12px;
       background:
-        radial-gradient(circle at 14% 8%, rgba(36, 107, 253, 0.08), transparent 34%),
-        radial-gradient(circle at 88% 92%, rgba(16, 17, 20, 0.06), transparent 32%),
-        linear-gradient(135deg, #fbfcfe 0%, var(--page) 100%);
+        radial-gradient(circle at 12% 4%, rgba(49,84,215,.08), transparent 30%),
+        linear-gradient(180deg, #f8faff, var(--page));
       color: var(--ink);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
+      font-family: "DM Sans", system-ui, sans-serif;
     }
-    button { cursor: pointer; font: inherit; }
-    a { color: inherit; }
-    .phone { width: min(100%, 414px); }
-    .profile-app {
-      position: relative;
+    a { color: inherit; text-decoration: none; }
+    button { color: inherit; cursor: pointer; font: inherit; }
+    .icon {
+      width: 21px;
+      height: 21px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .card {
+      width: min(100%, 438px);
+      margin: 0 auto;
       overflow: hidden;
+      border: 1px solid rgba(20, 45, 90, .08);
       border-radius: 34px;
       background: var(--surface);
-      border: 1px solid rgba(16,17,20,0.06);
-      box-shadow: 0 28px 80px rgba(16, 17, 20, 0.14);
+      box-shadow: var(--shadow);
     }
-    .cover {
-      position: relative;
-      min-height: 250px;
-      padding: 18px;
-      background:
-        linear-gradient(180deg, rgba(10, 12, 16, 0.08), rgba(10, 12, 16, 0.72)),
-        var(--cover-image, url("https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=1200&q=80")) center/cover no-repeat;
-    }
-    .cover::after {
-      content: "";
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: -1px;
-      height: 110px;
-      background: linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.82) 62%, #fff 100%);
-      pointer-events: none;
-    }
-    .topbar {
-      position: relative;
-      z-index: 5;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 14px;
-    }
-    .brand { min-width: 0; display: flex; align-items: center; gap: 11px; color: #fff; }
+    .card-inner { padding: 22px; }
+    .school-bar { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+    .school { min-width: 0; display: flex; align-items: center; gap: 11px; }
     .school-mark {
-      width: 44px;
-      height: 44px;
-      border-radius: 16px;
-      display: grid;
-      place-items: center;
-      overflow: hidden;
-      background: rgba(17,17,17,0.45);
-      border: 1px solid rgba(255,255,255,0.24);
-      backdrop-filter: blur(18px);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.16);
+      width: 47px; height: 47px; border-radius: 14px; flex: 0 0 auto; display: grid; place-items: center;
+      overflow: hidden; color: #fff; background: linear-gradient(145deg, var(--indigo), #0b2d72);
+      box-shadow: 0 8px 18px rgba(49,84,215,.18);
     }
     .school-mark img { width: 100%; height: 100%; object-fit: cover; }
-    .brand-label {
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.62);
-      margin-bottom: 4px;
+    .school-mark .icon { width: 25px; height: 25px; }
+    .school-copy { min-width: 0; }
+    .school-copy strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16px; letter-spacing: -.25px; }
+    .school-copy span { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
+    .top-actions { display: flex; gap: 8px; }
+    .top-action {
+      width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid var(--line);
+      border-radius: 13px; background: #fff; color: var(--ink); transition: .18s ease;
     }
-    .school-name {
-      max-width: 230px;
-      font-size: 17px;
-      line-height: 1.15;
-      font-weight: 800;
-      letter-spacing: -0.35px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .top-actions { display: flex; gap: 8px; flex: 0 0 auto; }
-    .icon-button {
-      width: 42px;
-      height: 42px;
-      border: 1px solid rgba(255,255,255,0.22);
-      border-radius: 50%;
-      background: rgba(17,17,17,0.38);
-      color: #fff;
-      display: grid;
-      place-items: center;
-      text-decoration: none;
-      backdrop-filter: blur(18px);
-      transition: transform 0.18s ease, background 0.18s ease;
-    }
-    .icon-button:hover { transform: translateY(-1px); background: rgba(17,17,17,0.55); }
-    .profile-summary { position: relative; z-index: 6; margin: -94px 18px 0; padding-bottom: 16px; }
-    .summary-card {
+    .top-action:hover { transform: translateY(-1px); border-color: #b8c3d7; box-shadow: 0 8px 18px rgba(16,37,79,.08); }
+    .hero { position: relative; margin-top: 20px; }
+    .cover {
       position: relative;
-      padding: 72px 18px 18px;
-      border-radius: 28px;
-      background: rgba(255,255,255,0.94);
-      border: 1px solid rgba(16,17,20,0.06);
-      box-shadow: 0 18px 52px rgba(16, 17, 20, 0.12);
-      backdrop-filter: blur(24px);
-    }
-    .avatar-ring {
-      position: absolute;
-      left: 50%;
-      top: -54px;
-      transform: translateX(-50%);
-      width: 108px;
-      height: 108px;
-      border-radius: 50%;
-      padding: 4px;
-      background: #fff;
-      border: 1px solid rgba(16,17,20,0.08);
-      box-shadow: 0 16px 40px rgba(16,17,20,0.16);
-    }
-    .avatar {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
+      height: 196px;
       overflow: hidden;
-      border: 3px solid #fff;
+      border-radius: 24px;
+      background:
+        linear-gradient(145deg, rgba(16,37,79,.05), rgba(16,37,79,.48)),
+        linear-gradient(135deg, #b9daf6, #e8f1fb 42%, #9db5d9 43%, #38618f);
+    }
+    .cover::before, .cover::after {
+      content: "";
+      position: absolute;
+      background: rgba(255,255,255,.34);
+      transform: rotate(-10deg);
+    }
+    .cover::before { width: 260px; height: 92px; left: -38px; top: 70px; }
+    .cover::after { width: 210px; height: 75px; right: -48px; top: 22px; }
+    .cover img { position: relative; z-index: 1; width: 100%; height: 100%; object-fit: cover; }
+    .student-id {
+      position: absolute;
+      z-index: 3;
+      right: 13px;
+      bottom: 13px;
+      padding: 8px 11px;
+      border: 1px solid rgba(255,255,255,.26);
+      border-radius: 12px;
+      color: #fff;
+      background: rgba(9, 31, 75, .86);
+      box-shadow: 0 8px 20px rgba(6,24,58,.18);
+      backdrop-filter: blur(10px);
+    }
+    .student-id small { display: block; color: rgba(255,255,255,.7); font-size: 8px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+    .student-id strong { display: block; margin-top: 2px; font-size: 12px; }
+    .portrait {
+      position: absolute;
+      z-index: 4;
+      left: 17px;
+      bottom: -47px;
+      width: 104px;
+      height: 104px;
+      overflow: hidden;
       display: grid;
       place-items: center;
-      background:
-        radial-gradient(circle at 50% 32%, #c6c9cf 0 18%, transparent 19%),
-        radial-gradient(circle at 50% 86%, #a7abb3 0 38%, transparent 39%),
-        linear-gradient(145deg, #f0f1f3, #d9dde3);
-      color: #636872;
-      font-size: 34px;
-      font-weight: 900;
+      border: 5px solid #fff;
+      border-radius: 50%;
+      background: #e8edf5;
+      color: #6a7891;
+      font-size: 33px;
+      font-weight: 700;
+      box-shadow: 0 13px 28px rgba(16,37,79,.17);
     }
-    .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .intro { text-align: center; margin-bottom: 14px; }
-    .intro h1 {
-      font-size: 25px;
-      line-height: 1.06;
-      font-weight: 850;
-      letter-spacing: -0.75px;
-      margin-bottom: 7px;
-      display: inline-flex;
+    .portrait img { width: 100%; height: 100%; object-fit: cover; }
+    .identity { padding: 60px 5px 0; }
+    .name-line { display: flex; align-items: center; gap: 9px; }
+    .identity h1 {
+      margin: 0;
+      font-family: "Libre Baskerville", Georgia, serif;
+      font-size: 27px;
+      line-height: 1.2;
+      letter-spacing: -.65px;
+      overflow-wrap: anywhere;
+    }
+    .verified {
+      width: 23px; height: 23px; flex: 0 0 auto; display: grid; place-items: center;
+      color: #fff;
+      background: linear-gradient(145deg, #20bf83, #0c9564);
+      clip-path: polygon(50% 0%,61% 9%,75% 5%,82% 18%,95% 25%,91% 39%,100% 50%,91% 61%,95% 75%,82% 82%,75% 95%,61% 91%,50% 100%,39% 91%,25% 95%,18% 82%,5% 75%,9% 61%,0% 50%,9% 39%,5% 25%,18% 18%,25% 5%,39% 9%);
+      filter: drop-shadow(0 3px 5px rgba(12,149,100,.22));
+    }
+    .verified .icon { width: 13px; height: 13px; stroke-width: 3.2; }
+    .academic-line { margin: 8px 0 0; color: #35486d; font-size: 14px; font-weight: 600; }
+    .location-line { margin: 8px 0 0; display: flex; align-items: flex-start; gap: 7px; color: var(--muted); font-size: 12px; }
+    .location-line .icon { width: 16px; height: 16px; flex: 0 0 auto; }
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(62px, 1fr));
+      margin-top: 22px;
+      padding: 12px 5px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: 0 8px 22px rgba(16,37,79,.04);
+    }
+    .action {
+      min-width: 0;
+      padding: 2px 4px;
+      display: grid;
+      justify-items: center;
+      gap: 6px;
+      border-right: 1px solid var(--line);
+      color: #233965;
+      font-size: 10px;
+      font-weight: 600;
+      text-align: center;
+      transition: .18s ease;
+    }
+    .action:last-child { border-right: 0; }
+    .action:hover { color: var(--indigo); }
+    .action-icon {
+      width: 36px; height: 36px; display: grid; place-items: center;
+      border-radius: 50%; color: var(--indigo); background: var(--indigo-soft);
+    }
+    .action.whatsapp .action-icon { color: #079953; background: #e8f8ef; }
+    .action .icon { width: 19px; height: 19px; }
+    .intro {
+      position: relative;
+      margin-top: 20px;
+      padding: 19px 18px 19px 49px;
+      border: 1px solid #e2e7f1;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #f7f9ff, #fff);
+      color: #263b64;
+      font-family: "Libre Baskerville", Georgia, serif;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .quote-mark { position: absolute; left: 17px; top: 12px; color: var(--indigo); font-family: Georgia, serif; font-size: 34px; line-height: 1; }
+    .section { margin-top: 21px; }
+    .section-title {
+      margin: 0 0 12px;
+      color: var(--indigo-dark);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .085em;
+      text-transform: uppercase;
+    }
+    .focus-list {
+      position: relative;
+      padding: 5px 0 3px 34px;
+      border: 1px solid var(--line);
+      border-radius: 19px;
+      background: #fff;
+    }
+    .focus-list::before { content: ""; position: absolute; left: 22px; top: 28px; bottom: 28px; width: 2px; background: #a7b8f4; }
+    .focus-item { position: relative; padding: 14px 15px 14px 20px; }
+    .focus-item::before {
+      content: ""; position: absolute; left: -18px; top: 19px; width: 10px; height: 10px;
+      border: 3px solid #fff; border-radius: 50%; background: var(--indigo); box-shadow: 0 0 0 1px #a7b8f4;
+    }
+    .focus-item + .focus-item { border-top: 1px solid #edf0f5; }
+    .focus-item strong { display: block; font-size: 13px; }
+    .focus-item p { margin: 4px 0 0; color: var(--muted); font-size: 11px; line-height: 1.55; }
+    .skill-section {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 19px;
+      background: #fff;
+    }
+    .skills { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .skill {
+      min-width: 0;
+      min-height: 94px;
+      padding: 11px 5px 9px;
+      display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      overflow-wrap: anywhere;
+      border: 1px solid #dce3ee;
+      border-radius: 12px;
+      color: var(--ink);
+      background: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1.25;
+      text-align: center;
     }
-    .active-dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: #16a34a;
-      box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
-      flex: 0 0 auto;
-    }
-    .intro p { color: var(--muted); font-size: 14px; font-weight: 650; }
-    .contact-actions {
-      width: fit-content;
-      margin: 0 auto 16px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px;
-      border-radius: 18px;
-      background: #f4f5f7;
-      border: 1px solid rgba(16,17,20,0.06);
-    }
-    .contact-action {
-      width: 46px;
-      height: 42px;
-      border: 0;
-      border-radius: 13px;
-      background: transparent;
-      color: #343842;
+    .skill-icon {
+      width: 38px;
+      height: 38px;
       display: grid;
       place-items: center;
-      text-decoration: none;
-      transition: background 0.16s ease, color 0.16s ease, transform 0.16s ease;
+      border-radius: 50%;
+      color: var(--indigo);
+      background: var(--indigo-soft);
     }
-    .contact-action:hover { transform: translateY(-1px); background: #fff; color: var(--ink); box-shadow: 0 8px 20px rgba(16,17,20,0.08); }
-    .contact-action.disabled { opacity: 0.38; pointer-events: none; }
-    .primary-actions { display: grid; grid-template-columns: 1fr 48px; gap: 10px; }
-    .share-button {
-      height: 50px;
-      border: none;
+    .skill-icon .icon { width: 22px; height: 22px; stroke-width: 1.9; }
+    .snapshot {
+      padding: 17px;
+      border: 1px solid var(--line);
+      border-radius: 19px;
+      background: linear-gradient(145deg, #f8faff, #fff);
+    }
+    .snapshot-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .snapshot-head .section-title { margin: 0; }
+    .snapshot-head .icon { color: var(--indigo); }
+    .snapshot-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 16px; }
+    .snapshot-item { min-width: 0; padding: 2px 8px; border-left: 1px solid var(--line); text-align: center; }
+    .snapshot-item:first-child { border-left: 0; }
+    .snapshot-item span { display: block; color: var(--muted); font-size: 8px; }
+    .snapshot-item strong { display: block; margin-top: 5px; font-size: 9.5px; line-height: 1.3; overflow-wrap: anywhere; }
+    .socials { display: flex; flex-wrap: wrap; gap: 8px; }
+    .social {
+      display: inline-flex; align-items: center; min-height: 34px; padding: 0 12px;
+      border: 1px solid var(--line); border-radius: 10px; color: #3e4e6d; background: #fff;
+      font-size: 10px; font-weight: 700;
+    }
+    .protected {
+      width: 100%;
+      margin-top: 21px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: #fff;
+      display: grid;
+      grid-template-columns: 39px 1fr auto;
+      align-items: center;
+      gap: 11px;
+      text-align: left;
+    }
+    .shield {
+      width: 39px; height: 39px; display: grid; place-items: center;
+      border-radius: 50%; color: var(--indigo); background: var(--indigo-soft);
+    }
+    .protected strong { display: block; font-size: 12px; }
+    .protected span { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; line-height: 1.4; }
+    .protected .chevron { color: var(--indigo); }
+    .connect {
+      width: 100%;
+      min-height: 52px;
+      margin-top: 18px;
+      border: 0;
       border-radius: 15px;
-      background: #101114;
-      color: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 9px;
+      color: #fff;
+      background: linear-gradient(100deg, #3658d8, #293fc1);
+      box-shadow: 0 12px 24px rgba(49,84,215,.22);
       font-size: 14px;
-      font-weight: 750;
-      box-shadow: 0 12px 26px rgba(16,17,20,0.16);
-      transition: 0.18s ease;
+      font-weight: 700;
+      transition: .18s ease;
     }
-    .share-button:hover { transform: translateY(-1px); background: #27272a; }
-    .details-button {
-      width: 48px;
-      height: 50px;
-      border-radius: 15px;
-      border: 1px solid rgba(16,17,20,0.08);
-      background: #f7f8fa;
-      color: var(--ink-2);
-      display: grid;
-      place-items: center;
-      transition: 0.18s ease;
-    }
-    .details-button:hover { transform: translateY(-1px); border-color: var(--line-strong); }
-    .content { padding: 0 18px 20px; }
-    .section { margin-bottom: 16px; }
-    .section-head {
-      display: flex;
-      align-items: end;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 0 2px;
-      margin-bottom: 10px;
-    }
-    .section-title { color: var(--ink); font-size: 14px; font-weight: 900; letter-spacing: -0.3px; }
-    .service-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
-    .wallet-card, .library-card {
-      position: relative;
-      overflow: hidden;
-      min-height: 132px;
-      border-radius: 22px;
-      padding: 15px;
-      border: 1px solid var(--line);
-      background: #fff;
-      box-shadow: 0 8px 24px rgba(16,17,20,0.05);
-    }
-    .wallet-card {
-      color: #fff;
-      background:
-        radial-gradient(circle at 88% 16%, rgba(255,255,255,0.18), transparent 30%),
-        linear-gradient(135deg, #111111, #2c2c31);
-      border-color: rgba(255,255,255,0.08);
-    }
-    .wallet-card::after {
-      content: "";
-      position: absolute;
-      width: 135px;
-      height: 135px;
-      right: -70px;
-      bottom: -74px;
-      border: 24px solid rgba(255,255,255,0.045);
-      border-radius: 50%;
-    }
-    .service-top {
-      position: relative;
-      z-index: 2;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 18px;
-    }
-    .service-icon {
-      width: 38px;
-      height: 38px;
-      border-radius: 14px;
-      display: grid;
-      place-items: center;
-      color: var(--gold);
-      background: var(--gold-soft);
-      flex: 0 0 auto;
-    }
-    .wallet-card .service-icon { color: #fff; background: rgba(255,255,255,0.12); }
-    .login-toggle {
-      height: 30px;
-      border: 0;
-      border-radius: 999px;
-      padding: 0 11px;
-      background: #fff;
-      color: var(--ink);
-      font-size: 10px;
-      font-weight: 850;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      position: relative;
-      z-index: 3;
-    }
-    .privacy-note {
-      position: relative;
-      z-index: 2;
-      margin-top: 10px;
-      color: rgba(255,255,255,0.58);
-      font-size: 10px;
-      font-weight: 650;
-      line-height: 1.35;
-    }
-    .service-status {
-      height: 26px;
-      padding: 0 9px;
-      display: inline-flex;
-      align-items: center;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.11);
-      color: rgba(255,255,255,0.78);
-      font-size: 10px;
-      font-weight: 850;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-    .wallet-balance { position: relative; z-index: 2; margin-bottom: 14px; }
-    .wallet-balance span, .library-meta span {
-      display: block;
-      color: rgba(255,255,255,0.62);
-      font-size: 10px;
-      font-weight: 850;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 6px;
-    }
-    .wallet-balance strong {
-      display: block;
-      color: #fff;
-      font-size: 27px;
-      line-height: 1;
-      font-weight: 900;
-      letter-spacing: -0.9px;
-    }
-    .wallet-actions {
-      position: relative;
-      z-index: 2;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-    .mini-action {
-      height: 36px;
-      border: 0;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.12);
-      color: #fff;
-      font-size: 11px;
-      font-weight: 850;
-      backdrop-filter: blur(12px);
-    }
-    .mini-action.primary {
-      background: #fff;
-      color: var(--ink);
-    }
-    .library-meta { margin-bottom: 14px; }
-    .library-meta span { color: var(--faint); }
-    .library-meta strong {
-      display: block;
-      color: var(--ink);
-      font-size: 23px;
-      line-height: 1;
-      font-weight: 900;
-      letter-spacing: -0.6px;
-      margin-bottom: 6px;
-    }
-    .library-meta p { color: var(--muted); font-size: 12px; line-height: 1.35; font-weight: 600; }
-    .library-progress { height: 8px; border-radius: 999px; background: #ececec; overflow: hidden; margin-bottom: 9px; }
-    .library-progress span { display: block; width: {% if private_visible %}62%{% else %}0%{% endif %}; height: 100%; border-radius: inherit; background: var(--gold); }
-    .library-note { color: var(--muted); font-size: 11px; font-weight: 700; }
-    .socials { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; padding-top: 2px; }
-    .social {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      color: var(--muted);
-      background: #fff;
-      border: 1px solid var(--line);
-      text-decoration: none;
-      transition: 0.18s ease;
-    }
-    .social svg { display: block; }
-    .social:hover { color: var(--ink); transform: translateY(-2px); border-color: var(--line-strong); }
+    .connect:hover { transform: translateY(-1px); box-shadow: 0 15px 28px rgba(49,84,215,.28); }
+    .footer { padding: 16px 8px 2px; display: flex; justify-content: center; align-items: center; gap: 6px; color: #7a879d; font-size: 9px; text-align: center; }
+    .footer .icon { width: 14px; height: 14px; color: var(--indigo); }
     .drawer {
       position: fixed;
+      z-index: 40;
       inset: 0;
-      z-index: 100;
-      display: none;
-      align-items: end;
-      justify-content: center;
-      padding: 14px;
-      background: linear-gradient(180deg, rgba(17,17,17,0.06), rgba(17,17,17,0.42));
-    }
-    .drawer.show { display: flex; }
-    .drawer-panel {
-      width: min(100%, 430px);
-      max-height: 78vh;
-      overflow-y: auto;
-      border-radius: 30px;
-      background: rgba(255,255,255,0.95);
-      border: 1px solid rgba(255,255,255,0.74);
-      box-shadow: 0 30px 80px rgba(0,0,0,0.24);
-      backdrop-filter: blur(24px);
       padding: 18px;
-      animation: rise 0.22s ease;
-    }
-    @keyframes rise {
-      from { transform: translateY(18px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    .drawer-head {
       display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-    .drawer-head h2 { font-size: 21px; letter-spacing: -0.6px; line-height: 1.15; margin-bottom: 5px; }
-    .drawer-head p { color: var(--muted); font-size: 13px; line-height: 1.4; }
-    .drawer-actions { display: flex; gap: 8px; flex: 0 0 auto; }
-    .ghost-btn, .solid-btn {
-      height: 38px;
-      border-radius: 999px;
-      padding: 0 14px;
-      font-size: 12px;
-      font-weight: 850;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
+      align-items: flex-end;
       justify-content: center;
-    }
-    .ghost-btn { border: 1px solid var(--line); background: #fff; color: var(--ink-2); }
-    .solid-btn { border: 0; background: var(--ink); color: #fff; }
-    .detail-list { overflow: hidden; border-radius: 22px; border: 1px solid var(--line); background: #fff; }
-    .detail-row { display: grid; grid-template-columns: 1fr 1.3fr; gap: 14px; padding: 14px; }
-    .detail-row + .detail-row { border-top: 1px solid var(--line); }
-    .detail-label {
-      color: var(--faint);
-      font-size: 11px;
-      font-weight: 850;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-    .detail-value {
-      min-width: 0;
-      color: var(--ink);
-      font-size: 13px;
-      font-weight: 750;
-      text-align: right;
-      overflow-wrap: anywhere;
-    }
-    .toast {
-      position: fixed;
-      left: 50%;
-      bottom: 18px;
-      z-index: 140;
-      transform: translate(-50%, 12px);
+      visibility: hidden;
       opacity: 0;
-      pointer-events: none;
-      padding: 12px 16px;
-      border-radius: 999px;
-      background: #101114;
-      color: #fff;
-      font-size: 13px;
-      font-weight: 800;
-      box-shadow: 0 14px 34px rgba(16,17,20,0.18);
-      transition: opacity 0.18s ease, transform 0.18s ease;
+      background: rgba(8,20,47,.48);
+      backdrop-filter: blur(5px);
+      transition: .2s ease;
+    }
+    .drawer.show { visibility: visible; opacity: 1; }
+    .drawer-panel {
+      width: min(100%, 438px);
+      max-height: 82vh;
+      overflow-y: auto;
+      padding: 21px;
+      border-radius: 24px;
+      background: #fff;
+      transform: translateY(20px);
+      transition: .25s ease;
+    }
+    .drawer.show .drawer-panel { transform: translateY(0); }
+    .drawer-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; }
+    .drawer-head h2 { margin: 0; font-size: 19px; }
+    .drawer-head p { margin: 5px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+    .close-btn { width: 36px; height: 36px; flex: 0 0 auto; border: 1px solid var(--line); border-radius: 11px; display: grid; place-items: center; background: #fff; }
+    .detail-list { margin-top: 17px; display: grid; }
+    .detail-row { padding: 12px 0; display: flex; justify-content: space-between; gap: 16px; border-bottom: 1px solid #edf0f5; font-size: 11px; }
+    .detail-row span { color: var(--muted); }
+    .detail-row strong { max-width: 62%; text-align: right; overflow-wrap: anywhere; }
+    .drawer-login { margin-top: 18px; }
+    .toast {
+      position: fixed; z-index: 60; left: 50%; bottom: 24px; padding: 10px 15px;
+      border-radius: 11px; color: #fff; background: #10254f; font-size: 11px; font-weight: 700;
+      opacity: 0; transform: translate(-50%, 12px); transition: .2s ease; pointer-events: none;
     }
     .toast.show { opacity: 1; transform: translate(-50%, 0); }
-    .unavailable-card {
-      width: min(100%, 390px);
-      border-radius: 28px;
-      background: #fff;
+    .unavailable {
+      width: min(100%, 430px);
+      margin: 10vh auto 0;
+      padding: 42px 28px;
       border: 1px solid var(--line);
-      box-shadow: 0 24px 70px rgba(16,17,20,0.13);
-      padding: 28px;
+      border-radius: 26px;
+      background: #fff;
+      box-shadow: var(--shadow);
       text-align: center;
     }
-    .unavailable-card h1 { font-size: 24px; margin-bottom: 10px; }
-    .unavailable-card p { color: var(--muted); font-size: 14px; line-height: 1.5; }
-    @media (max-width: 430px) {
-      body { padding: 0; align-items: stretch; }
-      .phone { width: 100%; }
-      .profile-app { min-height: 100vh; border-radius: 0; }
+    .unavailable-icon { width: 62px; height: 62px; margin: 0 auto 18px; display: grid; place-items: center; border-radius: 50%; color: var(--indigo); background: var(--indigo-soft); }
+    .unavailable h1 { margin: 0; font-size: 24px; }
+    .unavailable p { margin: 10px auto 0; max-width: 300px; color: var(--muted); font-size: 13px; line-height: 1.65; }
+    @media (max-width: 470px) {
+      body { padding: 0; background: #fff; }
+      .card { width: 100%; border: 0; border-radius: 0; box-shadow: none; }
+      .card-inner { padding: 18px; }
+      .school-copy strong { font-size: 14px; }
+      .school-mark { width: 43px; height: 43px; }
+      .cover { height: 184px; }
+      .identity h1 { font-size: 25px; }
+      .drawer { padding: 0; }
+      .drawer-panel { width: 100%; border-radius: 24px 24px 0 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
     }
   </style>
 </head>
 <body>
-{% if profile_unavailable %}
-  <section class="unavailable-card">
-    <h1>Profile unavailable</h1>
-    <p>This digital card is inactive or hidden by the school.</p>
-  </section>
-{% else %}
-  <div class="phone">
-    <article class="profile-app">
-      <header class="cover" {% if cover_photo_url %}style='--cover-image: url("{{ cover_photo_url }}");'{% endif %}>
-        <div class="topbar">
-          <div class="brand">
-            <div class="school-mark">
-              {% if school_logo_url %}
-                <img src="{{ school_logo_url }}" alt="{{ school_name|default:'School' }} logo">
-              {% else %}
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 9.5 12 4l9 5.5-9 5.5L3 9.5Z" stroke="currentColor" stroke-width="1.8"/><path d="M7 12v4.5c0 1.3 2.2 2.5 5 2.5s5-1.2 5-2.5V12" stroke="currentColor" stroke-width="1.8"/></svg>
-              {% endif %}
-            </div>
-            <div>
-              <div class="brand-label">Verified School</div>
-              <div class="school-name">{{ school_name|default:"School Name" }}</div>
-            </div>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-school" viewBox="0 0 24 24"><path d="m3 10 9-5 9 5-9 5-9-5Z"/><path d="M7 13v4c3 2 7 2 10 0v-4M21 10v6"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5"/></symbol>
+    <symbol id="i-qr" viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM15 14h2v2h-2zM19 14h1v5h-5v1M14 18h2"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m6 12 4 4 8-9"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M7 3H4.8A1.8 1.8 0 0 0 3 4.8C3 13.7 10.3 21 19.2 21a1.8 1.8 0 0 0 1.8-1.8V17l-4.3-1-1 2.3c-4.5-1.4-8-4.9-9.4-9.4l2.3-1L7 3Z"/></symbol>
+    <symbol id="i-message" viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5Z"/><path d="M8 9c1.2 3.2 2.8 4.8 6 6"/></symbol>
+    <symbol id="i-contact" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="9" r="2.5"/><path d="M8 17c.5-2.5 2-3.5 4-3.5s3.5 1 4 3.5"/></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z"/><path d="M9 3v15M15 6v15"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2"/><path d="M3 20c.5-4 2.5-6 6-6s5.5 2 6 6M15 15c3 0 5 1.5 6 5"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 5 3 8 7 10 4-2 7-5 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-5"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></symbol>
+    <symbol id="i-terminal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/></symbol>
+    <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0 0 18h1.5a2 2 0 0 0 1.4-3.4 1.8 1.8 0 0 1 1.3-3.1H18a3 3 0 0 0 3-3A9 9 0 0 0 12 3Z"/><circle cx="7.5" cy="11" r=".8"/><circle cx="10" cy="7.5" r=".8"/><circle cx="14" cy="7.5" r=".8"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></symbol>
+    <symbol id="i-html" viewBox="0 0 24 24"><path d="m4 3 1.5 17L12 22l6.5-2L20 3H4Z" fill="#f15a24" stroke="none"/><path d="M8 7h8l-.3 3H11l.2 2h4.3l-.4 4-3.1.9-3.1-.9-.2-2.2h2.2l.1.7 1 .3 1-.3.1-1.1H8.5L8 7Z" fill="#fff" stroke="none"/></symbol>
+    <symbol id="i-python" viewBox="0 0 24 24"><path d="M12 3c-4 0-4.5 1.7-4.5 4v2h7v1H5c-2 0-3 1.5-3 4s1.2 4 3.2 4H7v-2.5c0-2.2 1.8-4 4-4h6.5V7c0-2.4-1.5-4-5.5-4Z" fill="#3776ab" stroke="none"/><circle cx="10" cy="6" r="1" fill="#fff" stroke="none"/><path d="M12 21c4 0 4.5-1.7 4.5-4v-2h-7v-1H19c2 0 3-1.5 3-4s-1.2-4-3.2-4H17v2.5c0 2.2-1.8 4-4 4H6.5V17c0 2.4 1.5 4 5.5 4Z" fill="#ffd343" stroke="none"/><circle cx="14" cy="18" r="1" fill="#fff" stroke="none"/></symbol>
+    <symbol id="i-figma" viewBox="0 0 24 24"><path d="M8 3h4v6H8a3 3 0 1 1 0-6Z" fill="#f24e1e" stroke="none"/><path d="M12 3h4a3 3 0 1 1 0 6h-4V3Z" fill="#ff7262" stroke="none"/><path d="M8 9h4v6H8a3 3 0 1 1 0-6Z" fill="#a259ff" stroke="none"/><circle cx="16" cy="12" r="3" fill="#1abcfe" stroke="none"/><path d="M8 15h4v3a3 3 0 1 1-3-3Z" fill="#0acf83" stroke="none"/></symbol>
+    <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3ZM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15Z"/></symbol>
+  </svg>
+
+  {% if profile_unavailable %}
+    <main class="unavailable">
+      <div class="unavailable-icon"><svg class="icon"><use href="#i-lock"></use></svg></div>
+      <h1>Profile unavailable</h1>
+      <p>This student has temporarily hidden their digital ID. Please contact the school or profile owner if you need access.</p>
+    </main>
+  {% else %}
+    <article class="card">
+      <div class="card-inner">
+        <header class="school-bar">
+          <div class="school">
+            <span class="school-mark">
+              {% if school_logo_url %}<img src="{{ school_logo_url }}" alt="{{ school_name }} logo">{% else %}<svg class="icon"><use href="#i-school"></use></svg>{% endif %}
+            </span>
+            <span class="school-copy">
+              <strong>{{ school_name|default:"Student Digital ID" }}</strong>
+              <span>Verified academic profile</span>
+            </span>
           </div>
           <div class="top-actions">
-            <a class="icon-button" href="{{ edit_profile_url }}" aria-label="Edit profile photos">
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m13.5 6.5 4 4M4 20h4l10.5-10.5a2.8 2.8 0 0 0-4-4L4 16v4Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </a>
+            <button class="top-action" id="shareBtn" type="button" aria-label="Share profile"><svg class="icon"><use href="#i-share"></use></svg></button>
+            <a class="top-action" href="{{ qr_code_url }}" aria-label="Open QR code"><svg class="icon"><use href="#i-qr"></use></svg></a>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <section class="profile-summary">
-        <div class="summary-card">
-          <div class="avatar-ring">
-            <div class="avatar">
-              {% if student_photo_url %}
-                <img src="{{ student_photo_url }}" alt="{{ student.name|default:'Student' }}">
-              {% else %}
-                {{ student.name|default:"S"|slice:":1" }}
-              {% endif %}
-            </div>
+        <section class="hero">
+          <div class="cover">
+            {% if cover_photo_url %}<img src="{{ cover_photo_url }}" alt="{{ student.name }} cover">{% endif %}
           </div>
-          <div class="intro">
-            <h1>{{ student.name|default:"Student Name" }} <span class="active-dot" aria-label="Active"></span></h1>
-            <p>{{ grade_section|default:member_type_label|default:"Student" }}</p>
-          </div>
-
-          <nav class="contact-actions" aria-label="Profile actions">
-            <a href="{{ whatsapp_action_url|default:'#' }}" class="contact-action{% if not whatsapp_action_url %} disabled{% endif %}" aria-label="WhatsApp">
-              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M16.7 13.4c-.3-.2-1.7-.8-1.9-.9-.3-.1-.5-.2-.7.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-1.7-.8-2.8-1.8-3.6-3.3-.2-.3 0-.5.1-.6l.5-.6c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5s-.7-1.7-1-2.3c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 5 4.3.7.3 1.2.5 1.7.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.3-.1-.2-.3-.3-.6-.5Z" fill="currentColor"/><path d="M12 21a9 9 0 0 1-4.5-1.2L3 21l1.2-4.4A9 9 0 1 1 12 21Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
-            </a>
-            <a href="{% if student.email %}mailto:{{ student.email }}{% elif website_url %}{{ website_url }}{% else %}#{% endif %}" class="contact-action{% if not student.email and not website_url %} disabled{% endif %}" aria-label="Email or website">
-              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16v12H4V6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m4.5 7 7.5 6 7.5-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </a>
-            <a href="{{ birth_certificate_url }}" class="contact-action{% if not has_birth_certificate %} disabled{% endif %}" aria-label="Birth certificate">
-              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 3h7l4 4v14H7V3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3v5h5M9.5 13h5M9.5 17h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-            </a>
-          </nav>
-
-          <div class="primary-actions">
-            <button class="share-button" id="shareBtn" type="button">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8.5 12.5 15 16M15 8 8.5 11.5M18 9.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm12 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-              Share Profile
-            </button>
-            <button class="details-button" id="detailsBtn" type="button" aria-label="Student details">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 11v5M12 7.5h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <main class="content">
-        <section class="section">
-          <div class="section-head">
-            <h2 class="section-title">Private services</h2>
-          </div>
-          <div class="service-grid">
-            <article class="wallet-card">
-              <div class="service-top">
-                <div class="service-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16v14H4V7Zm2-4h12v4H6V3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M16 14h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
-                </div>
-                {% if private_visible %}
-                  <span class="service-status">Logged in</span>
-                {% else %}
-                  <a class="login-toggle" href="{{ edit_profile_url }}">Login</a>
-                {% endif %}
-              </div>
-              <div class="wallet-balance">
-                <span>Usable balance</span>
-                <strong>{% if private_visible %}Rs. 1,250{% else %}Rs. ****{% endif %}</strong>
-              </div>
-              <div class="wallet-actions">
-                <button class="mini-action primary" type="button">Top Up</button>
-                <button class="mini-action" type="button">Tap to Pay</button>
-              </div>
-              <p class="privacy-note">{% if private_visible %}Balance visible only in logged-in session.{% else %}Login required to view balance.{% endif %}</p>
-            </article>
-
-            <article class="library-card">
-              <div class="service-top">
-                <div class="service-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v15H8a3 3 0 0 1-3-3V4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 4v15a3 3 0 0 0 3 3M9 8h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-                </div>
-              </div>
-              <div class="library-meta">
-                <span>Library</span>
-                <strong>{{ library_borrowed_display }}</strong>
-                <p>{{ library_summary_display }}</p>
-              </div>
-              <div class="library-progress"><span></span></div>
-              <p class="library-note">{{ library_deadline_display }}</p>
-            </article>
+          <div class="student-id"><small>Student ID</small><strong>{{ student_identifier }}</strong></div>
+          <div class="portrait">
+            {% if student_photo_url %}<img src="{{ student_photo_url }}" alt="{{ student.name }}">{% else %}{{ student.name|slice:":2"|upper }}{% endif %}
           </div>
         </section>
 
-        <nav class="socials" aria-label="Social links">
-          {% if social_links %}
-          {% for link in social_links %}
-            {% if link.key != 'whatsapp' %}
-            <a href="{{ link.url }}" target="_blank" rel="noopener" class="social" aria-label="{{ link.label }}">
-              {% if link.key == 'facebook' %}
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 8h2V5h-2c-2.2 0-4 1.8-4 4v2H8v3h2v7h3v-7h2.4l.6-3h-3V9c0-.55.45-1 1-1Z"/></svg>
-              {% elif link.key == 'instagram' %}
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5" stroke="currentColor" stroke-width="2"/><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="currentColor" stroke-width="2"/><path d="M17.5 6.8h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
-              {% elif link.key == 'twitter' %}
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.9 2h3.1l-6.8 7.8L23.2 22h-6.3l-4.9-7.4L6.3 22H3.2l7.3-8.4L2.8 2h6.4l4.5 6.8L18.9 2Zm-1.1 17.9h1.7L8.2 4H6.4l11.4 15.9Z"/></svg>
-              {% elif link.key == 'linkedin' %}
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.94 8.5H3.75V20h3.19V8.5ZM5.35 3a1.85 1.85 0 1 0 0 3.7 1.85 1.85 0 0 0 0-3.7ZM20.25 13.47c0-3.08-1.64-5.06-4.3-5.06-1.98 0-2.86 1.09-3.36 1.86V8.5H9.54V20h3.18v-5.7c0-1.5.28-2.95 2.14-2.95 1.83 0 1.85 1.72 1.85 3.05V20h3.19v-6.53h.35Z"/></svg>
-              {% elif link.key == 'youtube' %}
-                <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.6 7.2a3 3 0 0 0-2.1-2.1C17.6 4.5 12 4.5 12 4.5s-5.6 0-7.5.6a3 3 0 0 0-2.1 2.1A31.2 31.2 0 0 0 2 12a31.2 31.2 0 0 0 .4 4.8 3 3 0 0 0 2.1 2.1c1.9.6 7.5.6 7.5.6s5.6 0 7.5-.6a3 3 0 0 0 2.1-2.1A31.2 31.2 0 0 0 22 12a31.2 31.2 0 0 0-.4-4.8ZM10 15.4V8.6l5.8 3.4L10 15.4Z"/></svg>
-              {% elif link.key == 'tiktok' %}
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.2 3c.4 2.5 1.8 4 4.3 4.2v3.4a8.1 8.1 0 0 1-4.2-1.2v6.4a6.2 6.2 0 1 1-5.4-6.1v3.5a2.8 2.8 0 1 0 2 2.7V3h3.3Z"/></svg>
-              {% elif link.key == 'github' %}
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.5-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 0 1.6 1.1 1.6 1.1.9 1.5 2.4 1.1 3 .8.1-.7.4-1.1.7-1.3-2.2-.3-4.6-1.1-4.6-5a3.9 3.9 0 0 1 1-2.7 3.6 3.6 0 0 1 .1-2.7s.9-.3 2.8 1a9.6 9.6 0 0 1 5.2 0c1.9-1.3 2.8-1 2.8-1a3.6 3.6 0 0 1 .1 2.7 3.9 3.9 0 0 1 1 2.7c0 3.9-2.4 4.7-4.6 5 .4.3.8 1 .8 2.1V21c0 .3.2.6.8.5A10 10 0 0 0 12 2Z"/></svg>
-              {% elif link.key == 'figma' %}
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 2h4v8H8a4 4 0 0 1 0-8Zm4 0h4a4 4 0 0 1 0 8h-4V2Zm0 8h4a4 4 0 1 1-4 4v-4Zm-4 0h4v8H8a4 4 0 0 1 0-8Zm0 8h4v2a4 4 0 1 1-4-4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
-              {% elif link.key == 'upwork' %}
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 7v5.4a3.6 3.6 0 0 0 7.2 0V7M12.2 12.4c1.3 1.2 2.7 1.8 4.1 1.8A3.2 3.2 0 1 0 13.4 9l-3.1 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              {% elif link.key == 'messenger' %}
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3C6.7 3 3 6.8 3 11.6c0 2.7 1.2 5.1 3.2 6.7V22l3.3-1.8c.8.2 1.6.3 2.5.3 5.3 0 9-3.8 9-8.6S17.3 3 12 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m7.5 14 3-3 2.5 2 3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              {% else %}
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM3.6 9h16.8M3.6 15h16.8M12 3c2.2 2.5 3.2 5.5 3.2 9S14.2 18.5 12 21c-2.2-2.5-3.2-5.5-3.2-9S9.8 5.5 12 3Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              {% endif %}
-            </a>
-            {% endif %}
-          {% endfor %}
-          {% else %}
-            <a href="#" class="social" aria-label="Facebook"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 8h2V5h-2c-2.2 0-4 1.8-4 4v2H8v3h2v7h3v-7h2.4l.6-3h-3V9c0-.55.45-1 1-1Z"/></svg></a>
-            <a href="#" class="social" aria-label="Instagram"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5" stroke="currentColor" stroke-width="2"/><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="currentColor" stroke-width="2"/><path d="M17.5 6.8h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></a>
-            <a href="#" class="social" aria-label="X"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.9 2h3.1l-6.8 7.8L23.2 22h-6.3l-4.9-7.4L6.3 22H3.2l7.3-8.4L2.8 2h6.4l4.5 6.8L18.9 2Zm-1.1 17.9h1.7L8.2 4H6.4l11.4 15.9Z"/></svg></a>
-            <a href="#" class="social" aria-label="LinkedIn"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.94 8.5H3.75V20h3.19V8.5ZM5.35 3a1.85 1.85 0 1 0 0 3.7 1.85 1.85 0 0 0 0-3.7ZM20.25 13.47c0-3.08-1.64-5.06-4.3-5.06-1.98 0-2.86 1.09-3.36 1.86V8.5H9.54V20h3.18v-5.7c0-1.5.28-2.95 2.14-2.95 1.83 0 1.85 1.72 1.85 3.05V20h3.19v-6.53h.35Z"/></svg></a>
+        <section class="identity">
+          <div class="name-line">
+            <h1>{{ student.name }}</h1>
+            <span class="verified" title="Verified profile"><svg class="icon"><use href="#i-check"></use></svg></span>
+          </div>
+          <p class="academic-line">{{ grade_section|default:member_type_label }}</p>
+          {% if student_address or school_address %}
+            <p class="location-line"><svg class="icon"><use href="#i-pin"></use></svg>{{ student_address|default:school_address }}</p>
+          {% endif %}
+        </section>
+
+        <nav class="actions" aria-label="Contact actions">
+          {% if phone_action_url %}
+            <a class="action" href="{{ phone_action_url }}"><span class="action-icon"><svg class="icon"><use href="#i-phone"></use></svg></span><span>Call</span></a>
+          {% endif %}
+          {% if whatsapp_action_url %}
+            <a class="action whatsapp" href="{{ whatsapp_action_url }}"><span class="action-icon"><svg class="icon"><use href="#i-message"></use></svg></span><span>WhatsApp</span></a>
+          {% endif %}
+          <a class="action" href="{{ download_vcard_url }}"><span class="action-icon"><svg class="icon"><use href="#i-contact"></use></svg></span><span>Save Contact</span></a>
+          {% if navigate_url %}
+            <a class="action" href="{{ navigate_url }}"><span class="action-icon"><svg class="icon"><use href="#i-map"></use></svg></span><span>Directions</span></a>
           {% endif %}
         </nav>
-      </main>
-    </article>
-  </div>
 
-  <div class="drawer" id="detailsDrawer">
-    <section class="drawer-panel">
-      <div class="drawer-head">
-        <div>
-          <h2>Student details</h2>
-          <p>Private school information is separated from the public profile.</p>
-        </div>
-        <div class="drawer-actions">
-          <button class="ghost-btn" id="closeDrawer" type="button">Close</button>
-          <a class="solid-btn" href="{{ edit_profile_url }}">Edit</a>
-        </div>
-      </div>
-
-      <div class="detail-list">
-        <div class="detail-row"><span class="detail-label">IEMIS No.</span><strong class="detail-value">{{ student_identifier|default:"Not added" }}</strong></div>
-        <div class="detail-row"><span class="detail-label">Website</span><strong class="detail-value">{% if website_url %}<a href="{{ website_url }}" target="_blank" rel="noopener">{{ website_display|default:website_url }}</a>{% else %}Not added{% endif %}</strong></div>
-        <div class="detail-row"><span class="detail-label">{{ parent_label|default:"Guardian" }}</span><strong class="detail-value">{{ parent_name|default:"Not added" }}</strong></div>
-        <div class="detail-row"><span class="detail-label">Emergency Phone</span><strong class="detail-value">{{ emergency_contact_phone|default:"Not added" }}</strong></div>
-        <div class="detail-row"><span class="detail-label">Blood Group</span><strong class="detail-value">{{ blood_group|default:"Not added" }}</strong></div>
-        <div class="detail-row"><span class="detail-label">Address</span><strong class="detail-value">{{ student_address|default:school_address|default:"Not added" }}</strong></div>
-        {% if additional_info_heading or additional_info_description %}
-          <div class="detail-row"><span class="detail-label">{{ additional_info_heading|default:"Additional Info" }}</span><strong class="detail-value">{{ additional_info_description|default:"Not added" }}</strong></div>
+        {% if public_intro %}
+          <section class="intro"><span class="quote-mark">“</span>{{ public_intro }}</section>
         {% endif %}
+
+        {% if public_current or public_featured %}
+          <section class="section">
+            <h2 class="section-title">Current focus</h2>
+            <div class="focus-list">
+              {% if public_current %}
+                <article class="focus-item"><strong>What I’m working on</strong><p>{{ public_current }}</p></article>
+              {% endif %}
+              {% if public_featured %}
+                <article class="focus-item"><strong>Featured interest</strong><p>{{ public_featured }}</p></article>
+              {% endif %}
+              {% if student.role %}
+                <article class="focus-item"><strong>Academic direction</strong><p>{{ student.role }}</p></article>
+              {% endif %}
+            </div>
+          </section>
+        {% endif %}
+
+        {% if public_skills %}
+          <section class="section skill-section">
+            <h2 class="section-title">Skills</h2>
+            <div class="skills">
+              {% for skill in public_skills %}
+                <span class="skill">
+                  <span class="skill-icon">
+                    <svg class="icon"><use href="{% if skill.name == 'HTML/CSS' %}#i-html{% elif skill.name == 'Python' %}#i-python{% elif skill.name == 'Figma' %}#i-figma{% elif skill.name == 'Public speaking' %}#i-mic{% else %}#i-sparkles{% endif %}"></use></svg>
+                  </span>
+                  <span>{{ skill.name }}</span>
+                </span>
+              {% endfor %}
+            </div>
+          </section>
+        {% endif %}
+
+        <section class="section snapshot">
+          <div class="snapshot-head">
+            <h2 class="section-title">Academic snapshot</h2>
+            <svg class="icon"><use href="#i-school"></use></svg>
+          </div>
+          <div class="snapshot-grid">
+            <div class="snapshot-item"><span>Program</span><strong>{{ student.role|default:grade_label|default:"Not added" }}</strong></div>
+            <div class="snapshot-item"><span>Year</span><strong>{{ grade_label|default:"Not added" }}</strong></div>
+            <div class="snapshot-item"><span>Section</span><strong>{{ section_label|default:"Not added" }}</strong></div>
+            <div class="snapshot-item"><span>Institution</span><strong>{{ school_name|default:"Independent profile" }}</strong></div>
+          </div>
+        </section>
+
+        {% if social_links %}
+          <section class="section">
+            <h2 class="section-title">Find me online</h2>
+            <div class="socials">
+              {% for social in social_links %}<a class="social" href="{{ social.url }}" target="_blank" rel="noopener">{{ social.label }}</a>{% endfor %}
+            </div>
+          </section>
+        {% endif %}
+
+        <button class="protected" id="detailsBtn" type="button">
+          <span class="shield"><svg class="icon"><use href="#i-shield"></use></svg></span>
+          <span><strong>View protected details</strong><span>Guardian, emergency contact, blood group, and address are securely protected.</span></span>
+          <svg class="icon chevron"><use href="#i-chevron"></use></svg>
+        </button>
+
+        {% if phone_action_url %}
+          <a class="connect" href="{{ phone_action_url }}"><svg class="icon"><use href="#i-users"></use></svg>Connect with {{ student.name }}</a>
+        {% elif whatsapp_action_url %}
+          <a class="connect" href="{{ whatsapp_action_url }}"><svg class="icon"><use href="#i-users"></use></svg>Connect with {{ student.name }}</a>
+        {% else %}
+          <a class="connect" href="{{ download_vcard_url }}"><svg class="icon"><use href="#i-contact"></use></svg>Save {{ student.name }}’s contact</a>
+        {% endif %}
+
+        <footer class="footer">
+          <svg class="icon"><use href="#i-shield"></use></svg>
+          <span>Verified by {{ school_name|default:"the profile owner" }} · Powered by</span>
+          {% include "partials/tap2connect_logo.html" with logo_width="46px" logo_height="16px" logo_radius="3px" logo_alt="Tap2Connect" %}
+        </footer>
       </div>
-    </section>
-  </div>
+    </article>
 
-  <div class="toast" id="toast">Saved</div>
+    <div class="drawer" id="detailsDrawer" role="dialog" aria-modal="true" aria-labelledby="detailsTitle">
+      <section class="drawer-panel">
+        <header class="drawer-head">
+          <div>
+            <h2 id="detailsTitle">Protected student details</h2>
+            {% if can_view_private_details %}
+              <p>You are viewing private information in an authorized session.</p>
+            {% else %}
+              <p>Login is required to protect guardian, emergency, identity, and school records.</p>
+            {% endif %}
+          </div>
+          <button class="close-btn" id="closeDrawer" type="button" aria-label="Close details"><svg class="icon"><use href="#i-close"></use></svg></button>
+        </header>
 
-  <script>
-    const detailsDrawer = document.getElementById("detailsDrawer");
-    const detailsBtn = document.getElementById("detailsBtn");
-    const closeDrawer = document.getElementById("closeDrawer");
-    const shareBtn = document.getElementById("shareBtn");
-    const toast = document.getElementById("toast");
-    const profileUrl = "{{ public_card_url|escapejs }}";
-    const shareTitle = "{{ student.name|default:'Student Profile'|escapejs }}";
-    const shareText = "View the verified student profile for {{ student.name|default:'this student'|escapejs }}.";
+        {% if can_view_private_details %}
+          <div class="detail-list">
+            <div class="detail-row"><span>IEMIS / Student No.</span><strong>{{ student_identifier|default:"Not added" }}</strong></div>
+            <div class="detail-row"><span>{{ parent_label|default:"Guardian" }}</span><strong>{{ parent_name|default:"Not added" }}</strong></div>
+            <div class="detail-row"><span>Emergency phone</span><strong>{{ emergency_contact_phone|default:"Not added" }}</strong></div>
+            <div class="detail-row"><span>Blood group</span><strong>{{ blood_group|default:"Not added" }}</strong></div>
+            <div class="detail-row"><span>Address</span><strong>{{ student_address|default:school_address|default:"Not added" }}</strong></div>
+            {% if additional_info_heading or additional_info_description %}
+              <div class="detail-row"><span>{{ additional_info_heading|default:"Additional info" }}</span><strong>{{ additional_info_description|default:"Not added" }}</strong></div>
+            {% endif %}
+          </div>
+          <a class="connect drawer-login" href="{{ edit_profile_url }}">Edit protected information</a>
+        {% else %}
+          <a class="connect drawer-login" href="{{ edit_profile_url }}"><svg class="icon"><use href="#i-lock"></use></svg>Login to view details</a>
+        {% endif %}
+      </section>
+    </div>
 
-    function showToast(message) {
-      if (!toast) return;
-      toast.textContent = message;
-      toast.classList.add("show");
-      window.setTimeout(() => toast.classList.remove("show"), 2200);
-    }
+    <div class="toast" id="toast">Profile link copied</div>
 
-    detailsBtn?.addEventListener("click", () => detailsDrawer?.classList.add("show"));
-    closeDrawer?.addEventListener("click", () => detailsDrawer?.classList.remove("show"));
-    detailsDrawer?.addEventListener("click", (event) => {
-      if (event.target === detailsDrawer) detailsDrawer.classList.remove("show");
-    });
+    <script>
+      (() => {
+        const drawer = document.getElementById("detailsDrawer");
+        const detailsButton = document.getElementById("detailsBtn");
+        const closeButton = document.getElementById("closeDrawer");
+        const shareButton = document.getElementById("shareBtn");
+        const toast = document.getElementById("toast");
+        const profileUrl = "{{ public_card_url|escapejs }}";
+        const shareTitle = "{{ student.name|default:'Student Digital ID'|escapejs }}";
 
-    shareBtn?.addEventListener("click", async () => {
-      const shareData = { title: shareTitle, text: shareText, url: profileUrl || window.location.href };
-      try {
-        if (navigator.share) {
-          await navigator.share(shareData);
-          return;
-        }
-        await navigator.clipboard.writeText(shareData.url);
-        showToast("Profile link copied");
-      } catch (error) {
-        showToast("Sharing was cancelled");
-      }
-    });
-  </script>
-{% endif %}
+        const closeDrawer = () => {
+          drawer?.classList.remove("show");
+          detailsButton?.focus();
+        };
+        detailsButton?.addEventListener("click", () => {
+          drawer?.classList.add("show");
+          closeButton?.focus();
+        });
+        closeButton?.addEventListener("click", closeDrawer);
+        drawer?.addEventListener("click", event => { if (event.target === drawer) closeDrawer(); });
+        document.addEventListener("keydown", event => { if (event.key === "Escape") closeDrawer(); });
+
+        shareButton?.addEventListener("click", async () => {
+          const shareData = { title: shareTitle, text: `View ${shareTitle}'s verified student profile.`, url: profileUrl || window.location.href };
+          try {
+            if (navigator.share) {
+              await navigator.share(shareData);
+            } else {
+              await navigator.clipboard.writeText(shareData.url);
+              toast?.classList.add("show");
+              window.setTimeout(() => toast?.classList.remove("show"), 2200);
+            }
+          } catch (error) {
+            if (error?.name !== "AbortError") {
+              toast.textContent = "Could not share this profile";
+              toast?.classList.add("show");
+              window.setTimeout(() => toast?.classList.remove("show"), 2200);
+            }
+          }
+        });
+      })();
+    </script>
+  {% endif %}
 </body>
 </html>

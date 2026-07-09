@@ -22,6 +22,7 @@ class College(models.Model):
     website = models.URLField(blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
+    student_username_prefix = models.CharField(max_length=80, blank=True, default='')
     theme_primary = models.CharField(max_length=20, blank=True, default='#1a3a5c')
     theme_light_primary = models.CharField(max_length=20, blank=True, default='#f7f5f0')
     theme_secondary = models.CharField(max_length=20, blank=True, default='#1a1a2a')
@@ -217,51 +218,3 @@ class StudentCard(models.Model):
 
     def __str__(self):
         return f"{self.student.name} - {self.card_uid}"
-
-
-class LibraryBook(models.Model):
-    title = models.CharField(max_length=255)
-    author = models.CharField(max_length=255, blank=True, default='')
-    isbn = models.CharField(max_length=50, blank=True, default='')
-    category = models.CharField(max_length=100, blank=True, default='')
-    book_code = models.CharField(max_length=80, unique=True)
-    total_copies = models.PositiveIntegerField(default=1)
-    available_copies = models.PositiveIntegerField(default=1)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"{self.title} ({self.book_code})"
-
-
-class LibraryBorrowRecord(models.Model):
-    STATUS_CHOICES = [
-        ('borrowed', 'Borrowed'),
-        ('returned', 'Returned'),
-        ('overdue', 'Overdue'),
-        ('lost', 'Lost'),
-    ]
-    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='library_records')
-    book = models.ForeignKey(LibraryBook, on_delete=models.CASCADE, related_name='borrow_records')
-    issued_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True, related_name='issued_library_books')
-    issue_date = models.DateField(default=timezone.localdate)
-    due_date = models.DateField()
-    return_date = models.DateField(blank=True, null=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='borrowed')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ['-created_at']
-
-    @property
-    def days_remaining(self):
-        return (self.due_date - timezone.localdate()).days
-
-    @property
-    def overdue_days(self):
-        return max(0, -self.days_remaining)
-
-    def __str__(self):
-        return f"{self.student.name} - {self.book.title}"

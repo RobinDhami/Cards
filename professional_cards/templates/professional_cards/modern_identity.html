@@ -1,0 +1,403 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ profile.full_name }} | Modern Identity</title>
+  {% include "partials/tap2connect_favicon.html" %}
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --accent: {{ profile.accent_color|default:"#3154d7" }};
+      --page: #f4f7fc;
+      --surface: #fff;
+      --ink: #10254f;
+      --muted: #63708a;
+      --line: #dfe5ef;
+      --accent-soft: color-mix(in srgb, var(--accent) 10%, white);
+      --shadow: 0 24px 70px rgba(18,45,94,.12);
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 22px 12px;
+      background: radial-gradient(circle at 12% 4%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 30%), linear-gradient(180deg,#f8faff,var(--page));
+      color: var(--ink);
+      font-family: "DM Sans", system-ui, sans-serif;
+    }
+    a { color: inherit; text-decoration: none; }
+    button { color: inherit; cursor: pointer; font: inherit; }
+    .profile-card { width: min(100%,438px); margin: 0 auto; overflow: hidden; border: 1px solid rgba(20,45,90,.08); border-radius: 34px; background:#fff; box-shadow:var(--shadow); }
+    .inner { padding:22px; }
+    .organization { display:flex; align-items:center; justify-content:space-between; gap:14px; }
+    .organization-copy { min-width:0; display:flex; align-items:center; gap:11px; }
+    .organization-mark {
+      width:47px; height:47px; flex:0 0 auto; overflow:hidden; display:grid; place-items:center;
+      border-radius:14px; color:#fff; background:linear-gradient(145deg,var(--accent),#0b2d72);
+      box-shadow:0 8px 18px color-mix(in srgb,var(--accent) 20%,transparent);
+    }
+    .organization-mark img { width:100%; height:100%; object-fit:cover; }
+    .organization-text { min-width:0; }
+    .organization-text strong { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:16px; letter-spacing:-.25px; }
+    .organization-text span { display:block; margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); font-size:10px; }
+    .top-actions { display:flex; gap:8px; }
+    .top-action { width:42px; height:42px; display:grid; place-items:center; border:1px solid var(--line); border-radius:13px; background:#fff; transition:.18s ease; }
+    .top-action:hover { transform:translateY(-1px); border-color:#b8c3d7; box-shadow:0 8px 18px rgba(16,37,79,.08); }
+    .hero { position:relative; margin-top:20px; }
+    .cover {
+      position:relative; height:196px; overflow:hidden; border-radius:24px;
+      background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 16%,#c9daf5),#e8f1fb 48%,color-mix(in srgb,var(--accent) 70%,#17335f));
+    }
+    .cover::before,.cover::after { content:""; position:absolute; background:rgba(255,255,255,.25); transform:rotate(-11deg); }
+    .cover::before { width:270px; height:92px; left:-45px; top:75px; }
+    .cover::after { width:210px; height:75px; right:-48px; top:20px; }
+    .cover img { position:relative; z-index:1; width:100%; height:100%; object-fit:cover; }
+    .credential {
+      position:absolute; z-index:3; right:13px; bottom:13px; padding:8px 11px;
+      border:1px solid rgba(255,255,255,.26); border-radius:12px; color:#fff; background:rgba(9,31,75,.86);
+      box-shadow:0 8px 20px rgba(6,24,58,.18); backdrop-filter:blur(10px);
+    }
+    .credential small { display:block; color:rgba(255,255,255,.7); font-size:8px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; }
+    .credential strong { display:block; margin-top:2px; font-size:12px; }
+    .portrait {
+      position:absolute; z-index:4; left:17px; bottom:-47px; width:104px; height:104px;
+      overflow:hidden; display:grid; place-items:center; border:5px solid #fff; border-radius:50%;
+      background:#e8edf5; color:#6a7891; font-size:33px; font-weight:700; box-shadow:0 13px 28px rgba(16,37,79,.17);
+    }
+    .portrait img { width:100%; height:100%; object-fit:cover; }
+    .identity { padding:60px 5px 0; }
+    .name-line { display:flex; align-items:center; gap:9px; }
+    .identity h1 { margin:0; font-family:"Libre Baskerville",Georgia,serif; font-size:27px; line-height:1.2; letter-spacing:-.65px; overflow-wrap:anywhere; }
+    .verified {
+      width:23px; height:23px; flex:0 0 auto; display:grid; place-items:center; color:#fff;
+      background:linear-gradient(145deg,#20bf83,#0c9564);
+      clip-path:polygon(50% 0%,61% 9%,75% 5%,82% 18%,95% 25%,91% 39%,100% 50%,91% 61%,95% 75%,82% 82%,75% 95%,61% 91%,50% 100%,39% 91%,25% 95%,18% 82%,5% 75%,9% 61%,0% 50%,9% 39%,5% 25%,18% 18%,25% 5%,39% 9%);
+      filter:drop-shadow(0 3px 5px rgba(12,149,100,.22));
+    }
+    .verified i { width:13px; height:13px; stroke-width:3.2; }
+    .role { margin:8px 0 0; color:#35486d; font-size:14px; font-weight:600; }
+    .location { margin:8px 0 0; display:flex; align-items:flex-start; gap:7px; color:var(--muted); font-size:12px; }
+    .location i { width:16px; height:16px; flex:0 0 auto; }
+    .actions {
+      display:grid; grid-template-columns:repeat(auto-fit,minmax(62px,1fr)); margin-top:22px; padding:12px 5px;
+      border:1px solid var(--line); border-radius:18px; background:#fff; box-shadow:0 8px 22px rgba(16,37,79,.04);
+    }
+    .action { min-width:0; padding:2px 4px; display:grid; justify-items:center; gap:6px; border-right:1px solid var(--line); color:#233965; font-size:10px; font-weight:600; text-align:center; }
+    .action:last-child { border-right:0; }
+    .action-icon { width:36px; height:36px; display:grid; place-items:center; border-radius:50%; color:var(--accent); background:var(--accent-soft); }
+    .action-icon i { width:19px; height:19px; }
+    .intro { position:relative; margin-top:20px; padding:19px 18px 19px 49px; border:1px solid #e2e7f1; border-radius:18px; background:linear-gradient(135deg,#f7f9ff,#fff); color:#263b64; font-family:"Libre Baskerville",Georgia,serif; font-size:13px; line-height:1.7; }
+    .quote { position:absolute; left:17px; top:12px; color:var(--accent); font-family:Georgia,serif; font-size:34px; line-height:1; }
+    .section { margin-top:21px; }
+    .section-title { margin:0 0 12px; color:var(--accent); font-size:11px; font-weight:700; letter-spacing:.085em; text-transform:uppercase; }
+    .focus-list { position:relative; padding:5px 0 3px 34px; border:1px solid var(--line); border-radius:19px; background:#fff; }
+    .focus-list::before { content:""; position:absolute; left:22px; top:28px; bottom:28px; width:2px; background:color-mix(in srgb,var(--accent) 35%,white); }
+    .focus-item { position:relative; padding:14px 15px 14px 20px; }
+    .focus-item::before { content:""; position:absolute; left:-18px; top:19px; width:10px; height:10px; border:3px solid #fff; border-radius:50%; background:var(--accent); box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 35%,white); }
+    .focus-item + .focus-item { border-top:1px solid #edf0f5; }
+    .focus-item strong { display:block; font-size:13px; }
+    .focus-item p { margin:4px 0 0; color:var(--muted); font-size:11px; line-height:1.55; }
+    .skill-section { padding:14px; border:1px solid var(--line); border-radius:19px; background:#fff; }
+    .skills { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
+    .skill { min-width:0; min-height:94px; padding:11px 5px 9px; display:flex; flex-direction:column; align-items:center; justify-content:center; border:1px solid var(--line); border-radius:12px; background:#fff; text-align:center; }
+    .skill-head { display:flex; flex-direction:column; align-items:center; gap:8px; }
+    .skill-icon { width:38px; height:38px; display:grid; place-items:center; flex:0 0 auto; border-radius:50%; color:var(--accent); background:var(--accent-soft); }
+    .skill-icon i { width:22px; height:22px; }
+    .skill strong { font-size:9.5px; line-height:1.25; overflow-wrap:anywhere; }
+    .snapshot { padding:17px; border:1px solid var(--line); border-radius:19px; background:linear-gradient(145deg,#f8faff,#fff); }
+    .snapshot-head { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .snapshot-head .section-title { margin:0; }
+    .snapshot-head i { width:20px; height:20px; color:var(--accent); }
+    .snapshot-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); margin-top:16px; }
+    .snapshot-item { min-width:0; padding:2px 8px; border-left:1px solid var(--line); text-align:center; }
+    .snapshot-item:first-child { border-left:0; }
+    .snapshot-item span { display:block; color:var(--muted); font-size:8px; }
+    .snapshot-item strong { display:block; margin-top:5px; font-size:9.5px; line-height:1.3; overflow-wrap:anywhere; }
+    .portfolio { display:grid; gap:10px; }
+    .portfolio-item { display:grid; grid-template-columns:84px 1fr; overflow:hidden; border:1px solid var(--line); border-radius:15px; background:#fff; }
+    .portfolio-image { min-height:88px; display:grid; place-items:center; color:var(--accent); background:var(--accent-soft); }
+    .portfolio-image img { width:100%; height:100%; object-fit:cover; }
+    .portfolio-image i { width:24px; height:24px; }
+    .portfolio-copy { padding:12px; }
+    .portfolio-copy strong { display:block; font-size:11px; }
+    .portfolio-copy p { margin:5px 0 0; color:var(--muted); font-size:9px; line-height:1.45; }
+    .recommendation,.details-box { padding:15px; border:1px solid var(--line); border-radius:15px; background:#fbfcfe; }
+    .recommendation + .recommendation { margin-top:9px; }
+    .recommendation p { margin:0; color:#40506d; font-size:10px; line-height:1.6; }
+    .recommendation strong { display:block; margin-top:9px; font-size:10px; }
+    .recommendation span { color:var(--muted); font-size:9px; }
+    .socials,.documents { display:flex; flex-wrap:wrap; gap:8px; }
+    .social,.document { min-height:34px; display:inline-flex; align-items:center; gap:6px; padding:0 11px; border:1px solid var(--line); border-radius:10px; color:#3e4e6d; background:#fff; font-size:10px; font-weight:700; }
+    .social i,.document i { width:14px; height:14px; }
+    .details-trigger { width:100%; margin-top:21px; padding:14px; border:1px solid var(--line); border-radius:17px; background:#fff; display:grid; grid-template-columns:39px 1fr auto; align-items:center; gap:11px; text-align:left; }
+    .details-icon { width:39px; height:39px; display:grid; place-items:center; border-radius:50%; color:var(--accent); background:var(--accent-soft); }
+    .details-trigger strong { display:block; font-size:12px; }
+    .details-trigger span span { display:block; margin-top:3px; color:var(--muted); font-size:9px; line-height:1.4; }
+    .details-trigger > i { width:18px; height:18px; color:var(--accent); }
+    .connect { width:100%; min-height:52px; margin-top:18px; display:flex; align-items:center; justify-content:center; gap:9px; border:0; border-radius:15px; color:#fff; background:linear-gradient(100deg,var(--accent),color-mix(in srgb,var(--accent) 78%,#142365)); box-shadow:0 12px 24px color-mix(in srgb,var(--accent) 24%,transparent); font-size:14px; font-weight:700; }
+    .footer { padding:16px 8px 2px; display:flex; justify-content:center; align-items:center; gap:6px; color:#7a879d; font-size:9px; text-align:center; }
+    .footer i { width:14px; height:14px; color:var(--accent); }
+    .drawer { position:fixed; z-index:100; inset:0; padding:18px; display:flex; align-items:flex-end; justify-content:center; visibility:hidden; opacity:0; background:rgba(8,20,47,.48); backdrop-filter:blur(5px); transition:.2s ease; }
+    .drawer.show { visibility:visible; opacity:1; }
+    .drawer-panel { width:min(100%,438px); max-height:82vh; overflow-y:auto; padding:21px; border-radius:24px; background:#fff; transform:translateY(20px); transition:.25s ease; }
+    .drawer.show .drawer-panel { transform:translateY(0); }
+    .drawer-head { display:flex; align-items:flex-start; justify-content:space-between; gap:15px; }
+    .drawer-head h2 { margin:0; font-size:19px; }
+    .drawer-head p { margin:5px 0 0; color:var(--muted); font-size:10px; line-height:1.5; }
+    .close { width:36px; height:36px; flex:0 0 auto; border:1px solid var(--line); border-radius:11px; display:grid; place-items:center; background:#fff; }
+    .detail-list { margin-top:17px; display:grid; }
+    .detail-row { padding:12px 0; display:flex; justify-content:space-between; gap:16px; border-bottom:1px solid #edf0f5; font-size:11px; }
+    .detail-row span { color:var(--muted); }
+    .detail-row strong { max-width:62%; text-align:right; overflow-wrap:anywhere; }
+    .owner-bar { position:sticky; z-index:80; top:0; width:min(100%,438px); margin:0 auto 10px; padding:10px 12px; display:flex; align-items:center; justify-content:space-between; gap:12px; border:1px solid #fde68a; border-radius:14px; background:#fffbeb; box-shadow:0 8px 20px rgba(120,80,10,.08); }
+    .owner-bar span { font-size:10px; color:#92400e; font-weight:700; }
+    .owner-bar a { padding:8px 11px; border-radius:9px; color:#fff; background:#172554; font-size:10px; font-weight:700; }
+    .toast { position:fixed; z-index:120; left:50%; bottom:24px; padding:10px 15px; border-radius:11px; color:#fff; background:#10254f; font-size:11px; font-weight:700; opacity:0; transform:translate(-50%,12px); transition:.2s ease; pointer-events:none; }
+    .toast.show { opacity:1; transform:translate(-50%,0); }
+    @media(max-width:470px) {
+      body { padding:0; background:#fff; }
+      .owner-bar { margin:0; border-width:0 0 1px; border-radius:0; }
+      .profile-card { width:100%; border:0; border-radius:0; box-shadow:none; }
+      .inner { padding:18px; }
+      .cover { height:184px; }
+      .identity h1 { font-size:25px; }
+      .drawer { padding:0; }
+      .drawer-panel { width:100%; border-radius:24px 24px 0 0; }
+    }
+  </style>
+</head>
+<body>
+  {% if is_profile_owner_view %}
+    <nav class="owner-bar" aria-label="Profile owner navigation">
+      <span>Owner preview · This is how visitors see your profile.</span>
+      <a href="{{ edit_login_url }}">Edit profile</a>
+    </nav>
+  {% endif %}
+
+  <article class="profile-card">
+    <div class="inner">
+      <header class="organization">
+        <div class="organization-copy">
+          <span class="organization-mark">
+            {% if profile.organization_logo %}
+              <img src="{{ profile.organization_logo.url }}" alt="{{ profile.company_name }} logo">
+            {% else %}
+              <i data-lucide="building-2"></i>
+            {% endif %}
+          </span>
+          <span class="organization-text">
+            <strong>{{ profile.company_name|default:"Professional Identity" }}</strong>
+            <span>{{ profile.organization_tagline|default:"Verified digital profile" }}</span>
+          </span>
+        </div>
+        <div class="top-actions">
+          <a class="top-action" href="{{ edit_login_url }}" aria-label="Edit profile"><i data-lucide="pencil"></i></a>
+          <button class="top-action" id="shareBtn" type="button" aria-label="Share profile"><i data-lucide="share-2"></i></button>
+          <a class="top-action" href="{% url 'professional_cards:qr_code' profile.slug %}" aria-label="Open QR code"><i data-lucide="qr-code"></i></a>
+        </div>
+      </header>
+
+      <section class="hero">
+        <div class="cover">{% if profile.cover_photo %}<img src="{{ profile.cover_photo.url }}" alt="{{ profile.full_name }} cover">{% endif %}</div>
+        {% if profile.profile_identifier %}
+          <div class="credential"><small>{{ profile.profile_identifier_label|default:"Profile ID" }}</small><strong>{{ profile.profile_identifier }}</strong></div>
+        {% endif %}
+        <div class="portrait">
+          {% if profile.profile_photo %}<img src="{{ profile.profile_photo.url }}" alt="{{ profile.full_name }}">{% else %}{{ profile.full_name|slice:":2"|upper }}{% endif %}
+        </div>
+      </section>
+
+      <section class="identity">
+        <div class="name-line">
+          <h1>{{ profile.full_name }}</h1>
+          {% if profile.is_verified %}<span class="verified" title="Verified profile"><i data-lucide="check"></i></span>{% endif %}
+        </div>
+        <p class="role">{{ profile.designation|default:profile.profession|default:"Professional Profile" }}{% if profile.company_name %} · {{ profile.company_name }}{% endif %}</p>
+        {% if profile.location %}<p class="location"><i data-lucide="map-pin"></i>{{ profile.location }}</p>{% endif %}
+      </section>
+
+      {% if primary_actions %}
+        <nav class="actions" aria-label="Primary contact actions">
+          {% for action in primary_actions|slice:":4" %}
+            <a class="action" href="{{ action.href }}" {% if action.external %}target="_blank" rel="noopener"{% endif %}>
+              <span class="action-icon"><i data-lucide="{{ action.icon }}"></i></span>
+              <span>{{ action.label }}</span>
+            </a>
+          {% endfor %}
+        </nav>
+      {% endif %}
+
+      {% if profile.short_tagline or profile.about %}
+        <section class="intro"><span class="quote">“</span>{{ profile.short_tagline|default:profile.about }}</section>
+      {% endif %}
+
+      {% if profile.current_focus or profile.featured_interest or profile.profession %}
+        <section class="section">
+          <h2 class="section-title">Current focus</h2>
+          <div class="focus-list">
+            {% if profile.current_focus %}<article class="focus-item"><strong>What I’m working on</strong><p>{{ profile.current_focus }}</p></article>{% endif %}
+            {% if profile.featured_interest %}<article class="focus-item"><strong>Featured interest</strong><p>{{ profile.featured_interest }}</p></article>{% endif %}
+            {% if profile.profession %}<article class="focus-item"><strong>Professional direction</strong><p>{{ profile.profession }}{% if profile.industry %} in {{ profile.industry }}{% endif %}</p></article>{% endif %}
+          </div>
+        </section>
+      {% endif %}
+
+      {% if profile.services.all %}
+        <section class="section skill-section">
+          <h2 class="section-title">Skills</h2>
+          <div class="skills">
+            {% for service in profile.services.all %}
+              <article class="skill">
+                <div class="skill-head"><span class="skill-icon"><i data-lucide="{{ service.icon|default:'sparkles' }}"></i></span><strong>{{ service.title }}</strong></div>
+              </article>
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
+
+      <section class="section snapshot">
+        <div class="snapshot-head"><h2 class="section-title">{% if profile.profile_type == "student" %}Academic snapshot{% else %}Professional snapshot{% endif %}</h2><i data-lucide="{% if profile.profile_type == 'student' %}graduation-cap{% else %}badge-check{% endif %}"></i></div>
+        <div class="snapshot-grid">
+          {% if profile.profile_type == "student" %}
+            <div class="snapshot-item"><span>Program</span><strong>{{ profile.industry|default:"Not added" }}</strong></div>
+            <div class="snapshot-item"><span>Year</span><strong>{% if profile.years_of_experience %}Year {{ profile.years_of_experience }}{% else %}Not added{% endif %}</strong></div>
+            <div class="snapshot-item"><span>Section</span><strong>{{ profile.academic_section|default:"Not added" }}</strong></div>
+            <div class="snapshot-item"><span>Institution</span><strong>{{ profile.company_name|default:"Independent" }}</strong></div>
+          {% else %}
+            <div class="snapshot-item"><span>Profile type</span><strong>{{ profile.get_profile_type_display }}</strong></div>
+            <div class="snapshot-item"><span>Field</span><strong>{{ profile.industry|default:"Not added" }}</strong></div>
+            <div class="snapshot-item"><span>Experience</span><strong>{% if profile.years_of_experience %}{{ profile.years_of_experience }} year{{ profile.years_of_experience|pluralize }}{% else %}Not added{% endif %}</strong></div>
+            <div class="snapshot-item"><span>Organization</span><strong>{{ profile.company_name|default:"Independent" }}</strong></div>
+          {% endif %}
+        </div>
+      </section>
+
+      {% if profile.portfolio_items.all %}
+        <section class="section">
+          <h2 class="section-title">Highlights</h2>
+          <div class="portfolio">
+            {% for item in profile.portfolio_items.all %}
+              <a class="portfolio-item" {% if item.link %}href="{{ item.link }}" target="_blank" rel="noopener"{% endif %}>
+                <span class="portfolio-image">{% if item.image %}<img src="{{ item.image.url }}" alt="{{ item.title }}">{% else %}<i data-lucide="image"></i>{% endif %}</span>
+                <span class="portfolio-copy"><strong>{{ item.title }}</strong>{% if item.description %}<p>{{ item.description }}</p>{% endif %}</span>
+              </a>
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
+
+      {% if profile.testimonials.all %}
+        <section class="section">
+          <h2 class="section-title">Recommendations</h2>
+          {% for testimonial in profile.testimonials.all %}
+            <article class="recommendation">
+              <p>“{{ testimonial.review_text }}”</p>
+              <strong>{{ testimonial.client_name }}</strong>
+              {% if testimonial.client_role %}<span>{{ testimonial.client_role }}</span>{% endif %}
+            </article>
+          {% endfor %}
+        </section>
+      {% endif %}
+
+      {% if profile.linkedin_url or profile.facebook_url or profile.instagram_url or profile.youtube_url or profile.github_url %}
+        <section class="section">
+          <h2 class="section-title">Find me online</h2>
+          <div class="socials">
+            {% if profile.linkedin_url %}<a class="social" href="{{ profile.linkedin_url }}" target="_blank" rel="noopener"><i data-lucide="linkedin"></i>LinkedIn</a>{% endif %}
+            {% if profile.instagram_url %}<a class="social" href="{{ profile.instagram_url }}" target="_blank" rel="noopener"><i data-lucide="instagram"></i>Instagram</a>{% endif %}
+            {% if profile.facebook_url %}<a class="social" href="{{ profile.facebook_url }}" target="_blank" rel="noopener"><i data-lucide="facebook"></i>Facebook</a>{% endif %}
+            {% if profile.youtube_url %}<a class="social" href="{{ profile.youtube_url }}" target="_blank" rel="noopener"><i data-lucide="youtube"></i>YouTube</a>{% endif %}
+            {% if profile.github_url %}<a class="social" href="{{ profile.github_url }}" target="_blank" rel="noopener"><i data-lucide="github"></i>GitHub</a>{% endif %}
+          </div>
+        </section>
+      {% endif %}
+
+      {% if public_documents %}
+        <section class="section">
+          <h2 class="section-title">Documents</h2>
+          <div class="documents">
+            {% for document in public_documents %}<a class="document" href="{{ document.file.url }}" target="_blank"><i data-lucide="file-down"></i>{{ document.title }}</a>{% endfor %}
+          </div>
+        </section>
+      {% endif %}
+
+      <button class="details-trigger" id="detailsBtn" type="button">
+        <span class="details-icon"><i data-lucide="contact"></i></span>
+        <span><strong>View complete details</strong><span>Contact information, availability, address, and professional links.</span></span>
+        <i data-lucide="chevron-right"></i>
+      </button>
+
+      {% if profile.booking_url %}
+        <a class="connect" href="{{ profile.booking_url }}" target="_blank" rel="noopener"><i data-lucide="users"></i>Connect with {{ profile.full_name }}</a>
+      {% elif whatsapp_digits %}
+        <a class="connect" href="https://wa.me/{{ whatsapp_digits }}" target="_blank" rel="noopener"><i data-lucide="users"></i>Connect with {{ profile.full_name }}</a>
+      {% elif profile.phone %}
+        <a class="connect" href="tel:{{ profile.phone }}"><i data-lucide="users"></i>Connect with {{ profile.full_name }}</a>
+      {% else %}
+        <a class="connect" href="{% url 'professional_cards:vcard' profile.slug %}"><i data-lucide="contact"></i>Save contact</a>
+      {% endif %}
+
+      <footer class="footer">
+        <i data-lucide="shield-check"></i>
+        <span>{% if profile.is_verified %}Verified{% else %}Digital identity{% endif %}{% if profile.company_name %} · {{ profile.company_name }}{% endif %} · Powered by</span>
+        {% include "partials/tap2connect_logo.html" with logo_width="46px" logo_height="16px" logo_radius="3px" logo_alt="Tap2Connect" %}
+      </footer>
+    </div>
+  </article>
+
+  <div class="drawer" id="detailsDrawer" role="dialog" aria-modal="true" aria-labelledby="detailsTitle">
+    <section class="drawer-panel">
+      <header class="drawer-head">
+        <div><h2 id="detailsTitle">Professional details</h2><p>Everything you need to connect, collaborate, or learn more.</p></div>
+        <button class="close" id="closeDrawer" type="button" aria-label="Close details"><i data-lucide="x"></i></button>
+      </header>
+      <div class="detail-list">
+        {% if profile.email %}<div class="detail-row"><span>Email</span><strong><a href="mailto:{{ profile.email }}">{{ profile.email }}</a></strong></div>{% endif %}
+        {% if profile.phone %}<div class="detail-row"><span>Phone</span><strong><a href="tel:{{ profile.phone }}">{{ profile.phone }}</a></strong></div>{% endif %}
+        {% if profile.website %}<div class="detail-row"><span>Website</span><strong><a href="{{ profile.website }}" target="_blank">{{ profile.website }}</a></strong></div>{% endif %}
+        {% if profile.business_hours %}<div class="detail-row"><span>Availability</span><strong>{{ profile.business_hours }}</strong></div>{% endif %}
+        {% if profile.office_address %}<div class="detail-row"><span>Office / campus</span><strong>{{ profile.office_address }}</strong></div>{% endif %}
+        {% if profile.profile_identifier %}<div class="detail-row"><span>{{ profile.profile_identifier_label|default:"Profile ID" }}</span><strong>{{ profile.profile_identifier }}</strong></div>{% endif %}
+      </div>
+      <a class="connect" href="{% url 'professional_cards:vcard' profile.slug %}"><i data-lucide="user-plus"></i>Save contact</a>
+    </section>
+  </div>
+  <div class="toast" id="toast">Profile link copied</div>
+
+  <script>
+    lucide.createIcons();
+    const drawer = document.getElementById("detailsDrawer");
+    const detailsButton = document.getElementById("detailsBtn");
+    const closeButton = document.getElementById("closeDrawer");
+    const toast = document.getElementById("toast");
+    const closeDrawer = () => { drawer.classList.remove("show"); detailsButton.focus(); };
+    detailsButton.addEventListener("click", () => { drawer.classList.add("show"); closeButton.focus(); });
+    closeButton.addEventListener("click", closeDrawer);
+    drawer.addEventListener("click", event => { if (event.target === drawer) closeDrawer(); });
+    document.addEventListener("keydown", event => { if (event.key === "Escape") closeDrawer(); });
+    document.getElementById("shareBtn").addEventListener("click", async () => {
+      const data = { title: "{{ profile.full_name|escapejs }}", text: "View {{ profile.full_name|escapejs }}'s digital profile.", url: "{{ public_url|escapejs }}" };
+      try {
+        if (navigator.share) await navigator.share(data);
+        else {
+          await navigator.clipboard.writeText(data.url);
+          toast.classList.add("show");
+          setTimeout(() => toast.classList.remove("show"), 2200);
+        }
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          toast.textContent = "Could not share this profile";
+          toast.classList.add("show");
+          setTimeout(() => toast.classList.remove("show"), 2200);
+        }
+      }
+    });
+  </script>
+</body>
+</html>

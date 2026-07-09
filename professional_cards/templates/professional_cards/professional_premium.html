@@ -1,9 +1,11 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ profile.full_name }} | Tap2Connect</title>
+  {% include "partials/tap2connect_favicon.html" %}
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
@@ -16,10 +18,38 @@
     .accent-bg { background: var(--accent); }
     .accent-text { color: var(--accent); }
     .accent-border { border-color: var(--accent); }
+    .brand-call { background:#0f766e; }
+    .brand-whatsapp { background:#25d366; }
+    .brand-email { background:#ea4335; }
+    .brand-website { background:#2563eb; }
+    .brand-linkedin { background:#0a66c2; }
+    .brand-facebook { background:#1877f2; }
+    .brand-instagram { background:linear-gradient(135deg,#f58529,#dd2a7b,#8134af,#515bd4); }
+    .brand-youtube { background:#ff0000; }
+    .brand-github { background:#24292f; }
+    .brand-save { background:#111827; }
+    .brand-booking { background:#7c3aed; }
+    .more-actions-toggle:checked ~ .more-actions { display:grid; }
+    .more-actions-toggle:checked ~ .see-more-label .more-text { display:none; }
+    .more-actions-toggle:checked ~ .see-more-label .less-text { display:inline; }
+    .less-text { display:none; }
+    .profile-menu-toggle:checked ~ .profile-menu-panel { display:block; }
   </style>
 </head>
 <body>
   <div class="mx-auto min-h-screen w-full max-w-md bg-white shadow-2xl shadow-slate-200/80">
+    {% if is_profile_owner_view %}
+      <nav aria-label="Profile owner navigation" class="sticky top-0 z-[110] flex items-center justify-between gap-3 border-b border-amber-200 bg-amber-50 px-4 py-2.5 shadow-sm">
+        <div class="min-w-0">
+          <p class="text-[10px] font-bold uppercase tracking-[0.15em] text-amber-700">Owner preview</p>
+          <p class="truncate text-xs font-medium text-slate-700">This is how visitors see your profile.</p>
+        </div>
+        <a href="{{ edit_login_url }}" class="flex shrink-0 items-center gap-1.5 rounded-xl bg-slate-900 px-3 py-2 text-xs font-bold text-white shadow-sm hover:bg-slate-800">
+          <i data-lucide="pencil" class="h-3.5 w-3.5"></i>
+          Edit Profile
+        </a>
+      </nav>
+    {% endif %}
     <header class="relative">
       <div class="h-44 overflow-hidden rounded-b-[2rem] bg-slate-900">
         {% if profile.cover_photo %}
@@ -28,10 +58,29 @@
           <div class="h-full w-full bg-[radial-gradient(circle_at_20%_15%,rgba(212,175,55,.35),transparent_30%),linear-gradient(135deg,#0f172a,#134e4a)]"></div>
         {% endif %}
       </div>
-      <div class="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold tracking-wide text-slate-900">Tap2Connect</div>
+      <div class="absolute left-4 top-4 inline-flex rounded-xl bg-white/90 px-2 shadow-sm">
+        {% include "partials/tap2connect_logo.html" with logo_width="72px" logo_height="25px" logo_radius="4px" %}
+      </div>
+      <div class="absolute right-4 top-4 z-[100]">
+        <input id="profile-menu-toggle" type="checkbox" class="profile-menu-toggle sr-only">
+        <label for="profile-menu-toggle" class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white/90 text-slate-800 shadow-md" aria-label="Open profile options">
+          <i data-lucide="more-vertical" class="h-5 w-5"></i>
+        </label>
+        <div class="profile-menu-panel absolute right-0 z-[100] mt-2 hidden w-48 overflow-hidden rounded-2xl border border-slate-200 bg-white text-sm shadow-xl">
+          <a href="{{ edit_login_url }}" class="flex items-center gap-2 px-4 py-3 font-semibold text-slate-700 hover:bg-slate-50">
+            <i data-lucide="pencil" class="h-4 w-4"></i>Edit My Profile
+          </a>
+          <a href="{% url 'professional_cards:vcard' profile.slug %}" class="flex items-center gap-2 px-4 py-3 font-semibold text-slate-700 hover:bg-slate-50">
+            <i data-lucide="user-plus" class="h-4 w-4"></i>Save Contact
+          </a>
+          <a href="{% url 'professional_cards:qr_code' profile.slug %}" download class="flex items-center gap-2 px-4 py-3 font-semibold text-slate-700 hover:bg-slate-50">
+            <i data-lucide="qr-code" class="h-4 w-4"></i>Download QR
+          </a>
+        </div>
+      </div>
     </header>
 
-    <section class="relative -mt-16 px-6 text-center">
+    <section class="relative z-30 -mt-16 px-6 text-center">
       <div class="mx-auto h-32 w-32 overflow-hidden rounded-full border-4 border-white bg-slate-100 shadow-lg">
         {% if profile.profile_photo %}
           <img src="{{ profile.profile_photo.url }}" alt="{{ profile.full_name }}" class="h-full w-full object-cover">
@@ -40,28 +89,46 @@
         {% endif %}
       </div>
       <h1 class="font-display mt-4 text-3xl font-bold text-slate-950">{{ profile.full_name }}</h1>
+      <div class="mt-2 inline-flex rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-600">{{ profile.get_profile_type_display }}</div>
       <div class="mt-1 flex items-center justify-center gap-2">
-        <p class="text-sm font-medium text-slate-600">{{ profile.designation|default:"Professional" }}</p>
+        <p class="text-sm font-medium text-slate-600">{{ profile.designation|default:profile.profession|default:"Networking Profile" }}</p>
         {% if profile.is_verified %}
           <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-600"><i data-lucide="check" class="h-3 w-3 text-white"></i></span>
         {% endif %}
       </div>
+      {% if profile.profession and profile.designation %}<p class="mt-1 text-sm text-slate-500">{{ profile.profession }}</p>{% endif %}
       {% if profile.company_name %}<p class="mt-1 text-sm text-slate-500">{{ profile.company_name }}</p>{% endif %}
       {% if profile.short_tagline %}<p class="mt-4 text-sm italic leading-6 text-slate-600">"{{ profile.short_tagline }}"</p>{% endif %}
     </section>
 
     <section class="mt-6 px-6">
       <div class="grid grid-cols-4 gap-3">
-        {% if profile.phone %}<a href="tel:{{ profile.phone }}" class="action-btn rounded-2xl bg-white p-3 text-center shadow-md"><span class="accent-bg mx-auto flex h-10 w-10 items-center justify-center rounded-full"><i data-lucide="phone" class="h-5 w-5 text-white"></i></span><span class="mt-1.5 block text-xs font-semibold">Call</span></a>{% endif %}
-        {% if whatsapp_digits %}<a href="https://wa.me/{{ whatsapp_digits }}" target="_blank" class="action-btn rounded-2xl bg-white p-3 text-center shadow-md"><span class="accent-bg mx-auto flex h-10 w-10 items-center justify-center rounded-full"><i data-lucide="message-circle" class="h-5 w-5 text-white"></i></span><span class="mt-1.5 block text-xs font-semibold">WhatsApp</span></a>{% endif %}
-        {% if profile.email %}<a href="mailto:{{ profile.email }}" class="action-btn rounded-2xl bg-white p-3 text-center shadow-md"><span class="accent-bg mx-auto flex h-10 w-10 items-center justify-center rounded-full"><i data-lucide="mail" class="h-5 w-5 text-white"></i></span><span class="mt-1.5 block text-xs font-semibold">Email</span></a>{% endif %}
-        {% if profile.website %}<a href="{{ profile.website }}" target="_blank" class="action-btn rounded-2xl bg-white p-3 text-center shadow-md"><span class="accent-bg mx-auto flex h-10 w-10 items-center justify-center rounded-full"><i data-lucide="globe" class="h-5 w-5 text-white"></i></span><span class="mt-1.5 block text-xs font-semibold">Website</span></a>{% endif %}
+        {% for action in primary_actions %}
+          <a href="{{ action.href }}" {% if action.external %}target="_blank" rel="noopener noreferrer"{% endif %} class="action-btn rounded-2xl bg-white p-3 text-center shadow-md">
+            <span class="{{ action.brand_class }} mx-auto flex h-10 w-10 items-center justify-center rounded-full"><i data-lucide="{{ action.icon }}" class="h-5 w-5 text-white"></i></span>
+            <span class="mt-1.5 block text-xs font-semibold">{{ action.label }}</span>
+          </a>
+        {% endfor %}
       </div>
-      <div class="mt-3 grid grid-cols-3 gap-3">
-        {% if profile.linkedin_url %}<a href="{{ profile.linkedin_url }}" target="_blank" class="action-btn rounded-2xl bg-white p-3 text-center shadow-md"><span class="accent-bg mx-auto flex h-10 w-10 items-center justify-center rounded-full"><i data-lucide="briefcase-business" class="h-5 w-5 text-white"></i></span><span class="mt-1.5 block text-xs font-semibold">LinkedIn</span></a>{% endif %}
-        <a href="{% url 'professional_cards:vcard' profile.slug %}" class="action-btn rounded-2xl bg-white p-3 text-center shadow-md"><span class="accent-bg mx-auto flex h-10 w-10 items-center justify-center rounded-full"><i data-lucide="user-plus" class="h-5 w-5 text-white"></i></span><span class="mt-1.5 block text-xs font-semibold">Save</span></a>
-        {% if profile.booking_url %}<a href="{{ profile.booking_url }}" target="_blank" class="action-btn rounded-2xl bg-white p-3 text-center shadow-md"><span class="accent-bg mx-auto flex h-10 w-10 items-center justify-center rounded-full"><i data-lucide="calendar-check" class="h-5 w-5 text-white"></i></span><span class="mt-1.5 block text-xs font-semibold">Book</span></a>{% endif %}
-      </div>
+      {% if extra_actions %}
+        <input id="more-actions-toggle" type="checkbox" class="more-actions-toggle sr-only">
+        <div class="more-actions mt-3 hidden grid-cols-4 gap-3">
+          {% for action in extra_actions %}
+            <a href="{{ action.href }}" {% if action.external %}target="_blank" rel="noopener noreferrer"{% endif %} class="action-btn rounded-2xl bg-white p-3 text-center shadow-md">
+              <span class="{{ action.brand_class }} mx-auto flex h-10 w-10 items-center justify-center rounded-full"><i data-lucide="{{ action.icon }}" class="h-5 w-5 text-white"></i></span>
+              <span class="mt-1.5 block text-xs font-semibold">{{ action.label }}</span>
+            </a>
+          {% endfor %}
+        </div>
+        <label for="more-actions-toggle" class="see-more-label mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm">
+          <span class="more-text">See more</span><span class="less-text">Show less</span>
+          <i data-lucide="chevron-down" class="h-4 w-4"></i>
+        </label>
+      {% endif %}
+      <a href="{% url 'professional_cards:vcard' profile.slug %}" class="action-btn brand-save mt-3 flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold text-white shadow-md">
+        <i data-lucide="user-plus" class="h-5 w-5"></i>
+        Save Contact
+      </a>
     </section>
 
     {% if profile.about or profile.years_of_experience or profile.location or profile.industry %}
@@ -70,10 +137,10 @@
         <div class="rounded-2xl bg-slate-50 p-5 shadow-sm">
           {% if profile.about %}<p class="text-sm leading-7 text-slate-600">{{ profile.about|linebreaksbr }}</p>{% endif %}
           <div class="mt-4 grid grid-cols-2 gap-3">
-            {% if profile.years_of_experience %}<div><span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Experience</span><p class="font-semibold">{{ profile.years_of_experience }} years</p></div>{% endif %}
+            {% if profile.years_of_experience %}<div><span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">{% if profile.profile_type == "student" %}Study Year{% else %}Experience{% endif %}</span><p class="font-semibold">{{ profile.years_of_experience }}{% if profile.profile_type == "student" %} year{% else %} years{% endif %}</p></div>{% endif %}
             {% if profile.location %}<div><span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Location</span><p class="font-semibold">{{ profile.location }}</p></div>{% endif %}
-            {% if profile.industry %}<div><span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Industry</span><p class="font-semibold">{{ profile.industry }}</p></div>{% endif %}
-            {% if profile.business_hours %}<div><span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Hours</span><p class="font-semibold">{{ profile.business_hours }}</p></div>{% endif %}
+            {% if profile.industry %}<div><span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">{% if profile.profile_type == "student" %}Course / Field{% else %}Industry{% endif %}</span><p class="font-semibold">{{ profile.industry }}</p></div>{% endif %}
+            {% if profile.business_hours %}<div><span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Availability</span><p class="font-semibold">{{ profile.business_hours }}</p></div>{% endif %}
           </div>
         </div>
       </section>
@@ -81,7 +148,7 @@
 
     {% if profile.services.all %}
       <section class="mt-8 px-6">
-        <h2 class="font-display mb-3 text-xl font-bold text-slate-950">Services</h2>
+        <h2 class="font-display mb-3 text-xl font-bold text-slate-950">Skills / Services</h2>
         <div class="grid grid-cols-2 gap-3">
           {% for service in profile.services.all %}
             <div class="rounded-2xl bg-slate-50 p-4 shadow-sm">
@@ -113,7 +180,7 @@
 
     {% if profile.testimonials.all %}
       <section class="mt-8 px-6">
-        <h2 class="font-display mb-3 text-xl font-bold text-slate-950">Testimonials</h2>
+        <h2 class="font-display mb-3 text-xl font-bold text-slate-950">Recommendations</h2>
         <div class="space-y-3">
           {% for testimonial in profile.testimonials.all %}
             <div class="rounded-2xl bg-slate-50 p-5 shadow-sm">
@@ -135,7 +202,7 @@
         {% if profile.office_address %}<div class="flex gap-3"><i data-lucide="map-pin" class="h-4 w-4 text-slate-400"></i><span>{{ profile.office_address }}</span></div>{% endif %}
         {% if profile.business_hours %}<div class="flex gap-3"><i data-lucide="clock" class="h-4 w-4 text-slate-400"></i><span>{{ profile.business_hours }}</span></div>{% endif %}
       </div>
-      {% if profile.google_maps_url %}
+      {% if profile.show_map_on_profile and profile.google_maps_url %}
         <a href="{{ profile.google_maps_url }}" target="_blank" class="accent-border accent-text mt-3 flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-bold">
           <i data-lucide="map" class="h-4 w-4"></i>Open Map
         </a>
@@ -161,7 +228,10 @@
       {% elif profile.phone %}
         <a href="tel:{{ profile.phone }}" class="action-btn accent-bg block w-full rounded-2xl py-4 text-center text-lg font-bold text-white shadow-lg">Connect Now</a>
       {% endif %}
-      <p class="mt-5 text-center text-xs text-slate-400">Powered by Tap2Connect</p>
+      <p class="mt-5 flex items-center justify-center gap-1.5 text-center text-xs text-slate-400">
+        <span>Powered by</span>
+        {% include "partials/tap2connect_logo.html" with logo_width="50px" logo_height="18px" logo_radius="3px" logo_alt="Tap2Connect" %}
+      </p>
     </section>
   </div>
   <script>lucide.createIcons();</script>

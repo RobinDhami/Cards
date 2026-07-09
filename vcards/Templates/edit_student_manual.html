@@ -366,10 +366,6 @@
             <label class="form-label">Address</label>
             <input class="form-input" name="address" value="{{ student.address|default:'' }}" placeholder="Full address">
           </div>
-          <div class="sm:col-span-2">
-            <label class="form-label">Bio / Note</label>
-            <textarea class="form-input" rows="2" name="bio" placeholder="Short bio or note">{{ student.bio|default:'' }}</textarea>
-          </div>
           <div>
             <label class="form-label">Emergency Contact Name</label>
             <input class="form-input" name="emergency_contact_name" value="{{ student.emergency_contact_name|default:'' }}" placeholder="Name">
@@ -405,6 +401,36 @@
               <input class="form-input pr-10" name="map_url" value="{{ student.map_url|default:'' }}" placeholder="Google Maps link">
               <i data-lucide="map-pin" class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gold"></i>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card" style="animation: fadeUp 0.63s ease both">
+        <div class="mb-5 flex items-center gap-2">
+          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-navy"><i data-lucide="user-round" class="h-4 w-4 text-gold"></i></div>
+          <div>
+            <h2 class="text-base font-semibold text-navy">About & Availability</h2>
+            <p class="mt-0.5 text-xs text-slate-500">Public information that helps visitors understand the person, their strengths, and their current focus.</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
+          <div class="sm:col-span-2">
+            <label class="form-label">Short Introduction</label>
+            <textarea class="form-input" rows="3" name="about_intro" maxlength="500" placeholder="A concise public introduction">{{ student.about_intro|default:student.bio|default:'' }}</textarea>
+            <p class="mt-1 text-xs text-slate-400">Who they are, what they study or teach, and what matters to them.</p>
+          </div>
+          <div>
+            <label class="form-label">Featured Strength or Achievement</label>
+            <textarea class="form-input" rows="3" name="about_featured" maxlength="300" placeholder="Example: Science fair finalist and robotics club member">{{ student.about_featured|default:'' }}</textarea>
+          </div>
+          <div>
+            <label class="form-label">Current Focus / Availability</label>
+            <textarea class="form-input" rows="3" name="about_current" maxlength="300" placeholder="Example: Currently learning Python and open to student projects">{{ student.about_current|default:'' }}</textarea>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="form-label">Skills & Interests</label>
+            <input class="form-input" name="custom_skills" value="{{ selected_skill_names }}" placeholder="Python, public speaking, football, graphic design">
+            <p class="mt-1 text-xs text-slate-400">Separate each skill or interest with a comma.</p>
           </div>
         </div>
       </div>

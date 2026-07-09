@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Management</title>
+  <title>Students</title>
+  {% include "partials/tap2connect_favicon.html" %}
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
       theme: {
@@ -23,8 +24,8 @@
     }
   </script>
   <style>
-    body { font-family: 'DM Sans', sans-serif; }
-    .font-display { font-family: 'Playfair Display', serif; }
+    body { font-family: 'Inter', sans-serif; }
+    .font-display { font-family: 'Inter', sans-serif; }
     .sidebar-link { transition: all 0.15s ease; }
     .sidebar-link:hover, .sidebar-link.active { background: rgba(255,255,255,0.1); }
     .table-row { transition: background 0.1s ease; }
@@ -32,7 +33,7 @@
     .btn-action { transition: all 0.15s ease; }
   </style>
 </head>
-<body class="h-full overflow-auto bg-slate2-50 text-navy-700">
+<body class="h-full overflow-auto bg-white text-slate-800">
   <div class="flex h-full w-full flex-col lg:flex-row">
     {% include "dashboard/_sidebar.html" %}
 
@@ -44,7 +45,7 @@
               <i data-lucide="menu" class="h-5 w-5"></i>
             </button>
             <div>
-              <h1 id="page-title" class="font-display text-lg font-bold text-navy-500">Student Management</h1>
+              <h1 id="page-title" class="text-lg font-semibold text-slate-950">Students</h1>
               <p class="mt-0.5 text-[11px] text-navy-400">
                 <span id="breadcrumb-school">{{ current_school.name|default:"School Workspace" }}</span> → Students
               </p>
@@ -64,7 +65,11 @@
               </form>
             {% endif %}
             {% if current_school %}
-              <a href="{% url 'add_student_to_college' current_school.id %}" id="add-student-btn" class="btn-action flex items-center gap-2 rounded-lg bg-gold-500 px-4 py-2 text-[13px] font-semibold text-white shadow-sm hover:bg-gold-600">
+              <a href="{% url 'dashboard_bulk_upload' %}{{ nav_school_query }}" class="btn-action hidden items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-[13px] font-semibold text-slate-700 hover:bg-slate-50 sm:flex">
+                <i data-lucide="upload" class="h-4 w-4"></i>
+                <span>Import Students</span>
+              </a>
+              <a href="{% url 'add_student_to_college' current_school.id %}" id="add-student-btn" class="btn-action flex items-center gap-2 rounded-lg bg-blue-700 px-4 py-2 text-[13px] font-semibold text-white hover:bg-blue-800">
                 <i data-lucide="plus" class="h-4 w-4"></i>
                 <span class="hidden sm:inline">Add Student</span>
               </a>
@@ -76,7 +81,7 @@
         </div>
       </header>
 
-      <main class="flex-1 space-y-5 p-4 lg:p-8">
+      <main class="flex-1 space-y-5 bg-white p-4 lg:p-8">
         {% if messages %}
           <div class="space-y-2">
             {% for message in messages %}
@@ -86,6 +91,19 @@
             {% endfor %}
           </div>
         {% endif %}
+
+        <section class="flex flex-col gap-4 rounded-xl border border-blue-200 bg-blue-50/70 p-4 sm:flex-row sm:items-center">
+          <div class="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-white text-blue-700 shadow-sm"><i data-lucide="key-round" class="h-4 w-4"></i></div>
+          <div class="min-w-0 flex-1">
+            <h2 class="text-[13px] font-semibold text-slate-950">Student login credentials</h2>
+            <p class="mt-1 text-[11px] leading-5 text-slate-600">New usernames default to <span class="font-mono font-semibold text-blue-800">{{ student_username_prefix }}.roll-number</span>. Passwords are encrypted and can only be reset, never viewed.</p>
+          </div>
+          <form method="post" action="{% url 'assign_school_usernames' %}" onsubmit="return confirm('Apply the school username format to every student? Their passwords will not change.');">
+            {% csrf_token %}
+            {% if current_school %}<input type="hidden" name="school" value="{{ current_school.id }}">{% endif %}
+            <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-blue-200 bg-white px-3 py-2.5 text-[11px] font-semibold text-blue-700 hover:bg-blue-50 sm:w-auto"><i data-lucide="wand-2" class="h-3.5 w-3.5"></i>Apply school usernames</button>
+          </form>
+        </section>
 
         <div class="rounded-xl border border-slate2-200 bg-white p-4 shadow-sm lg:p-5">
           <div class="mb-3 flex items-center gap-2">
@@ -137,6 +155,7 @@
                     <th class="px-4 py-3 font-semibold lg:px-5">Name</th>
                     <th class="px-4 py-3 font-semibold">Class</th>
                     <th class="px-4 py-3 font-semibold">Section</th>
+                    <th class="hidden px-4 py-3 font-semibold lg:table-cell">Login</th>
                     <th class="hidden px-4 py-3 font-semibold md:table-cell">Contact</th>
                     <th class="px-4 py-3 text-right font-semibold lg:px-5">Actions</th>
                   </tr>
@@ -154,18 +173,32 @@
                           {{ student.section|default:"-" }}
                         </span>
                       </td>
+                      <td class="hidden px-4 py-3.5 lg:table-cell">
+                        <div class="max-w-52 truncate font-mono text-[11px] font-medium text-slate-700" title="{{ student.username }}">{{ student.username }}</div>
+                        <div class="mt-1 text-[10px] {% if student.auth_user_id %}text-emerald-600{% else %}text-amber-600{% endif %}">{% if student.auth_user_id %}Login active{% else %}Not activated{% endif %}</div>
+                      </td>
                       <td class="hidden px-4 py-3.5 md:table-cell">
                         <div class="text-navy-600">{{ student.phone|default:"-" }}</div>
                         <div class="mt-0.5 text-[11px] text-navy-400">{{ student.email|default:"-" }}</div>
                       </td>
                       <td class="px-4 py-3.5 text-right lg:px-5">
                         <div class="inline-flex items-center gap-1">
+                          <a href="{% url 'student_credentials' student.id %}{{ nav_school_query }}" class="btn-action rounded-lg p-1.5 hover:bg-blue-50" title="Manage login">
+                            <i data-lucide="key-round" class="h-3.5 w-3.5 text-blue-600"></i>
+                          </a>
                           <a href="{% url 'edit_student_manual' student.id %}" class="btn-action rounded-lg p-1.5 hover:bg-navy-100" title="Edit">
-                            <i data-lucide="edit-3" class="h-3.5 w-3.5 text-navy-400"></i>
+                            <i data-lucide="pencil" class="h-3.5 w-3.5 text-navy-400"></i>
                           </a>
                           <a href="{% url 'student_contact_card' student.id %}" class="btn-action rounded-lg p-1.5 hover:bg-gold-100" title="Digital Card">
                             <i data-lucide="credit-card" class="h-3.5 w-3.5 text-gold-500"></i>
                           </a>
+                          <form method="post" action="{% url 'reset_student_password' student.id %}" class="inline" onsubmit="return confirm('Reset password for {{ student.name|escapejs }}?');">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{% url 'dashboard_students' %}{{ nav_school_query }}">
+                            <button type="submit" class="btn-action rounded-lg p-1.5 hover:bg-amber-50" title="Reset password">
+                              <i data-lucide="refresh-cw" class="h-3.5 w-3.5 text-amber-600"></i>
+                            </button>
+                          </form>
                           <form method="post" action="{% url 'delete_student_profile' student.id %}" class="inline">
                             {% csrf_token %}
                             <input type="hidden" name="next" value="{% url 'dashboard_students' %}{{ nav_school_query }}">
@@ -192,7 +225,7 @@
     </div>
 
     <div id="mobile-overlay" class="fixed inset-0 z-40 hidden bg-black/40 lg:hidden" onclick="closeMobileSidebar()"></div>
-    <aside id="mobile-sidebar" class="fixed left-0 top-0 bottom-0 z-50 hidden w-64 overflow-auto bg-navy-500 text-white lg:hidden"></aside>
+    <aside id="mobile-sidebar" class="fixed bottom-0 left-0 top-0 z-50 hidden w-64 overflow-auto border-r border-slate-200 bg-white text-slate-700 shadow-xl lg:hidden"></aside>
   </div>
 
   <script>

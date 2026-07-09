@@ -5,7 +5,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SkillConnect - Your Contact, One Tap Away</title>
+    <title>Tap2Connect - Your Identity, Ready to Share</title>
+    {% include "partials/tap2connect_favicon.html" %}
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
@@ -34,6 +35,9 @@
             --brand-secondary: #404040;
             --brand-accent: #1a1a1a;
             --brand-light: #f5f5f5;
+            --t2c-navy: #061b52;
+            --t2c-blue: #135df5;
+            --t2c-gold: #e1a814;
         }
         
         .hero-gradient::before {
@@ -81,16 +85,17 @@
         }
         
         .nav-glass {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(18px);
+            border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+            box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+            transition: background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
         }
         
         .nav-glass.scrolled {
-            background: rgba(255, 255, 255, 0.95);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.99);
+            border-bottom-color: rgba(15, 23, 42, 0.12);
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.1);
         }
         
         .nav-link {
@@ -115,20 +120,33 @@
         }
         
         .nav-link:hover {
-            color: #1e40af;
+            color: var(--t2c-blue);
             transform: translateY(-2px);
         }
         
         .logo-container {
-            transition: all 0.3s ease;
+            position: relative;
+            transition: transform 0.25s ease, opacity 0.25s ease;
+        }
+
+        .logo-container::after {
+            content: '';
+            position: absolute;
+            right: -14px;
+            top: 50%;
+            width: 1px;
+            height: 28px;
+            background: #e2e8f0;
+            transform: translateY(-50%);
         }
         
         .logo-container:hover {
-            transform: scale(1.05) rotate(5deg);
+            transform: translateY(-1px);
+            opacity: 0.9;
         }
         
         .nav-cta-btn {
-            background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+            background: linear-gradient(135deg, var(--t2c-navy) 0%, var(--t2c-blue) 100%);
             position: relative;
             overflow: hidden;
             transition: all 0.3s ease;
@@ -151,7 +169,7 @@
         
         .nav-cta-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+            box-shadow: 0 10px 24px rgba(19, 93, 245, 0.28);
         }
         
         .mobile-menu-btn {
@@ -160,7 +178,34 @@
         
         .mobile-menu-btn:hover {
             transform: scale(1.1);
-            color: #1e40af;
+            color: var(--t2c-blue);
+        }
+
+        .footer-brand-lockup {
+            display: inline-flex;
+            align-items: center;
+            gap: 14px;
+            padding: 8px 16px 8px 10px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            background: #fff;
+            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.2);
+        }
+
+        .footer-brand-copy {
+            padding-left: 14px;
+            border-left: 1px solid #e2e8f0;
+            color: #64748b;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 767px) {
+            .logo-container::after {
+                display: none;
+            }
         }
         
         .btn-primary {
@@ -229,25 +274,6 @@
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
         
-        .pricing-card {
-            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
-            border: 2px solid transparent;
-            background-clip: padding-box;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .pricing-card:hover {
-            transform: translateY(-15px) scale(1.05);
-            box-shadow: 0 40px 80px rgba(59, 130, 246, 0.3);
-        }
-        
-        .popular-badge {
-            background: linear-gradient(135deg, #fbbf24, #f59e0b);
-            animation: pulse 2s infinite;
-        }
-        
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -290,30 +316,28 @@
         <div class="flex justify-between items-center h-20">
             <!-- Branding -->
             <div class="flex items-center">
-                <a href="#home" class="text-2xl lg:text-3xl font-extrabold text-transparent bg-clip-text 
-                                  bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-blue-500 hover:to-cyan-400 
-                                  transition-all duration-300 cursor-pointer">
-                    Tap<span class="text-white">2</span>Solve
+                <a href="#home" class="logo-container inline-flex items-center" aria-label="Tap2Connect home">
+                    {% include "partials/tap2connect_logo.html" with logo_width="132px" logo_height="46px" logo_radius="0px" %}
                 </a>
             </div>
             
             <!-- Navigation Links -->
-            <div class="hidden md:flex items-center space-x-10">
-                <a href="#home" class="nav-link text-white font-medium text-sm tracking-wide">Home</a>
-                <a href="#how-it-works" class="nav-link text-white font-medium text-sm tracking-wide">How It Works</a>
-                <a href="#features" class="nav-link text-white font-medium text-sm tracking-wide">Features</a>
-                <a href="#pricing" class="nav-link text-white font-medium text-sm tracking-wide">Pricing</a>
-                <a href="#servives" class="nav-link text-white font-medium text-sm tracking-wide">Services</a>
-                <a href="#contact" class="nav-link text-white font-medium text-sm tracking-wide">Contact</a>
-                <a href="#products" class="nav-link text-white font-medium text-sm tracking-wide">Products</a>
-                <a href="{% url 'dashboard_login' %}" class="nav-cta-btn text-white px-8 py-3 rounded-full font-bold text-sm tracking-wide shadow-lg ml-4 inline-block">
+            <div class="hidden md:flex items-center gap-6 lg:gap-8">
+                <a href="#home" class="nav-link text-slate-700 font-semibold text-sm tracking-wide">Home</a>
+                <a href="#how-it-works" class="nav-link text-slate-700 font-semibold text-sm tracking-wide">How It Works</a>
+                <a href="#features" class="nav-link text-slate-700 font-semibold text-sm tracking-wide">Features</a>
+                <a href="#products" class="nav-link text-slate-700 font-semibold text-sm tracking-wide">Digital Cards</a>
+                <a href="#servives" class="nav-link text-slate-700 font-semibold text-sm tracking-wide">Services</a>
+                <a href="#contact" class="nav-link text-slate-700 font-semibold text-sm tracking-wide">Contact</a>
+                <a href="#products" class="nav-link text-slate-700 font-semibold text-sm tracking-wide">Products</a>
+                <a href="{% url 'dashboard_login' %}" class="nav-cta-btn text-white px-7 py-3 rounded-xl font-bold text-sm tracking-wide shadow-lg ml-1 inline-block">
                     Login
                 </a>
             </div>
             
             <!-- Mobile menu button -->
             <div class="md:hidden">
-                <button class="mobile-menu-btn text-white p-2">
+                <button class="mobile-menu-btn text-slate-800 p-2" aria-label="Open navigation menu">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
@@ -340,8 +364,8 @@
                 </p>
 
                 <div class="flex flex-col sm:flex-row gap-4">
-                    <a href="#pricing" class="inline-block bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-blue-500 hover:to-cyan-400 text-black px-8 py-4 rounded-xl font-bold text-lg shadow-2xl hover:shadow-3xl transition-all duration-300 text-center">
-                        Order Your Card Today
+                    <a href="#products" class="inline-block bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-blue-500 hover:to-cyan-400 text-black px-8 py-4 rounded-xl font-bold text-lg shadow-2xl hover:shadow-3xl transition-all duration-300 text-center">
+                        Explore Digital Cards
                     </a>
                     <a href="#features" class="inline-block border border-cyan-400 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-cyan-400/20 transition-all duration-300 text-center">
                         See How It Works
@@ -405,7 +429,7 @@
       <div class="glass-effect rounded-xl p-8 text-center border border-gray-700/40 hover:border-cyan-400/40 bg-white/5 backdrop-blur-lg transition card-hover group shadow-xl">
 <div class="w-32 h-32 mx-auto mb-6 rounded-2xl overflow-hidden shadow-md"> <img src="https://images.unsplash.com/photo-1556656793-08538906a9f8?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Hand holding NFC card near phone" class="w-full h-full object-cover"> </div>
         <h3 class="text-xl font-bold mb-4 text-white">Tap Your Card</h3>
-        <p class="text-gray-400 leading-relaxed">Simply tap your SkillConnect card on any NFC-enabled phone. No app downloads required.</p>
+        <p class="text-gray-400 leading-relaxed">Simply tap your Tap2Connect card on any NFC-enabled phone. No app downloads required.</p>
       </div>
 
       <!-- Step 2 -->
@@ -440,7 +464,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div class="text-center mb-20">
             <h2 class="text-5xl font-black text-white mb-6">
-                Why Choose <span class="text-cyan-400">SkillConnect</span>?
+                Why Choose <span class="text-cyan-400">Tap2Connect</span>?
             </h2>
             <p class="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
                 Experience the future of networking with our revolutionary approach to professional connections
@@ -462,7 +486,7 @@
                         </div>
                         <h3 class="text-2xl font-black mb-4 text-white">Eco-Friendly Revolution</h3>
                         <p class="text-gray-300 leading-relaxed text-lg">
-                            One SkillConnect card replaces hundreds of paper business cards, reducing waste and protecting our environment.
+                            One Tap2Connect card replaces hundreds of paper business cards, reducing waste and protecting our environment.
                         </p>
                         <div class="mt-6 inline-flex items-center text-green-400 font-semibold">
                             <span class="mr-2">🌍</span>
@@ -611,81 +635,6 @@
 </section>
 
 
-
-    <!-- Pricing Section -->
- <section id="pricing" class="py-20 bg-[#0a0f1c] text-white relative">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-    
-    <!-- Section Heading -->
-    <div class="text-center mb-16">
-      <h2 class="text-4xl sm:text-5xl font-extrabold mb-4">
-        Choose Your <span class="bg-gradient-to-r from-cyan-400 to-blue-600 bg-clip-text text-transparent">Plan</span>
-      </h2>
-      <p class="text-blue-200/80 text-lg max-w-2xl mx-auto">
-        Sleek NFC cards, powered by futuristic design.
-      </p>
-    </div>
-
-    <!-- Pricing Grid -->
-    <div class="grid md:grid-cols-3 gap-8">
-      
-      <!-- Starter -->
-      <div class="bg-[#111827]/80 backdrop-blur-xl border border-blue-900/40 rounded-2xl p-8 hover:border-cyan-400/70 transition relative overflow-hidden">
-        <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-800/10 pointer-events-none"></div>
-        <h3 class="text-2xl font-bold mb-4">🎓 Student Starter</h3>
-        <p class="text-blue-200/70 mb-6">Kickstart your networking journey.</p>
-        <div class="text-4xl font-extrabold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-6">$25</div>
-        <ul class="space-y-3 text-blue-100/90 mb-8">
-          <li>✔ NFC Card Design</li>
-          <li>✔ Portfolio Integration</li>
-          <li>✔ 5 Social Media Links</li>
-          <li>✔ 1 Year Free Updates</li>
-        </ul>
-        <button class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white py-3 rounded-xl font-bold hover:opacity-90 transition">Get Started</button>
-      </div>
-      
-      <!-- Elite (Highlighted) -->
-      <div class="bg-gradient-to-br from-cyan-600 to-blue-800 rounded-2xl p-8 shadow-2xl transform scale-105 relative overflow-hidden">
-        <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(0,255,255,0.2),_transparent_50%)] pointer-events-none"></div>
-        <h3 class="text-2xl font-bold mb-4">👑 Professional Elite</h3>
-        <p class="text-blue-100/90 mb-6">Most popular choice for pros.</p>
-        <div class="text-4xl font-extrabold mb-6">$45 <span class="line-through text-sm text-blue-200/60 ml-2">$65</span></div>
-        <ul class="space-y-3 text-blue-100/95 mb-8">
-          <li>✔ Premium Metal Card</li>
-          <li>✔ Custom Branding</li>
-          <li>✔ Advanced Analytics</li>
-          <li>✔ Unlimited Links</li>
-          <li>✔ Priority Support</li>
-        </ul>
-        <button class="w-full bg-black text-cyan-400 py-3 rounded-xl font-bold border border-cyan-500 hover:bg-cyan-500 hover:text-black transition">Choose Elite</button>
-      </div>
-      
-      <!-- Enterprise -->
-      <div class="bg-[#111827]/80 backdrop-blur-xl border border-blue-900/40 rounded-2xl p-8 hover:border-cyan-400/70 transition relative overflow-hidden">
-        <div class="absolute inset-0 bg-gradient-to-br from-blue-700/20 to-cyan-400/10 pointer-events-none"></div>
-        <h3 class="text-2xl font-bold mb-4">💼 Enterprise Platinum</h3>
-        <p class="text-blue-200/70 mb-6">Custom solutions for teams.</p>
-        <div class="text-3xl font-extrabold bg-gradient-to-r from-blue-400 to-cyan-500 bg-clip-text text-transparent mb-6">Custom</div>
-        <ul class="space-y-3 text-blue-100/90 mb-8">
-          <li>✔ Bulk Discounts</li>
-          <li>✔ Team Dashboard</li>
-          <li>✔ White-Label Options</li>
-          <li>✔ API Integration</li>
-        </ul>
-        <button class="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-3 rounded-xl font-bold hover:opacity-90 transition">Contact Sales</button>
-      </div>
-
-    </div>
-
-    <!-- Guarantee -->
-    <div class="text-center mt-12">
-      <p class="text-blue-300/80 text-sm flex items-center justify-center gap-3">
-        🛡 30-Day Guarantee • 🔒 Secure Payment • 🚚 Free Shipping
-      </p>
-    </div>
-
-  </div>
-</section>
 
 <!-- FAQ Section -->
 <section id="faq" class="py-20 bg-[#0a0f1c] text-white relative overflow-hidden">
@@ -1131,7 +1080,7 @@ function toggleFAQ(id) {
 
 
     <!-- Footer -->
-    <footer class="bg-gradient-to-br from-gray-900 to-black text-white py-12 relative overflow-hidden">
+    <footer id="site-footer" class="bg-gradient-to-br from-gray-900 to-black text-white py-12 relative overflow-hidden">
         <!-- Animated Background Pattern -->
         <div class="absolute inset-0 opacity-10">
             <div class="absolute top-0 left-0 w-full h-full">
@@ -1147,12 +1096,9 @@ function toggleFAQ(id) {
                 <!-- Brand Section -->
                 <div class="text-center lg:text-left mb-8 lg:mb-0">
                     <div class="flex items-center justify-center lg:justify-start mb-4">
-                        <div class="w-12 h-12 bg-gradient-to-br from-gray-600 to-gray-800 rounded-2xl flex items-center justify-center mr-4 shadow-xl">
-                            <span class="text-2xl">⚡</span>
-                        </div>
-                        <div>
-                            <h3 class="text-3xl font-black bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">SkillConnect</h3>
-                            <p class="text-gray-400 text-sm font-medium">Networking. Reimagined.</p>
+                        <div class="footer-brand-lockup">
+                            {% include "partials/tap2connect_logo.html" with logo_width="126px" logo_height="44px" logo_radius="0px" %}
+                            <span class="footer-brand-copy">Networking.<br>Reimagined.</span>
                         </div>
                     </div>
                     <p class="text-gray-300 max-w-md leading-relaxed">
@@ -1162,9 +1108,9 @@ function toggleFAQ(id) {
                 
                 <!-- Quick Actions -->
                 <div class="flex flex-col sm:flex-row items-center gap-4">
-                    <button onclick="scrollToSection('pricing')" class="bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 group">
+                    <button onclick="scrollToSection('products')" class="bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 group">
                         <span class="mr-2 group-hover:scale-110 transition-transform duration-300">🚀</span>
-                        Get Your Card
+                        Explore Cards
                     </button>
                     <button onclick="scrollToSection('contact')" class="border-2 border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-gray-800/50 transition-all duration-300">
                         Contact Us
@@ -1198,7 +1144,7 @@ function toggleFAQ(id) {
             <div class="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-gray-800">
                 <!-- Copyright -->
                 <div class="text-gray-400 text-sm mb-4 md:mb-0">
-                    © 2024 SkillConnect. Crafted with <span class="text-red-400 animate-pulse">❤️</span> for the future of networking.
+                    © {% now "Y" %} Tap2Connect. Crafted with <span class="text-red-400 animate-pulse">❤️</span> for the future of networking.
                 </div>
                 
                 <!-- Essential Links -->
@@ -1254,11 +1200,11 @@ function toggleFAQ(id) {
                 <div class="relative z-10">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
-                            <div class="w-12 h-12 bg-gradient-to-br from-white/20 to-white/10 rounded-2xl flex items-center justify-center mr-4 backdrop-blur-sm">
-                                <span class="text-2xl">🤖</span>
+                            <div class="mr-4 inline-flex rounded-lg bg-white px-1.5 shadow-sm">
+                                {% include "partials/tap2connect_logo.html" with logo_width="68px" logo_height="26px" logo_radius="3px" logo_alt="Tap2Connect" %}
                             </div>
                             <div>
-                                <h3 class="font-black text-lg">SkillConnect Assistant</h3>
+                                <h3 class="font-black text-lg">Tap2Connect Assistant</h3>
                                 <div class="flex items-center text-sm opacity-90">
                                     <div class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
                                     <span>Online • We'll email you back!</span>
@@ -1282,7 +1228,7 @@ function toggleFAQ(id) {
                         </div>
                         <div class="bg-gradient-to-br from-white to-gray-50 rounded-2xl rounded-tl-sm p-4 shadow-lg border border-gray-200 max-w-xs">
                             <p class="text-gray-800 text-sm leading-relaxed">
-                                👋 Hi there! I'm here to help with any questions about SkillConnect cards. 
+                                👋 Hi there! I'm here to help with any questions about Tap2Connect cards.
                                 <br><br>
                                 <strong>Leave your question and email</strong> - we'll get back to you within 2 hours! ⚡
                             </p>
@@ -1348,11 +1294,6 @@ function toggleFAQ(id) {
             document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
         }
 
-        function selectPlan(plan) {
-            alert(`You selected the ${plan} plan! Redirecting to checkout...`);
-            // Here you would typically redirect to a payment processor or order form
-        }
-
         function toggleFAQ(faqNumber) {
             const content = document.getElementById(`faq-content-${faqNumber}`);
             const icon = document.getElementById(`faq-icon-${faqNumber}`);
@@ -1367,7 +1308,7 @@ function toggleFAQ(id) {
         }
 
         // Contact form submission - Working solution
-        document.getElementById('contactForm').addEventListener('submit', function(e) {
+        document.getElementById('contactForm')?.addEventListener('submit', function(e) {
             e.preventDefault();
             
             // Show loading state
@@ -1393,9 +1334,9 @@ function toggleFAQ(id) {
             // Simulate processing time
             setTimeout(() => {
                 // Create email content
-                const emailSubject = `SkillConnect Contact: ${data.contactType} - ${data.fullName}`;
+                const emailSubject = `Tap2Connect Contact: ${data.contactType} - ${data.fullName}`;
                 const emailBody = `
-Contact Form Submission - SkillConnect
+Contact Form Submission - Tap2Connect
 
 Contact Type: ${data.contactType}
 Name: ${data.fullName}
@@ -1410,7 +1351,7 @@ Message:
 ${data.message}
 
 ---
-This message was sent from the SkillConnect website contact form.
+This message was sent from the Tap2Connect website contact form.
                 `.trim();
                 
                 // Create mailto link
@@ -1516,20 +1457,11 @@ This message was sent from the SkillConnect website contact form.
         // Navbar scroll effect
         window.addEventListener('scroll', function() {
             const navbar = document.getElementById('navbar');
-            const navLinks = document.querySelectorAll('.nav-link');
-            
+
             if (window.scrollY > 50) {
                 navbar.classList.add('scrolled');
-                navLinks.forEach(link => {
-                    link.classList.remove('text-white');
-                    link.classList.add('text-gray-700');
-                });
             } else {
                 navbar.classList.remove('scrolled');
-                navLinks.forEach(link => {
-                    link.classList.remove('text-gray-700');
-                    link.classList.add('text-white');
-                });
             }
         });
 

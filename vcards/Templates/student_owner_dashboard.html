@@ -1,267 +1,516 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{{ student.name }} | Profile Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ student.name }} | Student Overview</title>
+  {% include "partials/tap2connect_favicon.html" %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --page: #f7f8fc;
+      --surface: #fff;
+      --ink: #10172f;
+      --muted: #667085;
+      --line: #e5e8f0;
+      --indigo: #5b50e6;
+      --blue: #2684e8;
+      --green: #20ae78;
+      --navy: #092b68;
+      --shadow: 0 12px 32px rgba(16, 24, 40, .065);
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--page);
+      color: var(--ink);
+      font-family: "DM Sans", system-ui, sans-serif;
+    }
+    a { color: inherit; text-decoration: none; }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .icon {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .shell { min-height: 100vh; display: grid; grid-template-columns: 292px minmax(0, 1fr); }
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      background: #fff;
+      border-right: 1px solid var(--line);
+      padding: 28px 24px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--navy);
+    }
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      color: #fff;
+      background: var(--navy);
+    }
+    .identity { padding: 32px 0 26px; text-align: center; border-bottom: 1px solid var(--line); }
+    .avatar {
+      width: 82px;
+      height: 82px;
+      margin: 0 auto 14px;
+      border-radius: 50%;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      background: #e5e7ff;
+      color: #293a95;
+      font-size: 27px;
+      font-weight: 700;
+      border: 4px solid #f5f6ff;
+    }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .identity h1 { margin: 0; font-size: 18px; letter-spacing: -.3px; }
+    .identity p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+    .profile-meta { padding: 20px 0; border-bottom: 1px solid var(--line); display: grid; gap: 16px; }
+    .meta-row { display: grid; grid-template-columns: 32px 1fr auto; gap: 10px; align-items: center; }
+    .meta-icon {
+      width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center;
+      color: #48536a; background: #f7f8fb;
+    }
+    .meta-icon .icon { width: 17px; height: 17px; }
+    .meta-label { display: block; color: #8a92a3; font-size: 11px; }
+    .meta-value { display: block; margin-top: 2px; font-size: 13px; font-weight: 600; }
+    .live { color: #09875d; }
+    .mini-progress {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: conic-gradient(var(--indigo) calc(var(--progress) * 3.6deg), #e8eaf2 0);
+      position: relative;
+    }
+    .mini-progress::after { content: ""; position: absolute; inset: 4px; border-radius: 50%; background: #fff; }
+    .side-nav { display: grid; gap: 5px; padding: 20px 0; }
+    .side-nav a {
+      min-height: 44px;
+      padding: 0 12px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #4a556d;
+      font-size: 13px;
+      font-weight: 600;
+      transition: .18s ease;
+    }
+    .side-nav a:hover, .side-nav a.active { color: #3431be; background: #f0efff; }
+    .side-nav a.danger { color: #b42318; }
+    .main { min-width: 0; padding: 42px clamp(22px, 4vw, 58px) 70px; }
+    .page-head { display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; margin-bottom: 28px; }
+    .page-head h2 { margin: 0; font-size: clamp(28px, 3vw, 38px); letter-spacing: -1.1px; }
+    .page-head p { margin: 7px 0 0; color: var(--muted); font-size: 14px; }
+    .preview-btn, .primary-btn, .secondary-btn {
+      min-height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      border-radius: 12px; padding: 0 16px; font-size: 13px; font-weight: 700; border: 1px solid transparent;
+    }
+    .preview-btn, .primary-btn { background: var(--ink); color: #fff; }
+    .secondary-btn { background: #fff; color: var(--ink); border-color: var(--line); }
+    .messages { display: grid; gap: 10px; margin-bottom: 22px; }
+    .message { padding: 13px 16px; border: 1px solid #a8e3cd; border-radius: 12px; color: #087353; background: #edfdf6; font-size: 13px; font-weight: 600; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+    .panel, .metric {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .metric { padding: 20px; min-height: 140px; }
+    .metric-top { display: flex; align-items: center; gap: 12px; color: #4b556b; font-size: 13px; font-weight: 600; }
+    .metric-icon {
+      width: 42px; height: 42px; display: grid; place-items: center; flex: 0 0 auto;
+      border-radius: 50%; color: var(--metric-color); background: color-mix(in srgb, var(--metric-color) 13%, white);
+    }
+    .metric-number { display: block; margin-top: 15px; font-size: 34px; line-height: 1; letter-spacing: -1.4px; font-weight: 700; }
+    .sparkline { width: 100%; height: 22px; margin-top: 13px; color: var(--metric-color); }
+    .analytics-grid { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(280px, .9fr); gap: 18px; margin-top: 18px; }
+    .panel { padding: 22px; }
+    .panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+    .panel h3 { margin: 0; font-size: 17px; letter-spacing: -.25px; }
+    .panel-sub { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+    .legend { display: flex; flex-wrap: wrap; gap: 14px; color: #687086; font-size: 11px; }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .legend i { width: 8px; height: 8px; border-radius: 2px; display: block; }
+    .bar-chart { position: relative; height: 300px; padding: 8px 4px 30px 38px; }
+    .grid-lines { position: absolute; inset: 8px 4px 30px 38px; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; }
+    .grid-lines i { height: 1px; display: block; background: #e9ebf2; }
+    .bar-groups { position: relative; z-index: 1; height: 100%; display: grid; grid-template-columns: repeat(7, 1fr); align-items: end; gap: 10px; }
+    .bar-day { height: 100%; display: grid; grid-template-rows: 1fr auto; gap: 9px; min-width: 0; }
+    .bars { height: 100%; display: flex; align-items: flex-end; justify-content: center; gap: clamp(3px, .6vw, 7px); }
+    .bar { width: min(18px, 27%); min-height: 2px; border-radius: 5px 5px 1px 1px; transform-origin: bottom; animation: grow .65s cubic-bezier(.2,.8,.2,1) both; }
+    .bar-label { overflow: hidden; text-overflow: ellipsis; text-align: center; color: #697386; font-size: 11px; }
+    .axis-label { position: absolute; left: 0; color: #8a92a3; font-size: 10px; transform: translateY(50%); }
+    @keyframes grow { from { transform: scaleY(.08); opacity: .35; } }
+    .donut-wrap { display: grid; justify-items: center; }
+    .donut {
+      width: 192px; height: 192px; border-radius: 50%; position: relative; display: grid; place-items: center;
+      background: conic-gradient(var(--indigo) 0 var(--views-pct), var(--blue) var(--views-pct) var(--downloads-pct), var(--green) var(--downloads-pct) 100%);
+    }
+    .donut::after { content: ""; position: absolute; inset: 39px; background: #fff; border-radius: 50%; }
+    .donut-center { position: relative; z-index: 1; text-align: center; }
+    .donut-center span { display: block; color: var(--muted); font-size: 11px; }
+    .donut-center strong { display: block; margin-top: 3px; font-size: 28px; letter-spacing: -1px; }
+    .mix-list { width: 100%; display: grid; gap: 11px; margin-top: 24px; }
+    .mix-row { display: grid; grid-template-columns: 10px 1fr auto; align-items: center; gap: 8px; font-size: 12px; }
+    .mix-row i { width: 9px; height: 9px; border-radius: 50%; }
+    .mix-row span { color: #5d6679; }
+    .lower-grid { display: grid; grid-template-columns: minmax(280px, .8fr) minmax(0, 1.2fr); gap: 18px; margin-top: 18px; }
+    .completion-layout { display: grid; grid-template-columns: 126px 1fr; gap: 20px; align-items: center; }
+    .completion-ring {
+      width: 120px; height: 120px; border-radius: 50%; display: grid; place-items: center; position: relative;
+      background: conic-gradient(var(--indigo) calc(var(--progress) * 3.6deg), #eceef5 0);
+    }
+    .completion-ring::after { content: ""; position: absolute; inset: 11px; border-radius: 50%; background: #fff; }
+    .completion-ring strong { position: relative; z-index: 1; font-size: 26px; }
+    .completion-copy p { margin: 0 0 13px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .activity-list { display: grid; }
+    .activity {
+      display: grid; grid-template-columns: 34px minmax(0,1fr) auto; gap: 11px; align-items: center;
+      padding: 11px 0; border-bottom: 1px solid #edf0f5; font-size: 12px;
+    }
+    .activity:last-child { border-bottom: 0; }
+    .activity-icon { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: var(--indigo); background: #efefff; }
+    .activity-icon .icon { width: 16px; height: 16px; }
+    .activity-title { font-weight: 600; text-transform: capitalize; }
+    .activity-time { color: #8a92a3; font-size: 11px; white-space: nowrap; }
+    .settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 18px; }
+    .info-stack { display: grid; gap: 0; }
+    .info-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 13px 0; border-bottom: 1px solid #edf0f5; font-size: 12px; }
+    .info-row:last-child { border-bottom: 0; }
+    .info-row span { color: var(--muted); }
+    .info-row strong { max-width: 65%; text-align: right; overflow-wrap: anywhere; }
+    .visibility {
+      display: flex; align-items: center; justify-content: space-between; gap: 18px;
+      padding: 16px; border-radius: 14px; background: #f8f9fc;
+    }
+    .visibility strong { display: block; font-size: 13px; }
+    .visibility p { margin: 4px 0 0; color: var(--muted); font-size: 11px; }
+    .toggle-btn { border: 0; border-radius: 10px; background: var(--ink); color: #fff; padding: 9px 14px; font-size: 12px; font-weight: 700; }
+    .password-form { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; }
+    .field label { display: block; margin-bottom: 6px; color: #566074; font-size: 11px; font-weight: 700; }
+    .field input { width: 100%; min-height: 42px; border: 1px solid var(--line); border-radius: 11px; padding: 0 12px; color: var(--ink); background: #fff; outline: 0; }
+    .field input:focus { border-color: #8e88ef; box-shadow: 0 0 0 3px #efefff; }
+    .form-actions { grid-column: 1 / -1; }
+    .empty { padding: 20px 0; color: var(--muted); text-align: center; font-size: 12px; }
+    @media (max-width: 1120px) {
+      .shell { grid-template-columns: 240px minmax(0, 1fr); }
+      .sidebar { padding-inline: 18px; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .analytics-grid, .lower-grid { grid-template-columns: 1fr; }
+      .donut-wrap { max-width: 420px; margin: 0 auto; }
+    }
+    @media (max-width: 760px) {
+      .shell { display: block; }
+      .sidebar { position: static; width: 100%; height: auto; padding: 16px; }
+      .brand { justify-content: center; }
+      .identity { padding: 22px 0 18px; }
+      .avatar { width: 70px; height: 70px; }
+      .profile-meta { grid-template-columns: repeat(2, 1fr); }
+      .side-nav { display: flex; overflow-x: auto; padding-bottom: 2px; }
+      .side-nav a { flex: 0 0 auto; }
+      .main { padding: 28px 14px 50px; }
+      .page-head { align-items: center; }
+      .page-head p { max-width: 230px; }
+      .metrics { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+      .metric { min-height: 126px; padding: 15px; }
+      .metric-top { align-items: flex-start; font-size: 11px; }
+      .metric-icon { width: 34px; height: 34px; }
+      .metric-number { font-size: 28px; }
+      .panel { padding: 17px; }
+      .panel-head { display: block; }
+      .legend { margin-top: 12px; }
+      .bar-chart { height: 250px; padding-left: 27px; overflow: hidden; }
+      .grid-lines { left: 27px; }
+      .bar-groups { gap: 4px; }
+      .axis-label { display: none; }
+      .lower-grid, .settings-grid { grid-template-columns: 1fr; }
+      .password-form { grid-template-columns: 1fr; }
+      .completion-layout { grid-template-columns: 104px 1fr; }
+      .completion-ring { width: 98px; height: 98px; }
+    }
+    @media (max-width: 430px) {
+      .profile-meta { grid-template-columns: 1fr; }
+      .preview-btn span { display: none; }
+      .preview-btn { width: 42px; padding: 0; }
+      .activity { grid-template-columns: 32px minmax(0,1fr); }
+      .activity-time { grid-column: 2; }
+    }
+  </style>
 </head>
-<body class="min-h-screen bg-slate-100 text-slate-900">
-  <div class="max-w-6xl mx-auto px-4 py-6">
-    {% if messages %}
-      <div class="mb-4 space-y-3">
-        {% for message in messages %}
-          <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800 shadow-sm">{{ message }}</div>
-        {% endfor %}
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8" cy="10" r="2"/><path d="M5.5 16c.6-2.2 4.4-2.2 5 0M14 9h4M14 13h4"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-4-4 4 4 4-4M4 20h16"/></symbol>
+    <symbol id="i-pointer" viewBox="0 0 24 24"><path d="m5 3 14 8-6 2-3 6-5-16Z"/></symbol>
+    <symbol id="i-trend" viewBox="0 0 24 24"><path d="m4 16 5-5 4 4 7-8M15 7h5v5"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"/><path d="M5 20c.6-4 3-6 7-6s6.4 2 7 6"/></symbol>
+    <symbol id="i-school" viewBox="0 0 24 24"><path d="m3 10 9-5 9 5-9 5-9-5Z"/><path d="M7 13v4c3 2 7 2 10 0v-4M21 10v6"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M13.5 6.5 17.5 10.5M4 20l4.5-1 10-10a2.8 2.8 0 0 0-4-4l-10 10L4 20Z"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M10 5H5v14h5M13 8l4 4-4 4M8 12h9"/></symbol>
+    <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 5h5v5M19 5l-9 9M18 13v6H5V6h6"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  </svg>
+
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        {% include "partials/tap2connect_logo.html" with logo_width="88px" logo_height="32px" logo_radius="5px" %}
+        <span>Tap2Connect</span>
       </div>
-    {% endif %}
 
-    <div class="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-      <aside class="space-y-6">
-        <div class="rounded-3xl bg-slate-900 p-6 text-white shadow-xl">
-          <p class="text-sm uppercase tracking-[0.2em] text-slate-300 mb-2">Profile Dashboard</p>
-          <h1 class="text-3xl font-bold leading-tight">{{ student.name }}</h1>
-          <p class="mt-2 text-sm text-slate-300">{{ display_organization }}</p>
-          {% if student.role %}
-            <p class="mt-1 text-sm text-slate-400">{{ student.role }}</p>
+      <section class="identity">
+        <div class="avatar">
+          {% if student.profile_photo %}
+            <img src="{{ student.profile_photo.url }}" alt="{{ student.name }}">
+          {% else %}
+            {{ student.name|slice:":2"|upper }}
           {% endif %}
-
-          <div class="mt-6 space-y-3 text-sm">
-            <div class="rounded-2xl bg-white/10 px-4 py-3">
-              <div class="text-slate-300">Member Type</div>
-              <div class="font-semibold uppercase">{{ student.member_type }}</div>
-            </div>
-            <div class="rounded-2xl bg-white/10 px-4 py-3">
-              <div class="text-slate-300">Digital ID</div>
-              <div class="font-semibold">{% if student.show_contact_card %}Visible{% else %}Hidden{% endif %}</div>
-            </div>
-            <div class="rounded-2xl bg-white/10 px-4 py-3">
-              <div class="text-slate-300">Public Profile</div>
-              <div class="font-semibold">Digital ID</div>
-            </div>
-            <div class="rounded-2xl bg-white/10 px-4 py-3">
-              <div class="text-slate-300">Profile Completion</div>
-              <div class="font-semibold">{{ profile_completion }}%</div>
-            </div>
-          </div>
-
-          <div class="mt-6 space-y-3">
-            <a href="{% url 'edit_student_manual' student.id %}" class="block rounded-xl bg-white px-4 py-3 text-center font-semibold text-slate-900">Edit Profile</a>
-            <a href="{% url 'student_contact_card' student.id %}" class="block rounded-xl border border-white/20 px-4 py-3 text-center font-semibold">Open Digital ID</a>
-            <a href="{% url 'download_vcard' student.id %}" class="block rounded-xl border border-white/20 px-4 py-3 text-center font-semibold">Download vCard</a>
-            <a href="{% url 'logout_student_edit' student.id %}" class="block rounded-xl border border-white/20 px-4 py-3 text-center font-semibold">Logout</a>
-          </div>
         </div>
+        <h1>{{ student.name }}</h1>
+        <p>{{ display_organization }}</p>
+        {% if student.role %}<p>{{ student.role }}</p>{% endif %}
+      </section>
 
-        <div class="rounded-3xl bg-white p-6 shadow-lg">
-          <h2 class="text-lg font-bold">Access Rules</h2>
-          <p class="mt-2 text-sm text-slate-600">
-            Use this dashboard after login to manage your digital ID, visibility, and contact information.
-          </p>
-          <p class="mt-3 text-sm text-slate-600">
-            Your edit page is now protected by your profile username and password.
-          </p>
+      <div class="profile-meta">
+        <div class="meta-row">
+          <span class="meta-icon"><svg class="icon"><use href="#i-school"></use></svg></span>
+          <span><small class="meta-label">Member Type</small><strong class="meta-value">{{ student.get_member_type_display|default:"Student" }}</strong></span>
         </div>
-      </aside>
+        <div class="meta-row">
+          <span class="meta-icon"><svg class="icon"><use href="#i-eye"></use></svg></span>
+          <span><small class="meta-label">Digital ID</small><strong class="meta-value live">{% if student.show_contact_card %}Visible{% else %}Hidden{% endif %}</strong></span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-icon"><svg class="icon"><use href="#i-trend"></use></svg></span>
+          <span><small class="meta-label">Profile Completion</small><strong class="meta-value">{{ profile_completion }}%</strong></span>
+          <span class="mini-progress" style="--progress:{{ profile_completion }}" aria-hidden="true"></span>
+        </div>
+      </div>
 
-      <main class="space-y-6">
-        <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <div class="rounded-3xl bg-white p-6 shadow-lg">
-            <p class="text-sm font-medium text-slate-500">Card Views</p>
-            <p class="mt-3 text-4xl font-bold text-slate-900">{{ student.views }}</p>
-            <p class="mt-2 text-sm text-slate-500">Times the public card has been opened.</p>
-          </div>
-          <div class="rounded-3xl bg-white p-6 shadow-lg">
-            <p class="text-sm font-medium text-slate-500">vCard Downloads</p>
-            <p class="mt-3 text-4xl font-bold text-slate-900">{{ student.downloads }}</p>
-            <p class="mt-2 text-sm text-slate-500">Contacts saved from your card.</p>
-          </div>
-          <div class="rounded-3xl bg-white p-6 shadow-lg">
-            <p class="text-sm font-medium text-slate-500">Contact Clicks</p>
-            <p class="mt-3 text-4xl font-bold text-slate-900">{{ student.contact_clicks }}</p>
-            <p class="mt-2 text-sm text-slate-500">Tracked direct contact interactions.</p>
-          </div>
-          <div class="rounded-3xl bg-slate-900 p-6 text-white shadow-lg">
-            <p class="text-sm font-medium text-slate-300">Total Engagement</p>
-            <p class="mt-3 text-4xl font-bold">{{ total_engagement }}</p>
-            <p class="mt-2 text-sm text-slate-400">Views, downloads, and contact actions combined.</p>
-          </div>
-        </section>
+      <nav class="side-nav" aria-label="Dashboard actions">
+        <a class="active" href="#overview"><svg class="icon"><use href="#i-trend"></use></svg>Overview</a>
+        <a href="{% url 'edit_student_manual' student.id %}"><svg class="icon"><use href="#i-edit"></use></svg>Edit Profile</a>
+        <a href="{% url 'student_contact_card' student.id %}"><svg class="icon"><use href="#i-card"></use></svg>Open Digital ID</a>
+        <a href="{% url 'download_vcard' student.id %}"><svg class="icon"><use href="#i-download"></use></svg>Download vCard</a>
+        <a class="danger" href="{% url 'logout_student_edit' student.id %}"><svg class="icon"><use href="#i-logout"></use></svg>Logout</a>
+      </nav>
+    </aside>
 
-        <section class="grid gap-6 lg:grid-cols-2">
-          <div class="rounded-3xl bg-white p-6 shadow-lg">
-            <h2 class="text-xl font-bold">Quick Actions</h2>
-            <div class="mt-5 grid gap-3">
-              <a href="{% url 'edit_student_manual' student.id %}" class="rounded-2xl border border-slate-200 px-4 py-4 hover:bg-slate-50">
-                <div class="font-semibold">Edit digital ID content</div>
-                <div class="mt-1 text-sm text-slate-500">Update name, title, bio, links, images, and public card settings.</div>
-              </a>
-              <a href="{% url 'student_contact_card' student.id %}" class="rounded-2xl border border-slate-200 px-4 py-4 hover:bg-slate-50">
-                <div class="font-semibold">Preview public digital ID</div>
-                <div class="mt-1 text-sm text-slate-500">Check how your QR/NFC landing page looks to visitors.</div>
-              </a>
-              <div class="rounded-2xl border border-dashed border-slate-200 px-4 py-4 bg-slate-50">
-                <div class="font-semibold">Print card managed by school</div>
-                <div class="mt-1 text-sm text-slate-500">Physical ID card generation now happens from the school or college workspace.</div>
+    <main class="main" id="overview">
+      {% if messages %}
+        <div class="messages">
+          {% for message in messages %}<div class="message">{{ message }}</div>{% endfor %}
+        </div>
+      {% endif %}
+
+      <header class="page-head">
+        <div>
+          <h2>Overview</h2>
+          <p>See how people are engaging with your digital ID.</p>
+        </div>
+        <a class="preview-btn" href="{% url 'student_contact_card' student.id %}">
+          <svg class="icon"><use href="#i-external"></use></svg><span>Preview card</span>
+        </a>
+      </header>
+
+      <section class="metrics" aria-label="Engagement totals">
+        <article class="metric" style="--metric-color:var(--indigo)">
+          <div class="metric-top"><span class="metric-icon"><svg class="icon"><use href="#i-eye"></use></svg></span><span>Card Views</span></div>
+          <strong class="metric-number">{{ student.views }}</strong>
+          <svg class="sparkline" viewBox="0 0 140 22" preserveAspectRatio="none"><path d="M2 16 C12 16,14 7,24 12 S38 18,47 8 S60 17,70 13 S84 16,94 8 S107 15,118 10 S130 12,138 5" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        </article>
+        <article class="metric" style="--metric-color:var(--blue)">
+          <div class="metric-top"><span class="metric-icon"><svg class="icon"><use href="#i-download"></use></svg></span><span>vCard Downloads</span></div>
+          <strong class="metric-number">{{ student.downloads }}</strong>
+          <svg class="sparkline" viewBox="0 0 140 22" preserveAspectRatio="none"><path d="M2 17 C12 18,16 9,25 10 S38 18,49 9 S61 17,71 13 S84 16,95 10 S109 17,119 7 S129 15,138 9" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        </article>
+        <article class="metric" style="--metric-color:var(--green)">
+          <div class="metric-top"><span class="metric-icon"><svg class="icon"><use href="#i-pointer"></use></svg></span><span>Contact Clicks</span></div>
+          <strong class="metric-number">{{ student.contact_clicks }}</strong>
+          <svg class="sparkline" viewBox="0 0 140 22" preserveAspectRatio="none"><path d="M2 17 C14 18,19 13,27 8 S40 18,50 13 S61 16,71 7 S83 17,93 9 S107 17,116 5 S129 16,138 10" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        </article>
+        <article class="metric" style="--metric-color:#3859d9">
+          <div class="metric-top"><span class="metric-icon"><svg class="icon"><use href="#i-trend"></use></svg></span><span>Total Engagement</span></div>
+          <strong class="metric-number">{{ total_engagement }}</strong>
+          <svg class="sparkline" viewBox="0 0 140 22" preserveAspectRatio="none"><path d="M2 17 C12 18,18 7,27 11 S39 18,49 8 S62 16,71 12 S86 17,96 7 S111 16,121 6 S131 12,138 4" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        </article>
+      </section>
+
+      <section class="analytics-grid">
+        <article class="panel">
+          <div class="panel-head">
+            <div><h3>Engagement this week</h3><p class="panel-sub">Daily activity across your public card.</p></div>
+            <div class="legend" aria-label="Chart legend">
+              <span><i style="background:var(--indigo)"></i>Views</span>
+              <span><i style="background:var(--blue)"></i>Downloads</span>
+              <span><i style="background:var(--green)"></i>Contact Clicks</span>
+            </div>
+          </div>
+          <div class="bar-chart" id="engagementChart" role="img" aria-label="Seven day engagement bar chart">
+            <div class="grid-lines"><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="axis-label" style="bottom:30px">0</div>
+            <div class="bar-groups"></div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head"><div><h3>Engagement mix</h3><p class="panel-sub">How visitors interact with your card.</p></div></div>
+          <div class="donut-wrap">
+            <div class="donut" id="mixDonut">
+              <div class="donut-center"><span>Total</span><strong>{{ total_engagement }}</strong></div>
+            </div>
+            <div class="mix-list">
+              <div class="mix-row"><i style="background:var(--indigo)"></i><span>Card Views</span><strong>{{ student.views }}</strong></div>
+              <div class="mix-row"><i style="background:var(--blue)"></i><span>vCard Downloads</span><strong>{{ student.downloads }}</strong></div>
+              <div class="mix-row"><i style="background:var(--green)"></i><span>Contact Clicks</span><strong>{{ student.contact_clicks }}</strong></div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="lower-grid">
+        <article class="panel">
+          <div class="panel-head"><div><h3>Profile completion</h3><p class="panel-sub">A stronger profile gets more meaningful connections.</p></div></div>
+          <div class="completion-layout">
+            <div class="completion-ring" style="--progress:{{ profile_completion }}"><strong>{{ profile_completion }}%</strong></div>
+            <div class="completion-copy">
+              <p>{% if profile_completion >= 80 %}Great work — your digital ID is almost complete.{% else %}Add more detail to make your student profile stand out.{% endif %}</p>
+              <a class="secondary-btn" href="{% url 'edit_student_manual' student.id %}">Complete profile</a>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head"><div><h3>Recent activity</h3><p class="panel-sub">The latest interactions with your digital ID.</p></div></div>
+          <div class="activity-list">
+            {% for activity in recent_activities %}
+              <div class="activity">
+                <span class="activity-icon">
+                  <svg class="icon"><use href="{% if activity.event_type == 'download' %}#i-download{% elif activity.event_type == 'contact' %}#i-pointer{% else %}#i-eye{% endif %}"></use></svg>
+                </span>
+                <span class="activity-title">{{ activity.event_type }}{% if activity.action %} · {{ activity.action }}{% endif %}</span>
+                <time class="activity-time">{{ activity.created_at|timesince }} ago</time>
               </div>
-            </div>
+            {% empty %}
+              <div class="empty">No activity yet. Share your digital ID to start seeing insights.</div>
+            {% endfor %}
           </div>
+        </article>
+      </section>
 
-          <div class="rounded-3xl bg-white p-6 shadow-lg">
-            <h2 class="text-xl font-bold">Profile Summary</h2>
-            <div class="mt-5 space-y-4 text-sm">
-              <div class="flex items-start justify-between gap-4 border-b border-slate-100 pb-3">
-                <span class="text-slate-500">Username</span>
-                <span class="font-semibold text-right">{{ student.username }}</span>
-              </div>
-              <div class="flex items-start justify-between gap-4 border-b border-slate-100 pb-3">
-                <span class="text-slate-500">Email</span>
-                <span class="font-semibold text-right break-all">{{ student.email }}</span>
-              </div>
-              <div class="flex items-start justify-between gap-4 border-b border-slate-100 pb-3">
-                <span class="text-slate-500">Phone</span>
-                <span class="font-semibold text-right">{{ student.phone }}</span>
-              </div>
-              <div class="flex items-start justify-between gap-4 border-b border-slate-100 pb-3">
-                <span class="text-slate-500">Digital Profile</span>
-                <span class="font-semibold text-right">{{ contact_template_label }}</span>
-              </div>
-              <div class="flex items-start justify-between gap-4">
-                <span class="text-slate-500">ID Card Workflow</span>
-                <span class="font-semibold text-right">School Workspace</span>
-              </div>
-            </div>
+      <section class="settings-grid">
+        <article class="panel">
+          <div class="panel-head"><div><h3>Profile & access</h3><p class="panel-sub">Your public profile settings at a glance.</p></div></div>
+          <div class="visibility">
+            <div><strong>Digital ID visibility</strong><p>Your public card is currently {{ nfc_qr_status|lower }}.</p></div>
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="dashboard_action" value="toggle_contact_card">
+              <button class="toggle-btn" type="submit">{% if student.show_contact_card %}Hide card{% else %}Show card{% endif %}</button>
+            </form>
           </div>
-        </section>
-
-        <section class="grid gap-6 lg:grid-cols-2">
-          <div class="rounded-3xl bg-white p-6 shadow-lg">
-            <h2 class="text-xl font-bold">Visibility Controls</h2>
-            <div class="mt-5 space-y-4">
-              <form method="post" class="rounded-2xl border border-slate-200 p-4">
-                {% csrf_token %}
-                <input type="hidden" name="dashboard_action" value="toggle_contact_card">
-                <div class="flex items-center justify-between gap-4">
-                  <div>
-                    <div class="font-semibold">Digital ID</div>
-                    <div class="text-sm text-slate-500">Turn the public digital card on or off.</div>
-                  </div>
-                  <button type="submit" class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
-                    {% if student.show_contact_card %}Hide{% else %}Show{% endif %}
-                  </button>
-                </div>
-              </form>
-
-            </div>
+          <div class="info-stack" style="margin-top:10px">
+            <div class="info-row"><span>Username</span><strong>{{ student.username }}</strong></div>
+            <div class="info-row"><span>Email</span><strong>{{ student.email|default:"Not added" }}</strong></div>
+            <div class="info-row"><span>Phone</span><strong>{{ student.phone|default:"Not added" }}</strong></div>
+            <div class="info-row"><span>Digital profile</span><strong>{{ contact_template_label }}</strong></div>
           </div>
+        </article>
 
-          <div class="rounded-3xl bg-white p-6 shadow-lg">
-            <h2 class="text-xl font-bold">QR / NFC Status</h2>
-            <div class="mt-5 space-y-4">
-              <div class="rounded-2xl bg-slate-50 p-4">
-                <div class="text-sm text-slate-500">Status</div>
-                <div class="mt-1 text-lg font-semibold text-slate-900">{{ nfc_qr_status }}</div>
-              </div>
-              <div class="rounded-2xl bg-slate-50 p-4">
-                <div class="text-sm text-slate-500">Public Card URL</div>
-                <div class="mt-1 break-all font-semibold text-slate-900">{{ public_card_url }}</div>
-              </div>
-              <div class="rounded-2xl bg-slate-50 p-4">
-                <div class="text-sm text-slate-500">Best Use</div>
-                <div class="mt-1 text-sm text-slate-700">Use this link in your QR code and NFC tag. When the card is hidden, taps will not give visitors the expected public experience.</div>
-              </div>
-            </div>
+        <article class="panel">
+          <div class="panel-head"><div><h3>QR / NFC status</h3><p class="panel-sub">Use this destination for QR codes and NFC tags.</p></div></div>
+          <div class="info-stack">
+            <div class="info-row"><span>Status</span><strong class="{% if student.show_contact_card %}live{% endif %}">{{ nfc_qr_status }}</strong></div>
+            <div class="info-row"><span>Public card URL</span><strong>{{ public_card_url }}</strong></div>
+            <div class="info-row"><span>Physical ID card</span><strong>Managed by school</strong></div>
           </div>
-        </section>
-
-        <section class="grid gap-6 lg:grid-cols-2">
-          <div class="rounded-3xl bg-white p-6 shadow-lg">
-            <h2 class="text-xl font-bold">Last 7 Days</h2>
-            <div class="mt-5 overflow-x-auto">
-              <table class="min-w-full text-sm">
-                <thead>
-                  <tr class="border-b border-slate-200 text-left text-slate-500">
-                    <th class="pb-3 pr-4">Day</th>
-                    <th class="pb-3 pr-4">Views</th>
-                    <th class="pb-3 pr-4">Downloads</th>
-                    <th class="pb-3">Contact Clicks</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for item in daily_analytics %}
-                    <tr class="border-b border-slate-100">
-                      <td class="py-3 pr-4 font-medium">{{ item.day }}</td>
-                      <td class="py-3 pr-4">{{ item.views }}</td>
-                      <td class="py-3 pr-4">{{ item.downloads }}</td>
-                      <td class="py-3">{{ item.contacts }}</td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">
+            <a class="primary-btn" href="{% url 'student_contact_card' student.id %}">Open digital ID</a>
+            <a class="secondary-btn" href="{% url 'download_vcard' student.id %}">Download vCard</a>
           </div>
+        </article>
+      </section>
 
-          <div class="rounded-3xl bg-white p-6 shadow-lg">
-            <h2 class="text-xl font-bold">Recent Activity</h2>
-            <div class="mt-5 space-y-3">
-              {% for activity in recent_activities %}
-                <div class="rounded-2xl border border-slate-200 px-4 py-3">
-                  <div class="flex items-center justify-between gap-4">
-                    <div>
-                      <div class="font-semibold capitalize">{{ activity.event_type }}{% if activity.action %} · {{ activity.action }}{% endif %}</div>
-                      <div class="text-sm text-slate-500">{{ activity.created_at }}</div>
-                    </div>
-                  </div>
-                </div>
-              {% empty %}
-                <div class="text-sm text-slate-500">No recent activity yet.</div>
-              {% endfor %}
-            </div>
-          </div>
-        </section>
-
-        <section class="rounded-3xl bg-white p-6 shadow-lg">
-          <h2 class="text-xl font-bold">Change Password</h2>
-          <form method="post" class="mt-5 grid gap-4 md:grid-cols-3">
-            {% csrf_token %}
-            <input type="hidden" name="dashboard_action" value="change_password">
-            <div>
-              <label class="mb-1 block text-sm font-semibold text-slate-700">Current Password</label>
-              <input type="password" name="current_password" class="w-full rounded-xl border border-slate-300 px-4 py-3" required>
-            </div>
-            <div>
-              <label class="mb-1 block text-sm font-semibold text-slate-700">New Password</label>
-              <input type="password" name="new_password" class="w-full rounded-xl border border-slate-300 px-4 py-3" required>
-            </div>
-            <div>
-              <label class="mb-1 block text-sm font-semibold text-slate-700">Confirm Password</label>
-              <input type="password" name="confirm_password" class="w-full rounded-xl border border-slate-300 px-4 py-3" required>
-            </div>
-            <div class="md:col-span-3">
-              <button type="submit" class="rounded-xl bg-slate-900 px-6 py-3 font-semibold text-white hover:bg-slate-800">Update Password</button>
-            </div>
-          </form>
-        </section>
-
-        <section class="rounded-3xl bg-white p-6 shadow-lg">
-          <h2 class="text-xl font-bold">What To Do Next</h2>
-          <div class="mt-4 grid gap-3 md:grid-cols-3">
-            <div class="rounded-2xl bg-slate-50 px-4 py-4">
-              <div class="font-semibold">1. Pick a clean card</div>
-              <div class="mt-1 text-sm text-slate-500">Choose the contact template that fits your role best.</div>
-            </div>
-            <div class="rounded-2xl bg-slate-50 px-4 py-4">
-              <div class="font-semibold">2. Test your QR/NFC flow</div>
-              <div class="mt-1 text-sm text-slate-500">Open your public card on mobile and confirm every action button works.</div>
-            </div>
-            <div class="rounded-2xl bg-slate-50 px-4 py-4">
-              <div class="font-semibold">3. Watch engagement</div>
-              <div class="mt-1 text-sm text-slate-500">Track visits, saves, and contact clicks as people use your card.</div>
-            </div>
-          </div>
-        </section>
-      </main>
-    </div>
+      <section class="panel" style="margin-top:18px">
+        <div class="panel-head"><div><h3>Change password</h3><p class="panel-sub">Use at least six characters and keep your profile login private.</p></div></div>
+        <form method="post" class="password-form">
+          {% csrf_token %}
+          <input type="hidden" name="dashboard_action" value="change_password">
+          <div class="field"><label for="current_password">Current password</label><input id="current_password" type="password" name="current_password" autocomplete="current-password" required></div>
+          <div class="field"><label for="new_password">New password</label><input id="new_password" type="password" name="new_password" autocomplete="new-password" minlength="6" required></div>
+          <div class="field"><label for="confirm_password">Confirm password</label><input id="confirm_password" type="password" name="confirm_password" autocomplete="new-password" minlength="6" required></div>
+          <div class="form-actions"><button class="primary-btn" type="submit">Update password</button></div>
+        </form>
+      </section>
+    </main>
   </div>
+
+  {{ daily_analytics|json_script:"analytics-data" }}
+  <script>
+    (() => {
+      const dataNode = document.getElementById("analytics-data");
+      const chart = document.getElementById("engagementChart");
+      if (!dataNode || !chart) return;
+
+      const data = JSON.parse(dataNode.textContent);
+      const values = data.flatMap(item => [item.views, item.downloads, item.contacts]);
+      const highest = Math.max(1, ...values);
+      const axisMax = Math.max(5, Math.ceil(highest / 5) * 5);
+      const groups = chart.querySelector(".bar-groups");
+
+      data.forEach((item, index) => {
+        const group = document.createElement("div");
+        group.className = "bar-day";
+        const date = new Date(`${item.day}T00:00:00`);
+        const label = new Intl.DateTimeFormat(undefined, { weekday: "short" }).format(date);
+        group.innerHTML = `
+          <div class="bars">
+            <i class="bar" title="${item.views} views" style="height:${Math.max(1.5, item.views / axisMax * 100)}%;background:var(--indigo);animation-delay:${index * 40}ms"></i>
+            <i class="bar" title="${item.downloads} downloads" style="height:${Math.max(1.5, item.downloads / axisMax * 100)}%;background:var(--blue);animation-delay:${index * 40 + 35}ms"></i>
+            <i class="bar" title="${item.contacts} contact clicks" style="height:${Math.max(1.5, item.contacts / axisMax * 100)}%;background:var(--green);animation-delay:${index * 40 + 70}ms"></i>
+          </div>
+          <span class="bar-label">${label}</span>`;
+        groups.appendChild(group);
+      });
+
+      const total = Number("{{ total_engagement|default:0 }}");
+      const views = Number("{{ student.views|default:0 }}");
+      const downloads = Number("{{ student.downloads|default:0 }}");
+      const safeTotal = Math.max(total, 1);
+      const viewPct = views / safeTotal * 100;
+      const downloadEndPct = (views + downloads) / safeTotal * 100;
+      const donut = document.getElementById("mixDonut");
+      if (total === 0) {
+        donut.style.background = "#eceef5";
+      } else {
+        donut?.style.setProperty("--views-pct", `${viewPct}%`);
+        donut?.style.setProperty("--downloads-pct", `${downloadEndPct}%`);
+      }
+    })();
+  </script>
 </body>
 </html>

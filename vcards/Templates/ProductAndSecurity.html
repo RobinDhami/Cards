@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,6 +20,10 @@
         
         .heading-font {
             font-family: 'Poppins', sans-serif;
+        }
+
+        #products {
+            scroll-margin-top: 6.5rem;
         }
         
         .neon-glow {
@@ -52,36 +57,39 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
-        .card-flip {
-            perspective: 1000px;
+        .product-media {
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: #0f172a;
+            box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24);
         }
-        
-        .card-inner {
-            position: relative;
-            width: 100%;
-            height: 120px;
-            text-align: center;
-            transition: transform 0.6s;
-            transform-style: preserve-3d;
-        }
-        
-        .card-front, .card-back {
-            position: absolute;
+
+        .product-media img {
+            display: block;
             width: 100%;
             height: 100%;
-            backface-visibility: hidden;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            object-fit: cover;
+            transition: transform 0.45s ease;
         }
-        
-        .card-back {
-            transform: rotateY(180deg);
+
+        .product-card:hover .product-media img {
+            transform: scale(1.035);
         }
-        
-        .flipped .card-inner {
-            transform: rotateY(180deg);
+
+        .product-card .product-action {
+            flex: 0 0 auto;
+            padding-left: 0.9rem;
+            padding-right: 0.9rem;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 767px) {
+            .product-purchase-row {
+                padding-right: 3rem;
+            }
         }
     </style>
 </head>
@@ -265,12 +273,12 @@
             <p class="text-gray-300 text-lg max-w-2xl mx-auto">Discover our premium range of NFC cards designed for modern professionals and businesses</p>
             <div class="flex justify-center mt-8">
                 <div class="relative">
-                    <button class="glass-effect p-3 rounded-full hover:neon-glow transition-all duration-300">
+                    <button id="product-cart-button" type="button" class="glass-effect p-3 rounded-full hover:neon-glow transition-all duration-300" aria-label="Product cart">
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13l-1.5 6m0 0h12M17 13v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6"></path>
                         </svg>
                     </button>
-                    <span class="absolute -top-2 -right-2 bg-cyan-400 text-black text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">3</span>
+                    <span id="product-cart-count" class="absolute -top-2 -right-2 bg-cyan-400 text-black text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">0</span>
                 </div>
             </div>
         </div>
@@ -283,17 +291,17 @@
                 </div>
                 <div class="flex flex-col md:flex-row items-center gap-8">
                     <div class="flex-1">
-                        <h3 class="heading-font text-3xl font-bold text-white mb-4">Premium Metal NFC Card</h3>
-                        <p class="text-gray-300 mb-6">Luxury stainless steel card with custom engraving. Perfect for professionals and premium branding.</p>
+                        <h3 class="heading-font text-3xl font-bold text-white mb-4">Platinum NFC Card</h3>
+                        <p class="text-gray-300 mb-6">A black brushed premium card with precision engraving for executive and luxury branding.</p>
                         <div class="flex items-center gap-4">
                             <span class="text-4xl font-bold text-cyan-400">$49.99</span>
-                            <button class="bg-gradient-to-r from-cyan-400 to-blue-500 text-black px-8 py-3 rounded-full font-semibold hover:scale-105 transition-transform">
+                            <button class="product-action bg-gradient-to-r from-cyan-400 to-blue-500 text-black px-8 py-3 rounded-full font-semibold hover:scale-105 transition-transform">
                                 ORDER NOW
                             </button>
                         </div>
                     </div>
-                    <div class="w-64 h-40 bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl flex items-center justify-center border border-gray-600">
-                        <span class="text-white font-bold">PREMIUM METAL</span>
+                    <div class="w-full md:w-[420px] flex-none product-media">
+                        <img src="{% static 'products/platinum-nfc-card.png' %}" alt="T2C Platinum black NFC card shown from the front and back">
                     </div>
                 </div>
             </div>
@@ -302,226 +310,94 @@
         <!-- Filter Tabs -->
         <div class="mb-8">
             <div class="flex flex-wrap gap-2 justify-center">
-                <button onclick="filterProducts('all')" class="filter-btn active px-6 py-3 rounded-full font-semibold transition-all duration-300 bg-gradient-to-r from-cyan-400 to-blue-500 text-black">
+                <button onclick="filterProducts('all', this)" class="filter-btn active px-6 py-3 rounded-full font-semibold transition-all duration-300 bg-gradient-to-r from-cyan-400 to-blue-500 text-black" aria-pressed="true">
                     ALL
                 </button>
-                <button onclick="filterProducts('pvc')" class="filter-btn glass-effect px-6 py-3 rounded-full font-semibold text-white hover:neon-glow transition-all duration-300">
-                    PVC
+                <button onclick="filterProducts('plastic', this)" class="filter-btn glass-effect px-6 py-3 rounded-full font-semibold text-white hover:neon-glow transition-all duration-300" aria-pressed="false">
+                    PLASTIC
                 </button>
-                <button onclick="filterProducts('wooden')" class="filter-btn glass-effect px-6 py-3 rounded-full font-semibold text-white hover:neon-glow transition-all duration-300">
+                <button onclick="filterProducts('wooden', this)" class="filter-btn glass-effect px-6 py-3 rounded-full font-semibold text-white hover:neon-glow transition-all duration-300" aria-pressed="false">
                     WOODEN
                 </button>
-                <button onclick="filterProducts('metal')" class="filter-btn glass-effect px-6 py-3 rounded-full font-semibold text-white hover:neon-glow transition-all duration-300">
+                <button onclick="filterProducts('metal', this)" class="filter-btn glass-effect px-6 py-3 rounded-full font-semibold text-white hover:neon-glow transition-all duration-300" aria-pressed="false">
                     METAL
                 </button>
-                <button onclick="filterProducts('custom')" class="filter-btn glass-effect px-6 py-3 rounded-full font-semibold text-white hover:neon-glow transition-all duration-300">
-                    CUSTOM
+                <button onclick="filterProducts('platinum', this)" class="filter-btn glass-effect px-6 py-3 rounded-full font-semibold text-white hover:neon-glow transition-all duration-300" aria-pressed="false">
+                    PLATINUM
                 </button>
             </div>
         </div>
 
         <!-- Product Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8" id="productGrid">
-            <!-- PVC Cards -->
-            <div class="product-card pvc glass-effect rounded-xl p-6 card-hover" data-category="pvc">
-                <div class="card-flip mb-4">
-                    <div class="card-inner">
-                        <div class="card-front bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold">
-                            FRONT DESIGN
-                        </div>
-                        <div class="card-back bg-gradient-to-br from-purple-600 to-pink-600 text-white font-bold">
-                            BACK DESIGN
-                        </div>
-                    </div>
+            <!-- Plastic Card -->
+            <div class="product-card plastic glass-effect rounded-xl p-5 card-hover flex h-full flex-col" data-category="plastic">
+                <div class="product-media mb-5">
+                    <img src="{% static 'products/plastic-nfc-card.png' %}" alt="T2C blue plastic NFC cards shown from the front and back" loading="lazy">
                 </div>
-                <button onclick="flipCard(this)" class="text-cyan-400 text-sm mb-3 hover:text-cyan-300">👁️ Flip Card</button>
                 <div class="mb-2">
-                    <span class="bg-blue-500 text-white px-2 py-1 rounded text-xs font-bold">PVC</span>
+                    <span class="bg-blue-500 text-white px-2 py-1 rounded text-xs font-bold">PLASTIC</span>
                 </div>
-                <h4 class="heading-font text-white font-semibold mb-2">Standard PVC Card</h4>
-                <p class="text-gray-400 text-sm mb-4">Durable plastic card with custom printing</p>
-                <div class="flex justify-between items-center">
-                    <span class="text-2xl font-black text-cyan-400">$12.99</span>
-                    <button class="bg-cyan-400 text-black px-4 py-2 rounded-full font-bold hover:bg-cyan-300 transition-colors">
-                        ADD TO CART
-                    </button>
-                </div>
-            </div>
-
-            <div class="product-card pvc glass-effect rounded-xl p-6 card-hover" data-category="pvc">
-                <div class="card-flip mb-4">
-                    <div class="card-inner">
-                        <div class="card-front bg-gradient-to-br from-green-600 to-teal-600 text-white font-bold">
-                            FRONT DESIGN
-                        </div>
-                        <div class="card-back bg-gradient-to-br from-teal-600 to-cyan-600 text-white font-bold">
-                            BACK DESIGN
-                        </div>
-                    </div>
-                </div>
-                <button onclick="flipCard(this)" class="text-cyan-400 text-sm mb-3 hover:text-cyan-300">👁️ Flip Card</button>
-                <div class="mb-2">
-                    <span class="bg-blue-500 text-white px-2 py-1 rounded text-xs font-bold">PVC</span>
-                </div>
-                <h4 class="heading-font text-white font-semibold mb-2">Premium PVC Card</h4>
-                <p class="text-gray-400 text-sm mb-4">High-quality PVC with matte finish</p>
-                <div class="flex justify-between items-center">
+                <h4 class="heading-font text-white font-semibold mb-2">Plastic NFC Card</h4>
+                <p class="text-gray-400 text-sm mb-5 flex-1">Durable, lightweight card with full-colour custom printing.</p>
+                <div class="product-purchase-row flex justify-between items-center gap-3">
                     <span class="text-2xl font-bold text-cyan-400">$18.99</span>
-                    <button class="bg-cyan-400 text-black px-4 py-2 rounded-full font-semibold hover:bg-cyan-300 transition-colors">
+                    <button class="product-action bg-cyan-400 text-black px-4 py-2 rounded-full font-semibold hover:bg-cyan-300 transition-colors">
                         ADD TO CART
                     </button>
                 </div>
             </div>
 
-            <!-- Wooden Cards -->
-            <div class="product-card wooden glass-effect rounded-xl p-6 card-hover" data-category="wooden">
-                <div class="card-flip mb-4">
-                    <div class="card-inner">
-                        <div class="card-front bg-gradient-to-br from-amber-700 to-orange-800 text-white font-semibold">
-                            WOOD FRONT
-                        </div>
-                        <div class="card-back bg-gradient-to-br from-orange-800 to-red-800 text-white font-semibold">
-                            WOOD BACK
-                        </div>
-                    </div>
+            <!-- Wooden Card -->
+            <div class="product-card wooden glass-effect rounded-xl p-5 card-hover flex h-full flex-col" data-category="wooden">
+                <div class="product-media mb-5">
+                    <img src="{% static 'products/wooden-nfc-card.png' %}" alt="T2C wooden NFC cards shown from the front and back" loading="lazy">
                 </div>
-                <button onclick="flipCard(this)" class="text-cyan-400 text-sm mb-3 hover:text-cyan-300">👁️ Flip Card</button>
                 <div class="mb-2">
                     <span class="bg-amber-600 text-white px-2 py-1 rounded text-xs font-semibold">WOODEN</span>
                 </div>
-                <h4 class="heading-font text-white font-semibold mb-2">Bamboo NFC Card</h4>
-                <p class="text-gray-400 text-sm mb-4">Eco-friendly bamboo with laser engraving</p>
-                <div class="flex justify-between items-center">
+                <h4 class="heading-font text-white font-semibold mb-2">Wooden NFC Card</h4>
+                <p class="text-gray-400 text-sm mb-5 flex-1">Natural wood grain with precision engraving and an embedded NFC chip.</p>
+                <div class="product-purchase-row flex justify-between items-center gap-3">
                     <span class="text-2xl font-bold text-cyan-400">$24.99</span>
-                    <button class="bg-cyan-400 text-black px-4 py-2 rounded-full font-semibold hover:bg-cyan-300 transition-colors">
+                    <button class="product-action bg-cyan-400 text-black px-4 py-2 rounded-full font-semibold hover:bg-cyan-300 transition-colors">
                         ADD TO CART
                     </button>
                 </div>
             </div>
 
-            <div class="product-card wooden glass-effect rounded-xl p-6 card-hover" data-category="wooden">
-                <div class="card-flip mb-4">
-                    <div class="card-inner">
-                        <div class="card-front bg-gradient-to-br from-yellow-800 to-amber-900 text-white font-semibold">
-                            WALNUT FRONT
-                        </div>
-                        <div class="card-back bg-gradient-to-br from-amber-900 to-orange-900 text-white font-semibold">
-                            WALNUT BACK
-                        </div>
-                    </div>
+            <!-- Metal Card -->
+            <div class="product-card metal glass-effect rounded-xl p-5 card-hover flex h-full flex-col" data-category="metal">
+                <div class="product-media mb-5">
+                    <img src="{% static 'products/metal-nfc-card.png' %}" alt="T2C brushed blue metal NFC cards shown from the front and back" loading="lazy">
                 </div>
-                <button onclick="flipCard(this)" class="text-cyan-400 text-sm mb-3 hover:text-cyan-300">👁️ Flip Card</button>
-                <div class="mb-2">
-                    <span class="bg-amber-600 text-white px-2 py-1 rounded text-xs font-semibold">WOODEN</span>
-                </div>
-                <h4 class="heading-font text-white font-semibold mb-2">Walnut Wood Card</h4>
-                <p class="text-gray-400 text-sm mb-4">Premium walnut with precision engraving</p>
-                <div class="flex justify-between items-center">
-                    <span class="text-2xl font-black text-cyan-400">$34.99</span>
-                    <button class="bg-cyan-400 text-black px-4 py-2 rounded-full font-bold hover:bg-cyan-300 transition-colors">
-                        ADD TO CART
-                    </button>
-                </div>
-            </div>
-
-            <!-- Metal Cards -->
-            <div class="product-card metal glass-effect rounded-xl p-6 card-hover" data-category="metal">
-                <div class="card-flip mb-4">
-                    <div class="card-inner">
-                        <div class="card-front bg-gradient-to-br from-gray-600 to-gray-800 text-white font-bold">
-                            STEEL FRONT
-                        </div>
-                        <div class="card-back bg-gradient-to-br from-gray-800 to-black text-white font-bold">
-                            STEEL BACK
-                        </div>
-                    </div>
-                </div>
-                <button onclick="flipCard(this)" class="text-cyan-400 text-sm mb-3 hover:text-cyan-300">👁️ Flip Card</button>
                 <div class="mb-2">
                     <span class="bg-gray-500 text-white px-2 py-1 rounded text-xs font-bold">METAL</span>
                 </div>
-                <h3 class="text-white font-bold mb-2">Stainless Steel Card</h3>
-                <p class="text-gray-400 text-sm mb-4">Brushed steel with etched design</p>
-                <div class="flex justify-between items-center">
+                <h3 class="heading-font text-white font-semibold mb-2">Metal NFC Card</h3>
+                <p class="text-gray-400 text-sm mb-5 flex-1">Brushed metal construction with engraved gold and blue detailing.</p>
+                <div class="product-purchase-row flex justify-between items-center gap-3">
                     <span class="text-2xl font-black text-cyan-400">$39.99</span>
-                    <button class="bg-cyan-400 text-black px-4 py-2 rounded-full font-bold hover:bg-cyan-300 transition-colors">
+                    <button class="product-action bg-cyan-400 text-black px-4 py-2 rounded-full font-bold hover:bg-cyan-300 transition-colors">
                         ADD TO CART
                     </button>
                 </div>
             </div>
 
-            <div class="product-card metal glass-effect rounded-xl p-6 card-hover" data-category="metal">
-                <div class="card-flip mb-4">
-                    <div class="card-inner">
-                        <div class="card-front bg-gradient-to-br from-yellow-400 to-yellow-600 text-black font-bold">
-                            GOLD FRONT
-                        </div>
-                        <div class="card-back bg-gradient-to-br from-yellow-600 to-yellow-800 text-black font-bold">
-                            GOLD BACK
-                        </div>
-                    </div>
+            <!-- Platinum Card -->
+            <div class="product-card platinum glass-effect rounded-xl p-5 card-hover flex h-full flex-col" data-category="platinum">
+                <div class="product-media mb-5">
+                    <img src="{% static 'products/platinum-nfc-card.png' %}" alt="T2C Platinum black NFC cards shown from the front and back" loading="lazy">
                 </div>
-                <button onclick="flipCard(this)" class="text-cyan-400 text-sm mb-3 hover:text-cyan-300">👁️ Flip Card</button>
                 <div class="mb-2">
-                    <span class="bg-gray-500 text-white px-2 py-1 rounded text-xs font-bold">METAL</span>
+                    <span class="bg-slate-200 text-slate-950 px-2 py-1 rounded text-xs font-bold">PLATINUM</span>
                 </div>
-                <h3 class="text-white font-bold mb-2">Gold Plated Card</h3>
-                <p class="text-gray-400 text-sm mb-4">24k gold plated luxury card</p>
-                <div class="flex justify-between items-center">
-                    <span class="text-2xl font-black text-cyan-400">$89.99</span>
-                    <button class="bg-cyan-400 text-black px-4 py-2 rounded-full font-bold hover:bg-cyan-300 transition-colors">
+                <h3 class="heading-font text-white font-semibold mb-2">Platinum NFC Card</h3>
+                <p class="text-gray-400 text-sm mb-5 flex-1">Black brushed premium finish made for executive and luxury branding.</p>
+                <div class="product-purchase-row flex justify-between items-center gap-3">
+                    <span class="text-2xl font-black text-cyan-400">$49.99</span>
+                    <button class="product-action bg-cyan-400 text-black px-4 py-2 rounded-full font-bold hover:bg-cyan-300 transition-colors">
                         ADD TO CART
-                    </button>
-                </div>
-            </div>
-
-            <!-- Custom Cards -->
-            <div class="product-card custom glass-effect rounded-xl p-6 card-hover" data-category="custom">
-                <div class="card-flip mb-4">
-                    <div class="card-inner">
-                        <div class="card-front bg-gradient-to-br from-purple-600 to-pink-600 text-white font-bold">
-                            YOUR DESIGN
-                        </div>
-                        <div class="card-back bg-gradient-to-br from-pink-600 to-red-600 text-white font-bold">
-                            YOUR BRAND
-                        </div>
-                    </div>
-                </div>
-                <button onclick="flipCard(this)" class="text-cyan-400 text-sm mb-3 hover:text-cyan-300">👁️ Flip Card</button>
-                <div class="mb-2">
-                    <span class="bg-purple-500 text-white px-2 py-1 rounded text-xs font-bold">CUSTOM</span>
-                </div>
-                <h3 class="text-white font-bold mb-2">Custom Design Card</h3>
-                <p class="text-gray-400 text-sm mb-4">Fully customizable with your design</p>
-                <div class="flex justify-between items-center">
-                    <span class="text-2xl font-black text-cyan-400">$29.99</span>
-                    <button class="bg-cyan-400 text-black px-4 py-2 rounded-full font-bold hover:bg-cyan-300 transition-colors">
-                        CUSTOMIZE
-                    </button>
-                </div>
-            </div>
-
-            <div class="product-card custom glass-effect rounded-xl p-6 card-hover" data-category="custom">
-                <div class="card-flip mb-4">
-                    <div class="card-inner">
-                        <div class="card-front bg-gradient-to-br from-cyan-600 to-blue-600 text-white font-bold">
-                            HOLOGRAPHIC
-                        </div>
-                        <div class="card-back bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-bold">
-                            SPECIAL FX
-                        </div>
-                    </div>
-                </div>
-                <button onclick="flipCard(this)" class="text-cyan-400 text-sm mb-3 hover:text-cyan-300">👁️ Flip Card</button>
-                <div class="mb-2">
-                    <span class="bg-purple-500 text-white px-2 py-1 rounded text-xs font-bold">CUSTOM</span>
-                </div>
-                <h3 class="text-white font-bold mb-2">Holographic Card</h3>
-                <p class="text-gray-400 text-sm mb-4">Special effects with holographic finish</p>
-                <div class="flex justify-between items-center">
-                    <span class="text-2xl font-black text-cyan-400">$54.99</span>
-                    <button class="bg-cyan-400 text-black px-4 py-2 rounded-full font-bold hover:bg-cyan-300 transition-colors">
-                        ORDER NOW
                     </button>
                 </div>
             </div>
@@ -529,7 +405,7 @@
     </section>
 
     <script>
-        function filterProducts(category) {
+        function filterProducts(category, activeButton) {
             const cards = document.querySelectorAll('.product-card');
             const buttons = document.querySelectorAll('.filter-btn');
             
@@ -537,15 +413,17 @@
             buttons.forEach(btn => {
                 btn.classList.remove('active', 'bg-gradient-to-r', 'from-cyan-400', 'to-blue-500', 'text-black');
                 btn.classList.add('glass-effect', 'text-white');
+                btn.setAttribute('aria-pressed', 'false');
             });
             
-            event.target.classList.remove('glass-effect', 'text-white');
-            event.target.classList.add('active', 'bg-gradient-to-r', 'from-cyan-400', 'to-blue-500', 'text-black');
+            activeButton.classList.remove('glass-effect', 'text-white');
+            activeButton.classList.add('active', 'bg-gradient-to-r', 'from-cyan-400', 'to-blue-500', 'text-black');
+            activeButton.setAttribute('aria-pressed', 'true');
             
             // Filter cards
             cards.forEach(card => {
                 if (category === 'all' || card.dataset.category === category) {
-                    card.style.display = 'block';
+                    card.style.display = '';
                     setTimeout(() => {
                         card.style.opacity = '1';
                         card.style.transform = 'scale(1)';
@@ -560,36 +438,23 @@
             });
         }
         
-        function flipCard(button) {
-            const cardFlip = button.parentElement.querySelector('.card-flip');
-            cardFlip.classList.toggle('flipped');
-        }
-        
         // Add to cart functionality
-        document.querySelectorAll('button').forEach(button => {
-            if (button.textContent.includes('ADD TO CART') || button.textContent.includes('ORDER NOW') || button.textContent.includes('CUSTOMIZE')) {
-                button.addEventListener('click', function() {
-                    // Simple cart animation
-                    const cartIcon = document.querySelector('svg').parentElement;
-                    cartIcon.classList.add('neon-glow');
-                    
-                    // Update cart count
-                    const cartCount = document.querySelector('.bg-cyan-400');
-                    let count = parseInt(cartCount.textContent);
-                    cartCount.textContent = count + 1;
-                    
-                    // Remove glow after animation
-                    setTimeout(() => {
-                        cartIcon.classList.remove('neon-glow');
-                    }, 1000);
-                    
-                    // Button feedback
-                    this.style.transform = 'scale(0.95)';
-                    setTimeout(() => {
-                        this.style.transform = 'scale(1)';
-                    }, 150);
-                });
-            }
+        document.querySelectorAll('.product-action').forEach(button => {
+            button.addEventListener('click', function() {
+                const cartIcon = document.getElementById('product-cart-button');
+                const cartCount = document.getElementById('product-cart-count');
+                cartIcon.classList.add('neon-glow');
+                cartCount.textContent = String(parseInt(cartCount.textContent, 10) + 1);
+
+                setTimeout(() => {
+                    cartIcon.classList.remove('neon-glow');
+                }, 1000);
+
+                this.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    this.style.transform = 'scale(1)';
+                }, 150);
+            });
         });
     </script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97bed2957140a6dc',t:'MTc1NzMzODQ1OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>

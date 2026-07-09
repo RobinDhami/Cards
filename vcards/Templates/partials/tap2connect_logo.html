@@ -1,0 +1,4 @@
+{% load static %}
+<span class="{{ logo_class|default:'' }}" style="display:inline-block;position:relative;width:{{ logo_width|default:'108px' }};height:{{ logo_height|default:'38px' }};flex:0 0 auto;overflow:hidden;border-radius:{{ logo_radius|default:'8px' }};background:#fff;vertical-align:middle;">
+  <img src="{% static 'branding/tap2connect-logo.png' %}" alt="{{ logo_alt|default:'Tap2Connect' }}" style="position:absolute;left:0;top:50%;display:block;width:100%;max-width:none;height:auto;transform:translateY(-50%);">
+</span>

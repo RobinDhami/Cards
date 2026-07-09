@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import LibraryBook, StudentCard, StudentProfile
+from .models import StudentCard, StudentProfile
 
 
 class StudentProfileForm(forms.ModelForm):
@@ -37,9 +37,3 @@ class StudentCardForm(forms.ModelForm):
     class Meta:
         model = StudentCard
         fields = ['student', 'card_uid', 'card_number', 'is_active', 'lost_or_blocked']
-
-
-class LibraryBookForm(forms.ModelForm):
-    class Meta:
-        model = LibraryBook
-        fields = ['title', 'author', 'isbn', 'category', 'book_code', 'total_copies', 'available_copies', 'is_active']

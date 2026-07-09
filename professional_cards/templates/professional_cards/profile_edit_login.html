@@ -1,0 +1,48 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit {{ profile.full_name }} | Tap2Connect</title>
+  {% include "partials/tap2connect_favicon.html" %}
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'DM Sans', sans-serif; }
+    .font-display { font-family: 'Playfair Display', serif; }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-100 px-4 py-10">
+  <main class="mx-auto max-w-md rounded-3xl bg-white p-8 shadow-xl">
+    <a href="{% url 'home' %}" class="inline-flex rounded-xl border border-slate-200 bg-white px-2 shadow-sm" aria-label="Tap2Connect home">
+      {% include "partials/tap2connect_logo.html" with logo_width="132px" logo_height="46px" logo_radius="6px" %}
+    </a>
+    <h1 class="font-display mt-3 text-3xl font-bold text-slate-950">Edit profile</h1>
+    <p class="mt-3 text-sm leading-6 text-slate-600">Log in with the account that manages {{ profile.full_name }} to update this networking card.</p>
+
+    {% if messages %}
+      <div class="mt-5 space-y-2">
+        {% for message in messages %}
+          <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <form method="post" class="mt-6 space-y-4">
+      {% csrf_token %}
+      <label class="block">
+        <span class="mb-1 block text-sm font-semibold text-slate-700">Username</span>
+        <input type="text" name="username" required class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-teal-600 focus:outline-none">
+      </label>
+      <label class="block">
+        <span class="mb-1 block text-sm font-semibold text-slate-700">Password</span>
+        <input type="password" name="password" required class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-teal-600 focus:outline-none">
+      </label>
+      <button type="submit" class="w-full rounded-xl bg-slate-950 px-4 py-3 font-semibold text-white hover:bg-slate-800">Login to Edit</button>
+    </form>
+
+    <a href="{% url 'professional_cards:public_profile' profile.slug %}" class="mt-4 block text-center text-sm font-semibold text-slate-500 hover:text-slate-800">Back to profile</a>
+  </main>
+</body>
+</html>

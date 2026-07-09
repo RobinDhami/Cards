@@ -3,434 +3,265 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>School Identity Dashboard</title>
+  <title>Overview · Tap2Connect</title>
+  {% include "partials/tap2connect_favicon.html" %}
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            navy: { 50:'#f0f3f9', 100:'#dce3f0', 200:'#b8c7e1', 300:'#8aa3cc', 400:'#5c7db5', 500:'#1b3a6b', 600:'#162f56', 700:'#112441', 800:'#0b192c', 900:'#060e17' },
-            gold: { 50:'#fdf9ef', 100:'#faf0d4', 200:'#f4dfa8', 300:'#edc96e', 400:'#d4a843', 500:'#b8922e', 600:'#967524', 700:'#74591b', 800:'#523e13', 900:'#30240b' }
-          }
-        }
-      }
-    }
-  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    html, body { height: 100%; margin: 0; font-family: 'DM Sans', sans-serif; }
-    .font-display { font-family: 'Playfair Display', serif; }
-    .card-shadow { box-shadow: 0 1px 3px rgba(27,58,107,.08), 0 4px 14px rgba(27,58,107,.04); }
-    .card-shadow-lg { box-shadow: 0 2px 6px rgba(27,58,107,.1), 0 8px 24px rgba(27,58,107,.06); }
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(12px); }
-      to { opacity: 1; transform: translateY(0); }
+    :root {
+      --page:#f7f9fc;
+      --surface:#ffffff;
+      --ink:#10213d;
+      --muted:#64748b;
+      --line:#e2e8f0;
+      --blue:#0b4bcb;
+      --navy:#0f2b52;
+      --green:#16a269;
+      --amber:#f59e0b;
     }
-    .anim-in { animation: fadeUp .45s ease both; }
-    .anim-d1 { animation-delay: .05s; }
-    .anim-d2 { animation-delay: .1s; }
-    .anim-d3 { animation-delay: .15s; }
-    .anim-d4 { animation-delay: .2s; }
+    * { box-sizing:border-box; }
+    html, body { min-height:100%; margin:0; font-family:Inter, sans-serif; background:var(--page); color:var(--ink); }
+    .panel { border:1px solid var(--line); border-radius:10px; background:var(--surface); }
+    .metric { min-height:108px; }
+    .focus-ring:focus { outline:3px solid rgba(11,75,203,.14); outline-offset:1px; }
+    .chart-grid { background-image:linear-gradient(to top, #eef2f7 1px, transparent 1px); background-size:100% 25%; }
+    .donut { position:relative; border-radius:9999px; }
+    .donut::after { content:""; position:absolute; inset:22%; border-radius:9999px; background:#fff; }
+    .fade-up { animation:fade-up .34s ease both; }
+    @keyframes fade-up { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:none; } }
+    @media (prefers-reduced-motion:reduce) { .fade-up { animation:none; } }
   </style>
 </head>
-<body class="h-full bg-navy-50 text-navy-500">
-  <div class="flex h-full">
+<body>
+  <div class="flex min-h-screen">
     {% include "dashboard/_sidebar.html" %}
 
-    <div class="flex min-w-0 flex-1 flex-col">
-      <header class="flex flex-shrink-0 items-center justify-between border-b border-navy-100 bg-white px-4 py-3 sm:px-6">
-        <div class="flex items-center gap-3">
-          <button class="rounded-lg p-1.5 transition hover:bg-navy-50 lg:hidden" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
-            <i data-lucide="menu" class="h-5 w-5 text-navy-500"></i>
+    <div class="min-w-0 flex-1">
+      <header class="sticky top-0 z-30 flex min-h-[72px] items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6">
+        <div class="flex min-w-0 items-center gap-3">
+          <button id="mobile-menu-btn" type="button" aria-label="Open navigation" class="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 lg:hidden">
+            <i data-lucide="menu" class="h-4 w-4"></i>
           </button>
-          <div>
-            <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-navy-300">Dashboard Home</p>
-            <h1 class="font-display text-lg font-bold text-navy-500 sm:text-xl">School Identity Dashboard</h1>
-          </div>
+          <h1 class="truncate text-xl font-semibold tracking-tight text-slate-950">Overview</h1>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 sm:gap-3">
           {% if is_super_admin and school_options %}
-            <form method="get" class="hidden items-center gap-2 xl:flex">
-              <label for="schoolSwitcher" class="text-xs font-semibold uppercase tracking-[0.2em] text-navy-300">School</label>
-              <select id="schoolSwitcher" name="school" class="rounded-lg border border-navy-100 bg-white px-3 py-2 text-xs text-navy-500 outline-none focus:border-navy-300">
+            <form method="get" class="hidden sm:block">
+              <label for="school-switcher" class="sr-only">Select school</label>
+              <select id="school-switcher" name="school" onchange="this.form.submit()" class="focus-ring max-w-64 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700">
+                <option value="">Select a school</option>
                 {% for school in school_options %}
                   <option value="{{ school.id }}" {% if current_school and school.id == current_school.id %}selected{% endif %}>{{ school.name }}</option>
                 {% endfor %}
               </select>
-              <button type="submit" class="rounded-lg border border-navy-100 px-3 py-2 text-xs font-semibold text-navy-500 transition hover:bg-navy-50">Open</button>
             </form>
           {% endif %}
-          {% if is_super_admin %}
-            <a href="#create-school" class="hidden items-center gap-2 rounded-lg border border-navy-100 px-3.5 py-2 text-xs font-semibold text-navy-500 transition hover:bg-navy-50 md:inline-flex">
-              <i data-lucide="plus" class="h-3.5 w-3.5"></i>Create School
-            </a>
-          {% endif %}
-
-          {% if current_school %}
-            <a href="{% url 'add_student_to_college' current_school.id %}" class="hidden items-center gap-2 rounded-lg bg-navy-500 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-navy-600 sm:inline-flex">
-              <i data-lucide="user-plus" class="h-3.5 w-3.5"></i>Add Student
-            </a>
-            <a href="{% url 'add_student_to_college' current_school.id %}?role_type=teacher" class="hidden items-center gap-2 rounded-lg bg-navy-500 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-navy-600 sm:inline-flex">
-              <i data-lucide="user-plus" class="h-3.5 w-3.5"></i>Add Teacher
-            </a>
-            <a href="{% url 'dashboard_print' %}{{ nav_school_query }}" class="inline-flex items-center gap-2 rounded-lg bg-gold-400 px-3.5 py-2 text-xs font-semibold text-navy-700 transition hover:bg-gold-300">
-              <i data-lucide="printer" class="h-3.5 w-3.5"></i>Print Cards
-            </a>
-          {% endif %}
+          <button type="button" aria-label="Notifications" class="relative flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50">
+            <i data-lucide="bell" class="h-4 w-4"></i>
+          </button>
+          <div class="hidden items-center gap-2 border-l border-slate-200 pl-3 sm:flex">
+            <div class="flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-blue-700">{{ request.user.first_name|default:request.user.username|slice:":2"|upper }}</div>
+            <div class="hidden xl:block">
+              <div class="max-w-36 truncate text-xs font-semibold text-slate-900">{{ request.user.first_name|default:request.user.username }}</div>
+              <div class="text-[10px] text-slate-500">{% if is_super_admin %}Super Admin{% else %}School Administrator{% endif %}</div>
+            </div>
+          </div>
         </div>
       </header>
 
-      <div id="mobile-menu" class="hidden bg-navy-500 p-3 text-sm text-white lg:hidden">
-        <div class="space-y-1">
-          <a href="{% url 'admin_dashboard' %}{{ nav_school_query }}" class="block rounded-lg bg-white/10 px-3 py-2 font-medium">Dashboard</a>
-          {% if is_super_admin %}
-            <a href="{% url 'admin_dashboard' %}{{ nav_school_query }}" class="block rounded-lg px-3 py-2 text-navy-200">Schools</a>
-            <a href="{% url 'professional_cards:list' %}" class="block rounded-lg px-3 py-2 text-navy-200">Professional Cards</a>
-          {% endif %}
-          <a href="{% url 'dashboard_students' %}{{ nav_school_query }}" class="block rounded-lg px-3 py-2 text-navy-200">Students</a>
-          <a href="{% url 'dashboard_teachers' %}{{ nav_school_query }}" class="block rounded-lg px-3 py-2 text-navy-200">Teachers / Staff</a>
-          <a href="{% url 'dashboard_print' %}{{ nav_school_query }}" class="block rounded-lg px-3 py-2 text-navy-200">ID Card Studio</a>
-          <a href="{% url 'dashboard_bulk_upload' %}{{ nav_school_query }}" class="block rounded-lg px-3 py-2 text-navy-200">Bulk Upload</a>
-          <a href="{% url 'dashboard_settings' %}{{ nav_school_query }}" class="block rounded-lg px-3 py-2 text-navy-200">Settings</a>
-          <a href="{% url 'dashboard_logout' %}" class="block rounded-lg px-3 py-2 text-navy-200">Logout</a>
-        </div>
-      </div>
-
-      <main class="flex-1 space-y-5 overflow-auto p-4 sm:p-6">
+      <main class="mx-auto max-w-[1440px] space-y-4 p-4">
         {% if messages %}
-          <div class="space-y-3">
+          <div class="space-y-2">
             {% for message in messages %}
-              <div class="rounded-xl border px-4 py-3 text-sm {% if message.tags == 'error' %}border-red-200 bg-red-50 text-red-700{% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-700{% else %}border-emerald-200 bg-emerald-50 text-emerald-700{% endif %}">
-                {{ message }}
-              </div>
+              <div class="rounded-lg border px-4 py-3 text-sm {% if message.tags == 'error' %}border-red-200 bg-red-50 text-red-700{% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-700{% else %}border-emerald-200 bg-emerald-50 text-emerald-700{% endif %}">{{ message }}</div>
             {% endfor %}
           </div>
         {% endif %}
 
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 anim-in">
-          <div class="flex items-center gap-4 rounded-xl border border-navy-100/60 bg-white p-5 card-shadow">
-            <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-navy-500">
-              <i data-lucide="building-2" class="h-5 w-5 text-white"></i>
-            </div>
-            <div>
-              <div class="text-[11px] font-semibold uppercase tracking-wider text-navy-300">Schools</div>
-              <div class="text-2xl font-bold text-navy-500">{{ total_schools }}</div>
-            </div>
-          </div>
-          <div class="flex items-center gap-4 rounded-xl border border-navy-100/60 bg-white p-5 card-shadow">
-            <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gold-400">
-              <i data-lucide="graduation-cap" class="h-5 w-5 text-navy-700"></i>
-            </div>
-            <div>
-              <div class="text-[11px] font-semibold uppercase tracking-wider text-navy-300">Students</div>
-              <div class="text-2xl font-bold text-navy-500">{{ total_students }}</div>
-            </div>
-          </div>
-          <div class="flex items-center gap-4 rounded-xl border border-navy-100/60 bg-white p-5 card-shadow">
-            <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-navy-200">
-              <i data-lucide="users" class="h-5 w-5 text-navy-600"></i>
-            </div>
-            <div>
-              <div class="text-[11px] font-semibold uppercase tracking-wider text-navy-300">Teachers / Staff</div>
-              <div class="text-2xl font-bold text-navy-500">{{ total_teachers }}</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 gap-4 lg:grid-cols-5">
-          <div class="overflow-hidden rounded-xl border border-navy-100/60 bg-white card-shadow-lg lg:col-span-3 anim-in anim-d1">
-            {% if current_school %}
-              <div class="flex items-center justify-between bg-gradient-to-r from-navy-500 to-navy-600 px-5 py-4">
-                <div class="flex items-center gap-3">
-                  <div class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-gold-400 font-display text-sm font-bold text-navy-700">
-                    {% if current_school.logo %}
-                      <img src="{{ current_school.logo.url }}" alt="{{ current_school.name }}" class="h-full w-full object-cover">
-                    {% else %}
-                      {{ current_school.name|slice:":1"|upper }}
-                    {% endif %}
-                  </div>
-                  <div>
-                    <h2 class="font-display text-base font-bold text-white">{{ current_school.name }}</h2>
-                    <p class="text-xs text-navy-200">{{ current_school.address|default:"School address not added yet." }}</p>
-                  </div>
-                </div>
-                <a href="{% url 'dashboard_settings' %}{{ nav_school_query }}" class="flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-white/25">
-                  <i data-lucide="settings" class="h-3.5 w-3.5"></i>Edit Settings
-                </a>
-              </div>
-              <div class="grid grid-cols-3 gap-4 p-5 text-center">
-                <div class="rounded-lg bg-navy-50 py-3">
-                  <div class="text-2xl font-bold text-navy-500">{{ school_member_count }}</div>
-                  <div class="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-navy-300">Members</div>
-                </div>
-                <div class="rounded-lg bg-navy-50 py-3">
-                  <div class="text-2xl font-bold text-gold-500">{{ school_student_count }}</div>
-                  <div class="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-navy-300">Students</div>
-                </div>
-                <div class="rounded-lg bg-navy-50 py-3">
-                  <div class="text-2xl font-bold text-navy-400">{{ school_teacher_count }}</div>
-                  <div class="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-navy-300">Teachers</div>
-                </div>
-              </div>
-            {% else %}
-              <div class="p-6">
-                <div class="rounded-2xl border border-dashed border-navy-200 bg-navy-50 px-6 py-10 text-center">
-                  <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-white text-navy-400">
-                    <i data-lucide="building-2" class="h-5 w-5"></i>
-                  </div>
-                  <h2 class="font-display text-lg font-bold text-navy-500">No school selected yet</h2>
-                  <p class="mt-2 text-sm text-navy-400">Choose a school workspace to see member counts, quick actions, and print tools.</p>
-                </div>
-              </div>
-            {% endif %}
-          </div>
-
-          <div class="rounded-xl border border-navy-100/60 bg-white p-5 card-shadow lg:col-span-2 anim-in anim-d2">
-            <h3 class="mb-3 text-xs font-semibold uppercase tracking-wider text-navy-300">Quick Actions</h3>
-            <div class="space-y-2">
-              <a href="{% if current_school %}{% url 'dashboard_students' %}{{ nav_school_query }}{% else %}#{% endif %}" class="group flex w-full items-center gap-3 rounded-lg border border-navy-100 px-4 py-3 text-left transition hover:border-navy-200 hover:bg-navy-50/50">
-                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-navy-50 transition group-hover:bg-navy-100">
-                  <i data-lucide="graduation-cap" class="h-4 w-4 text-navy-500"></i>
-                </div>
-                <span class="text-sm font-medium text-navy-500">Open Students Module</span>
-                <i data-lucide="chevron-right" class="ml-auto h-4 w-4 text-navy-300"></i>
-              </a>
-              <a href="{% if current_school %}{% url 'dashboard_teachers' %}{{ nav_school_query }}{% else %}#{% endif %}" class="group flex w-full items-center gap-3 rounded-lg border border-navy-100 px-4 py-3 text-left transition hover:border-navy-200 hover:bg-navy-50/50">
-                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-navy-50 transition group-hover:bg-navy-100">
-                  <i data-lucide="users" class="h-4 w-4 text-navy-500"></i>
-                </div>
-                <span class="text-sm font-medium text-navy-500">Open Teachers Module</span>
-                <i data-lucide="chevron-right" class="ml-auto h-4 w-4 text-navy-300"></i>
-              </a>
-              <a href="{% if current_school %}{% url 'dashboard_bulk_upload' %}{{ nav_school_query }}{% else %}#{% endif %}" class="group flex w-full items-center gap-3 rounded-lg border border-navy-100 px-4 py-3 text-left transition hover:border-navy-200 hover:bg-navy-50/50">
-                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-navy-50 transition group-hover:bg-navy-100">
-                  <i data-lucide="upload" class="h-4 w-4 text-gold-500"></i>
-                </div>
-                <span class="text-sm font-medium text-navy-500">Bulk Upload Records</span>
-                <i data-lucide="chevron-right" class="ml-auto h-4 w-4 text-navy-300"></i>
-              </a>
-              <a href="{% if current_school %}{% url 'dashboard_print' %}{{ nav_school_query }}{% else %}#{% endif %}" class="group flex w-full items-center gap-3 rounded-lg border border-navy-100 px-4 py-3 text-left transition hover:border-navy-200 hover:bg-navy-50/50">
-                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-gold-50 transition group-hover:bg-gold-100">
-                  <i data-lucide="printer" class="h-4 w-4 text-gold-500"></i>
-                </div>
-                <span class="text-sm font-medium text-navy-500">Generate &amp; Print ID Cards</span>
-                <i data-lucide="chevron-right" class="ml-auto h-4 w-4 text-navy-300"></i>
-              </a>
-            </div>
-          </div>
-        </div>
-
-        <div class="rounded-xl border border-navy-100/60 bg-white p-5 card-shadow anim-in anim-d3">
-          <div class="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <h3 class="font-display text-sm font-semibold text-navy-500">Dashboard Features</h3>
-              <p class="mt-1 text-xs text-navy-300">{% if is_super_admin %}Platform-wide controls plus selected-school operations.{% else %}School workspace tools scoped to {{ current_school.name|default:"your school" }}.{% endif %}</p>
-            </div>
-            <span class="rounded-full bg-navy-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-navy-400">{% if is_super_admin %}Super Admin{% else %}School Admin{% endif %}</span>
-          </div>
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {% for feature in dashboard_features %}
-              {% if feature.url %}
-                <a href="{{ feature.url }}" class="group rounded-lg border border-navy-100 p-4 transition hover:border-navy-200 hover:bg-navy-50/50">
+        {% if current_school and analytics %}
+          <section class="panel fade-up flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
+            <div class="flex h-14 w-14 flex-none items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white">
+              {% if current_school.logo %}
+                <img src="{{ current_school.logo.url }}" alt="{{ current_school.name }}" class="h-full w-full object-contain p-1.5">
               {% else %}
-                <div class="rounded-lg border border-navy-100 bg-navy-50/30 p-4 opacity-70">
+                <i data-lucide="school" class="h-6 w-6 text-blue-700"></i>
               {% endif %}
-                  <div class="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-navy-500 text-white transition group-hover:bg-navy-600">
-                    <i data-lucide="{{ feature.icon }}" class="h-4 w-4"></i>
-                  </div>
-                  <div class="text-sm font-semibold text-navy-500">{{ feature.title }}</div>
-                  <p class="mt-1 text-xs leading-5 text-navy-300">{{ feature.description }}</p>
-              {% if feature.url %}
-                </a>
-              {% else %}
-                </div>
-              {% endif %}
-            {% endfor %}
-          </div>
-        </div>
-
-        {% if is_super_admin %}
-          <div id="create-school" class="rounded-xl border border-navy-100/60 bg-white p-5 card-shadow anim-in anim-d4">
-            <div class="mb-4 flex items-start justify-between gap-3">
-              <div>
-                <h3 class="font-display text-sm font-semibold text-navy-500">Create School Workspace</h3>
-                <p class="mt-1 text-xs text-navy-300">Creates the school profile and the first school-admin login in one step.</p>
-              </div>
-              <i data-lucide="school" class="h-5 w-5 text-gold-500"></i>
             </div>
-            <form method="post" action="{% url 'add_college' %}" enctype="multipart/form-data" class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-              {% csrf_token %}
-              <div class="xl:col-span-2">
-                <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-navy-300">School Name</label>
-                <input required type="text" name="name" class="w-full rounded-lg border border-navy-100 px-3 py-2 text-sm outline-none focus:border-navy-300" placeholder="Kathmandu Model School">
+            <div class="min-w-0 flex-1">
+              <h2 class="truncate text-base font-bold text-slate-950">{{ current_school.name }}</h2>
+              <div class="mt-2 flex flex-wrap gap-x-5 gap-y-1.5 text-[11px] text-slate-500">
+                {% if current_school.address %}<span class="inline-flex items-center gap-1.5"><i data-lucide="map-pin" class="h-3.5 w-3.5"></i>{{ current_school.address }}</span>{% endif %}
+                {% if current_school.principal_name %}<span class="inline-flex items-center gap-1.5"><i data-lucide="user-check" class="h-3.5 w-3.5"></i>{{ current_school.principal_name }}</span>{% endif %}
+                <span class="inline-flex items-center gap-1.5"><i data-lucide="users" class="h-3.5 w-3.5"></i>{{ analytics.teacher_count }} staff records</span>
               </div>
-              <div>
-                <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-navy-300">Phone</label>
-                <input type="text" name="phone" class="w-full rounded-lg border border-navy-100 px-3 py-2 text-sm outline-none focus:border-navy-300" placeholder="01-0000000">
+            </div>
+            <div class="flex flex-none items-center gap-2">
+              <a href="{% url 'dashboard_students' %}{{ nav_school_query }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"><i data-lucide="users" class="h-3.5 w-3.5"></i>Manage students</a>
+              <a href="{% url 'add_student_to_college' current_school.id %}" class="inline-flex items-center gap-2 rounded-lg bg-blue-700 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-800"><i data-lucide="plus" class="h-3.5 w-3.5"></i>Add student</a>
+            </div>
+          </section>
+
+          <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <article class="panel metric fade-up flex items-center gap-4 p-5">
+              <div class="flex h-12 w-12 flex-none items-center justify-center rounded-lg bg-blue-50 text-blue-700"><i data-lucide="users" class="h-5 w-5"></i></div>
+              <div><div class="text-xs text-slate-500">Total Students</div><div class="mt-1 text-2xl font-semibold text-slate-950">{{ analytics.student_count }}</div><div class="mt-1 text-[10px] text-slate-500">Current school records</div></div>
+            </article>
+            <article class="panel metric fade-up flex items-center gap-4 p-5">
+              <div class="flex h-12 w-12 flex-none items-center justify-center rounded-lg bg-emerald-50 text-emerald-700"><i data-lucide="badge-check" class="h-5 w-5"></i></div>
+              <div><div class="text-xs text-slate-500">Digital IDs Live</div><div class="mt-1 text-2xl font-semibold text-slate-950">{{ analytics.live_count }}</div><div class="mt-1 text-[10px] font-medium text-emerald-700">{{ analytics.live_coverage }}% profile coverage</div></div>
+            </article>
+            <article class="panel metric fade-up flex items-center gap-4 p-5">
+              <div class="flex h-12 w-12 flex-none items-center justify-center rounded-lg bg-violet-50 text-violet-700"><i data-lucide="wifi" class="h-5 w-5 rotate-90"></i></div>
+              <div><div class="text-xs text-slate-500">Active NFC Cards</div><div class="mt-1 text-2xl font-semibold text-slate-950">{{ analytics.active_card_count }}</div><div class="mt-1 text-[10px] text-slate-500">{{ analytics.card_coverage }}% of students assigned</div></div>
+            </article>
+            <article class="panel metric fade-up flex items-center gap-4 p-5">
+              <div class="flex h-12 w-12 flex-none items-center justify-center rounded-lg bg-amber-50 text-amber-600"><i data-lucide="eye" class="h-5 w-5"></i></div>
+              <div><div class="text-xs text-slate-500">Profile Views</div><div class="mt-1 text-2xl font-semibold text-slate-950">{{ analytics.profile_views }}</div><div class="mt-1 text-[10px] text-slate-500">{{ analytics.total_engagement }} total interactions</div></div>
+            </article>
+          </section>
+
+          <section class="grid gap-4 xl:grid-cols-[1.1fr_.9fr]">
+            <article class="panel min-w-0 p-5">
+              <div class="flex items-start justify-between">
+                <div><h2 class="text-sm font-semibold text-slate-950">Students by Class</h2><p class="mt-1 text-[11px] text-slate-500">Academic distribution in this school</p></div>
+                <i data-lucide="bar-chart-3" class="h-5 w-5 text-blue-700"></i>
               </div>
-              <div>
-                <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-navy-300">Email</label>
-                <input type="email" name="email" class="w-full rounded-lg border border-navy-100 px-3 py-2 text-sm outline-none focus:border-navy-300" placeholder="admin@school.edu.np">
+              {% if analytics.class_rows %}
+                <div class="mt-5 overflow-x-auto">
+                  <div class="chart-grid flex h-36 min-w-[560px] items-end gap-3 border-b border-slate-300 px-2 pt-4">
+                    {% for row in analytics.class_rows %}
+                      <div class="flex h-full min-w-12 flex-1 flex-col items-center justify-end">
+                        <span class="mb-2 text-[10px] font-semibold text-slate-700">{{ row.total }}</span>
+                        <div class="w-8 rounded-t bg-blue-600 transition hover:bg-blue-700 sm:w-10" style="height:{{ row.percentage }}%; min-height:8px"></div>
+                        <span class="mt-2 w-full truncate text-center text-[9px] text-slate-500" title="{{ row.label }}">{{ row.label }}</span>
+                      </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              {% else %}
+                <div class="mt-5 flex h-56 items-center justify-center rounded-lg bg-slate-50 text-sm text-slate-500">Assign classes to students to populate this chart.</div>
+              {% endif %}
+            </article>
+
+            <article class="panel p-5">
+              <div><h2 class="text-sm font-semibold text-slate-950">Card Engagement</h2><p class="mt-1 text-[11px] text-slate-500">How people use student digital cards</p></div>
+              <div class="mt-5 grid items-center gap-6 sm:grid-cols-[180px_1fr]">
+                <div class="relative mx-auto h-36 w-36">
+                  <div class="donut h-full w-full" style="background:{{ analytics.donut_style }}"></div>
+                  <div class="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center">
+                    <span class="text-[10px] text-slate-500">Total engagement</span>
+                    <strong class="mt-1 text-xl text-slate-950">{{ analytics.total_engagement }}</strong>
+                  </div>
+                </div>
+                <div class="space-y-4">
+                  {% for item in analytics.activity_mix %}
+                    <div class="grid grid-cols-[10px_1fr_auto] items-start gap-2.5">
+                      <span class="mt-1 h-2.5 w-2.5 rounded-full" style="background:{{ item.color }}"></span>
+                      <div><div class="text-xs font-medium text-slate-700">{{ item.label }}</div><div class="mt-0.5 text-[10px] text-slate-500">{{ item.percentage }}% of tracked activity</div></div>
+                      <strong class="text-xs text-slate-950">{{ item.value }}</strong>
+                    </div>
+                  {% endfor %}
+                </div>
               </div>
-              <div class="xl:col-span-2">
-                <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-navy-300">Address</label>
-                <input type="text" name="address" class="w-full rounded-lg border border-navy-100 px-3 py-2 text-sm outline-none focus:border-navy-300" placeholder="City, district">
+            </article>
+          </section>
+
+          <section class="grid gap-4 xl:grid-cols-[.85fr_1.15fr_.8fr]">
+            <article class="panel overflow-hidden">
+              <div class="border-b border-slate-200 px-4 py-2.5"><h2 class="text-sm font-semibold text-slate-950">Top Card Users</h2><p class="mt-0.5 text-[10px] text-slate-500">Highest all-time engagement</p></div>
+              <div class="divide-y divide-slate-100">
+                {% for profile in analytics.top_profiles %}
+                  <a href="{% url 'student_contact_card' profile.id %}" target="_blank" class="flex items-center gap-3 px-4 py-1.5 hover:bg-slate-50">
+                    <div class="flex h-7 w-7 flex-none items-center justify-center overflow-hidden rounded-full bg-slate-100">{% if profile.profile_photo %}<img src="{{ profile.profile_photo.url }}" alt="" class="h-full w-full object-cover">{% else %}<i data-lucide="user" class="h-3.5 w-3.5 text-slate-400"></i>{% endif %}</div>
+                    <div class="min-w-0 flex-1"><div class="truncate text-xs font-semibold text-slate-900">{{ profile.name }}</div><div class="truncate text-[10px] text-slate-500">{{ profile.get_academic_level_display|default:"Class not set" }}{% if profile.section %} · Section {{ profile.section }}{% endif %}</div></div>
+                    <span class="text-xs font-semibold text-slate-700">{{ profile.interactions }}</span>
+                  </a>
+                {% empty %}<div class="px-5 py-10 text-center text-xs text-slate-500">Engagement will appear after cards are opened.</div>{% endfor %}
               </div>
-              <div>
-                <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-navy-300">Admin Username</label>
-                <input required type="text" name="admin_username" class="w-full rounded-lg border border-navy-100 px-3 py-2 text-sm outline-none focus:border-navy-300" placeholder="schooladmin">
+              <a href="{% url 'dashboard_reports' %}{{ nav_school_query }}" class="block border-t border-slate-200 px-4 py-2 text-center text-[11px] font-semibold text-blue-700 hover:bg-blue-50">View all reports</a>
+            </article>
+
+            <article class="panel p-5">
+              <div class="flex items-start justify-between">
+                <div><h2 class="text-sm font-semibold text-slate-950">Engagement Over Time</h2><p class="mt-1 text-[11px] text-slate-500">All tracked card actions · last 7 days</p></div>
+                <span class="rounded-md border border-slate-200 px-2 py-1 text-[10px] text-slate-500">7 days</span>
               </div>
-              <div>
-                <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-navy-300">Admin Password</label>
-                <input required type="text" name="admin_password" class="w-full rounded-lg border border-navy-100 px-3 py-2 text-sm outline-none focus:border-navy-300" placeholder="Temporary password">
+              <div class="mt-3">
+                <svg viewBox="0 0 100 100" class="h-32 w-full overflow-visible" role="img" aria-label="Seven day engagement chart">
+                  <line x1="7" y1="20" x2="93" y2="20" stroke="#eef2f7" stroke-width=".6"/>
+                  <line x1="7" y1="42.5" x2="93" y2="42.5" stroke="#eef2f7" stroke-width=".6"/>
+                  <line x1="7" y1="65" x2="93" y2="65" stroke="#eef2f7" stroke-width=".6"/>
+                  <line x1="7" y1="88" x2="93" y2="88" stroke="#cbd5e1" stroke-width=".7"/>
+                  <polyline points="{{ analytics.engagement_points }}" fill="none" stroke="#0b4bcb" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  {% for row in analytics.daily_engagement %}
+                    <circle cx="{{ row.x }}" cy="{{ row.y }}" r="1.8" fill="#fff" stroke="#0b4bcb" stroke-width="1.1"><title>{{ row.date_label }}: {{ row.total }} interactions</title></circle>
+                    <text x="{{ row.x }}" y="97" text-anchor="middle" font-size="3.1" fill="#64748b">{{ row.label }}</text>
+                  {% endfor %}
+                </svg>
               </div>
-              <div class="xl:col-span-2">
-                <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-navy-300">Logo</label>
-                <input type="file" name="logo" accept="image/*" class="w-full rounded-lg border border-navy-100 px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-navy-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-navy-500">
+              <div class="mt-2 flex items-center justify-center gap-2 text-[10px] text-slate-500"><span class="h-2 w-2 rounded-full bg-blue-600"></span>Views, contacts, and downloads</div>
+            </article>
+
+            <article class="panel p-5">
+              <h2 class="text-sm font-semibold text-slate-950">Student ID Workflow</h2>
+              <p class="mt-1 text-[11px] text-slate-500">Current rollout progress</p>
+              <div class="relative mt-4 space-y-4 before:absolute before:bottom-4 before:left-4 before:top-4 before:w-px before:bg-slate-200">
+                <div class="relative flex gap-3">
+                  <span class="z-10 flex h-8 w-8 flex-none items-center justify-center rounded-full bg-emerald-600 text-white"><i data-lucide="check" class="h-4 w-4"></i></span>
+                  <div class="min-w-0 flex-1"><div class="text-xs font-semibold text-slate-900">Student records</div><div class="mt-0.5 text-[10px] text-slate-500">{{ analytics.student_count }} profiles added</div></div>
+                </div>
+                <div class="relative flex gap-3">
+                  <span class="z-10 flex h-8 w-8 flex-none items-center justify-center rounded-full {% if analytics.live_coverage == 100 %}bg-emerald-600 text-white{% else %}bg-blue-700 text-white{% endif %}">{% if analytics.live_coverage == 100 %}<i data-lucide="check" class="h-4 w-4"></i>{% else %}2{% endif %}</span>
+                  <div class="min-w-0 flex-1"><div class="text-xs font-semibold text-slate-900">Digital IDs live</div><div class="mt-0.5 text-[10px] text-slate-500">{{ analytics.live_count }} of {{ analytics.student_count }}</div></div>
+                </div>
+                <div class="relative flex gap-3">
+                  <span class="z-10 flex h-8 w-8 flex-none items-center justify-center rounded-full {% if analytics.card_coverage == 100 %}bg-emerald-600 text-white{% else %}border border-slate-300 bg-white text-slate-600{% endif %}">{% if analytics.card_coverage == 100 %}<i data-lucide="check" class="h-4 w-4"></i>{% else %}3{% endif %}</span>
+                  <div class="min-w-0 flex-1"><div class="text-xs font-semibold text-slate-900">NFC cards assigned</div><div class="mt-0.5 text-[10px] text-slate-500">{{ analytics.active_card_count }} of {{ analytics.student_count }}</div></div>
+                </div>
               </div>
-              <div class="xl:col-span-2">
-                <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-navy-300">Slogan</label>
-                <input type="text" name="slogan" class="w-full rounded-lg border border-navy-100 px-3 py-2 text-sm outline-none focus:border-navy-300" placeholder="Optional school slogan">
-              </div>
-              <div class="md:col-span-2 xl:col-span-4">
-                <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-navy-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-navy-600">
-                  <i data-lucide="plus" class="h-4 w-4"></i>Create School Workspace
-                </button>
-              </div>
-            </form>
-          </div>
+              <a href="{% url 'dashboard_students' %}{{ nav_school_query }}" class="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-blue-700">Review students<i data-lucide="arrow-right" class="h-3.5 w-3.5"></i></a>
+            </article>
+          </section>
+
+          <section class="panel flex flex-col gap-4 border-blue-200 bg-blue-50/60 p-4 sm:flex-row sm:items-center">
+            <div class="flex h-11 w-11 flex-none items-center justify-center rounded-lg bg-white text-blue-700 shadow-sm"><i data-lucide="credit-card" class="h-5 w-5"></i></div>
+            <div class="min-w-0 flex-1"><h2 class="text-sm font-semibold text-slate-950">Everything you need for secure student identity</h2><p class="mt-1 text-[11px] text-slate-500">Create digital IDs, issue NFC cards, choose card designs, and export print-ready files.</p></div>
+            <a href="{% url 'dashboard_print' %}{{ nav_school_query }}" class="inline-flex flex-none items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 py-2.5 text-xs font-semibold text-white hover:bg-blue-800">Go to ID Card Studio<i data-lucide="arrow-right" class="h-4 w-4"></i></a>
+          </section>
+        {% else %}
+          <section class="panel px-6 py-20 text-center">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-blue-50 text-blue-700"><i data-lucide="school" class="h-6 w-6"></i></div>
+            <h2 class="mt-5 text-lg font-semibold text-slate-950">{% if is_super_admin %}Select a school workspace{% else %}No school workspace assigned{% endif %}</h2>
+            <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">{% if is_super_admin %}Choose a school above or open Schools to create and manage an institution.{% else %}Ask the platform administrator to assign your account to a school.{% endif %}</p>
+            {% if is_super_admin %}<a href="{% url 'dashboard_schools' %}" class="mt-5 inline-flex items-center gap-2 rounded-lg bg-blue-700 px-4 py-2.5 text-xs font-semibold text-white">Open Schools<i data-lucide="arrow-right" class="h-4 w-4"></i></a>{% endif %}
+          </section>
         {% endif %}
-
-        <div class="overflow-hidden rounded-xl border border-navy-100/60 bg-white card-shadow anim-in anim-d3">
-          <div class="flex items-center justify-between border-b border-navy-100/60 px-5 py-4">
-            <h3 class="font-display text-sm font-semibold text-navy-500">School Directory</h3>
-            {% if is_super_admin %}
-              <a href="{% url 'dashboard_settings' %}" class="text-xs font-medium text-navy-400 transition hover:text-navy-500">Open settings →</a>
-            {% endif %}
-          </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="bg-navy-50/60 text-[11px] uppercase tracking-wider text-navy-400">
-                  <th class="px-5 py-3 text-left font-semibold">School</th>
-                  <th class="hidden px-5 py-3 text-left font-semibold sm:table-cell">Phone</th>
-                  <th class="hidden px-5 py-3 text-left font-semibold md:table-cell">Email</th>
-                  <th class="px-5 py-3 text-right font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-navy-50">
-                {% for school in schools %}
-                  <tr class="transition hover:bg-navy-50/40">
-                    <td class="px-5 py-3.5">
-                      <div class="flex items-center gap-3">
-                        <div class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg {% if current_school and school.id == current_school.id %}bg-gold-400 text-navy-700{% else %}bg-navy-500 text-white{% endif %} text-xs font-bold">
-                          {% if school.logo %}
-                            <img src="{{ school.logo.url }}" alt="{{ school.name }}" class="h-full w-full object-cover">
-                          {% else %}
-                            {{ school.name|slice:":1"|upper }}
-                          {% endif %}
-                        </div>
-                        <div>
-                          <div class="font-medium text-navy-500">{{ school.name }}</div>
-                          <div class="text-[11px] text-navy-300">{{ school.address|default:"No address" }}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td class="hidden px-5 py-3.5 text-navy-400 sm:table-cell">{{ school.phone|default:"-" }}</td>
-                    <td class="hidden px-5 py-3.5 text-navy-400 md:table-cell">{{ school.email|default:"-" }}</td>
-                    <td class="px-5 py-3.5 text-right">
-                      <div class="flex items-center justify-end gap-1">
-                        <a href="{% url 'admin_dashboard' %}?school={{ school.id }}" class="rounded-md p-1.5 transition hover:bg-navy-50" title="Open">
-                          <i data-lucide="eye" class="h-3.5 w-3.5 text-navy-400"></i>
-                        </a>
-                        <a href="{% url 'dashboard_settings' %}?school={{ school.id }}" class="rounded-md p-1.5 transition hover:bg-navy-50" title="Settings">
-                          <i data-lucide="edit" class="h-3.5 w-3.5 text-navy-400"></i>
-                        </a>
-                        {% if is_super_admin %}
-                          <form method="post" action="{% url 'delete_college' school.id %}" class="inline">
-                            {% csrf_token %}
-                            <button type="submit" class="rounded-md p-1.5 transition hover:bg-red-50" title="Delete" onclick="return confirm('Delete this school?');">
-                              <i data-lucide="trash-2" class="h-3.5 w-3.5 text-red-400"></i>
-                            </button>
-                          </form>
-                        {% endif %}
-                      </div>
-                    </td>
-                  </tr>
-                {% empty %}
-                  <tr>
-                    <td colspan="4" class="px-5 py-10 text-center text-sm text-navy-300">No schools created yet.</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="overflow-hidden rounded-xl border border-navy-100/60 bg-white card-shadow anim-in anim-d4">
-          <div class="flex items-center justify-between border-b border-navy-100/60 px-5 py-4">
-            <h3 class="font-display text-sm font-semibold text-navy-500">Recent Activity</h3>
-            <span class="text-xs font-medium text-navy-400">Latest interactions</span>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="bg-navy-50/60 text-[11px] uppercase tracking-wider text-navy-400">
-                  <th class="px-5 py-3 text-left font-semibold">Profile</th>
-                  <th class="hidden px-5 py-3 text-left font-semibold sm:table-cell">School</th>
-                  <th class="px-5 py-3 text-left font-semibold">Event</th>
-                  <th class="px-5 py-3 text-right font-semibold">When</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-navy-50">
-                {% for activity in recent_activities %}
-                  <tr class="transition hover:bg-navy-50/40">
-                    <td class="px-5 py-3.5">
-                      <div class="flex items-center gap-3">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-600">
-                          {{ activity.student.name|slice:":2"|upper }}
-                        </div>
-                        <div class="font-medium text-navy-500">{{ activity.student.name }}</div>
-                      </div>
-                    </td>
-                    <td class="hidden px-5 py-3.5 text-navy-400 sm:table-cell">{{ activity.student.college.name|default:"-" }}</td>
-                    <td class="px-5 py-3.5">
-                      <span class="inline-flex items-center gap-1.5 rounded-full bg-navy-50 px-2.5 py-1 text-xs font-medium text-navy-500">
-                        {% if activity.event_type == 'view' %}
-                          <i data-lucide="eye" class="h-3 w-3"></i>
-                        {% elif activity.event_type == 'download' %}
-                          <i data-lucide="download" class="h-3 w-3"></i>
-                        {% else %}
-                          <i data-lucide="pointer" class="h-3 w-3"></i>
-                        {% endif %}
-                        {{ activity.get_event_type_display }}{% if activity.action %}: {{ activity.action }}{% endif %}
-                      </span>
-                    </td>
-                    <td class="px-5 py-3.5 text-right text-xs text-navy-400">{{ activity.created_at|date:"M d, Y H:i" }}</td>
-                  </tr>
-                {% empty %}
-                  <tr>
-                    <td colspan="4" class="px-5 py-10 text-center text-sm text-navy-300">No recent activity yet.</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <footer class="py-4 text-center text-[11px] text-navy-300">
-          © {% now "Y" %} School Identity Platform · Dashboard Home
-        </footer>
       </main>
     </div>
   </div>
 
+  <div id="mobile-overlay" class="fixed inset-0 z-40 hidden bg-slate-950/40 lg:hidden"></div>
+  <aside id="mobile-sidebar" class="fixed bottom-0 left-0 top-0 z-50 hidden w-72 overflow-auto bg-white shadow-2xl lg:hidden"></aside>
   <script>
+    function openMobileSidebar() {
+      const source = document.getElementById('sidebar');
+      const target = document.getElementById('mobile-sidebar');
+      if (!source || !target) return;
+      target.innerHTML = source.innerHTML;
+      target.classList.remove('hidden');
+      document.getElementById('mobile-overlay')?.classList.remove('hidden');
+      lucide.createIcons();
+    }
+    function closeMobileSidebar() {
+      document.getElementById('mobile-sidebar')?.classList.add('hidden');
+      document.getElementById('mobile-overlay')?.classList.add('hidden');
+    }
+    document.getElementById('mobile-menu-btn')?.addEventListener('click', openMobileSidebar);
+    document.getElementById('mobile-overlay')?.addEventListener('click', closeMobileSidebar);
     lucide.createIcons();
   </script>
 </body>
