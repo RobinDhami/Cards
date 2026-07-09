@@ -143,10 +143,6 @@
         <label><span class="field-label">{{ form.company_name.label }}</span>{{ form.company_name }}</label>
         <label><span class="field-label">{{ form.organization_logo.label }}</span>{{ form.organization_logo }}</label>
         <label><span class="field-label">{{ form.organization_tagline.label }}</span>{{ form.organization_tagline }}</label>
-        <div class="grid grid-cols-2 gap-3">
-          <label><span class="field-label">{{ form.profile_identifier_label.label }}</span>{{ form.profile_identifier_label }}</label>
-          <label><span class="field-label">{{ form.profile_identifier.label }}</span>{{ form.profile_identifier }}</label>
-        </div>
         <label><span class="field-label">{{ form.designation.label }}</span>{{ form.designation }}</label>
         <label><span class="field-label">{{ form.industry.label }}</span>{{ form.industry }}</label>
         <label><span class="field-label">{{ form.academic_section.label }}</span>{{ form.academic_section }}</label>
@@ -155,6 +151,21 @@
           <label><span class="field-label">{{ form.location.label }}</span>{{ form.location }}</label>
         </div>
         <label><span class="field-label">{{ form.business_hours.label }}</span>{{ form.business_hours }}</label>
+      </div>
+    </section>
+
+    <section class="section-card">
+      <h2 class="mb-1 font-semibold">Academic Background</h2>
+      <p class="mb-3 text-xs leading-5 text-gray-500">Used for the academic timeline card on student and professional profiles.</p>
+      <div class="space-y-3">
+        <label><span class="field-label">{{ form.academic_title.label }}</span>{{ form.academic_title }}</label>
+        <label><span class="field-label">{{ form.academic_institution.label }}</span>{{ form.academic_institution }}</label>
+        <div class="grid grid-cols-2 gap-3">
+          <label><span class="field-label">{{ form.academic_level.label }}</span>{{ form.academic_level }}</label>
+          <label><span class="field-label">{{ form.academic_year.label }}</span>{{ form.academic_year }}</label>
+        </div>
+        <label><span class="field-label">{{ form.academic_specialization.label }}</span>{{ form.academic_specialization }}</label>
+        <label><span class="field-label">{{ form.academic_certification.label }}</span>{{ form.academic_certification }}</label>
       </div>
     </section>
 

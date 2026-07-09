@@ -1259,6 +1259,8 @@ def _school_card_context(request, student):
             social_links.append({'key': key, 'url': _build_tracked_action_url(student.id, action), 'label': label})
 
     public_skills = list(student.skills.order_by('name'))
+    student_identifier = student.unique_identifier or student.roll_number or ''
+    student_identifier_label = 'IEMIS No.' if student.unique_identifier else 'Student No.'
 
     return {
         'student': student,
@@ -1274,7 +1276,8 @@ def _school_card_context(request, student):
         'grade_label': grade_label,
         'section_label': student.section,
         'grade_section': grade_section,
-        'student_identifier': student.unique_identifier or student.roll_number or f'STU-{student.id}',
+        'student_identifier': student_identifier,
+        'student_identifier_label': student_identifier_label,
         'parent_label': 'Parent / Guardian' if student.member_type == 'student' else 'Emergency Contact',
         'parent_name': student.emergency_contact_name,
         'emergency_contact_name': student.emergency_contact_name,

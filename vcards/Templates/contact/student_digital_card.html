@@ -436,7 +436,9 @@
           <div class="cover">
             {% if cover_photo_url %}<img src="{{ cover_photo_url }}" alt="{{ student.name }} cover">{% endif %}
           </div>
-          <div class="student-id"><small>Student ID</small><strong>{{ student_identifier }}</strong></div>
+          {% if student_identifier %}
+            <div class="student-id"><small>{{ student_identifier_label }}</small><strong>{{ student_identifier }}</strong></div>
+          {% endif %}
           <div class="portrait">
             {% if student_photo_url %}<img src="{{ student_photo_url }}" alt="{{ student.name }}">{% else %}{{ student.name|slice:":2"|upper }}{% endif %}
           </div>
@@ -563,7 +565,7 @@
 
         {% if can_view_private_details %}
           <div class="detail-list">
-            <div class="detail-row"><span>IEMIS / Student No.</span><strong>{{ student_identifier|default:"Not added" }}</strong></div>
+            <div class="detail-row"><span>{{ student_identifier_label|default:"IEMIS No." }}</span><strong>{{ student_identifier|default:"Not added" }}</strong></div>
             <div class="detail-row"><span>{{ parent_label|default:"Guardian" }}</span><strong>{{ parent_name|default:"Not added" }}</strong></div>
             <div class="detail-row"><span>Emergency phone</span><strong>{{ emergency_contact_phone|default:"Not added" }}</strong></div>
             <div class="detail-row"><span>Blood group</span><strong>{{ blood_group|default:"Not added" }}</strong></div>

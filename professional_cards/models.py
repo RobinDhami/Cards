@@ -57,6 +57,32 @@ class ProfessionalProfile(models.Model):
         default='',
         help_text='Optional class, batch, cohort, or section for student profiles.',
     )
+    academic_title = models.CharField(
+        max_length=160,
+        blank=True,
+        default='',
+        help_text='Degree, program, qualification, or academic title shown on the public card.',
+    )
+    academic_institution = models.CharField(
+        max_length=180,
+        blank=True,
+        default='',
+        help_text='College, university, school, or training institute.',
+    )
+    academic_level = models.CharField(
+        max_length=120,
+        blank=True,
+        default='',
+        help_text='For example: Bachelor, Master, Graduate, Undergraduate, or Diploma.',
+    )
+    academic_year = models.CharField(
+        max_length=80,
+        blank=True,
+        default='',
+        help_text='Graduation year, current year, batch, or expected completion.',
+    )
+    academic_specialization = models.CharField(max_length=160, blank=True, default='')
+    academic_certification = models.CharField(max_length=160, blank=True, default='')
     short_tagline = models.CharField(max_length=255, blank=True, default='')
     about = models.TextField(blank=True, default='')
     current_focus = models.TextField(
@@ -165,6 +191,7 @@ class ProfessionalTestimonial(models.Model):
 
 class ProfessionalDocument(models.Model):
     DOCUMENT_TYPES = [
+        ('cv_resume', 'CV / Resume'),
         ('brochure', 'Brochure'),
         ('portfolio', 'Portfolio'),
         ('certificate', 'Certificate'),

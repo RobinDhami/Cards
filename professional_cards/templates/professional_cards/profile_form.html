@@ -85,7 +85,7 @@
       </div>
       <div class="rounded-xl border border-teal-200 bg-teal-50/60 p-4">
         <div class="flex items-center gap-2 font-semibold text-navy-500"><i data-lucide="badge-check" class="h-4 w-4 text-teal-700"></i>Modern Identity</div>
-        <p class="mt-2 text-xs leading-5 text-slate-500">Editorial identity card with organization branding, credential ID, current focus, skills, and profile snapshot.</p>
+        <p class="mt-2 text-xs leading-5 text-slate-500">Editorial identity card with organization branding, current focus, skills, and profile snapshot.</p>
       </div>
     </div>
   </section>
@@ -140,7 +140,7 @@
       </div>
       <div class="grid gap-4 sm:grid-cols-2">
         {% for field in form.visible_fields %}
-          {% if field.name != "about" and field.name != "office_address" and field.name != "is_verified" and field.name != "is_active" and field.name != "login_username" and field.name != "login_password" and field.name != "profile_photo" and field.name != "cover_photo" and field.name != "google_maps_url" and field.name != "show_map_on_profile" and field.name != "template_name" and field.name != "accent_color" %}
+          {% if field.name != "about" and field.name != "office_address" and field.name != "is_verified" and field.name != "is_active" and field.name != "login_username" and field.name != "login_password" and field.name != "profile_photo" and field.name != "cover_photo" and field.name != "google_maps_url" and field.name != "show_map_on_profile" and field.name != "template_name" and field.name != "accent_color" and field.name != "academic_title" and field.name != "academic_institution" and field.name != "academic_level" and field.name != "academic_year" and field.name != "academic_specialization" and field.name != "academic_certification" %}
             <label class="block">
               <span class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">{{ field.label }}</span>
               {{ field }}
@@ -158,6 +158,38 @@
         <span class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">{{ form.office_address.label }}</span>
         {{ form.office_address }}
       </label>
+      <div class="rounded-xl border border-slate2-200 bg-slate2-50 p-4">
+        <div class="mb-3">
+          <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">Academic Background</div>
+          <div class="text-xs text-navy-400">Shown as the academic timeline card on the public profile.</div>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <label class="block">
+            <span class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">{{ form.academic_title.label }}</span>
+            {{ form.academic_title }}
+          </label>
+          <label class="block">
+            <span class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">{{ form.academic_institution.label }}</span>
+            {{ form.academic_institution }}
+          </label>
+          <label class="block">
+            <span class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">{{ form.academic_level.label }}</span>
+            {{ form.academic_level }}
+          </label>
+          <label class="block">
+            <span class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">{{ form.academic_year.label }}</span>
+            {{ form.academic_year }}
+          </label>
+          <label class="block">
+            <span class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">{{ form.academic_specialization.label }}</span>
+            {{ form.academic_specialization }}
+          </label>
+          <label class="block">
+            <span class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">{{ form.academic_certification.label }}</span>
+            {{ form.academic_certification }}
+          </label>
+        </div>
+      </div>
       <div class="rounded-xl border border-slate2-200 bg-slate2-50 p-4">
         <div class="grid gap-4 sm:grid-cols-2">
           <label class="block">
@@ -194,7 +226,7 @@
       {% endif %}
       <div class="rounded-xl border border-slate2-200 bg-white p-5 text-sm text-slate-600 shadow-sm">
         <h2 class="font-display text-lg font-bold text-navy-500">Template</h2>
-        <p class="mt-2">Choose <strong>Professional Premium</strong> for the classic networking layout or <strong>Modern Identity</strong> for the richer editorial card with current focus, skills, profile snapshot, and credential details.</p>
+        <p class="mt-2">Choose <strong>Professional Premium</strong> for the classic networking layout or <strong>Modern Identity</strong> for the richer editorial card with current focus, skills, and profile snapshot.</p>
       </div>
     </aside>
   </div>
@@ -322,11 +354,19 @@
   </section>
 
   <section class="rounded-xl border border-slate2-200 bg-white p-5 shadow-sm">
-    <h2 class="font-display text-lg font-bold text-slate-900">Documents</h2>
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <h2 class="font-display text-lg font-bold text-slate-900">Documents</h2>
+        <p class="mt-1 text-sm text-navy-400">Add CV / Resume files, certificates, portfolios, brochures, or other public documents.</p>
+      </div>
+      <button type="button" data-add-formset="documents" class="btn-action inline-flex items-center justify-center gap-2 rounded-lg bg-gold-500 px-4 py-2 text-[13px] font-semibold text-white shadow-sm hover:bg-gold-600">
+        <i data-lucide="plus" class="h-4 w-4"></i>Add Document
+      </button>
+    </div>
     {{ formsets.documents.management_form }}
-    <div class="mt-4 space-y-3">
+    <div id="documents-list" class="mt-4 space-y-3">
       {% for document_form in formsets.documents.forms %}
-        <div class="grid gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3 sm:grid-cols-6">
+        <div class="formset-row grid gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3 sm:grid-cols-6">
           {% for hidden in document_form.hidden_fields %}{{ hidden }}{% endfor %}
           <label class="sm:col-span-2"><span class="mb-1 block text-xs font-semibold text-slate-500">Title</span>{{ document_form.title }}</label>
           <label><span class="mb-1 block text-xs font-semibold text-slate-500">Type</span>{{ document_form.document_type }}</label>
@@ -339,6 +379,30 @@
         </div>
       {% endfor %}
     </div>
+    <div id="documents-empty" class="mt-4 hidden rounded-xl border-2 border-dashed border-slate2-200 bg-slate2-50 px-6 py-10 text-center">
+      <i data-lucide="file-plus" class="mx-auto mb-3 h-8 w-8 text-slate2-300"></i>
+      <p class="text-sm font-semibold text-navy-500">No documents added yet</p>
+      <p class="mt-1 text-xs text-navy-400">Add a CV / Resume, certificate, or supporting document.</p>
+      <button type="button" data-add-formset="documents" class="btn-action mt-4 inline-flex items-center gap-2 rounded-lg bg-gold-500 px-4 py-2 text-[13px] font-semibold text-white hover:bg-gold-600">
+        <i data-lucide="plus" class="h-4 w-4"></i>Add Document
+      </button>
+    </div>
+    <button type="button" data-add-formset="documents" class="btn-action mt-4 inline-flex items-center gap-2 rounded-lg border border-gold-200 px-3 py-2 text-[13px] font-semibold text-gold-600 hover:bg-gold-50">
+      <i data-lucide="plus" class="h-4 w-4"></i>Add another document
+    </button>
+    <template id="documents-empty-form">
+      <div class="formset-row grid gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3 sm:grid-cols-6">
+        {% for hidden in formsets.documents.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
+        <label class="sm:col-span-2"><span class="mb-1 block text-xs font-semibold text-slate-500">Title</span>{{ formsets.documents.empty_form.title }}</label>
+        <label><span class="mb-1 block text-xs font-semibold text-slate-500">Type</span>{{ formsets.documents.empty_form.document_type }}</label>
+        <label><span class="mb-1 block text-xs font-semibold text-slate-500">Order</span>{{ formsets.documents.empty_form.display_order }}</label>
+        <label class="flex items-end gap-2 text-xs font-semibold text-slate-700">{{ formsets.documents.empty_form.is_public }} Public</label>
+        <label class="delete-toggle flex cursor-pointer items-center justify-center gap-2 self-end rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50">
+          {{ formsets.documents.empty_form.DELETE }}<i data-lucide="trash-2" class="h-4 w-4"></i><span>Remove</span>
+        </label>
+        <label class="sm:col-span-3"><span class="mb-1 block text-xs font-semibold text-slate-500">File</span>{{ formsets.documents.empty_form.file }}</label>
+      </div>
+    </template>
   </section>
 
   <div class="sticky bottom-0 z-20 flex justify-end gap-2 border-t border-slate2-200 bg-white/95 p-3 shadow-[0_-6px_20px_rgba(16,34,59,.06)]">
@@ -398,5 +462,6 @@
 
   updateEmptyState('services');
   updateEmptyState('portfolio');
+  updateEmptyState('documents');
 </script>
 {% include "professional_cards/_dashboard_shell_end.html" %}
