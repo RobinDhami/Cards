@@ -136,17 +136,30 @@
       letter-spacing: -.65px;
       overflow-wrap: anywhere;
     }
-    .verified {
-      width: 23px; height: 23px; flex: 0 0 auto; display: grid; place-items: center;
-      color: #fff;
-      background: linear-gradient(145deg, #20bf83, #0c9564);
-      clip-path: polygon(50% 0%,61% 9%,75% 5%,82% 18%,95% 25%,91% 39%,100% 50%,91% 61%,95% 75%,82% 82%,75% 95%,61% 91%,50% 100%,39% 91%,25% 95%,18% 82%,5% 75%,9% 61%,0% 50%,9% 39%,5% 25%,18% 18%,25% 5%,39% 9%);
-      filter: drop-shadow(0 3px 5px rgba(12,149,100,.22));
-    }
-    .verified .icon { width: 13px; height: 13px; stroke-width: 3.2; }
     .academic-line { margin: 8px 0 0; color: #35486d; font-size: 14px; font-weight: 600; }
-    .location-line { margin: 8px 0 0; display: flex; align-items: flex-start; gap: 7px; color: var(--muted); font-size: 12px; }
-    .location-line .icon { width: 16px; height: 16px; flex: 0 0 auto; }
+    .location-line {
+      width: fit-content;
+      max-width: 100%;
+      margin: 10px 0 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 10px;
+      border: 1px solid #e4e9f3;
+      border-radius: 999px;
+      color: #58667f;
+      background: #f8faff;
+      font-size: 11.5px;
+      font-weight: 600;
+      line-height: 1.25;
+    }
+    .location-line .icon {
+      width: 13px;
+      height: 13px;
+      flex: 0 0 auto;
+      color: var(--indigo);
+      stroke-width: 2.2;
+    }
     .actions {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(62px, 1fr));
@@ -217,28 +230,25 @@
     .focus-item strong { display: block; font-size: 13px; }
     .focus-item p { margin: 4px 0 0; color: var(--muted); font-size: 11px; line-height: 1.55; }
     .skill-section {
-      padding: 14px;
-      border: 1px solid var(--line);
-      border-radius: 19px;
-      background: #fff;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
     }
-    .skills { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .skills { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
     .skill {
       min-width: 0;
-      min-height: 94px;
-      padding: 11px 5px 9px;
+      min-height: 82px;
+      padding: 9px 4px 8px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      border: 1px solid #dce3ee;
-      border-radius: 12px;
-      color: var(--ink);
+      gap: 7px;
+      border: 1px solid #e7edf6;
+      border-radius: 13px;
       background: #fff;
-      font-size: 10px;
-      font-weight: 700;
-      line-height: 1.25;
+      box-shadow: 0 7px 15px rgba(16,37,79,.035);
       text-align: center;
     }
     .skill-icon {
@@ -250,27 +260,167 @@
       color: var(--indigo);
       background: var(--indigo-soft);
     }
-    .skill-icon .icon { width: 22px; height: 22px; stroke-width: 1.9; }
-    .snapshot {
-      padding: 17px;
-      border: 1px solid var(--line);
-      border-radius: 19px;
-      background: linear-gradient(145deg, #f8faff, #fff);
+    .skill-icon .icon { width: 19px; height: 19px; stroke-width: 2.3; }
+    .skill strong {
+      width: 100%;
+      min-height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #111827;
+      font-size: 8.7px;
+      font-weight: 800;
+      line-height: 1.18;
+      overflow-wrap: anywhere;
+      text-align: center;
     }
-    .snapshot-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-    .snapshot-head .section-title { margin: 0; }
-    .snapshot-head .icon { color: var(--indigo); }
-    .snapshot-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 16px; }
-    .snapshot-item { min-width: 0; padding: 2px 8px; border-left: 1px solid var(--line); text-align: center; }
-    .snapshot-item:first-child { border-left: 0; }
-    .snapshot-item span { display: block; color: var(--muted); font-size: 8px; }
-    .snapshot-item strong { display: block; margin-top: 5px; font-size: 9.5px; line-height: 1.3; overflow-wrap: anywhere; }
-    .socials { display: flex; flex-wrap: wrap; gap: 8px; }
+    .academic-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 176px;
+      padding: 18px 16px 16px 58px;
+      border: 1px solid #ddccff;
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: 0 10px 24px rgba(16,37,79,.045);
+    }
+    .academic-badge {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 40px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      border-radius: 0 0 16px 0;
+      color: #fff;
+      background: linear-gradient(145deg, #4f7bd9, #8b5cf6);
+      box-shadow: 0 10px 20px rgba(16,37,79,.12);
+    }
+    .academic-badge .icon { width: 18px; height: 18px; stroke-width: 2.2; }
+    .academic-card::after {
+      content: "";
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      width: 42px;
+      height: 42px;
+      opacity: .32;
+      color: #8b5cf6;
+      background-image: radial-gradient(currentColor 1.8px, transparent 2px);
+      background-size: 10px 10px;
+    }
+    .academic-eyebrow {
+      margin: 0 0 9px;
+      color: #7c3aed;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .academic-title {
+      margin: 0;
+      max-width: 86%;
+      color: #111827;
+      font-size: 18px;
+      line-height: 1.18;
+      font-weight: 750;
+      overflow-wrap: anywhere;
+    }
+    .academic-subtitle {
+      margin: 6px 0 0;
+      max-width: 86%;
+      color: #5d687c;
+      font-size: 12px;
+      font-weight: 650;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .academic-divider {
+      height: 1px;
+      margin: 15px 0 12px;
+      color: #8b5cf6;
+      background: linear-gradient(90deg, currentColor, transparent);
+      opacity: .24;
+    }
+    .academic-facts { position: relative; display: grid; gap: 10px; }
+    .academic-facts::before {
+      content: "";
+      position: absolute;
+      left: 2.5px;
+      top: 8px;
+      bottom: 8px;
+      width: 1px;
+      border-radius: 999px;
+      background: #4f7bd9;
+      opacity: .24;
+    }
+    .academic-fact {
+      display: grid;
+      grid-template-columns: minmax(82px, .7fr) minmax(0, 1fr);
+      gap: 12px;
+      align-items: baseline;
+    }
+    .academic-fact span {
+      position: relative;
+      padding-left: 15px;
+      color: #111827;
+      font-size: 11.5px;
+      font-weight: 650;
+      line-height: 1.25;
+    }
+    .academic-fact span::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: .55em;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #4f7bd9;
+    }
+    .academic-fact strong {
+      min-width: 0;
+      color: #1f2937;
+      font-size: 11.5px;
+      line-height: 1.3;
+      font-weight: 600;
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+    .socials {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      padding: 0 4px;
+    }
     .social {
-      display: inline-flex; align-items: center; min-height: 34px; padding: 0 12px;
-      border: 1px solid var(--line); border-radius: 10px; color: #3e4e6d; background: #fff;
-      font-size: 10px; font-weight: 700;
+      width: 38px;
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      color: #fff;
+      background: #243047;
+      box-shadow: 0 8px 18px rgba(16,37,79,.12);
+      transition: .18s ease;
     }
+    .social:hover { transform: translateY(-1px); box-shadow: 0 12px 22px rgba(16,37,79,.16); }
+    .social .icon { width: 17px; height: 17px; stroke-width: 2.1; }
+    .social-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+    .social-facebook { background: #1877f2; }
+    .social-instagram { background: linear-gradient(135deg, #f58529, #dd2a7b, #8134af, #515bd4); }
+    .social-twitter { background: #111827; }
+    .social-linkedin { background: #0a66c2; }
+    .social-youtube { background: #ff0000; }
+    .social-tiktok { background: #111827; }
+    .social-github { background: #24292f; }
+    .social-figma { background: #7c3aed; }
+    .social-upwork { background: #14a800; }
+    .social-messenger { background: #0084ff; }
+    .social-website { background: var(--indigo); }
     .protected {
       width: 100%;
       margin-top: 21px;
@@ -385,6 +535,7 @@
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <symbol id="i-school" viewBox="0 0 24 24"><path d="m3 10 9-5 9 5-9 5-9-5Z"/><path d="M7 13v4c3 2 7 2 10 0v-4M21 10v6"/></symbol>
     <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M13.5 6.5 17.5 10.5M4 20l4.5-1 10-10a2.8 2.8 0 0 0-4-4l-10 10L4 20Z"/></symbol>
     <symbol id="i-qr" viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM15 14h2v2h-2zM19 14h1v5h-5v1M14 18h2"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="m6 12 4 4 8-9"/></symbol>
     <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
@@ -428,6 +579,7 @@
           </div>
           <div class="top-actions">
             <button class="top-action" id="shareBtn" type="button" aria-label="Share profile"><svg class="icon"><use href="#i-share"></use></svg></button>
+            <a class="top-action" href="{{ edit_profile_url }}" aria-label="Edit profile"><svg class="icon"><use href="#i-pencil"></use></svg></a>
             <a class="top-action" href="{{ qr_code_url }}" aria-label="Open QR code"><svg class="icon"><use href="#i-qr"></use></svg></a>
           </div>
         </header>
@@ -447,11 +599,10 @@
         <section class="identity">
           <div class="name-line">
             <h1>{{ student.name }}</h1>
-            <span class="verified" title="Verified profile"><svg class="icon"><use href="#i-check"></use></svg></span>
           </div>
           <p class="academic-line">{{ grade_section|default:member_type_label }}</p>
           {% if student_address or school_address %}
-            <p class="location-line"><svg class="icon"><use href="#i-pin"></use></svg>{{ student_address|default:school_address }}</p>
+            <p class="location-line"><svg class="icon"><use href="#i-pin"></use></svg><span>{{ student_address|default:school_address }}</span></p>
           {% endif %}
         </section>
 
@@ -491,30 +642,33 @@
 
         {% if public_skills %}
           <section class="section skill-section">
-            <h2 class="section-title">Skills</h2>
+            <h2 class="section-title">Skills & Hobbies</h2>
             <div class="skills">
               {% for skill in public_skills %}
                 <span class="skill">
                   <span class="skill-icon">
                     <svg class="icon"><use href="{% if skill.name == 'HTML/CSS' %}#i-html{% elif skill.name == 'Python' %}#i-python{% elif skill.name == 'Figma' %}#i-figma{% elif skill.name == 'Public speaking' %}#i-mic{% else %}#i-sparkles{% endif %}"></use></svg>
                   </span>
-                  <span>{{ skill.name }}</span>
+                  <strong>{{ skill.name }}</strong>
                 </span>
               {% endfor %}
             </div>
           </section>
         {% endif %}
 
-        <section class="section snapshot">
-          <div class="snapshot-head">
-            <h2 class="section-title">Academic snapshot</h2>
-            <svg class="icon"><use href="#i-school"></use></svg>
-          </div>
-          <div class="snapshot-grid">
-            <div class="snapshot-item"><span>Program</span><strong>{{ student.role|default:grade_label|default:"Not added" }}</strong></div>
-            <div class="snapshot-item"><span>Year</span><strong>{{ grade_label|default:"Not added" }}</strong></div>
-            <div class="snapshot-item"><span>Section</span><strong>{{ section_label|default:"Not added" }}</strong></div>
-            <div class="snapshot-item"><span>Institution</span><strong>{{ school_name|default:"Independent profile" }}</strong></div>
+        <section class="section">
+          <div class="academic-card">
+            <span class="academic-badge" aria-hidden="true"><svg class="icon"><use href="#i-school"></use></svg></span>
+            <p class="academic-eyebrow">Academic background</p>
+            <h2 class="academic-title">{{ student.role|default:grade_label|default:"Academic Profile" }}</h2>
+            <p class="academic-subtitle">{{ school_name|default:"Institution not added" }}</p>
+            <div class="academic-divider"></div>
+            <div class="academic-facts">
+              <div class="academic-fact"><span>Level</span><strong>{{ grade_label|default:member_type_label|default:"Not added" }}</strong></div>
+              <div class="academic-fact"><span>Section</span><strong>{{ section_label|default:"Not added" }}</strong></div>
+              <div class="academic-fact"><span>Roll No.</span><strong>{{ student.roll_number|default:"Not added" }}</strong></div>
+              <div class="academic-fact"><span>Institution</span><strong>{{ school_name|default:"Independent profile" }}</strong></div>
+            </div>
           </div>
         </section>
 
@@ -522,7 +676,24 @@
           <section class="section">
             <h2 class="section-title">Find me online</h2>
             <div class="socials">
-              {% for social in social_links %}<a class="social" href="{{ social.url }}" target="_blank" rel="noopener">{{ social.label }}</a>{% endfor %}
+              {% for social in social_links %}
+                <a class="social social-{{ social.key }}" href="{{ social.url }}" target="_blank" rel="noopener" aria-label="{{ social.label }}">
+                  {% if social.key == "facebook" %}
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 8.5V6.7c0-.9.6-1.1 1-1.1h2.7V2.1L14.2 2C10.8 2 9 4.1 9 6.4v2.1H6v3.9h3V22h4.1v-9.6h3.3l.5-3.9H13Z" fill="currentColor" stroke="none"/></svg>
+                  {% elif social.key == "instagram" %}
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="3.5"/><circle cx="17.4" cy="6.6" r=".8" fill="currentColor" stroke="none"/></svg>
+                  {% elif social.key == "linkedin" %}
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5.001 2.5 2.5 0 0 1 0-5.001ZM3 9h4v12H3V9Zm6.5 0h3.8v1.6h.1c.5-.9 1.8-1.9 3.7-1.9 4 0 4.7 2.6 4.7 6V21h-4v-5.2c0-1.2 0-2.8-1.7-2.8s-2 1.3-2 2.7V21h-4V9Z" fill="currentColor" stroke="none"/></svg>
+                  {% elif social.key == "youtube" %}
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.6 7.2s-.2-1.6-.8-2.3c-.8-.8-1.7-.8-2.1-.9C15.8 3.8 12 3.8 12 3.8s-3.8 0-6.7.2c-.4 0-1.3.1-2.1.9-.6.7-.8 2.3-.8 2.3S2.2 9.1 2.2 11v1.8c0 1.9.2 3.8.2 3.8s.2 1.6.8 2.3c.8.8 1.9.8 2.4.9 1.7.2 6.4.2 6.4.2s3.8 0 6.7-.2c.4-.1 1.3-.1 2.1-.9.6-.7.8-2.3.8-2.3s.2-1.9.2-3.8V11c0-1.9-.2-3.8-.2-3.8ZM10 15.2V8.6l6.2 3.3-6.2 3.3Z" fill="currentColor" stroke="none"/></svg>
+                  {% elif social.key == "github" %}
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.5-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 0 1.6 1.1 1.6 1.1.9 1.5 2.4 1.1 2.9.8.1-.7.4-1.1.7-1.4-2.2-.3-4.6-1.1-4.6-5A3.9 3.9 0 0 1 6.8 8.7c-.1-.3-.5-1.3.1-2.8 0 0 .9-.3 2.9 1.1A9.8 9.8 0 0 1 12 6.7c.8 0 1.5.1 2.2.3 2-1.4 2.9-1.1 2.9-1.1.6 1.5.2 2.5.1 2.8a3.9 3.9 0 0 1 1.1 2.8c0 3.9-2.4 4.7-4.6 5 .4.3.7.9.7 1.8V21c0 .3.2.6.7.5A10 10 0 0 0 12 2Z" fill="currentColor" stroke="none"/></svg>
+                  {% else %}
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.1 0l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1"/><path d="M14 11a5 5 0 0 0-7.1 0l-2 2A5 5 0 0 0 12 20.1l1.1-1.1"/></svg>
+                  {% endif %}
+                  <span class="social-label">{{ social.label }}</span>
+                </a>
+              {% endfor %}
             </div>
           </section>
         {% endif %}
@@ -606,7 +777,7 @@
         document.addEventListener("keydown", event => { if (event.key === "Escape") closeDrawer(); });
 
         shareButton?.addEventListener("click", async () => {
-          const shareData = { title: shareTitle, text: `View ${shareTitle}'s verified student profile.`, url: profileUrl || window.location.href };
+          const shareData = { title: shareTitle, text: `View ${shareTitle}'s student profile.`, url: profileUrl || window.location.href };
           try {
             if (navigator.share) {
               await navigator.share(shareData);
