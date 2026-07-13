@@ -54,6 +54,7 @@
 
   <form method="post" enctype="multipart/form-data" class="mx-auto max-w-lg space-y-4 px-4 pt-4">
     {% csrf_token %}
+    {{ form.slug }}
     <div class="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
       <i data-lucide="info" class="mt-0.5 h-4 w-4 shrink-0"></i>
       <p>Update your details here, then tap <strong>Save Changes</strong>. Use <strong>View Profile</strong> to see what visitors see.</p>

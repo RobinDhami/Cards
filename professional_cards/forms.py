@@ -180,6 +180,21 @@ class ProfessionalProfileOwnerForm(ProfessionalProfileForm):
             if field not in {'is_verified', 'is_active'}
         ]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['slug'].required = False
+        self.fields['slug'].widget = forms.HiddenInput()
+        if self.instance and self.instance.slug:
+            self.fields['slug'].initial = self.instance.slug
+
+    def clean_slug(self):
+        slug = (self.cleaned_data.get('slug') or '').strip()
+        if slug:
+            return slug
+        if self.instance and self.instance.slug:
+            return self.instance.slug
+        return slug
+
 
 class ProfessionalServiceForm(forms.ModelForm):
     class Meta:
