@@ -1,7 +1,8 @@
 from django import views
 from django.conf import settings
 from django.conf.urls.static import static
-from django.urls import include, path
+from django.urls import include, path, re_path
+from django.views.static import serve as serve_media
 from django.contrib import admin
 from vcards.views import *
 from vcards.views import dashboard_qr_export, dashboard_qr_export_download
@@ -51,9 +52,12 @@ urlpatterns = [
     path('ai-chat/', ai_chat, name='ai_chat'),
     path('send-message/', send_site_message, name='send_message'),
     path('api/card/lookup/', api_card_lookup, name='api_card_lookup'),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
 
 if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += [path("__reload__/", include("django_browser_reload.urls"))]
+elif settings.SERVE_MEDIA_FILES:
     urlpatterns += [
-        path("__reload__/", include("django_browser_reload.urls")),
+        re_path(r'^media/(?P<path>.*)$', serve_media, {'document_root': settings.MEDIA_ROOT}),
     ]

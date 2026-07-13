@@ -162,6 +162,7 @@ STATIC_URL = '/static/'
 # Media files (uploaded files)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = Path(os.environ.get("MEDIA_ROOT", BASE_DIR / "media"))
+SERVE_MEDIA_FILES = os.environ.get("SERVE_MEDIA_FILES", "True" if RENDER else "False").lower() == "true"
 
 
 STATICFILES_DIRS = []
