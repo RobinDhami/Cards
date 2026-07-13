@@ -8,7 +8,7 @@ from django.core.mail import send_mail
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth.models import User
 from django.conf import settings
-from django.db import transaction
+from django.db import DatabaseError, transaction
 from django.db.models import Count, Q
 from django.db.models.functions import TruncDate
 from django.template import TemplateDoesNotExist
@@ -1177,7 +1177,10 @@ def _build_tracked_action_url(student_id, action):
 
 
 def _log_profile_activity(student, event_type, action=''):
-    ProfileActivity.objects.create(student=student, event_type=event_type, action=action)
+    try:
+        ProfileActivity.objects.create(student=student, event_type=event_type, action=action)
+    except DatabaseError:
+        pass
 
 
 def _normalize_public_url(url):
@@ -1206,7 +1209,12 @@ def _build_qr_png_bytes(url):
 
 
 def _media_url(file_field):
-    return file_field.url if file_field else ''
+    if not file_field:
+        return ''
+    try:
+        return file_field.url
+    except (ValueError, OSError):
+        return ''
 
 
 def _google_maps_url(address):
