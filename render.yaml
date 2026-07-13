@@ -20,5 +20,9 @@ services:
           property: connectionString
       - key: DEBUG
         value: false
+      - key: ALLOWED_HOSTS
+        value: cards-web.onrender.com,tap2connectnepal.com,www.tap2connectnepal.com
+      - key: CSRF_TRUSTED_ORIGINS
+        value: https://cards-web.onrender.com,https://tap2connectnepal.com,https://www.tap2connectnepal.com
       - key: WEB_CONCURRENCY
         value: 1
