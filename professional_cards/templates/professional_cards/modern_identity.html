@@ -77,6 +77,12 @@
     .role { margin:8px 0 0; color:#35486d; font-size:14px; font-weight:600; }
     .location { margin:8px 0 0; display:flex; align-items:flex-start; gap:7px; color:var(--muted); font-size:12px; }
     .location i { width:16px; height:16px; flex:0 0 auto; }
+    .map-link {
+      width:max-content; max-width:100%; margin:12px 0 0; display:inline-flex; align-items:center; gap:8px;
+      border:1px solid color-mix(in srgb,var(--accent) 28%,#dfe5ef); border-radius:999px;
+      background:var(--accent-soft); color:var(--accent); padding:8px 12px; font-size:12px; font-weight:800;
+    }
+    .map-link i { width:15px; height:15px; flex:0 0 auto; }
     .actions {
       display:grid; grid-template-columns:repeat(auto-fit,minmax(62px,1fr)); margin-top:22px; padding:12px 5px;
       border:1px solid var(--line); border-radius:18px; background:#fff; box-shadow:0 8px 22px rgba(16,37,79,.04);
@@ -300,6 +306,12 @@
         </div>
         <p class="role">{{ profile.designation|default:profile.profession|default:"Professional Profile" }}{% if profile.company_name %} · {{ profile.company_name }}{% endif %}</p>
         {% if profile.location %}<p class="location"><i data-lucide="map-pin"></i>{{ profile.location }}</p>{% endif %}
+        {% if public_map_url %}
+          <a class="map-link" href="{{ public_map_url }}" target="_blank" rel="noopener">
+            <i data-lucide="map-pin"></i>
+            Open Google Maps
+          </a>
+        {% endif %}
       </section>
 
       {% if primary_actions %}

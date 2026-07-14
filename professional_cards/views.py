@@ -414,6 +414,7 @@ def public_professional_profile(request, slug):
     context = {
         'profile': profile,
         'public_url': _absolute_public_url(request, profile),
+        'public_map_url': _public_map_url(profile),
         'whatsapp_digits': whatsapp_digits,
         'primary_actions': primary_actions,
         'extra_actions': extra_actions,
