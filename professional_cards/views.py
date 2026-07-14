@@ -1,5 +1,6 @@
 from io import BytesIO
 import re
+from urllib.parse import quote
 
 import qrcode
 from django.contrib import messages
@@ -132,7 +133,21 @@ def _normalize_phone(number):
     return re.sub(r'\D+', '', number or '')
 
 
+def _google_maps_search_url(query):
+    query = (query or '').strip()
+    if not query:
+        return ''
+    return f'https://www.google.com/maps/search/?api=1&query={quote(query)}'
+
+
+def _public_map_url(profile):
+    return (profile.google_maps_url or '').strip() or _google_maps_search_url(
+        profile.office_address or profile.location
+    )
+
+
 def _build_public_actions(profile, whatsapp_digits):
+    map_url = _public_map_url(profile)
     action_defs = [
         {
             'enabled': bool(profile.phone),
@@ -157,8 +172,8 @@ def _build_public_actions(profile, whatsapp_digits):
             'brand_class': 'brand-email',
         },
         {
-            'enabled': bool(profile.show_map_on_profile and profile.google_maps_url),
-            'href': profile.google_maps_url,
+            'enabled': bool(map_url),
+            'href': map_url,
             'label': 'Map',
             'icon': 'map-pin',
             'brand_class': 'brand-map',
