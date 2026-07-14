@@ -15,6 +15,27 @@ class ProfessionalProfile(models.Model):
         ('creator', 'Creator'),
         ('other', 'Other'),
     ]
+    HEADER_IDENTITY_CHOICES = [
+        ('organization', 'Organization'),
+        ('personal', 'Personal brand'),
+        ('hidden', 'Hide header identity'),
+    ]
+    CURRENT_STATUS_CHOICES = [
+        ('', 'Select status'),
+        ('opportunities', 'Open to opportunities'),
+        ('internships', 'Open to internships'),
+        ('freelance', 'Open to freelance projects'),
+        ('collaboration', 'Open to collaboration'),
+        ('mentorship', 'Open to mentorship'),
+        ('not_available', 'Currently not available'),
+    ]
+    WORK_MODE_CHOICES = [
+        ('', 'Select work mode'),
+        ('onsite', 'On-site'),
+        ('remote', 'Remote'),
+        ('hybrid', 'Hybrid'),
+        ('flexible', 'Flexible'),
+    ]
 
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -31,6 +52,11 @@ class ProfessionalProfile(models.Model):
     profession = models.CharField(max_length=160, blank=True, default='')
     designation = models.CharField(max_length=160, blank=True, default='')
     company_name = models.CharField(max_length=180, blank=True, default='')
+    header_identity = models.CharField(
+        max_length=30,
+        choices=HEADER_IDENTITY_CHOICES,
+        default='organization',
+    )
     organization_logo = models.ImageField(
         upload_to='professional_profiles/organization_logos/',
         blank=True,
@@ -42,6 +68,13 @@ class ProfessionalProfile(models.Model):
         default='',
         help_text='A short line shown below the company, college, or organization name.',
     )
+    personal_logo = models.ImageField(
+        upload_to='professional_profiles/personal_logos/',
+        blank=True,
+        null=True,
+    )
+    brand_name = models.CharField(max_length=180, blank=True, default='')
+    brand_tagline = models.CharField(max_length=180, blank=True, default='')
     profile_identifier_label = models.CharField(
         max_length=60,
         blank=True,
@@ -94,6 +127,25 @@ class ProfessionalProfile(models.Model):
         default='',
         help_text='A featured specialty, interest, initiative, or professional goal.',
     )
+    current_status = models.CharField(
+        max_length=40,
+        choices=CURRENT_STATUS_CHOICES,
+        blank=True,
+        default='',
+    )
+    looking_for = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        help_text='Comma-separated opportunity interests selected in the profile builder.',
+    )
+    preferred_work_mode = models.CharField(
+        max_length=30,
+        choices=WORK_MODE_CHOICES,
+        blank=True,
+        default='',
+    )
+    networking_statement = models.CharField(max_length=255, blank=True, default='')
     phone = models.CharField(max_length=40, blank=True, default='')
     whatsapp_number = models.CharField(max_length=40, blank=True, default='')
     email = models.EmailField(blank=True, default='')
@@ -159,8 +211,22 @@ class ProfessionalService(models.Model):
 
 
 class ProfessionalPortfolioItem(models.Model):
+    HIGHLIGHT_TYPES = [
+        ('project', 'Project'),
+        ('work_experience', 'Work experience'),
+        ('internship', 'Internship'),
+        ('achievement', 'Achievement'),
+        ('volunteering', 'Volunteering'),
+        ('event', 'Event'),
+        ('publication', 'Publication'),
+        ('other', 'Other'),
+    ]
+
     profile = models.ForeignKey(ProfessionalProfile, on_delete=models.CASCADE, related_name='portfolio_items')
     title = models.CharField(max_length=180)
+    highlight_type = models.CharField(max_length=40, choices=HIGHLIGHT_TYPES, default='project')
+    organization = models.CharField(max_length=180, blank=True, default='')
+    period = models.CharField(max_length=120, blank=True, default='')
     description = models.TextField(blank=True, default='')
     image = models.ImageField(upload_to='professional_profiles/portfolio/', blank=True, null=True)
     link = models.URLField(blank=True, default='')
@@ -177,6 +243,8 @@ class ProfessionalTestimonial(models.Model):
     profile = models.ForeignKey(ProfessionalProfile, on_delete=models.CASCADE, related_name='testimonials')
     client_name = models.CharField(max_length=160)
     client_role = models.CharField(max_length=180, blank=True, default='')
+    organization = models.CharField(max_length=180, blank=True, default='')
+    profile_photo = models.ImageField(upload_to='professional_profiles/recommendations/', blank=True, null=True)
     review_text = models.TextField()
     rating = models.PositiveSmallIntegerField(blank=True, null=True)
     display_order = models.PositiveIntegerField(default=0)

@@ -36,6 +36,7 @@
     .profile-card { width: min(100%,438px); margin: 0 auto; overflow: hidden; border: 1px solid rgba(20,45,90,.08); border-radius: 34px; background:#fff; box-shadow:var(--shadow); }
     .inner { padding:22px; }
     .organization { display:flex; align-items:center; justify-content:space-between; gap:14px; }
+    .organization.no-identity { justify-content:flex-end; }
     .organization-copy { min-width:0; display:flex; align-items:center; gap:11px; }
     .organization-mark {
       width:47px; height:47px; flex:0 0 auto; overflow:hidden; display:grid; place-items:center;
@@ -92,6 +93,12 @@
     .action-website { background:#2563eb; }
     .intro { position:relative; margin-top:20px; padding:19px 18px 19px 49px; border:1px solid #e2e7f1; border-radius:18px; background:linear-gradient(135deg,#f7f9ff,#fff); color:#263b64; font-family:"Libre Baskerville",Georgia,serif; font-size:13px; line-height:1.7; }
     .quote { position:absolute; left:17px; top:12px; color:var(--accent); font-family:Georgia,serif; font-size:34px; line-height:1; }
+    .opportunity { margin-top:18px; padding:15px; border:1px solid var(--line); border-radius:18px; background:#fbfcfe; }
+    .opportunity-title { margin:0 0 8px; display:flex; align-items:center; gap:7px; font-size:12px; font-weight:850; color:#10254f; }
+    .opportunity-title i { width:17px; height:17px; color:var(--accent); }
+    .opportunity-tags { display:flex; flex-wrap:wrap; gap:7px; }
+    .opportunity-tag { display:inline-flex; align-items:center; border-radius:999px; background:var(--accent-soft); padding:6px 9px; color:#1f2f57; font-size:10px; font-weight:800; }
+    .opportunity p { margin:9px 0 0; color:var(--muted); font-size:11px; line-height:1.55; }
     .section { margin-top:21px; }
     .section-title { margin:0 0 12px; color:var(--accent); font-size:11px; font-weight:700; letter-spacing:.085em; text-transform:uppercase; }
     .focus-list { position:relative; padding:5px 0 3px 34px; border:1px solid var(--line); border-radius:19px; background:#fff; }
@@ -179,6 +186,7 @@
     .social { position:relative; width:42px; height:42px; display:inline-flex; align-items:center; justify-content:center; border-radius:50%; color:#fff; box-shadow:0 8px 18px rgba(16,37,79,.12); transition:.18s ease; }
     .social:hover { transform:translateY(-1px); box-shadow:0 12px 22px rgba(16,37,79,.16); }
     .social svg { width:19px; height:19px; fill:currentColor; }
+    .social i { width:19px; height:19px; }
     .social-linkedin { background:#0a66c2; }
     .social-instagram { background:linear-gradient(135deg,#f58529,#dd2a7b,#8134af,#515bd4); }
     .social-facebook { background:#1877f2; }
@@ -196,6 +204,12 @@
     .details-trigger span span { display:block; margin-top:3px; color:var(--muted); font-size:9px; line-height:1.4; }
     .details-trigger > i { width:18px; height:18px; color:var(--accent); }
     .connect { width:100%; min-height:52px; margin-top:18px; display:flex; align-items:center; justify-content:center; gap:9px; border:0; border-radius:15px; color:#fff; background:linear-gradient(100deg,var(--accent),color-mix(in srgb,var(--accent) 78%,#142365)); box-shadow:0 12px 24px color-mix(in srgb,var(--accent) 24%,transparent); font-size:14px; font-weight:700; }
+    .connect-soon { width:100%; margin-top:18px; display:grid; grid-template-columns:42px 1fr; gap:12px; align-items:center; padding:15px; border:1px dashed color-mix(in srgb,var(--accent) 38%,#dbe4f0); border-radius:17px; color:#10254f; background:linear-gradient(135deg,#fbfcff,#fff); }
+    .connect-soon-icon { width:42px; height:42px; display:grid; place-items:center; border-radius:50%; color:#fff; background:var(--accent); box-shadow:0 10px 20px color-mix(in srgb,var(--accent) 18%,transparent); }
+    .connect-soon-icon i { width:20px; height:20px; }
+    .connect-soon strong { display:block; font-size:13px; }
+    .connect-soon span { display:block; margin-top:2px; color:var(--accent); font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.08em; }
+    .connect-soon p { margin:5px 0 0; color:var(--muted); font-size:10.5px; line-height:1.5; }
     .footer { padding:16px 8px 2px; display:flex; justify-content:center; align-items:center; gap:6px; color:#7a879d; font-size:9px; text-align:center; }
     .footer i { width:14px; height:14px; color:var(--accent); }
     .drawer { position:fixed; z-index:100; inset:0; padding:18px; display:flex; align-items:flex-end; justify-content:center; visibility:hidden; opacity:0; background:rgba(8,20,47,.48); backdrop-filter:blur(5px); transition:.2s ease; }
@@ -265,20 +279,29 @@
 
   <article class="profile-card">
     <div class="inner">
-      <header class="organization">
-        <div class="organization-copy">
-          <span class="organization-mark">
-            {% if profile.organization_logo %}
-              <img src="{{ profile.organization_logo.url }}" alt="{{ profile.company_name }} logo">
-            {% else %}
-              <i data-lucide="building-2"></i>
-            {% endif %}
-          </span>
-          <span class="organization-text">
-            <strong>{{ profile.company_name|default:"Professional Identity" }}</strong>
-            <span>{{ profile.organization_tagline|default:"Verified digital profile" }}</span>
-          </span>
-        </div>
+      <header class="organization{% if profile.header_identity == 'hidden' %} no-identity{% endif %}">
+        {% if profile.header_identity != 'hidden' %}
+          <div class="organization-copy">
+            <span class="organization-mark">
+              {% if profile.header_identity == 'personal' and profile.personal_logo %}
+                <img src="{{ profile.personal_logo.url }}" alt="{{ profile.brand_name|default:profile.full_name }} logo">
+              {% elif profile.organization_logo %}
+                <img src="{{ profile.organization_logo.url }}" alt="{{ profile.company_name|default:profile.full_name }} logo">
+              {% else %}
+                <i data-lucide="{% if profile.header_identity == 'personal' %}badge{% else %}building-2{% endif %}"></i>
+              {% endif %}
+            </span>
+            <span class="organization-text">
+              {% if profile.header_identity == 'personal' %}
+                <strong>{{ profile.brand_name|default:profile.full_name }}</strong>
+                <span>{{ profile.brand_tagline|default:profile.profession|default:"Personal brand" }}</span>
+              {% else %}
+                <strong>{{ profile.company_name|default:"Professional Identity" }}</strong>
+                <span>{{ profile.organization_tagline|default:"Verified digital profile" }}</span>
+              {% endif %}
+            </span>
+          </div>
+        {% endif %}
         <div class="top-actions">
           <a class="top-action" href="{{ edit_login_url }}" aria-label="Edit profile"><i data-lucide="pencil"></i></a>
           <button class="top-action" id="shareBtn" type="button" aria-label="Share profile"><i data-lucide="share-2"></i></button>
@@ -323,17 +346,27 @@
         </nav>
       {% endif %}
 
-      {% if profile.short_tagline or profile.about %}
-        <section class="intro"><span class="quote">“</span>{{ profile.short_tagline|default:profile.about }}</section>
+      {% if profile.short_tagline %}
+        <section class="intro"><span class="quote">“</span>{{ profile.short_tagline }}</section>
       {% endif %}
 
-      {% if profile.current_focus or profile.featured_interest or profile.profession %}
+      {% if profile.current_status or looking_for_labels or profile.preferred_work_mode or profile.networking_statement %}
+        <section class="opportunity" aria-label="Opportunity and networking goal">
+          <h2 class="opportunity-title"><i data-lucide="radar"></i>{% if profile.current_status %}{{ profile.get_current_status_display }}{% else %}Networking goal{% endif %}</h2>
+          <div class="opportunity-tags">
+            {% for label in looking_for_labels %}<span class="opportunity-tag">{{ label }}</span>{% endfor %}
+            {% if profile.preferred_work_mode %}<span class="opportunity-tag">{{ profile.get_preferred_work_mode_display }}</span>{% endif %}
+          </div>
+          {% if profile.networking_statement %}<p>{{ profile.networking_statement }}</p>{% endif %}
+        </section>
+      {% endif %}
+
+      {% if profile.current_focus or profile.featured_interest %}
         <section class="section">
           <h2 class="section-title">Current focus</h2>
           <div class="focus-list">
             {% if profile.current_focus %}<article class="focus-item"><strong>What I’m working on</strong><p>{{ profile.current_focus }}</p></article>{% endif %}
             {% if profile.featured_interest %}<article class="focus-item"><strong>Featured interest</strong><p>{{ profile.featured_interest }}</p></article>{% endif %}
-            {% if profile.profession %}<article class="focus-item"><strong>Professional direction</strong><p>{{ profile.profession }}{% if profile.industry %} in {{ profile.industry }}{% endif %}</p></article>{% endif %}
           </div>
         </section>
       {% endif %}
@@ -342,7 +375,7 @@
         <section class="section skill-section">
           <h2 class="section-title">Skills</h2>
           <div class="skills">
-            {% for service in profile.services.all %}
+            {% for service in profile.services.all|slice:":8" %}
               <article class="skill">
                 <div class="skill-head">
                   {% if service.icon == "python" or service.title|lower == "python" %}
@@ -392,10 +425,10 @@
             <p class="identity-subtitle">{{ profile.company_name|default:profile.organization_tagline|default:"Independent profile" }}</p>
             <div class="identity-divider"></div>
             <div class="identity-facts">
-              <div class="identity-fact"><span>Experience</span><strong>{% if profile.portfolio_items.all %}{{ profile.portfolio_items.count }} highlight{{ profile.portfolio_items.count|pluralize }}{% elif profile.years_of_experience %}{% if profile.profile_type == "student" %}Year {{ profile.years_of_experience }}{% else %}{{ profile.years_of_experience }} year{{ profile.years_of_experience|pluralize }}{% endif %}{% else %}Not added yet{% endif %}</strong></div>
-              <div class="identity-fact"><span>Industry</span><strong>{{ profile.industry|default:profile.profession|default:"Not added yet" }}</strong></div>
-              <div class="identity-fact"><span>Open to</span><strong>{{ profile.business_hours|default:"By appointment" }}</strong></div>
-              <div class="identity-fact"><span>Work base</span><strong>{{ profile.location|default:"Not added yet" }}</strong></div>
+              {% if profile.years_of_experience %}<div class="identity-fact"><span>Experience</span><strong>{% if profile.profile_type == "student" %}Year {{ profile.years_of_experience }}{% else %}{{ profile.years_of_experience }} year{{ profile.years_of_experience|pluralize }}{% endif %}</strong></div>{% endif %}
+              {% if profile.industry or profile.profession %}<div class="identity-fact"><span>Industry</span><strong>{{ profile.industry|default:profile.profession }}</strong></div>{% endif %}
+              {% if profile.business_hours %}<div class="identity-fact"><span>Availability</span><strong>{{ profile.business_hours }}</strong></div>{% endif %}
+              {% if profile.location %}<div class="identity-fact"><span>Work base</span><strong>{{ profile.location }}</strong></div>{% endif %}
             </div>
           </article>
 
@@ -407,10 +440,10 @@
               <p class="identity-subtitle">{{ profile.academic_institution|default:profile.company_name|default:"Institution not added" }}</p>
               <div class="identity-divider"></div>
               <div class="identity-facts">
-                <div class="identity-fact"><span>Level</span><strong>{{ profile.academic_level|default:profile.get_profile_type_display }}</strong></div>
-                <div class="identity-fact"><span>Graduated</span><strong>{{ profile.academic_year|default:profile.academic_section|default:"Not added yet" }}</strong></div>
-                <div class="identity-fact"><span>Specialization</span><strong>{{ profile.academic_specialization|default:profile.featured_interest|default:"Not added yet" }}</strong></div>
-                <div class="identity-fact"><span>Certification</span><strong>{{ profile.academic_certification|default:"Not added yet" }}</strong></div>
+                {% if profile.academic_level %}<div class="identity-fact"><span>Level</span><strong>{{ profile.academic_level }}</strong></div>{% endif %}
+                {% if profile.academic_year or profile.academic_section %}<div class="identity-fact"><span>Graduation</span><strong>{{ profile.academic_year|default:profile.academic_section }}</strong></div>{% endif %}
+                {% if profile.academic_specialization or profile.featured_interest %}<div class="identity-fact"><span>Specialization</span><strong>{{ profile.academic_specialization|default:profile.featured_interest }}</strong></div>{% endif %}
+                {% if profile.academic_certification %}<div class="identity-fact"><span>Certification</span><strong>{{ profile.academic_certification }}</strong></div>{% endif %}
               </div>
             </article>
           {% endif %}
@@ -426,11 +459,13 @@
                 <span class="portfolio-image">{% if item.image %}<img src="{{ item.image.url }}" alt="{{ item.title }}">{% else %}<i data-lucide="image"></i>{% endif %}</span>
                 <span class="portfolio-copy">
                   <strong>{{ item.title }}</strong>
-                  <span class="portfolio-meta"><i data-lucide="{% if profile.profile_type == 'student' %}graduation-cap{% else %}building-2{% endif %}"></i>{{ profile.company_name|default:profile.academic_institution|default:"Independent work" }}</span>
+                  {% if item.organization or profile.company_name or profile.academic_institution %}
+                    <span class="portfolio-meta"><i data-lucide="{% if profile.profile_type == 'student' %}graduation-cap{% else %}building-2{% endif %}"></i>{{ item.organization|default:profile.company_name|default:profile.academic_institution }}</span>
+                  {% endif %}
                   {% if item.description %}<p>{{ item.description }}</p>{% endif %}
                   <span class="portfolio-tags">
-                    <span class="portfolio-tag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5H5v14h14v-4"/><path d="M13 5h6v6"/><path d="m19 5-9 9"/></svg>{% if item.link %}Project{% else %}Highlight{% endif %}</span>
-                    <span class="portfolio-tag"><i data-lucide="{% if profile.profile_type == 'student' %}book-open{% else %}globe{% endif %}"></i>{{ profile.industry|default:profile.profession|default:"Portfolio" }}</span>
+                    <span class="portfolio-tag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5H5v14h14v-4"/><path d="M13 5h6v6"/><path d="m19 5-9 9"/></svg>{{ item.get_highlight_type_display }}</span>
+                    {% if item.period %}<span class="portfolio-tag"><i data-lucide="calendar-days"></i>{{ item.period }}</span>{% endif %}
                   </span>
                 </span>
               </a>
@@ -446,21 +481,22 @@
             <article class="recommendation">
               <p>“{{ testimonial.review_text }}”</p>
               <strong>{{ testimonial.client_name }}</strong>
-              {% if testimonial.client_role %}<span>{{ testimonial.client_role }}</span>{% endif %}
+              {% if testimonial.client_role or testimonial.organization %}<span>{{ testimonial.client_role }}{% if testimonial.client_role and testimonial.organization %} · {% endif %}{{ testimonial.organization }}</span>{% endif %}
             </article>
           {% endfor %}
         </section>
       {% endif %}
 
-      {% if profile.linkedin_url or profile.facebook_url or profile.instagram_url or profile.youtube_url or profile.github_url %}
+      {% if profile.linkedin_url or profile.github_url or profile.website or profile.youtube_url or profile.instagram_url or profile.facebook_url %}
         <section class="section">
           <h2 class="section-title">Find me online</h2>
           <div class="socials">
             {% if profile.linkedin_url %}<a class="social social-linkedin" href="{{ profile.linkedin_url }}" target="_blank" rel="noopener" aria-label="LinkedIn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5.001 2.5 2.5 0 0 1 0-5.001ZM3 9h4v12H3V9Zm6.5 0h3.8v1.6h.1c.5-.9 1.8-1.9 3.7-1.9 4 0 4.7 2.6 4.7 6V21h-4v-5.2c0-1.2 0-2.8-1.7-2.8s-2 1.3-2 2.7V21h-4V9Z"/></svg><span class="social-label">LinkedIn</span></a>{% endif %}
+            {% if profile.github_url %}<a class="social social-github" href="{{ profile.github_url }}" target="_blank" rel="noopener" aria-label="GitHub"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.5-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 0 1.6 1.1 1.6 1.1.9 1.5 2.4 1.1 2.9.8.1-.7.4-1.1.7-1.4-2.2-.3-4.6-1.1-4.6-5A3.9 3.9 0 0 1 6.8 8.7c-.1-.3-.5-1.3.1-2.8 0 0 .9-.3 2.9 1.1A9.8 9.8 0 0 1 12 6.7c.8 0 1.5.1 2.2.3 2-1.4 2.9-1.1 2.9-1.1.6 1.5.2 2.5.1 2.8a3.9 3.9 0 0 1 1.1 2.8c0 3.9-2.4 4.7-4.6 5 .4.3.7.9.7 1.8V21c0 .3.2.6.7.5A10 10 0 0 0 12 2Z"/></svg><span class="social-label">GitHub</span></a>{% endif %}
+            {% if profile.website %}<a class="social action-website" href="{{ profile.website }}" target="_blank" rel="noopener" aria-label="Portfolio website"><i data-lucide="globe"></i><span class="social-label">Website</span></a>{% endif %}
+            {% if profile.youtube_url %}<a class="social social-youtube" href="{{ profile.youtube_url }}" target="_blank" rel="noopener" aria-label="YouTube"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.6 7.2s-.2-1.6-.8-2.3c-.8-.8-1.7-.8-2.1-.9C15.8 3.8 12 3.8 12 3.8s-3.8 0-6.7.2c-.4 0-1.3.1-2.1.9-.6.7-.8 2.3-.8 2.3S2.2 9.1 2.2 11v1.8c0 1.9.2 3.8.2 3.8s.2 1.6.8 2.3c.8.8 1.9.8 2.4.9 1.7.2 6.4.2 6.4.2s3.8 0 6.7-.2c.4-.1 1.3-.1 2.1-.9.6-.7.8-2.3.8-2.3s.2-1.9.2-3.8V11c0-1.9-.2-3.8-.2-3.8ZM10 15.2V8.6l6.2 3.3-6.2 3.3Z"/></svg><span class="social-label">YouTube</span></a>{% endif %}
             {% if profile.instagram_url %}<a class="social social-instagram" href="{{ profile.instagram_url }}" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.8 2h8.4A5.8 5.8 0 0 1 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8A5.8 5.8 0 0 1 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2Zm0 2A3.8 3.8 0 0 0 4 7.8v8.4A3.8 3.8 0 0 0 7.8 20h8.4a3.8 3.8 0 0 0 3.8-3.8V7.8A3.8 3.8 0 0 0 16.2 4H7.8Zm4.2 3.2a4.8 4.8 0 1 1 0 9.6 4.8 4.8 0 0 1 0-9.6Zm0 2a2.8 2.8 0 1 0 0 5.6 2.8 2.8 0 0 0 0-5.6Zm5-2.7a1.1 1.1 0 1 1 0 2.2 1.1 1.1 0 0 1 0-2.2Z"/></svg><span class="social-label">Instagram</span></a>{% endif %}
             {% if profile.facebook_url %}<a class="social social-facebook" href="{{ profile.facebook_url }}" target="_blank" rel="noopener" aria-label="Facebook"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 8.5V6.7c0-.9.6-1.1 1-1.1h2.7V2.1L14.2 2C10.8 2 9 4.1 9 6.4v2.1H6v3.9h3V22h4.1v-9.6h3.3l.5-3.9H13Z"/></svg><span class="social-label">Facebook</span></a>{% endif %}
-            {% if profile.youtube_url %}<a class="social social-youtube" href="{{ profile.youtube_url }}" target="_blank" rel="noopener" aria-label="YouTube"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.6 7.2s-.2-1.6-.8-2.3c-.8-.8-1.7-.8-2.1-.9C15.8 3.8 12 3.8 12 3.8s-3.8 0-6.7.2c-.4 0-1.3.1-2.1.9-.6.7-.8 2.3-.8 2.3S2.2 9.1 2.2 11v1.8c0 1.9.2 3.8.2 3.8s.2 1.6.8 2.3c.8.8 1.9.8 2.4.9 1.7.2 6.4.2 6.4.2s3.8 0 6.7-.2c.4-.1 1.3-.1 2.1-.9.6-.7.8-2.3.8-2.3s.2-1.9.2-3.8V11c0-1.9-.2-3.8-.2-3.8ZM10 15.2V8.6l6.2 3.3-6.2 3.3Z"/></svg><span class="social-label">YouTube</span></a>{% endif %}
-            {% if profile.github_url %}<a class="social social-github" href="{{ profile.github_url }}" target="_blank" rel="noopener" aria-label="GitHub"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.5-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 0 1.6 1.1 1.6 1.1.9 1.5 2.4 1.1 2.9.8.1-.7.4-1.1.7-1.4-2.2-.3-4.6-1.1-4.6-5A3.9 3.9 0 0 1 6.8 8.7c-.1-.3-.5-1.3.1-2.8 0 0 .9-.3 2.9 1.1A9.8 9.8 0 0 1 12 6.7c.8 0 1.5.1 2.2.3 2-1.4 2.9-1.1 2.9-1.1.6 1.5.2 2.5.1 2.8a3.9 3.9 0 0 1 1.1 2.8c0 3.9-2.4 4.7-4.6 5 .4.3.7.9.7 1.8V21c0 .3.2.6.7.5A10 10 0 0 0 12 2Z"/></svg><span class="social-label">GitHub</span></a>{% endif %}
           </div>
         </section>
       {% endif %}
@@ -479,21 +515,22 @@
         </section>
       {% endif %}
 
-      <button class="details-trigger" id="detailsBtn" type="button">
-        <span class="details-icon"><i data-lucide="contact"></i></span>
-        <span><strong>View complete details</strong><span>Contact information, availability, address, and professional links.</span></span>
-        <i data-lucide="chevron-right"></i>
-      </button>
-
-      {% if profile.booking_url %}
-        <a class="connect" href="{{ profile.booking_url }}" target="_blank" rel="noopener"><i data-lucide="users"></i>Connect with {{ profile.full_name }}</a>
-      {% elif whatsapp_digits %}
-        <a class="connect" href="https://wa.me/{{ whatsapp_digits }}" target="_blank" rel="noopener"><i data-lucide="users"></i>Connect with {{ profile.full_name }}</a>
-      {% elif profile.phone %}
-        <a class="connect" href="tel:{{ profile.phone }}"><i data-lucide="users"></i>Connect with {{ profile.full_name }}</a>
-      {% else %}
-        <a class="connect" href="{% url 'professional_cards:vcard' profile.slug %}"><i data-lucide="contact"></i>Save contact</a>
+      {% if profile.about or profile.website or profile.booking_url or profile.office_address %}
+        <button class="details-trigger" id="detailsBtn" type="button">
+          <span class="details-icon"><i data-lucide="contact"></i></span>
+          <span><strong>View complete details</strong><span>Website, booking, address, and profile details.</span></span>
+          <i data-lucide="chevron-right"></i>
+        </button>
       {% endif %}
+
+      <section class="connect-soon" aria-label="Let's Connect coming soon">
+        <span class="connect-soon-icon"><i data-lucide="network"></i></span>
+        <span>
+          <strong>Let’s Connect</strong>
+          <span>Coming Soon</span>
+          <p>Soon you’ll be able to exchange digital profiles, build professional connections, and manage your Tap2Connect network.</p>
+        </span>
+      </section>
 
       <footer class="footer">
         <i data-lucide="shield-check"></i>
@@ -503,22 +540,23 @@
     </div>
   </article>
 
-  <div class="drawer" id="detailsDrawer" role="dialog" aria-modal="true" aria-labelledby="detailsTitle">
-    <section class="drawer-panel">
-      <header class="drawer-head">
-        <div><h2 id="detailsTitle">Professional details</h2><p>Everything you need to connect, collaborate, or learn more.</p></div>
-        <button class="close" id="closeDrawer" type="button" aria-label="Close details"><i data-lucide="x"></i></button>
-      </header>
-      <div class="detail-list">
-        {% if profile.email %}<div class="detail-row"><span>Email</span><strong><a href="mailto:{{ profile.email }}">{{ profile.email }}</a></strong></div>{% endif %}
-        {% if profile.phone %}<div class="detail-row"><span>Phone</span><strong><a href="tel:{{ profile.phone }}">{{ profile.phone }}</a></strong></div>{% endif %}
-        {% if profile.website %}<div class="detail-row"><span>Website</span><strong><a href="{{ profile.website }}" target="_blank">{{ profile.website }}</a></strong></div>{% endif %}
-        {% if profile.business_hours %}<div class="detail-row"><span>Availability</span><strong>{{ profile.business_hours }}</strong></div>{% endif %}
-        {% if profile.office_address %}<div class="detail-row"><span>Office / campus</span><strong>{{ profile.office_address }}</strong></div>{% endif %}
-      </div>
-      <a class="connect" href="{% url 'professional_cards:vcard' profile.slug %}"><i data-lucide="user-plus"></i>Save contact</a>
-    </section>
-  </div>
+  {% if profile.about or profile.website or profile.booking_url or profile.office_address %}
+    <div class="drawer" id="detailsDrawer" role="dialog" aria-modal="true" aria-labelledby="detailsTitle">
+      <section class="drawer-panel">
+        <header class="drawer-head">
+          <div><h2 id="detailsTitle">Professional details</h2><p>Everything you need to connect, collaborate, or learn more.</p></div>
+          <button class="close" id="closeDrawer" type="button" aria-label="Close details"><i data-lucide="x"></i></button>
+        </header>
+        <div class="detail-list">
+          {% if profile.about %}<div class="detail-row"><span>About</span><strong>{{ profile.about }}</strong></div>{% endif %}
+          {% if profile.website %}<div class="detail-row"><span>Website</span><strong><a href="{{ profile.website }}" target="_blank">{{ profile.website }}</a></strong></div>{% endif %}
+          {% if profile.booking_url %}<div class="detail-row"><span>Booking</span><strong><a href="{{ profile.booking_url }}" target="_blank">{{ profile.booking_url }}</a></strong></div>{% endif %}
+          {% if profile.office_address %}<div class="detail-row"><span>Office / campus</span><strong>{{ profile.office_address }}</strong></div>{% endif %}
+        </div>
+        <a class="connect" href="{% url 'professional_cards:vcard' profile.slug %}"><i data-lucide="user-plus"></i>Save contact</a>
+      </section>
+    </div>
+  {% endif %}
   <div class="toast" id="toast">Profile link copied</div>
 
   <script>
@@ -527,10 +565,10 @@
     const detailsButton = document.getElementById("detailsBtn");
     const closeButton = document.getElementById("closeDrawer");
     const toast = document.getElementById("toast");
-    const closeDrawer = () => { drawer.classList.remove("show"); detailsButton.focus(); };
-    detailsButton.addEventListener("click", () => { drawer.classList.add("show"); closeButton.focus(); });
-    closeButton.addEventListener("click", closeDrawer);
-    drawer.addEventListener("click", event => { if (event.target === drawer) closeDrawer(); });
+    const closeDrawer = () => { drawer?.classList.remove("show"); detailsButton?.focus(); };
+    detailsButton?.addEventListener("click", () => { drawer?.classList.add("show"); closeButton?.focus(); });
+    closeButton?.addEventListener("click", closeDrawer);
+    drawer?.addEventListener("click", event => { if (event.target === drawer) closeDrawer(); });
     document.addEventListener("keydown", event => { if (event.key === "Escape") closeDrawer(); });
     document.getElementById("shareBtn").addEventListener("click", async () => {
       const data = { title: "{{ profile.full_name|escapejs }}", text: "View {{ profile.full_name|escapejs }}'s digital profile.", url: "{{ public_url|escapejs }}" };

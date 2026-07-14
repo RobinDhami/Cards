@@ -14,6 +14,7 @@ from django.urls import reverse
 from django.utils.text import slugify
 
 from .forms import (
+    LOOKING_FOR_CHOICES,
     ProfessionalDocumentFormSet,
     ProfessionalPortfolioFormSet,
     ProfessionalProfileForm,
@@ -53,6 +54,8 @@ PROFESSION_SUGGESTIONS = [
     'Real Estate Advisor',
     'Financial Advisor',
 ]
+
+LOOKING_FOR_LABELS = dict(LOOKING_FOR_CHOICES)
 
 
 def platform_admin_required(user):
@@ -146,9 +149,47 @@ def _public_map_url(profile):
     )
 
 
+def _looking_for_labels(profile):
+    values = [
+        value.strip()
+        for value in (profile.looking_for or '').split(',')
+        if value.strip()
+    ]
+    return [LOOKING_FOR_LABELS.get(value, value) for value in values]
+
+
+def _profile_completion(profile):
+    checks = [
+        bool(profile.profile_photo),
+        bool(profile.full_name),
+        bool(profile.profession),
+        bool(profile.designation or profile.academic_title or profile.industry),
+        bool(profile.company_name or profile.academic_institution),
+        bool(profile.location),
+        bool(profile.current_status),
+        profile.services.count() >= 3,
+        bool(profile.about),
+        profile.portfolio_items.exists(),
+        bool(profile.phone or profile.whatsapp_number or profile.email),
+    ]
+    completed = sum(1 for item in checks if item)
+    percent = round((completed / len(checks)) * 100)
+    if not profile.current_status:
+        suggestion = 'Add your opportunity status to help visitors understand how to connect.'
+    elif profile.services.count() < 3:
+        suggestion = 'Add at least three strong skills to improve your profile.'
+    elif not profile.portfolio_items.exists():
+        suggestion = 'Add one highlight to strengthen your profile.'
+    elif not profile.phone and not profile.whatsapp_number and not profile.email:
+        suggestion = 'Add one professional contact method.'
+    else:
+        suggestion = 'Your profile has the key details visitors need.'
+    return {'percent': percent, 'suggestion': suggestion}
+
+
 def _build_public_actions(profile, whatsapp_digits):
     map_url = _public_map_url(profile)
-    action_defs = [
+    primary_defs = [
         {
             'enabled': bool(profile.phone),
             'href': f'tel:{profile.phone}',
@@ -179,14 +220,8 @@ def _build_public_actions(profile, whatsapp_digits):
             'brand_class': 'brand-map',
             'external': True,
         },
-        {
-            'enabled': bool(profile.website),
-            'href': profile.website,
-            'label': 'Website',
-            'icon': 'globe',
-            'brand_class': 'brand-website',
-            'external': True,
-        },
+    ]
+    extra_defs = [
         {
             'enabled': bool(profile.linkedin_url),
             'href': profile.linkedin_url,
@@ -236,8 +271,9 @@ def _build_public_actions(profile, whatsapp_digits):
             'external': True,
         },
     ]
-    actions = [action for action in action_defs if action['enabled']]
-    return actions[:8], actions[8:]
+    primary_actions = [action for action in primary_defs if action['enabled']]
+    extra_actions = [action for action in extra_defs if action['enabled']]
+    return primary_actions, extra_actions
 
 
 def _profile_formsets(profile, data=None, files=None):
@@ -384,6 +420,7 @@ def professional_profile_owner_edit(request, slug):
         'public_url': _absolute_public_url(request, profile),
         'profession_suggestions': PROFESSION_SUGGESTIONS,
         'is_profile_owner_editor': True,
+        'profile_completion': _profile_completion(profile),
     })
 
 
@@ -418,9 +455,10 @@ def public_professional_profile(request, slug):
         'whatsapp_digits': whatsapp_digits,
         'primary_actions': primary_actions,
         'extra_actions': extra_actions,
+        'looking_for_labels': _looking_for_labels(profile),
         'edit_login_url': reverse('professional_cards:edit_login', args=[profile.slug]),
         'is_profile_owner_view': is_profile_owner_view,
-        'public_documents': profile.documents.filter(is_public=True),
+        'public_documents': profile.documents.filter(is_public=True).exclude(file='')[:2],
     }
     template_path = {
         'modern_identity': 'professional_cards/modern_identity.html',

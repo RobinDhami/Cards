@@ -29,6 +29,15 @@
       <option value="{{ profession }}"></option>
     {% endfor %}
   </datalist>
+  <div class="hidden">
+    {{ form.header_identity }}
+    {{ form.brand_name }}
+    {{ form.brand_tagline }}
+    {{ form.current_status }}
+    {{ form.looking_for }}
+    {{ form.preferred_work_mode }}
+    {{ form.networking_statement }}
+  </div>
 
   <section class="rounded-xl border border-slate2-200 bg-white p-5 shadow-sm">
     <h2 class="font-display text-lg font-bold text-navy-500">Profile Login</h2>
@@ -292,6 +301,7 @@
       {% for item_form in formsets.portfolio.forms %}
         <div class="formset-row grid gap-3 rounded-lg border border-slate2-200 bg-slate2-50 p-4 sm:grid-cols-5">
           {% for hidden in item_form.hidden_fields %}{{ hidden }}{% endfor %}
+          <div class="hidden">{{ item_form.highlight_type }}{{ item_form.organization }}{{ item_form.period }}</div>
           <label class="sm:col-span-2"><span class="mb-1 block text-xs font-semibold text-slate-500">Title</span>{{ item_form.title }}</label>
           <label class="sm:col-span-2"><span class="mb-1 block text-xs font-semibold text-slate-500">Link</span>{{ item_form.link }}</label>
           <label><span class="mb-1 block text-xs font-semibold text-slate-500">Order</span>{{ item_form.display_order }}</label>
@@ -317,6 +327,7 @@
     <template id="portfolio-empty-form">
       <div class="formset-row grid gap-3 rounded-lg border border-slate2-200 bg-slate2-50 p-4 sm:grid-cols-5">
         {% for hidden in formsets.portfolio.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
+        <div class="hidden">{{ formsets.portfolio.empty_form.highlight_type }}{{ formsets.portfolio.empty_form.organization }}{{ formsets.portfolio.empty_form.period }}</div>
         <label class="sm:col-span-2"><span class="mb-1 block text-xs font-semibold text-slate-500">Title</span>{{ formsets.portfolio.empty_form.title }}</label>
         <label class="sm:col-span-2"><span class="mb-1 block text-xs font-semibold text-slate-500">Link</span>{{ formsets.portfolio.empty_form.link }}</label>
         <label><span class="mb-1 block text-xs font-semibold text-slate-500">Order</span>{{ formsets.portfolio.empty_form.display_order }}</label>
