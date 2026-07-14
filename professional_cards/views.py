@@ -157,6 +157,14 @@ def _build_public_actions(profile, whatsapp_digits):
             'brand_class': 'brand-email',
         },
         {
+            'enabled': bool(profile.show_map_on_profile and profile.google_maps_url),
+            'href': profile.google_maps_url,
+            'label': 'Map',
+            'icon': 'map-pin',
+            'brand_class': 'brand-map',
+            'external': True,
+        },
+        {
             'enabled': bool(profile.website),
             'href': profile.website,
             'label': 'Website',
@@ -399,9 +407,8 @@ def public_professional_profile(request, slug):
         'public_documents': profile.documents.filter(is_public=True),
     }
     template_path = {
-        'professional_premium': 'professional_cards/professional_premium.html',
         'modern_identity': 'professional_cards/modern_identity.html',
-    }.get(profile.template_name, 'professional_cards/professional_premium.html')
+    }.get(profile.template_name, 'professional_cards/modern_identity.html')
     return render(request, template_path, context)
 
 

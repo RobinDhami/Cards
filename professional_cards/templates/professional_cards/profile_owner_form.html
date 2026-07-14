@@ -17,7 +17,7 @@
     .field-label { display: block; margin-bottom: .25rem; font-size: .8125rem; font-weight: 600; color: #374151; }
   </style>
 </head>
-<body class="min-h-screen w-full bg-gray-50 pb-28 text-gray-900">
+<body class="min-h-screen w-full bg-gray-50 pb-20 text-gray-900">
   <header class="sticky top-0 z-50 border-b border-gray-200 bg-white/95 shadow-sm backdrop-blur">
     <div class="mx-auto flex max-w-lg items-center gap-3 px-4 py-3">
       <div class="h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 gold-border bg-gray-100">
@@ -57,7 +57,7 @@
     {{ form.slug }}
     <div class="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
       <i data-lucide="info" class="mt-0.5 h-4 w-4 shrink-0"></i>
-      <p>Update your details here, then tap <strong>Save Changes</strong>. Use <strong>View Profile</strong> to see what visitors see.</p>
+      <p>Update your details here, then tap <strong>Save Changes</strong>.</p>
     </div>
     {% if messages %}
       <div class="space-y-2">
@@ -118,7 +118,7 @@
 
     <section class="section-card">
       <h2 class="mb-1 font-semibold">Card Design</h2>
-      <p class="mb-3 text-xs leading-5 text-gray-500">Switch templates without losing your profile data. Modern Identity uses the richer editorial design.</p>
+      <p class="mb-3 text-xs leading-5 text-gray-500">Modern Identity is the public profile layout for professional cards.</p>
       <div class="space-y-3">
         <label><span class="field-label">{{ form.template_name.label }}</span>{{ form.template_name }}</label>
         <label><span class="field-label">{{ form.accent_color.label }}</span>{{ form.accent_color }}</label>
@@ -384,15 +384,9 @@
       </div>
     </section>
 
-    <div class="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white/95 p-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur">
-      <div class="mx-auto flex max-w-lg gap-2">
-        {% if public_url %}
-          <a href="{{ public_url }}" class="flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-800 hover:bg-gray-50">
-            <i data-lucide="eye" class="h-4 w-4"></i>
-            View Profile
-          </a>
-        {% endif %}
-        <button class="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#1f2f57] px-4 py-3 text-base font-semibold text-white shadow-sm hover:bg-[#162442]">
+    <div class="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white/95 px-3 py-2 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur">
+      <div class="mx-auto flex max-w-lg">
+        <button class="flex w-full items-center justify-center gap-2 rounded-lg bg-[#1f2f57] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#162442]">
           <i data-lucide="save" class="h-4 w-4"></i>
           Save Changes
         </button>

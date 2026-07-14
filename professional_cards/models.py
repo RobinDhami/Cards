@@ -6,7 +6,6 @@ from django.utils.text import slugify
 
 class ProfessionalProfile(models.Model):
     TEMPLATE_CHOICES = [
-        ('professional_premium', 'Professional Premium'),
         ('modern_identity', 'Modern Identity'),
     ]
     PROFILE_TYPE_CHOICES = [
@@ -113,7 +112,7 @@ class ProfessionalProfile(models.Model):
     location = models.CharField(max_length=160, blank=True, default='')
     is_verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
-    template_name = models.CharField(max_length=80, choices=TEMPLATE_CHOICES, default='professional_premium')
+    template_name = models.CharField(max_length=80, choices=TEMPLATE_CHOICES, default='modern_identity')
     accent_color = models.CharField(max_length=20, default='#0f766e')
     views = models.PositiveIntegerField(default=0)
     downloads = models.PositiveIntegerField(default=0)
