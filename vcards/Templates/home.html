@@ -5,7 +5,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tap2Connect - Your Identity, Ready to Share</title>
+    <title>{{ seo_title|default:"Tap2Connect Nepal | NFC Digital Business Cards & Smart ID Cards" }}</title>
+    <meta name="description" content="{{ seo_description }}">
+    <meta name="keywords" content="{{ seo_keywords }}">
+    <link rel="canonical" href="{{ canonical_url }}">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <meta name="author" content="Tap2Connect Nepal">
+    <meta property="og:site_name" content="Tap2Connect Nepal">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{ seo_title }}">
+    <meta property="og:description" content="{{ seo_description }}">
+    <meta property="og:url" content="{{ canonical_url }}">
+    <meta property="og:image" content="{{ og_image_url }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ seo_title }}">
+    <meta name="twitter:description" content="{{ seo_description }}">
+    <meta name="twitter:image" content="{{ og_image_url }}">
+    <script type="application/ld+json">{{ home_schema_json|safe }}</script>
     {% include "partials/tap2connect_favicon.html" %}
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -357,10 +373,10 @@
             <div class="flex flex-col justify-center">
                 <h1 class="text-5xl lg:text-6xl font-black mb-6 leading-tight">
                     Share Your Details<br>
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">with One Tap</span>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">with One Tap in Nepal</span>
                 </h1>
                 <p class="text-xl mb-8 leading-relaxed text-gray-300">
-                    A sleek NFC-enabled card that instantly shares your contact details, portfolio, and social links — perfect for students and professionals.
+                    Tap2Connect Nepal makes NFC digital business cards, QR profiles, and smart school ID cards that instantly share your contact details, portfolio, and social links.
                 </p>
 
                 <div class="flex flex-col sm:flex-row gap-4">

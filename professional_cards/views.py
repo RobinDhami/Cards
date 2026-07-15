@@ -1,4 +1,5 @@
 from io import BytesIO
+import json
 import re
 from urllib.parse import quote
 
@@ -443,6 +444,13 @@ def public_professional_profile(request, slug):
     ProfessionalProfile.objects.filter(pk=profile.pk).update(views=profile.views + 1)
     whatsapp_digits = _normalize_phone(profile.whatsapp_number or profile.phone)
     primary_actions, extra_actions = _build_public_actions(profile, whatsapp_digits)
+    public_url = _absolute_public_url(request, profile)
+    seo_description = (
+        profile.short_tagline
+        or profile.networking_statement
+        or profile.about
+        or f'{profile.full_name} digital profile on Tap2Connect Nepal.'
+    )[:160]
     is_profile_owner_view = bool(
         request.user.is_authenticated
         and profile.owner_id
@@ -450,7 +458,19 @@ def public_professional_profile(request, slug):
     )
     context = {
         'profile': profile,
-        'public_url': _absolute_public_url(request, profile),
+        'public_url': public_url,
+        'seo_description': seo_description,
+        'profile_schema_json': json.dumps({
+            '@context': 'https://schema.org',
+            '@type': 'Person',
+            'name': profile.full_name,
+            'jobTitle': profile.designation or profile.profession,
+            'worksFor': profile.company_name,
+            'url': public_url,
+            'email': profile.email,
+            'telephone': profile.phone,
+            'address': profile.location or profile.office_address,
+        }, separators=(',', ':')),
         'public_map_url': _public_map_url(profile),
         'whatsapp_digits': whatsapp_digits,
         'primary_actions': primary_actions,

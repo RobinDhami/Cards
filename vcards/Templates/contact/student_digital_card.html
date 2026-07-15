@@ -4,7 +4,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% if profile_unavailable %}Profile unavailable{% else %}{{ student.name|default:"Student Digital ID" }}{% endif %}</title>
+  <title>{% if profile_unavailable %}Profile unavailable{% else %}{{ student.name|default:"Student Digital ID" }} | Tap2Connect Nepal Digital ID{% endif %}</title>
+  {% if profile_unavailable %}
+  <meta name="robots" content="noindex, nofollow">
+  {% else %}
+  <meta name="description" content="{{ student.name }} digital ID{% if school_name %} for {{ school_name }}{% endif %} on Tap2Connect Nepal. Secure QR and NFC-enabled student, teacher, and school profile.">
+  <link rel="canonical" href="{{ public_card_url }}">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta property="og:site_name" content="Tap2Connect Nepal">
+  <meta property="og:type" content="profile">
+  <meta property="og:title" content="{{ student.name }} | Tap2Connect Nepal Digital ID">
+  <meta property="og:description" content="{{ student.name }} digital ID{% if school_name %} for {{ school_name }}{% endif %} on Tap2Connect Nepal.">
+  <meta property="og:url" content="{{ public_card_url }}">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="{{ student.name }} | Tap2Connect Nepal Digital ID">
+  <meta name="twitter:description" content="{{ student.name }} digital ID{% if school_name %} for {{ school_name }}{% endif %} on Tap2Connect Nepal.">
+  {% endif %}
   {% include "partials/tap2connect_favicon.html" %}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

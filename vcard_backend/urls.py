@@ -9,6 +9,8 @@ from vcards.views import dashboard_qr_export, dashboard_qr_export_download
 
 urlpatterns = [
     path('',home,name='home'),
+    path('robots.txt', robots_txt, name='robots_txt'),
+    path('sitemap.xml', sitemap_xml, name='sitemap_xml'),
     path('', include('professional_cards.urls')),
     path('login/', dashboard_login, name='dashboard_login'),
     path('logout/', dashboard_logout, name='dashboard_logout'),

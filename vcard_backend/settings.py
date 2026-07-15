@@ -218,6 +218,9 @@ DEFAULT_FROM_EMAIL = os.environ.get(
     EMAIL_HOST_USER or "webmaster@localhost",
 )
 
+SITE_NAME = os.environ.get("SITE_NAME", "Tap2Connect Nepal")
+SITE_URL = os.environ.get("SITE_URL", "")
+
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/dashboard/"
 

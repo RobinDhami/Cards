@@ -4,7 +4,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ profile.full_name }} | Modern Identity</title>
+  <title>{{ profile.full_name }} | Tap2Connect Nepal Digital Profile</title>
+  <meta name="description" content="{{ seo_description|truncatechars:160 }}">
+  <link rel="canonical" href="{{ public_url }}">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta property="og:site_name" content="Tap2Connect Nepal">
+  <meta property="og:type" content="profile">
+  <meta property="og:title" content="{{ profile.full_name }} | Tap2Connect Nepal">
+  <meta property="og:description" content="{{ seo_description|truncatechars:160 }}">
+  <meta property="og:url" content="{{ public_url }}">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="{{ profile.full_name }} | Tap2Connect Nepal">
+  <meta name="twitter:description" content="{{ seo_description|truncatechars:160 }}">
+  <script type="application/ld+json">{{ profile_schema_json|safe }}</script>
   {% include "partials/tap2connect_favicon.html" %}
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">

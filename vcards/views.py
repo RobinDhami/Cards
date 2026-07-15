@@ -25,8 +25,10 @@ import secrets
 import string
 import textwrap
 from urllib.parse import urlencode
+from xml.sax.saxutils import escape
 from zipfile import ZIP_DEFLATED, ZipFile
 
+from django.templatetags.static import static as static_url
 from openpyxl import Workbook
 from openpyxl.drawing.image import Image as OpenPyXLImage
 from openpyxl.styles import Alignment, Font, PatternFill
@@ -278,6 +280,76 @@ def _get_user_role(user):
     if owned_profile and _profile_supports_self_service(owned_profile):
         return owned_profile.member_type or 'student'
     return 'public'
+
+
+def _site_root_url(request):
+    configured_url = getattr(settings, 'SITE_URL', '').strip().rstrip('/')
+    if configured_url:
+        return configured_url
+    return request.build_absolute_uri('/').rstrip('/')
+
+
+def _absolute_url(request, path):
+    if path.startswith(('http://', 'https://')):
+        return path
+    return f"{_site_root_url(request)}{path if path.startswith('/') else f'/{path}'}"
+
+
+def _static_absolute_url(request, path):
+    return _absolute_url(request, static_url(path))
+
+
+def _home_schema(request):
+    site_url = _site_root_url(request)
+    logo_url = _static_absolute_url(request, 'branding/tap2connect-logo.png')
+    return {
+        '@context': 'https://schema.org',
+        '@graph': [
+            {
+                '@type': 'Organization',
+                '@id': f'{site_url}/#organization',
+                'name': 'Tap2Connect Nepal',
+                'alternateName': ['Tap2Connect', 'Tap 2 Connect Nepal'],
+                'url': site_url,
+                'logo': logo_url,
+                'areaServed': {'@type': 'Country', 'name': 'Nepal'},
+                'description': (
+                    'Tap2Connect Nepal provides NFC business cards, QR digital profiles, '
+                    'smart school ID cards, and contactless identity solutions in Nepal.'
+                ),
+                'sameAs': [],
+            },
+            {
+                '@type': 'WebSite',
+                '@id': f'{site_url}/#website',
+                'url': site_url,
+                'name': 'Tap2Connect Nepal',
+                'publisher': {'@id': f'{site_url}/#organization'},
+                'inLanguage': 'en',
+            },
+            {
+                '@type': 'LocalBusiness',
+                '@id': f'{site_url}/#localbusiness',
+                'name': 'Tap2Connect Nepal',
+                'url': site_url,
+                'image': logo_url,
+                'areaServed': 'Nepal',
+                'priceRange': '$$',
+                'description': (
+                    'NFC cards, QR cards, digital business cards, and school identity '
+                    'card solutions for students, professionals, schools, and organizations in Nepal.'
+                ),
+            },
+            {
+                '@type': 'Service',
+                '@id': f'{site_url}/#nfc-card-service',
+                'name': 'NFC Digital Card and Smart ID Card Services in Nepal',
+                'provider': {'@id': f'{site_url}/#organization'},
+                'areaServed': 'Nepal',
+                'serviceType': 'NFC cards, QR digital profiles, digital business cards, school ID cards',
+            },
+        ],
+    }
 
 
 def _can_manage_school(user, college):
@@ -1055,7 +1127,87 @@ def _build_pdf_response(cards, print_mode, filename):
 
 
 def home(request):
-    return render(request, 'home.html')
+    site_url = _site_root_url(request)
+    return render(request, 'home.html', {
+        'seo_title': 'Tap2Connect Nepal | NFC Digital Business Cards & Smart ID Cards',
+        'seo_description': (
+            'Tap2Connect Nepal creates NFC business cards, QR digital profiles, smart school ID cards, '
+            'and contactless identity solutions for professionals, students, schools, and organizations.'
+        ),
+        'seo_keywords': (
+            'Tap2Connect Nepal, Tap2Connect, NFC card Nepal, digital business card Nepal, '
+            'QR business card Nepal, smart ID card Nepal, school ID card Nepal, contactless card Nepal'
+        ),
+        'canonical_url': site_url,
+        'og_image_url': _static_absolute_url(request, 'branding/tap2connect-logo.png'),
+        'home_schema_json': json.dumps(_home_schema(request), separators=(',', ':')),
+    })
+
+
+def robots_txt(request):
+    site_url = _site_root_url(request)
+    lines = [
+        'User-agent: *',
+        'Allow: /',
+        'Disallow: /admin/',
+        'Disallow: /dashboard/',
+        'Disallow: /login/',
+        'Disallow: /logout/',
+        'Disallow: /api/',
+        f'Sitemap: {site_url}/sitemap.xml',
+        '',
+    ]
+    return HttpResponse('\n'.join(lines), content_type='text/plain')
+
+
+def _sitemap_url_entry(location, lastmod=None, changefreq='weekly', priority='0.7'):
+    lastmod_xml = f'<lastmod>{escape(lastmod)}</lastmod>' if lastmod else ''
+    return (
+        '<url>'
+        f'<loc>{escape(location)}</loc>'
+        f'{lastmod_xml}'
+        f'<changefreq>{changefreq}</changefreq>'
+        f'<priority>{priority}</priority>'
+        '</url>'
+    )
+
+
+def sitemap_xml(request):
+    site_url = _site_root_url(request)
+    entries = [
+        _sitemap_url_entry(site_url, changefreq='daily', priority='1.0'),
+    ]
+
+    students = StudentProfile.objects.filter(show_contact_card=True).only('id', 'created_at').order_by('-created_at')[:1000]
+    for student in students:
+        entries.append(_sitemap_url_entry(
+            f"{site_url}{reverse('student_contact_card', args=[student.id])}",
+            student.created_at.date().isoformat() if student.created_at else None,
+            changefreq='monthly',
+            priority='0.5',
+        ))
+
+    try:
+        from professional_cards.models import ProfessionalProfile
+    except ImportError:
+        ProfessionalProfile = None
+    if ProfessionalProfile:
+        profiles = ProfessionalProfile.objects.filter(is_active=True).only('slug', 'updated_at').order_by('-updated_at')[:1000]
+        for profile in profiles:
+            entries.append(_sitemap_url_entry(
+                f"{site_url}{reverse('professional_cards:public_profile', args=[profile.slug])}",
+                profile.updated_at.date().isoformat() if profile.updated_at else None,
+                changefreq='monthly',
+                priority='0.6',
+            ))
+
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        f"{''.join(entries)}"
+        '</urlset>'
+    )
+    return HttpResponse(xml, content_type='application/xml')
 
 
 def _fallback_chat_reply(message):
