@@ -1,0 +1,435 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add New Product - Tap2Connect Shop</title>
+  {% include "partials/tap2connect_favicon.html" %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="stylesheet" href="{% static 'shop/css/owner_dashboard.css' %}">
+</head>
+<body>
+  <div class="owner-shell">
+    <aside class="owner-sidebar" aria-label="Store owner navigation">
+      <a class="owner-logo" href="{% url 'shops:owner_dashboard' store.slug %}" aria-label="Tap2Connect Shop dashboard">
+        <span class="bag-mark"><i data-lucide="shopping-bag"></i></span>
+        <span><strong>Tap2Connect</strong><small>SHOP</small></span>
+      </a>
+      <nav class="owner-menu">
+        <a href="{% url 'shops:owner_dashboard' store.slug %}"><i data-lucide="layout-dashboard"></i>Dashboard</a>
+        <a href="{% url 'shops:owner_orders' store.slug %}"><i data-lucide="shopping-cart"></i>Orders<span class="order-badge">23</span></a>
+        <a class="active" href="{% url 'shops:owner_products' store.slug %}"><i data-lucide="package"></i>Products</a>
+        <a href="{% url 'shops:owner_categories' store.slug %}"><i data-lucide="tags"></i>Categories</a>
+        <a href="{% url 'shops:owner_customers' store.slug %}"><i data-lucide="users"></i>Customers</a>
+        <a href="{% url 'shops:owner_discounts' store.slug %}"><i data-lucide="badge-percent"></i>Discounts</a>
+        <a href="#"><i data-lucide="star"></i>Reviews</a>
+        <a href="{% url 'shops:owner_marketing' store.slug %}"><i data-lucide="megaphone"></i>Marketing</a>
+        <a href="{% url 'shops:owner_reports' store.slug %}"><i data-lucide="bar-chart-3"></i>Reports</a>
+        <a href="{% url 'shops:owner_website' store.slug %}"><i data-lucide="monitor-smartphone"></i>Website</a>
+        <a href="{% url 'shops:owner_staff' store.slug %}"><i data-lucide="user-cog"></i>Staff</a>
+        <a href="{% url 'shops:owner_billing' store.slug %}"><i data-lucide="credit-card"></i>Billing</a>
+        <a href="{% url 'shops:owner_settings' store.slug %}"><i data-lucide="settings"></i>Settings</a>
+        <a href="{% url 'shops:owner_support' store.slug %}"><i data-lucide="life-buoy"></i>Support</a>
+      </nav>
+      <div class="sales-channel">
+        <span>Sales Channel</span>
+        <a href="{% url 'shops:store_home' store.slug %}"><i data-lucide="external-link"></i>View Store</a>
+        <a href="{% url 'shops:owner_store_preview' store.slug %}"><i data-lucide="eye"></i>Store Preview</a>
+      </div>
+      <button class="owner-profile" type="button">
+        <span class="avatar">DS</span>
+        <span><strong>Dipak Store</strong><small>Owner</small></span>
+        <i data-lucide="chevron-down"></i>
+      </button>
+    </aside>
+
+    <div class="dashboard-frame">
+      <header class="owner-topbar">
+        <div class="topbar-left">
+          <button class="icon-button" type="button" aria-label="Toggle sidebar"><i data-lucide="menu"></i></button>
+          <button class="store-selector" type="button">Dipak Store <i data-lucide="chevron-down"></i></button>
+          <span class="live-badge"><i data-lucide="radio"></i>Live</span>
+        </div>
+        <label class="global-search">
+          <i data-lucide="search"></i>
+          <input placeholder="Search orders, products, customers..." aria-label="Search orders, products, customers">
+        </label>
+        <div class="topbar-actions">
+          <button class="date-pill" type="button"><i data-lucide="calendar-days"></i>May 7 - Jun 4</button>
+          <a class="icon-button alert" href="{% url 'shops:owner_notifications' store.slug %}" aria-label="Notifications"><i data-lucide="bell"></i></a>
+          <button class="icon-button" type="button" aria-label="Help"><i data-lucide="circle-help"></i></button>
+          <button class="top-profile" type="button">
+            <span class="avatar image-avatar">DS</span>
+            <span><strong>Dipak Sharma</strong><small>Store Owner</small></span>
+            <i data-lucide="chevron-down"></i>
+          </button>
+        </div>
+      </header>
+
+      <form class="owner-main product-create-main" id="productForm">
+        <section class="welcome-row orders-header product-create-header">
+          <div>
+            <a class="back-link" href="{% url 'shops:owner_products' store.slug %}"><i data-lucide="arrow-left"></i>Products</a>
+            <h1>Add New Product</h1>
+            <p>Add product information, pricing, inventory and variations.</p>
+          </div>
+          <div class="page-actions">
+            <button class="secondary-action" type="button" data-product-action="draft"><i data-lucide="save"></i>Save as Draft</button>
+            <button class="secondary-action" type="button" data-product-action="preview"><i data-lucide="eye"></i>Preview</button>
+            <button class="primary-mini-action" type="submit"><i data-lucide="send"></i>Publish Product</button>
+          </div>
+        </section>
+
+        <div class="product-create-layout">
+          <div class="product-form-column">
+            <section class="dashboard-card product-form-card" aria-labelledby="basic-title">
+              <header class="form-card-head">
+                <span class="form-card-icon purple"><i data-lucide="file-text"></i></span>
+                <div><h2 id="basic-title">Basic Information</h2><p>Give customers the details they need to understand this product.</p></div>
+              </header>
+              <div class="form-grid two-columns">
+                <label class="form-field full"><span>Product name <em>*</em></span><input id="productName" name="name" type="text" placeholder="e.g. Classic Wrist Watch" required></label>
+                <label class="form-field full"><span>Product slug</span><div class="slug-field"><span>/products/</span><input id="productSlug" name="slug" type="text" placeholder="classic-wrist-watch"></div></label>
+                <label class="form-field"><span>Category <em>*</em></span><select name="category" required><option value="">Select category</option><option>Accessories</option><option>Clothing</option><option>Footwear</option><option>Bags</option></select></label>
+                <label class="form-field"><span>Subcategory</span><select name="subcategory"><option value="">Select subcategory</option><option>Watches</option><option>Handbags</option><option>Casual wear</option><option>Sneakers</option></select></label>
+                <label class="form-field full"><span>Brand</span><select name="brand"><option value="">Select brand</option><option>Tap2Connect Collection</option><option>Himalayan Style</option><option>Nepal Essentials</option></select></label>
+                <label class="form-field full"><span>Short description</span><textarea id="shortDescription" name="short_description" rows="3" maxlength="180" placeholder="A concise summary for product cards and search results."></textarea><small><span id="shortCount">0</span>/180 characters</small></label>
+                <div class="form-field full">
+                  <span>Full description</span>
+                  <div class="rich-editor">
+                    <div class="rich-toolbar" aria-label="Description formatting">
+                      <button type="button" data-command="bold" aria-label="Bold"><i data-lucide="bold"></i></button>
+                      <button type="button" data-command="italic" aria-label="Italic"><i data-lucide="italic"></i></button>
+                      <button type="button" data-command="underline" aria-label="Underline"><i data-lucide="underline"></i></button>
+                      <span></span>
+                      <button type="button" data-command="insertUnorderedList" aria-label="Bulleted list"><i data-lucide="list"></i></button>
+                      <button type="button" data-command="insertOrderedList" aria-label="Numbered list"><i data-lucide="list-ordered"></i></button>
+                      <button type="button" data-command="justifyLeft" aria-label="Align left"><i data-lucide="align-left"></i></button>
+                      <button type="button" data-command="justifyCenter" aria-label="Align center"><i data-lucide="align-center"></i></button>
+                      <span></span>
+                      <button type="button" data-command="createLink" aria-label="Add link"><i data-lucide="link"></i></button>
+                      <button type="button" data-command="removeFormat" aria-label="Clear formatting"><i data-lucide="eraser"></i></button>
+                    </div>
+                    <div class="rich-editor-body" id="fullDescription" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Describe materials, features, care instructions and what makes this product special."></div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="dashboard-card product-form-card" aria-labelledby="media-title">
+              <header class="form-card-head">
+                <span class="form-card-icon blue"><i data-lucide="images"></i></span>
+                <div><h2 id="media-title">Product Media</h2><p>Add clear images and an optional product video.</p></div>
+              </header>
+              <input id="mediaInput" type="file" accept="image/*,video/*" multiple hidden>
+              <button class="media-dropzone" id="mediaDropzone" type="button">
+                <span class="upload-mark"><i data-lucide="cloud-upload"></i></span>
+                <strong>Drag and drop product media here</strong>
+                <span>or <b>browse files</b> from your computer</span>
+                <small>Images: JPG, PNG or WebP. Video: MP4 up to 25 MB.</small>
+              </button>
+              <div class="media-support-row">
+                <span><i data-lucide="image"></i>Main product image</span>
+                <span><i data-lucide="gallery-horizontal"></i>Additional images</span>
+                <span><i data-lucide="video"></i>Product video</span>
+              </div>
+              <div class="media-preview-list" id="mediaPreview" aria-live="polite">
+                <div class="media-empty"><i data-lucide="grip-vertical"></i><span>Uploaded media can be reordered and marked as featured.</span></div>
+              </div>
+            </section>
+
+            <section class="dashboard-card product-form-card" aria-labelledby="pricing-title">
+              <header class="form-card-head">
+                <span class="form-card-icon green"><i data-lucide="badge-dollar-sign"></i></span>
+                <div><h2 id="pricing-title">Pricing</h2><p>Set customer pricing and track your margin in NPR.</p></div>
+              </header>
+              <div class="form-grid four-columns">
+                <label class="form-field"><span>Regular price <em>*</em></span><div class="money-field"><b>NPR</b><input id="regularPrice" type="number" min="0" step="0.01" placeholder="0.00" required></div></label>
+                <label class="form-field"><span>Discounted price</span><div class="money-field"><b>NPR</b><input id="discountPrice" type="number" min="0" step="0.01" placeholder="0.00"></div></label>
+                <label class="form-field"><span>Cost price</span><div class="money-field"><b>NPR</b><input type="number" min="0" step="0.01" placeholder="0.00"></div></label>
+                <label class="form-field"><span>Tax setting</span><select><option>Tax included</option><option>Add 13% VAT</option><option>Tax exempt</option></select></label>
+              </div>
+            </section>
+
+            <section class="dashboard-card product-form-card" aria-labelledby="inventory-title">
+              <header class="form-card-head">
+                <span class="form-card-icon orange"><i data-lucide="warehouse"></i></span>
+                <div><h2 id="inventory-title">Inventory</h2><p>Control stock tracking and low-stock alerts.</p></div>
+              </header>
+              <div class="form-grid four-columns">
+                <label class="form-field"><span>SKU <em>*</em></span><input type="text" placeholder="T2C-WAT-001" required></label>
+                <label class="form-field"><span>Barcode</span><input type="text" placeholder="Scan or enter code"></label>
+                <label class="form-field"><span>Stock quantity</span><input type="number" min="0" value="0"></label>
+                <label class="form-field"><span>Low-stock threshold</span><input type="number" min="0" value="5"></label>
+              </div>
+              <div class="inline-setting-row">
+                <label class="toggle-setting"><span><strong>Track inventory</strong><small>Update available quantity after each order.</small></span><input type="checkbox" checked><i></i></label>
+                <label class="toggle-setting"><span><strong>Allow backorders</strong><small>Continue selling when stock reaches zero.</small></span><input type="checkbox"><i></i></label>
+              </div>
+            </section>
+
+            <section class="dashboard-card product-form-card variations-card" aria-labelledby="variations-title">
+              <header class="form-card-head variation-head">
+                <span class="form-card-icon purple"><i data-lucide="git-branch"></i></span>
+                <div><h2 id="variations-title">Product Variations</h2><p>Create purchasable combinations for this product.</p></div>
+                <button class="compact-outline-action" id="addOptionButton" type="button"><i data-lucide="plus"></i>Add option</button>
+              </header>
+              <div class="variation-option-builder">
+                <label class="form-field"><span>Option</span><select id="variationOption"><option>Size</option><option>Colour</option><option>Material</option><option>Storage</option><option>Model</option><option>Weight</option><option>Flavour</option></select></label>
+                <label class="form-field option-values-field"><span>Values</span><input id="variationValues" type="text" value="S, M, L" placeholder="Separate values with commas"></label>
+                <button class="secondary-action" id="saveOptionButton" type="button">Save option</button>
+              </div>
+              <div class="variation-options" id="variationOptions">
+                <span><strong>Size</strong>S, M, L<button type="button" aria-label="Remove Size option"><i data-lucide="x"></i></button></span>
+                <span><strong>Colour</strong>Black, White<button type="button" aria-label="Remove Colour option"><i data-lucide="x"></i></button></span>
+              </div>
+              <div class="variation-table-wrap">
+                <table class="variation-table">
+                  <thead><tr><th>Combination</th><th>SKU</th><th>Price adjustment</th><th>Stock</th><th>Image</th><th>Active</th></tr></thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>S / Black</strong></td>
+                      <td><input value="T2C-001-S-BLK" aria-label="SKU for S Black"></td>
+                      <td><div class="adjustment-field"><select aria-label="Adjustment type"><option>+</option><option>-</option></select><input value="0" aria-label="Price adjustment for S Black"></div></td>
+                      <td><input type="number" value="8" min="0" aria-label="Stock for S Black"></td>
+                      <td><button class="variation-image-button" type="button" aria-label="Add image for S Black"><i data-lucide="image-plus"></i></button></td>
+                      <td><label class="mini-toggle"><input type="checkbox" checked><i></i><span class="sr-only">Active</span></label></td>
+                    </tr>
+                    <tr>
+                      <td><strong>M / Black</strong></td>
+                      <td><input value="T2C-001-M-BLK" aria-label="SKU for M Black"></td>
+                      <td><div class="adjustment-field"><select aria-label="Adjustment type"><option>+</option><option>-</option></select><input value="0" aria-label="Price adjustment for M Black"></div></td>
+                      <td><input type="number" value="12" min="0" aria-label="Stock for M Black"></td>
+                      <td><button class="variation-image-button" type="button" aria-label="Add image for M Black"><i data-lucide="image-plus"></i></button></td>
+                      <td><label class="mini-toggle"><input type="checkbox" checked><i></i><span class="sr-only">Active</span></label></td>
+                    </tr>
+                    <tr>
+                      <td><strong>L / White</strong></td>
+                      <td><input value="T2C-001-L-WHT" aria-label="SKU for L White"></td>
+                      <td><div class="adjustment-field"><select aria-label="Adjustment type"><option>+</option><option>-</option></select><input value="150" aria-label="Price adjustment for L White"></div></td>
+                      <td><input type="number" value="6" min="0" aria-label="Stock for L White"></td>
+                      <td><button class="variation-image-button" type="button" aria-label="Add image for L White"><i data-lucide="image-plus"></i></button></td>
+                      <td><label class="mini-toggle"><input type="checkbox" checked><i></i><span class="sr-only">Active</span></label></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="dashboard-card product-form-card" aria-labelledby="shipping-title">
+              <header class="form-card-head">
+                <span class="form-card-icon blue"><i data-lucide="truck"></i></span>
+                <div><h2 id="shipping-title">Shipping Information</h2><p>Add package dimensions for accurate delivery handling.</p></div>
+              </header>
+              <div class="form-grid five-columns">
+                <label class="form-field"><span>Weight</span><div class="unit-field"><input type="number" min="0" step="0.01" placeholder="0.00"><b>kg</b></div></label>
+                <label class="form-field"><span>Length</span><div class="unit-field"><input type="number" min="0" step="0.1" placeholder="0"><b>cm</b></div></label>
+                <label class="form-field"><span>Width</span><div class="unit-field"><input type="number" min="0" step="0.1" placeholder="0"><b>cm</b></div></label>
+                <label class="form-field"><span>Height</span><div class="unit-field"><input type="number" min="0" step="0.1" placeholder="0"><b>cm</b></div></label>
+                <label class="form-field"><span>Delivery class</span><select><option>Standard</option><option>Fragile</option><option>Bulky</option><option>Express eligible</option></select></label>
+              </div>
+              <label class="toggle-setting standalone-toggle"><span><strong>Free delivery eligibility</strong><small>Allow this product to qualify for store free-delivery promotions.</small></span><input type="checkbox"><i></i></label>
+            </section>
+
+            <section class="dashboard-card product-form-card" aria-labelledby="seo-title">
+              <header class="form-card-head">
+                <span class="form-card-icon green"><i data-lucide="search-check"></i></span>
+                <div><h2 id="seo-title">SEO</h2><p>Control how this product appears in search results.</p></div>
+              </header>
+              <div class="form-grid two-columns">
+                <label class="form-field full"><span>SEO page title</span><input id="seoTitle" type="text" maxlength="60" placeholder="Classic Wrist Watch | Dipak Store"><small><span id="seoTitleCount">0</span>/60 characters</small></label>
+                <label class="form-field full"><span>Meta description</span><textarea id="metaDescription" rows="3" maxlength="160" placeholder="Write a clear description that encourages shoppers to visit this product."></textarea><small><span id="metaCount">0</span>/160 characters</small></label>
+              </div>
+              <div class="search-preview">
+                <span>dipakstore.tap2connect.com.np / products / <b id="previewSlug">product-slug</b></span>
+                <strong id="previewTitle">Product title will appear here</strong>
+                <p id="previewDescription">Your meta description will appear here in the customer search preview.</p>
+              </div>
+            </section>
+          </div>
+
+          <aside class="product-settings-column" aria-label="Product settings">
+            <section class="dashboard-card product-settings-card">
+              <header><i data-lucide="circle-dot"></i><h2>Product Status</h2></header>
+              <label class="choice-row"><input type="radio" name="status" value="active"><span><strong>Active</strong><small>Available for customers to buy.</small></span></label>
+              <label class="choice-row"><input type="radio" name="status" value="draft" checked><span><strong>Draft</strong><small>Keep private while you finish editing.</small></span></label>
+              <label class="choice-row"><input type="radio" name="status" value="inactive"><span><strong>Inactive</strong><small>Keep product data without listing it.</small></span></label>
+            </section>
+
+            <section class="dashboard-card product-settings-card">
+              <header><i data-lucide="eye"></i><h2>Visibility</h2></header>
+              <label class="choice-row"><input type="radio" name="visibility" value="public" checked><span><strong>Public</strong><small>Visible across your storefront.</small></span></label>
+              <label class="choice-row"><input type="radio" name="visibility" value="hidden"><span><strong>Hidden</strong><small>Accessible only with a direct link.</small></span></label>
+              <label class="choice-row"><input type="radio" name="visibility" value="scheduled"><span><strong>Scheduled</strong><small>Publish automatically at a chosen time.</small></span></label>
+              <label class="form-field schedule-field"><span>Publish date and time</span><input type="datetime-local"></label>
+            </section>
+
+            <section class="dashboard-card product-settings-card">
+              <header><i data-lucide="folders"></i><h2>Organisation</h2></header>
+              <label class="form-field"><span>Category</span><select><option>Select category</option><option>Accessories</option><option>Clothing</option><option>Bags</option></select></label>
+              <label class="form-field"><span>Brand</span><select><option>Select brand</option><option>Tap2Connect Collection</option><option>Himalayan Style</option></select></label>
+              <label class="form-field"><span>Tags</span><input type="text" placeholder="Type and press Enter"></label>
+              <label class="form-field"><span>Collections</span><select><option>Select collections</option><option>New Season</option><option>Everyday Essentials</option><option>Festival Picks</option></select></label>
+            </section>
+
+            <section class="dashboard-card product-settings-card feature-settings-card">
+              <header><i data-lucide="sliders-horizontal"></i><h2>Feature Settings</h2></header>
+              <label class="toggle-setting"><span><strong>Featured product</strong><small>Show in featured sections.</small></span><input type="checkbox"><i></i></label>
+              <label class="toggle-setting"><span><strong>New arrival</strong><small>Add a new-arrival label.</small></span><input type="checkbox" checked><i></i></label>
+              <label class="toggle-setting"><span><strong>Best seller</strong><small>Highlight as a popular product.</small></span><input type="checkbox"><i></i></label>
+              <label class="toggle-setting"><span><strong>Allow reviews</strong><small>Let verified customers leave reviews.</small></span><input type="checkbox" checked><i></i></label>
+            </section>
+          </aside>
+        </div>
+
+        <div class="product-sticky-actions">
+          <a class="cancel-action" href="{% url 'shops:owner_products' store.slug %}">Cancel</a>
+          <span id="saveStatus"><i data-lucide="cloud"></i>Changes are saved locally for this preview</span>
+          <button class="secondary-action" type="button" data-product-action="draft"><i data-lucide="save"></i>Save Draft</button>
+          <button class="primary-mini-action" type="submit"><i data-lucide="send"></i>Publish Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="product-toast" id="productToast" role="status" aria-live="polite"><i data-lucide="circle-check"></i><span>Draft saved</span></div>
+
+  <script>
+    lucide.createIcons();
+
+    const productForm = document.getElementById('productForm');
+    const productName = document.getElementById('productName');
+    const productSlug = document.getElementById('productSlug');
+    const shortDescription = document.getElementById('shortDescription');
+    const seoTitle = document.getElementById('seoTitle');
+    const metaDescription = document.getElementById('metaDescription');
+    const previewTitle = document.getElementById('previewTitle');
+    const previewSlug = document.getElementById('previewSlug');
+    const previewDescription = document.getElementById('previewDescription');
+    const toast = document.getElementById('productToast');
+    let slugWasEdited = false;
+    let toastTimer;
+
+    function makeSlug(value) {
+      return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    }
+
+    function showToast(message) {
+      toast.querySelector('span').textContent = message;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2600);
+    }
+
+    function updateSearchPreview() {
+      previewTitle.textContent = seoTitle.value.trim() || productName.value.trim() || 'Product title will appear here';
+      previewSlug.textContent = productSlug.value.trim() || 'product-slug';
+      previewDescription.textContent = metaDescription.value.trim() || shortDescription.value.trim() || 'Your meta description will appear here in the customer search preview.';
+    }
+
+    productName.addEventListener('input', function () {
+      if (!slugWasEdited) productSlug.value = makeSlug(productName.value);
+      if (!seoTitle.value.trim()) previewTitle.textContent = productName.value.trim() || 'Product title will appear here';
+      updateSearchPreview();
+    });
+    productSlug.addEventListener('input', function () { slugWasEdited = true; updateSearchPreview(); });
+
+    [
+      [shortDescription, document.getElementById('shortCount')],
+      [seoTitle, document.getElementById('seoTitleCount')],
+      [metaDescription, document.getElementById('metaCount')]
+    ].forEach(function (pair) {
+      pair[0].addEventListener('input', function () {
+        pair[1].textContent = pair[0].value.length;
+        updateSearchPreview();
+      });
+    });
+
+    document.querySelectorAll('.rich-toolbar button').forEach(function (button) {
+      button.addEventListener('click', function () {
+        const command = button.dataset.command;
+        let value = null;
+        if (command === 'createLink') value = window.prompt('Enter a link URL');
+        if (command !== 'createLink' || value) document.execCommand(command, false, value);
+        document.getElementById('fullDescription').focus();
+      });
+    });
+
+    const mediaInput = document.getElementById('mediaInput');
+    const mediaDropzone = document.getElementById('mediaDropzone');
+    const mediaPreview = document.getElementById('mediaPreview');
+
+    function renderMedia(files) {
+      if (!files.length) return;
+      mediaPreview.innerHTML = '';
+      Array.from(files).forEach(function (file, index) {
+        const item = document.createElement('div');
+        item.className = 'media-preview-item';
+        const icon = file.type.indexOf('video') === 0 ? 'video' : 'image';
+        item.innerHTML = '<i data-lucide="grip-vertical"></i><span class="media-file-icon"><i data-lucide="' + icon + '"></i></span><span><strong>' + file.name + '</strong><small>' + Math.max(1, Math.round(file.size / 1024)) + ' KB</small></span><button type="button" class="' + (index === 0 ? 'featured' : '') + '">' + (index === 0 ? 'Featured' : 'Set featured') + '</button><button type="button" class="remove-media" aria-label="Remove ' + file.name + '"><i data-lucide="x"></i></button>';
+        item.querySelector('.remove-media').addEventListener('click', function () { item.remove(); });
+        item.querySelector('button:not(.remove-media)').addEventListener('click', function () {
+          mediaPreview.querySelectorAll('button.featured').forEach(function (featured) {
+            featured.classList.remove('featured');
+            featured.textContent = 'Set featured';
+          });
+          this.classList.add('featured');
+          this.textContent = 'Featured';
+        });
+        mediaPreview.appendChild(item);
+      });
+      lucide.createIcons();
+    }
+
+    mediaDropzone.addEventListener('click', function () { mediaInput.click(); });
+    mediaInput.addEventListener('change', function () { renderMedia(mediaInput.files); });
+    ['dragenter', 'dragover'].forEach(function (eventName) {
+      mediaDropzone.addEventListener(eventName, function (event) {
+        event.preventDefault();
+        mediaDropzone.classList.add('dragging');
+      });
+    });
+    ['dragleave', 'drop'].forEach(function (eventName) {
+      mediaDropzone.addEventListener(eventName, function (event) {
+        event.preventDefault();
+        mediaDropzone.classList.remove('dragging');
+        if (eventName === 'drop') renderMedia(event.dataTransfer.files);
+      });
+    });
+
+    const variationOptions = document.getElementById('variationOptions');
+    document.getElementById('saveOptionButton').addEventListener('click', function () {
+      const option = document.getElementById('variationOption').value;
+      const values = document.getElementById('variationValues').value.trim();
+      if (!values) return showToast('Add at least one option value');
+      const chip = document.createElement('span');
+      chip.innerHTML = '<strong>' + option + '</strong>' + values + '<button type="button" aria-label="Remove ' + option + ' option"><i data-lucide="x"></i></button>';
+      chip.querySelector('button').addEventListener('click', function () { chip.remove(); });
+      variationOptions.appendChild(chip);
+      lucide.createIcons();
+      showToast(option + ' option added');
+    });
+    document.getElementById('addOptionButton').addEventListener('click', function () {
+      document.getElementById('variationOption').focus();
+    });
+    variationOptions.querySelectorAll('button').forEach(function (button) {
+      button.addEventListener('click', function () { button.parentElement.remove(); });
+    });
+
+    document.querySelectorAll('[data-product-action="draft"]').forEach(function (button) {
+      button.addEventListener('click', function () { showToast('Product saved as draft'); });
+    });
+    document.querySelector('[data-product-action="preview"]').addEventListener('click', function () {
+      showToast('Preview is ready for review');
+    });
+    productForm.addEventListener('submit', function (event) {
+      event.preventDefault();
+      showToast('Product is ready to publish');
+    });
+  </script>
+</body>
+</html>

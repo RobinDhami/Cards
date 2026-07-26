@@ -1,0 +1,10 @@
+<footer id="contact">
+  <div class="container footer-grid">
+    <div class="footer-about"><a class="brand footer-brand" href="{% url 'shops:store_home' store.slug %}">DIPAK STORE</a><p>{{ store.description }}</p><div class="footer-contact"><span><svg><use href="#i-map"></use></svg>{{ store.address }}</span><a href="tel:{{ store.phone }}"><svg><use href="#i-phone"></use></svg>{{ store.phone }}</a></div><div class="socials"><button type="button" aria-label="Instagram"><svg><use href="#i-instagram"></use></svg></button><button type="button" aria-label="Facebook"><svg><use href="#i-facebook"></use></svg></button><a href="mailto:{{ store.email }}" aria-label="Email {{ store.name }}"><svg><use href="#i-mail"></use></svg></a></div></div>
+    <div><h3>Shop</h3><a href="{% url 'shops:product_list' store.slug %}">All Products</a><a href="{% url 'shops:product_list' store.slug %}?sort=newest">New Arrivals</a><a href="{% url 'shops:product_list' store.slug %}?category=women">Women</a><a href="{% url 'shops:product_list' store.slug %}?category=men">Men</a><a href="{% url 'shops:product_list' store.slug %}?category=footwear">Shoes</a></div>
+    <div><h3>Customer Care</h3><a href="#contact">Contact Us</a><a href="{% url 'shops:track_order' store.slug %}">Order Tracking</a><a href="#policies">Shipping Information</a><a href="#policies">Returns &amp; Exchanges</a><a href="#policies">FAQ</a></div>
+    <div><h3>About</h3><a href="{% url 'shops:store_home' store.slug %}#story">Our Story</a><a href="#contact">Store Location</a><a href="#policies">Privacy</a><a href="#policies">Terms</a></div>
+    <div class="newsletter"><h3>Stay in the loop</h3><p>New arrivals, useful style edits and subscriber-only offers.</p><form id="newsletterForm"><input type="email" required placeholder="Enter your email" aria-label="Email address"><button>Subscribe</button></form><small>No spam. Unsubscribe anytime.</small></div>
+  </div>
+  <div class="container copyright"><span>&copy; 2026 {{ store.name }}. Powered by Tap2Connect Shop.</span><span class="payment-marks"><b>COD</b><b>eSewa</b><b>Khalti</b><b>Bank</b></span></div>
+</footer>

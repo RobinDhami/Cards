@@ -1,0 +1,56 @@
+{% extends 'shop/dashboard/owner_base.html' %}
+{% block title %}Staff & Permissions | Tap2Connect Shop{% endblock %}
+{% block main_class %}staff-workspace{% endblock %}
+{% block content %}
+<header class="workspace-header">
+  <div><span class="page-eyebrow">Team access</span><h1>Staff &amp; Permissions</h1><p>Invite staff and control what each person can access.</p></div>
+  <button class="workspace-btn primary" type="button" data-open-panel="invitePanel"><i data-lucide="user-plus"></i>Invite Staff Member</button>
+</header>
+
+<section class="surface-card plan-usage-banner">
+  <span class="summary-icon purple"><i data-lucide="users"></i></span><div><small>Staff accounts</small><strong>3 of 5 used</strong></div><div class="usage-track"><i style="width:60%"></i></div><span>2 seats available</span><a href="{% url 'shops:owner_billing' store.slug %}">Upgrade Plan <i data-lucide="arrow-up-right"></i></a>
+</section>
+
+<section class="surface-card">
+  <div class="section-heading"><div><h2>Staff members</h2><p>People with access to Dipak Store.</p></div><label class="table-search"><i data-lucide="search"></i><input placeholder="Search staff"></label></div>
+  <div class="workspace-table-wrap"><table class="workspace-table staff-table"><thead><tr><th>Staff Member</th><th>Email</th><th>Role</th><th>Permissions</th><th>Last Active</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+    <tr><td><span class="person-cell"><i class="avatar purple">DS</i><span><strong>Dipak Sharma</strong><small>Store owner</small></span></span></td><td>dipak@dipakstore.com</td><td><span class="role-pill owner">Owner</span></td><td>Full access</td><td>Active now</td><td><span class="state-pill active">Active</span></td><td><button class="more-button" aria-label="Staff actions"><i data-lucide="more-horizontal"></i></button></td></tr>
+    <tr><td><span class="person-cell"><i class="avatar blue">SR</i><span><strong>Suman Rai</strong><small>Joined Mar 18</small></span></span></td><td>suman@dipakstore.com</td><td><span class="role-pill">Order Manager</span></td><td><span class="permission-count">8 permissions</span></td><td>12 minutes ago</td><td><span class="state-pill active">Active</span></td><td><button class="more-button" aria-label="Staff actions"><i data-lucide="more-horizontal"></i></button></td></tr>
+    <tr><td><span class="person-cell"><i class="avatar green">PK</i><span><strong>Pooja Karki</strong><small>Joined Apr 2</small></span></span></td><td>pooja@dipakstore.com</td><td><span class="role-pill">Product Manager</span></td><td><span class="permission-count">6 permissions</span></td><td>Yesterday</td><td><span class="state-pill active">Active</span></td><td><button class="more-button" aria-label="Staff actions"><i data-lucide="more-horizontal"></i></button></td></tr>
+    <tr><td><span class="person-cell"><i class="avatar orange">RT</i><span><strong>Roshan Thapa</strong><small>Invited Jul 20</small></span></span></td><td>roshan@dipakstore.com</td><td><span class="role-pill">Support Staff</span></td><td><span class="permission-count">4 permissions</span></td><td>Never</td><td><span class="state-pill scheduled">Invitation Pending</span></td><td><button class="more-button" aria-label="Staff actions"><i data-lucide="more-horizontal"></i></button></td></tr>
+  </tbody></table></div>
+</section>
+
+<section class="surface-card">
+  <div class="section-heading"><div><h2>Roles</h2><p>Start with a predefined role or create your own.</p></div><button class="quiet-btn" type="button"><i data-lucide="plus"></i>Custom role</button></div>
+  <div class="role-card-grid">
+    <button class="selected" type="button"><span class="tool-icon purple"><i data-lucide="crown"></i></span><strong>Owner</strong><small>Complete access and ownership controls.</small><em>1 member</em></button>
+    <button type="button"><span class="tool-icon navy"><i data-lucide="shield-check"></i></span><strong>Administrator</strong><small>Everything except ownership and billing.</small><em>0 members</em></button>
+    <button type="button"><span class="tool-icon blue"><i data-lucide="shopping-cart"></i></span><strong>Order Manager</strong><small>Orders, customers and delivery workflows.</small><em>1 member</em></button>
+    <button type="button"><span class="tool-icon green"><i data-lucide="package"></i></span><strong>Product Manager</strong><small>Catalogue, categories and inventory.</small><em>1 member</em></button>
+    <button type="button"><span class="tool-icon orange"><i data-lucide="headphones"></i></span><strong>Customer Support</strong><small>Customers, orders and notes.</small><em>1 invited</em></button>
+    <button type="button"><span class="tool-icon red"><i data-lucide="settings-2"></i></span><strong>Custom Role</strong><small>Create permissions for a specific workflow.</small><em>Create new</em></button>
+  </div>
+</section>
+
+<section class="staff-editor-grid">
+  <article class="surface-card" id="invitePanel">
+    <div class="section-heading"><div><h2>Invite staff member</h2><p>An email invitation will be sent immediately.</p></div></div>
+    <div class="form-grid two-columns"><label>Full name<input placeholder="Full name"></label><label>Email<input type="email" placeholder="name@dipakstore.com"></label><label>Role<select><option>Order Manager</option><option>Product Manager</option><option>Customer Support</option><option>Administrator</option><option>Custom Role</option></select></label><label class="invite-check"><input type="checkbox" checked>Send invitation email</label></div>
+    <button class="workspace-btn primary" type="button" data-toast="Staff invitation sent"><i data-lucide="send"></i>Send Invitation</button>
+  </article>
+  <article class="surface-card permission-card">
+    <div class="section-heading"><div><h2>Permission settings</h2><p>Order Manager permissions.</p></div><button class="quiet-btn" type="button">Reset</button></div>
+    <div class="permission-groups">
+      <fieldset><legend><i data-lucide="package"></i>Products</legend><label><input type="checkbox" checked>View products</label><label><input type="checkbox">Add products</label><label><input type="checkbox">Edit products</label><label><input type="checkbox">Delete products</label><label><input type="checkbox">Manage inventory</label></fieldset>
+      <fieldset><legend><i data-lucide="shopping-cart"></i>Orders</legend><label><input type="checkbox" checked>View orders</label><label><input type="checkbox" checked>Update status</label><label><input type="checkbox" checked>Cancel orders</label><label><input type="checkbox" checked>Print invoices</label><label><input type="checkbox" checked>Export orders</label></fieldset>
+      <fieldset><legend><i data-lucide="users"></i>Customers</legend><label><input type="checkbox" checked>View customers</label><label><input type="checkbox" checked>Contact customers</label><label><input type="checkbox" checked>Add notes</label></fieldset>
+      <fieldset><legend><i data-lucide="chart-no-axes-combined"></i>Reports</legend><label><input type="checkbox">View analytics</label><label><input type="checkbox">Export reports</label></fieldset>
+      <fieldset class="wide"><legend><i data-lucide="settings"></i>Store Settings</legend><label><input type="checkbox">Edit website</label><label><input type="checkbox">Manage payments</label><label><input type="checkbox">Manage delivery</label><label><input type="checkbox">Manage staff</label><label><input type="checkbox">Manage billing</label></fieldset>
+    </div>
+    <div class="permission-actions"><button class="workspace-btn" type="button">Cancel</button><button class="workspace-btn primary" type="button" data-toast="Role permissions saved">Save Permissions</button></div>
+  </article>
+</section>
+<div class="warning-banner"><i data-lucide="shield-alert"></i><span><strong>Owner-only controls</strong>Only the store owner can transfer ownership or delete the store.</span></div>
+{% endblock %}
+{% block scripts %}<script>document.querySelectorAll('.role-card-grid button').forEach((button) => button.addEventListener('click', () => { document.querySelectorAll('.role-card-grid button').forEach((item) => item.classList.remove('selected')); button.classList.add('selected'); }));document.querySelectorAll('[data-open-panel]').forEach((button) => button.addEventListener('click', () => document.getElementById(button.dataset.openPanel).scrollIntoView({behavior:'smooth'})));</script>{% endblock %}

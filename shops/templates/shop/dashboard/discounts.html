@@ -1,0 +1,288 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discounts &amp; Coupons - Tap2Connect Shop</title>
+  {% include "partials/tap2connect_favicon.html" %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="stylesheet" href="{% static 'shop/css/owner_dashboard.css' %}">
+</head>
+<body>
+  <div class="owner-shell">
+    <aside class="owner-sidebar" aria-label="Store owner navigation">
+      <a class="owner-logo" href="{% url 'shops:owner_dashboard' store.slug %}" aria-label="Tap2Connect Shop dashboard">
+        <span class="bag-mark"><i data-lucide="shopping-bag"></i></span>
+        <span><strong>Tap2Connect</strong><small>SHOP</small></span>
+      </a>
+      <nav class="owner-menu">
+        <a href="{% url 'shops:owner_dashboard' store.slug %}"><i data-lucide="layout-dashboard"></i>Dashboard</a>
+        <a href="{% url 'shops:owner_orders' store.slug %}"><i data-lucide="shopping-cart"></i>Orders<span class="order-badge">23</span></a>
+        <a href="{% url 'shops:owner_products' store.slug %}"><i data-lucide="package"></i>Products</a>
+        <a href="{% url 'shops:owner_categories' store.slug %}"><i data-lucide="tags"></i>Categories</a>
+        <a href="{% url 'shops:owner_customers' store.slug %}"><i data-lucide="users"></i>Customers</a>
+        <a class="active" href="{% url 'shops:owner_discounts' store.slug %}"><i data-lucide="badge-percent"></i>Discounts</a>
+        <a href="#"><i data-lucide="star"></i>Reviews</a>
+        <a href="{% url 'shops:owner_marketing' store.slug %}"><i data-lucide="megaphone"></i>Marketing</a>
+        <a href="{% url 'shops:owner_reports' store.slug %}"><i data-lucide="bar-chart-3"></i>Reports</a>
+        <a href="{% url 'shops:owner_website' store.slug %}"><i data-lucide="monitor-smartphone"></i>Website</a>
+        <a href="{% url 'shops:owner_staff' store.slug %}"><i data-lucide="user-cog"></i>Staff</a>
+        <a href="{% url 'shops:owner_billing' store.slug %}"><i data-lucide="credit-card"></i>Billing</a>
+        <a href="{% url 'shops:owner_settings' store.slug %}"><i data-lucide="settings"></i>Settings</a>
+        <a href="{% url 'shops:owner_support' store.slug %}"><i data-lucide="life-buoy"></i>Support</a>
+      </nav>
+      <div class="sales-channel">
+        <span>Sales Channel</span>
+        <a href="{% url 'shops:store_home' store.slug %}"><i data-lucide="external-link"></i>View Store</a>
+        <a href="{% url 'shops:owner_store_preview' store.slug %}"><i data-lucide="eye"></i>Store Preview</a>
+      </div>
+      <button class="owner-profile" type="button"><span class="avatar">DS</span><span><strong>Dipak Store</strong><small>Owner</small></span><i data-lucide="chevron-down"></i></button>
+    </aside>
+
+    <div class="dashboard-frame">
+      <header class="owner-topbar">
+        <div class="topbar-left">
+          <button class="icon-button" type="button" aria-label="Toggle sidebar"><i data-lucide="menu"></i></button>
+          <button class="store-selector" type="button">Dipak Store <i data-lucide="chevron-down"></i></button>
+          <span class="live-badge"><i data-lucide="radio"></i>Live</span>
+        </div>
+        <label class="global-search"><i data-lucide="search"></i><input placeholder="Search orders, products, customers..." aria-label="Search orders, products, customers"></label>
+        <div class="topbar-actions">
+          <button class="date-pill" type="button"><i data-lucide="calendar-days"></i>May 7 - Jun 4</button>
+          <a class="icon-button alert" href="{% url 'shops:owner_notifications' store.slug %}" aria-label="Notifications"><i data-lucide="bell"></i></a>
+          <button class="icon-button" type="button" aria-label="Help"><i data-lucide="circle-help"></i></button>
+          <button class="top-profile" type="button"><span class="avatar image-avatar">DS</span><span><strong>Dipak Sharma</strong><small>Store Owner</small></span><i data-lucide="chevron-down"></i></button>
+        </div>
+      </header>
+
+      <main class="owner-main discounts-main">
+        <section class="welcome-row orders-header">
+          <div><h1>Discounts &amp; Coupons</h1><p>Create promotions that encourage customers to purchase.</p></div>
+          <div class="page-actions"><button class="primary-mini-action" id="openDiscountForm" type="button"><i data-lucide="plus"></i>Create Discount</button></div>
+        </section>
+
+        <section class="order-summary-row" aria-label="Discount summary">
+          {% for card in summary_cards %}
+            <article class="order-summary-card discount-summary-card">
+              <span class="kpi-icon {{ card.tone }}"><i data-lucide="{{ card.icon }}"></i></span>
+              <div><small>{{ card.label }}</small><strong>{{ card.value }}</strong><em class="trend up">{{ card.trend }}</em></div>
+            </article>
+          {% endfor %}
+        </section>
+
+        <nav class="discount-tabs" aria-label="Discount views">
+          {% for label, count in tabs %}
+            <button class="{% if forloop.first %}active{% endif %}" type="button" data-tab="{{ label }}"><span>{{ label }}</span><small>{{ count }}</small></button>
+          {% endfor %}
+        </nav>
+
+        <div class="discount-workspace">
+          <section class="dashboard-card discount-table-card">
+            <header class="management-card-head">
+              <div><h2>Discount campaigns</h2><p>Manage automatic offers and reusable coupon codes.</p></div>
+              <label class="compact-search"><i data-lucide="search"></i><input id="discountSearch" placeholder="Search discount or code" aria-label="Search discounts"></label>
+            </header>
+            <div class="discount-table-wrap">
+              <table class="discount-table">
+                <thead><tr><th>Discount Name</th><th>Code</th><th>Type</th><th>Value</th><th>Usage</th><th>Validity</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody id="discountRows">
+                  {% for discount in discounts %}
+                    <tr data-status="{{ discount.status }}" data-type="{{ discount.type }}" data-name="{{ discount.name }}" data-code="{{ discount.code }}" data-value="{{ discount.value }}">
+                      <td><div class="discount-name-cell"><span><i data-lucide="{% if discount.type == 'Free Delivery' %}truck{% elif discount.type == 'Percentage' %}percent{% elif discount.type == 'Buy One Get One' %}gift{% else %}banknote{% endif %}"></i></span><strong>{{ discount.name }}</strong></div></td>
+                      <td><button class="coupon-code" type="button" title="Copy code">{{ discount.code }}<i data-lucide="copy"></i></button></td>
+                      <td>{{ discount.type }}</td>
+                      <td><strong>{{ discount.value }}</strong></td>
+                      <td>{{ discount.usage }}</td>
+                      <td><span class="validity-cell"><strong>{{ discount.validity }}</strong><small>{% if discount.status == 'Scheduled' %}Starts later{% elif discount.status == 'Expired' %}Ended{% else %}Campaign period{% endif %}</small></span></td>
+                      <td><span class="discount-status {{ discount.status|lower }}">{{ discount.status }}</span></td>
+                      <td>
+                        <details class="row-actions">
+                          <summary aria-label="Open actions for {{ discount.name }}"><i data-lucide="more-horizontal"></i></summary>
+                          <div><button class="edit-discount" type="button">Edit Discount</button><button type="button">View Performance</button><button type="button">Duplicate</button><button type="button">Deactivate</button><button type="button" class="danger">Delete</button></div>
+                        </details>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <footer class="table-footer"><span>Showing 1-6 of 25 discounts</span><div><button type="button"><i data-lucide="chevron-left"></i>Previous</button><button type="button">Next<i data-lucide="chevron-right"></i></button></div></footer>
+          </section>
+
+          <aside class="dashboard-card discount-builder-card" id="discountBuilder">
+            <header class="management-card-head">
+              <div><h2 id="discountBuilderTitle">Create Discount</h2><p>Set the offer rules and eligibility.</p></div>
+              <button class="icon-button" id="resetDiscount" type="button" aria-label="Reset discount form"><i data-lucide="rotate-ccw"></i></button>
+            </header>
+            <form id="discountForm">
+              <div class="discount-builder-fields">
+                <label class="form-field"><span>Discount name <em>*</em></span><input id="discountName" type="text" placeholder="e.g. Welcome Offer" required></label>
+                <label class="form-field"><span>Coupon code</span><div class="code-input"><input id="discountCode" type="text" placeholder="WELCOME20"><button id="generateCode" type="button"><i data-lucide="wand-sparkles"></i>Generate</button></div></label>
+
+                <div class="form-field">
+                  <span>Promotion method</span>
+                  <div class="discount-method-control">
+                    <label><input type="radio" name="method" value="Code-based" checked><span><i data-lucide="ticket"></i>Code-based</span></label>
+                    <label><input type="radio" name="method" value="Automatic"><span><i data-lucide="zap"></i>Automatic</span></label>
+                  </div>
+                </div>
+
+                <fieldset class="discount-type-fieldset">
+                  <legend>Discount type</legend>
+                  <label><input type="radio" name="discount_type" value="Percentage" checked><span><i data-lucide="percent"></i><strong>Percentage</strong></span></label>
+                  <label><input type="radio" name="discount_type" value="Fixed amount"><span><i data-lucide="banknote"></i><strong>Fixed amount</strong></span></label>
+                  <label><input type="radio" name="discount_type" value="Free delivery"><span><i data-lucide="truck"></i><strong>Free delivery</strong></span></label>
+                  <label><input type="radio" name="discount_type" value="Buy one get one"><span><i data-lucide="gift"></i><strong>Buy one get one</strong></span></label>
+                </fieldset>
+
+                <div class="discount-value-grid">
+                  <label class="form-field"><span>Discount value</span><div class="unit-field"><input id="discountValue" type="number" min="0" value="20"><b id="discountUnit">%</b></div></label>
+                  <label class="form-field"><span>Minimum purchase</span><div class="money-field"><b>NPR</b><input id="minimumPurchase" type="number" min="0" value="2000"></div></label>
+                </div>
+
+                <label class="form-field"><span>Specific products</span><select><option>All products</option><option>Choose products...</option><option>Exclude products...</option></select></label>
+                <label class="form-field"><span>Specific categories</span><select><option>All categories</option><option>Fashion</option><option>Accessories</option><option>Footwear</option></select></label>
+                <label class="form-field"><span>Customer eligibility</span><select><option>All customers</option><option>New customers only</option><option>Returning customers</option><option>VIP customers</option><option>Selected customers</option></select></label>
+
+                <div class="discount-value-grid">
+                  <label class="form-field"><span>Usage limit</span><input type="number" min="0" placeholder="Unlimited"></label>
+                  <label class="form-field"><span>Per-customer limit</span><input type="number" min="1" value="1"></label>
+                  <label class="form-field"><span>Start date</span><input id="discountStart" type="date" value="2026-07-22"></label>
+                  <label class="form-field"><span>End date</span><input id="discountEnd" type="date" value="2026-08-31"></label>
+                </div>
+                <label class="toggle-setting compact-toggle"><span><strong>Active status</strong><small>Make this promotion available when saved.</small></span><input id="discountActive" type="checkbox" checked><i></i></label>
+              </div>
+
+              <section class="promotion-live-summary">
+                <header><span><i data-lucide="sparkles"></i>Live promotion summary</span><small id="summaryStatus">Active</small></header>
+                <div class="promotion-ticket">
+                  <span class="ticket-icon"><i data-lucide="badge-percent"></i></span>
+                  <div><small id="summaryMethod">COUPON CODE</small><strong id="summaryCode">WELCOME20</strong><p id="summaryOffer">20% off selected products</p></div>
+                </div>
+                <p id="summaryRule"><i data-lucide="shopping-bag"></i>Minimum purchase NPR 2,000</p>
+                <p><i data-lucide="calendar-days"></i><span id="summaryDates">Jul 22 - Aug 31, 2026</span></p>
+              </section>
+
+              <footer class="editor-actions">
+                <button class="secondary-action" id="saveDiscountDraft" type="button"><i data-lucide="save"></i>Save Draft</button>
+                <button class="primary-mini-action" type="submit"><i data-lucide="zap"></i>Activate Discount</button>
+              </footer>
+            </form>
+          </aside>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div class="product-toast" id="discountToast" role="status" aria-live="polite"><i data-lucide="circle-check"></i><span>Discount activated</span></div>
+
+  <script>
+    lucide.createIcons();
+    const discountRows = document.querySelectorAll('#discountRows tr');
+    const discountTabs = document.querySelectorAll('.discount-tabs button');
+    const discountSearch = document.getElementById('discountSearch');
+    const discountName = document.getElementById('discountName');
+    const discountCode = document.getElementById('discountCode');
+    const discountValue = document.getElementById('discountValue');
+    const minimumPurchase = document.getElementById('minimumPurchase');
+    const discountToast = document.getElementById('discountToast');
+
+    function filterDiscounts() {
+      const activeTab = document.querySelector('.discount-tabs button.active').dataset.tab;
+      const query = discountSearch.value.toLowerCase().trim();
+      discountRows.forEach(function (row) {
+        const matchesSearch = !query || row.innerText.toLowerCase().indexOf(query) !== -1;
+        let matchesTab = activeTab === 'All';
+        if (activeTab === 'Active' || activeTab === 'Scheduled' || activeTab === 'Expired') matchesTab = row.dataset.status === activeTab;
+        if (activeTab === 'Automatic Discounts') matchesTab = row.dataset.code === 'AUTOMATIC';
+        if (activeTab === 'Coupon Codes') matchesTab = row.dataset.code !== 'AUTOMATIC';
+        row.hidden = !(matchesSearch && matchesTab);
+      });
+    }
+
+    discountTabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        discountTabs.forEach(function (item) { item.classList.remove('active'); });
+        tab.classList.add('active');
+        filterDiscounts();
+      });
+    });
+    discountSearch.addEventListener('input', filterDiscounts);
+
+    function selectedDiscountType() {
+      return document.querySelector('input[name="discount_type"]:checked').value;
+    }
+
+    function updatePromotionSummary() {
+      const type = selectedDiscountType();
+      const value = discountValue.value || '0';
+      const method = document.querySelector('input[name="method"]:checked').value;
+      document.getElementById('summaryCode').textContent = method === 'Automatic' ? (discountName.value.trim() || 'AUTOMATIC OFFER') : (discountCode.value.trim().toUpperCase() || 'YOURCODE');
+      document.getElementById('summaryMethod').textContent = method.toUpperCase();
+      document.getElementById('summaryStatus').textContent = document.getElementById('discountActive').checked ? 'Active' : 'Draft';
+      document.getElementById('discountUnit').textContent = type === 'Percentage' ? '%' : 'NPR';
+      let offer = value + '% off selected products';
+      if (type === 'Fixed amount') offer = 'NPR ' + Number(value || 0).toLocaleString() + ' off selected products';
+      if (type === 'Free delivery') offer = 'Free delivery on eligible orders';
+      if (type === 'Buy one get one') offer = 'Buy one item and get one free';
+      document.getElementById('summaryOffer').textContent = offer;
+      document.getElementById('summaryRule').innerHTML = '<i data-lucide="shopping-bag"></i>Minimum purchase NPR ' + Number(minimumPurchase.value || 0).toLocaleString();
+      lucide.createIcons();
+    }
+
+    [discountName, discountCode, discountValue, minimumPurchase, document.getElementById('discountActive')].forEach(function (field) {
+      field.addEventListener('input', updatePromotionSummary);
+      field.addEventListener('change', updatePromotionSummary);
+    });
+    document.querySelectorAll('input[name="method"], input[name="discount_type"]').forEach(function (input) {
+      input.addEventListener('change', updatePromotionSummary);
+    });
+
+    document.getElementById('generateCode').addEventListener('click', function () {
+      discountCode.value = 'DIPAK' + Math.floor(100 + Math.random() * 900);
+      updatePromotionSummary();
+    });
+    document.querySelectorAll('.coupon-code').forEach(function (button) {
+      button.addEventListener('click', function () {
+        navigator.clipboard && navigator.clipboard.writeText(button.textContent.trim());
+        showDiscountToast('Coupon code copied');
+      });
+    });
+    document.querySelectorAll('.edit-discount').forEach(function (button) {
+      button.addEventListener('click', function () {
+        const row = button.closest('tr');
+        document.getElementById('discountBuilderTitle').textContent = 'Edit Discount';
+        discountName.value = row.dataset.name;
+        discountCode.value = row.dataset.code;
+        discountValue.value = parseInt(row.dataset.value, 10) || 0;
+        updatePromotionSummary();
+        document.getElementById('discountBuilder').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+    document.getElementById('openDiscountForm').addEventListener('click', function () {
+      document.getElementById('discountBuilderTitle').textContent = 'Create Discount';
+      document.getElementById('discountBuilder').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      discountName.focus();
+    });
+    document.getElementById('resetDiscount').addEventListener('click', function () {
+      document.getElementById('discountForm').reset();
+      updatePromotionSummary();
+    });
+
+    function showDiscountToast(message) {
+      discountToast.querySelector('span').textContent = message;
+      discountToast.classList.add('show');
+      setTimeout(function () { discountToast.classList.remove('show'); }, 2400);
+    }
+    document.getElementById('saveDiscountDraft').addEventListener('click', function () { showDiscountToast('Discount saved as draft'); });
+    document.getElementById('discountForm').addEventListener('submit', function (event) {
+      event.preventDefault();
+      showDiscountToast('Discount activated');
+    });
+    updatePromotionSummary();
+  </script>
+</body>
+</html>

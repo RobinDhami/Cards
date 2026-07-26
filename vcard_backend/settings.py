@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'cloudinary',
     'vcards',
     'professional_cards',
+    'shops',
     'rest_framework',
     'corsheaders',
     'tailwind',

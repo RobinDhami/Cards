@@ -1,0 +1,84 @@
+{% extends 'shop/dashboard/owner_base.html' %}
+{% block title %}Store Settings | Tap2Connect Shop{% endblock %}
+{% block main_class %}settings-workspace{% endblock %}
+{% block content %}
+<header class="workspace-header"><div><span class="page-eyebrow">Configuration</span><h1>Store Settings</h1><p>Configure your store information, payments, delivery and policies.</p></div><div class="workspace-actions"><button class="workspace-btn" type="button">Cancel</button><button class="workspace-btn primary" type="button" data-toast="Store settings saved"><i data-lucide="save"></i>Save Changes</button></div></header>
+
+<section class="settings-shell">
+  <nav class="settings-nav" aria-label="Store settings sections">
+    <button class="active" data-settings-tab="details"><i data-lucide="store"></i><span><strong>Store Details</strong><small>Identity and contact</small></span><i data-lucide="chevron-right"></i></button>
+    <button data-settings-tab="payments"><i data-lucide="wallet-cards"></i><span><strong>Payments</strong><small>Payment methods</small></span><i data-lucide="chevron-right"></i></button>
+    <button data-settings-tab="delivery"><i data-lucide="truck"></i><span><strong>Delivery</strong><small>Rates and zones</small></span><i data-lucide="chevron-right"></i></button>
+    <button data-settings-tab="domain"><i data-lucide="globe-2"></i><span><strong>Domain</strong><small>Store web address</small></span><i data-lucide="chevron-right"></i></button>
+    <button data-settings-tab="notifications"><i data-lucide="bell"></i><span><strong>Notifications</strong><small>Alerts and reminders</small></span><i data-lucide="chevron-right"></i></button>
+    <button data-settings-tab="policies"><i data-lucide="file-text"></i><span><strong>Policies</strong><small>Legal store pages</small></span><i data-lucide="chevron-right"></i></button>
+    <button data-settings-tab="social"><i data-lucide="share-2"></i><span><strong>Social Links</strong><small>Connected channels</small></span><i data-lucide="chevron-right"></i></button>
+    <button data-settings-tab="seo"><i data-lucide="search-check"></i><span><strong>SEO</strong><small>Search visibility</small></span><i data-lucide="chevron-right"></i></button>
+    <button data-settings-tab="security"><i data-lucide="shield-check"></i><span><strong>Security</strong><small>Account protection</small></span><i data-lucide="chevron-right"></i></button>
+  </nav>
+
+  <div class="settings-content">
+    <section class="surface-card settings-panel active" data-settings-panel="details">
+      <div class="section-heading"><div><h2>Store details</h2><p>Core business information visible to customers.</p></div></div>
+      <div class="settings-logo-upload"><span class="bag-mark"><i data-lucide="shopping-bag"></i></span><div><strong>Dipak Store logo</strong><small>PNG or JPG, maximum 2 MB</small></div><button class="workspace-btn" type="button">Replace Logo</button></div>
+      <div class="form-grid two-columns"><label>Store name<input value="Dipak Store"></label><label>Email<input type="email" value="hello@dipakstore.com"></label><label>Phone<input value="+977 980-123-4567"></label><label>WhatsApp number<input value="+977 980-123-4567"></label><label class="full-field">Store description<textarea>Curated everyday fashion, accessories and essentials delivered across Nepal.</textarea></label><label class="full-field">Address<input value="New Road, Kathmandu 44600"></label><label>Province<select><option>Bagmati Province</option></select></label><label>City<input value="Kathmandu"></label><label>Time zone<select><option>Asia/Kathmandu (NPT)</option></select></label><label>Currency<select><option>NPR - Nepalese Rupee</option></select></label></div>
+    </section>
+
+    <section class="surface-card settings-panel" data-settings-panel="payments">
+      <div class="section-heading"><div><h2>Payment settings</h2><p>Choose how customers can pay for orders.</p></div></div>
+      <div class="payment-method-list">
+        <label><span class="payment-brand cod"><i data-lucide="banknote"></i></span><span><strong>Cash on Delivery</strong><small>Collect payment when the order arrives.</small></span><input type="checkbox" checked></label>
+        <label><span class="payment-brand qr"><i data-lucide="qr-code"></i></span><span><strong>Manual QR Payment</strong><small>Verify uploaded customer receipts.</small></span><input type="checkbox" checked></label>
+        <label><span class="payment-brand bank"><i data-lucide="landmark"></i></span><span><strong>Bank Transfer</strong><small>Accept direct bank deposits.</small></span><input type="checkbox" checked></label>
+        <label><span class="payment-brand esewa">e</span><span><strong>eSewa</strong><small>Connect an eSewa merchant account.</small></span><input type="checkbox" checked></label>
+        <label><span class="payment-brand khalti">K</span><span><strong>Khalti</strong><small>Accept Khalti wallet payments.</small></span><input type="checkbox"></label>
+        <label><span class="payment-brand fonepay">F</span><span><strong>Fonepay</strong><small>Accept Fonepay QR payments.</small></span><input type="checkbox"></label>
+      </div>
+      <div class="nested-settings-box"><div><h3>Manual QR payment</h3><p>Shown after the customer places an order.</p></div><div class="qr-upload"><span><i data-lucide="qr-code"></i></span><button type="button">Upload payment QR</button></div><div class="form-grid two-columns"><label>Account name<input value="Dipak Sharma"></label><label class="full-field">Payment instructions<textarea>Scan the QR, complete payment and upload a clear screenshot with your order number.</textarea></label><label class="toggle-row full-field"><span><strong>Screenshot required</strong><small>Customers must upload payment proof.</small></span><input type="checkbox" checked></label></div></div>
+      <a class="workspace-btn" href="{% url 'shops:owner_payment_verification' store.slug %}"><i data-lucide="badge-check"></i>Open Payment Verification</a>
+    </section>
+
+    <section class="surface-card settings-panel" data-settings-panel="delivery">
+      <div class="section-heading"><div><h2>Delivery settings</h2><p>Set rates and service areas across Nepal.</p></div></div>
+      <div class="option-card-grid"><label><input type="radio" name="delivery" checked><span><i data-lucide="badge-dollar-sign"></i><strong>Flat delivery rate</strong><small>One charge for all orders.</small></span></label><label><input type="radio" name="delivery"><span><i data-lucide="map-pinned"></i><strong>Delivery by location</strong><small>Different rates by area.</small></span></label><label><input type="radio" name="delivery"><span><i data-lucide="gift"></i><strong>Free delivery threshold</strong><small>Free above a set amount.</small></span></label><label><input type="radio" name="delivery"><span><i data-lucide="store"></i><strong>Store pickup</strong><small>Customers collect in person.</small></span></label></div>
+      <div class="delivery-zone-list"><div class="section-heading"><div><h3>Delivery zones</h3><p>Rates shown in NPR.</p></div><button class="quiet-btn" type="button"><i data-lucide="plus"></i>Add custom area</button></div><div><span><i data-lucide="grip-vertical"></i><b>Inside Kathmandu Valley</b><small>Kathmandu, Lalitpur, Bhaktapur</small></span><strong>NPR 120</strong><label class="switch"><input checked type="checkbox"><i></i></label></div><div><span><i data-lucide="grip-vertical"></i><b>Outside Kathmandu Valley</b><small>Major serviceable cities</small></span><strong>NPR 220</strong><label class="switch"><input checked type="checkbox"><i></i></label></div><div><span><i data-lucide="grip-vertical"></i><b>Custom areas</b><small>Remote and special service areas</small></span><strong>From NPR 280</strong><label class="switch"><input checked type="checkbox"><i></i></label></div></div>
+    </section>
+
+    <section class="surface-card settings-panel" data-settings-panel="domain">
+      <div class="section-heading"><div><h2>Domain settings</h2><p>Connect a memorable address to your storefront.</p></div></div>
+      <div class="domain-card connected"><span><i data-lucide="globe-2"></i></span><div><small>Current subdomain</small><strong>dipakstore.tap2connectnepal.com</strong><em><i data-lucide="check-circle-2"></i>Active</em></div><button class="quiet-btn">Copy</button></div>
+      <div class="domain-card"><span><i data-lucide="link"></i></span><div><small>Custom domain</small><strong>www.dipakstore.com</strong><em><i data-lucide="badge-check"></i>Connected</em></div><span class="state-pill active">Primary</span></div>
+      <div class="domain-actions"><button class="workspace-btn primary"><i data-lucide="plus"></i>Connect Domain</button><button class="workspace-btn"><i data-lucide="refresh-cw"></i>Verify Domain</button><button class="workspace-btn"><i data-lucide="star"></i>Set Primary Domain</button></div>
+    </section>
+
+    <section class="surface-card settings-panel" data-settings-panel="notifications">
+      <div class="section-heading"><div><h2>Notification settings</h2><p>Control important store alerts.</p></div></div>
+      <div class="toggle-list"><label><span><i data-lucide="shopping-cart"></i><strong>New order email</strong><small>Email the owner when an order arrives.</small></span><input type="checkbox" checked></label><label><span><i data-lucide="message-square"></i><strong>New order SMS</strong><small>Send a concise SMS alert.</small></span><input type="checkbox" checked></label><label><span><i data-lucide="triangle-alert"></i><strong>Low-stock alert</strong><small>Warn when inventory reaches its threshold.</small></span><input type="checkbox" checked></label><label><span><i data-lucide="badge-check"></i><strong>Payment verification alert</strong><small>Notify when proof is uploaded.</small></span><input type="checkbox" checked></label><label><span><i data-lucide="star"></i><strong>Customer review alert</strong><small>Notify when a new review is submitted.</small></span><input type="checkbox"></label><label><span><i data-lucide="calendar-clock"></i><strong>Subscription reminder</strong><small>Receive reminders before renewal.</small></span><input type="checkbox" checked></label></div>
+    </section>
+
+    <section class="surface-card settings-panel" data-settings-panel="policies">
+      <div class="section-heading"><div><h2>Store policies</h2><p>Clear policies build customer confidence.</p></div></div>
+      <div class="policy-tabs"><button class="active">Shipping Policy</button><button>Return &amp; Refund</button><button>Privacy Policy</button><button>Terms &amp; Conditions</button></div>
+      <div class="rich-editor"><div><button><b>B</b></button><button><i>I</i></button><button><i data-lucide="list"></i></button><button><i data-lucide="link"></i></button></div><textarea>Orders are processed within 1-2 business days. Delivery inside Kathmandu Valley normally takes 1-3 days, while delivery outside the Valley takes 3-7 business days.</textarea></div>
+    </section>
+
+    <section class="surface-card settings-panel" data-settings-panel="social">
+      <div class="section-heading"><div><h2>Social links</h2><p>Help customers find Dipak Store online.</p></div></div>
+      <div class="social-inputs"><label><i>f</i><span>Facebook<input value="facebook.com/dipakstore"></span></label><label><i>◎</i><span>Instagram<input value="instagram.com/dipakstore"></span></label><label><i>♪</i><span>TikTok<input value="tiktok.com/@dipakstore"></span></label><label><i>▶</i><span>YouTube<input placeholder="youtube.com/@channel"></span></label><label><i data-lucide="message-circle"></i><span>WhatsApp<input value="https://wa.me/9779801234567"></span></label></div>
+    </section>
+
+    <section class="surface-card settings-panel" data-settings-panel="seo">
+      <div class="section-heading"><div><h2>Search engine optimization</h2><p>Control how the store appears in search results.</p></div></div>
+      <div class="form-grid"><label>Homepage SEO title<input value="Dipak Store | Fashion & Accessories in Nepal"><small>48 of 60 characters</small></label><label>Meta description<textarea>Shop curated fashion, accessories, footwear and everyday essentials from Dipak Store. Fast delivery across Nepal.</textarea><small>132 of 160 characters</small></label><label>Social sharing image<button class="seo-image-upload" type="button"><i data-lucide="image-plus"></i>Upload 1200 x 630 image</button></label><label class="toggle-row"><span><strong>Search engine visibility</strong><small>Allow search engines to index the storefront.</small></span><input type="checkbox" checked></label></div>
+      <div class="search-result-preview"><small>dipakstore.tap2connectnepal.com</small><strong>Dipak Store | Fashion &amp; Accessories in Nepal</strong><p>Shop curated fashion, accessories, footwear and everyday essentials from Dipak Store.</p></div>
+    </section>
+
+    <section class="surface-card settings-panel" data-settings-panel="security">
+      <div class="section-heading"><div><h2>Security</h2><p>Protect your account and monitor access.</p></div></div>
+      <div class="security-list"><div><span><i data-lucide="key-round"></i><strong>Change password</strong><small>Last changed 3 months ago.</small></span><button class="workspace-btn">Change Password</button></div><div><span><i data-lucide="shield-check"></i><strong>Two-factor authentication</strong><small>Add an extra layer of account protection.</small></span><button class="workspace-btn primary">Enable 2FA</button></div><div><span><i data-lucide="monitor-smartphone"></i><strong>Active login sessions</strong><small>2 active sessions on Windows and Android.</small></span><button class="workspace-btn">View Sessions</button></div><div><span><i data-lucide="history"></i><strong>Login history</strong><small>Review recent account access.</small></span><button class="workspace-btn">View History</button></div></div>
+      <button class="danger-outline-btn" type="button" data-toast="Other sessions signed out"><i data-lucide="log-out"></i>Sign out all devices</button>
+    </section>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script>const settingsTabs=document.querySelectorAll('[data-settings-tab]'),settingsPanels=document.querySelectorAll('[data-settings-panel]');settingsTabs.forEach(tab=>tab.addEventListener('click',()=>{settingsTabs.forEach(item=>item.classList.remove('active'));settingsPanels.forEach(panel=>panel.classList.toggle('active',panel.dataset.settingsPanel===tab.dataset.settingsTab));tab.classList.add('active');if(innerWidth<900)document.querySelector('.settings-content').scrollIntoView({behavior:'smooth'});}));document.querySelectorAll('.policy-tabs button').forEach(button=>button.addEventListener('click',()=>{document.querySelectorAll('.policy-tabs button').forEach(item=>item.classList.remove('active'));button.classList.add('active');}));</script>{% endblock %}

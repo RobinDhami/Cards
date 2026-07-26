@@ -1,0 +1,72 @@
+{% extends 'shop/dashboard/owner_base.html' %}
+{% block title %}Marketing | Tap2Connect Shop{% endblock %}
+{% block main_class %}marketing-workspace{% endblock %}
+{% block content %}
+<header class="workspace-header">
+  <div><span class="page-eyebrow">Growth</span><h1>Marketing</h1><p>Promote your store and increase sales across different channels.</p></div>
+  <button class="workspace-btn primary" type="button" data-toast="Campaign draft created"><i data-lucide="plus"></i>Create Campaign</button>
+</header>
+
+<section class="workspace-summary five" aria-label="Marketing summary">
+  <article><span class="summary-icon purple"><i data-lucide="circle-dollar-sign"></i></span><small>Campaign Revenue</small><strong>NPR 184,500</strong><em class="positive">+18.2%</em></article>
+  <article><span class="summary-icon blue"><i data-lucide="radio-tower"></i></span><small>Active Campaigns</small><strong>5</strong><em>2 ending soon</em></article>
+  <article><span class="summary-icon green"><i data-lucide="mouse-pointer-click"></i></span><small>Coupon Conversions</small><strong>8.4%</strong><em class="positive">+1.6%</em></article>
+  <article><span class="summary-icon orange"><i data-lucide="shopping-cart"></i></span><small>Carts Recovered</small><strong>32</strong><em class="positive">NPR 76,400</em></article>
+  <article><span class="summary-icon navy"><i data-lucide="trending-up"></i></span><small>Marketing Return</small><strong>4.2x</strong><em class="positive">Healthy return</em></article>
+</section>
+
+<section class="surface-card">
+  <div class="section-heading"><div><h2>Campaign tools</h2><p>Choose a channel and start reaching more customers.</p></div><a href="#campaigns">View active campaigns</a></div>
+  <div class="feature-tool-grid">
+    <button type="button" data-toast="Promotional banner editor opened"><span class="tool-icon purple"><i data-lucide="image"></i></span><strong>Promotional Banners</strong><small>Highlight offers across your storefront.</small><i data-lucide="arrow-up-right"></i></button>
+    <button type="button" data-toast="Coupon campaign started"><span class="tool-icon blue"><i data-lucide="ticket-percent"></i></span><strong>Coupon Campaigns</strong><small>Pair a coupon with a focused audience.</small><i data-lucide="arrow-up-right"></i></button>
+    <button type="button" data-toast="Email campaign composer opened"><span class="tool-icon green"><i data-lucide="mail"></i></span><strong>Email Campaigns</strong><small>Send product stories and promotions.</small><i data-lucide="arrow-up-right"></i></button>
+    <button type="button" data-toast="SMS campaign composer opened"><span class="tool-icon orange"><i data-lucide="message-square-text"></i></span><strong>SMS Campaigns</strong><small>Reach opted-in customers instantly.</small><i data-lucide="arrow-up-right"></i></button>
+    <button type="button" data-toast="Recovery flow opened"><span class="tool-icon red"><i data-lucide="shopping-cart"></i></span><strong>Abandoned Cart Recovery</strong><small>Bring high-intent shoppers back.</small><i data-lucide="arrow-up-right"></i></button>
+    <button type="button" data-toast="Social sharing options opened"><span class="tool-icon navy"><i data-lucide="share-2"></i></span><strong>Social Media Sharing</strong><small>Publish products to your channels.</small><i data-lucide="arrow-up-right"></i></button>
+    <button type="button" class="coming-soon" disabled><span class="tool-icon purple"><i data-lucide="users-round"></i></span><strong>Referral Program</strong><small>Reward customers who bring friends.</small><em>Coming Soon</em></button>
+    <button type="button" class="coming-soon" disabled><span class="tool-icon blue"><i data-lucide="gem"></i></span><strong>Loyalty Program</strong><small>Build lasting customer relationships.</small><em>Coming Soon</em></button>
+  </div>
+</section>
+
+<section class="surface-card" id="campaigns">
+  <div class="section-heading"><div><h2>Active campaigns</h2><p>Performance across current and scheduled promotions.</p></div><button class="quiet-btn" type="button"><i data-lucide="sliders-horizontal"></i>Filter</button></div>
+  <div class="workspace-table-wrap">
+    <table class="workspace-table campaign-table">
+      <thead><tr><th>Campaign</th><th>Channel</th><th>Audience</th><th>Status</th><th>Sent / Reach</th><th>Conversions</th><th>Revenue</th><th>Date</th><th>Actions</th></tr></thead>
+      <tbody>
+        <tr><td><span class="table-title"><i class="campaign-dot purple"></i><span><strong>New Collection Launch</strong><small>Summer edit</small></span></span></td><td>Website + Email</td><td>All customers</td><td><span class="state-pill active">Active</span></td><td>8,420</td><td>9.8%</td><td><strong>NPR 62,800</strong></td><td>Jul 18 - Aug 2</td><td><button class="more-button" aria-label="Campaign actions"><i data-lucide="more-horizontal"></i></button></td></tr>
+        <tr><td><span class="table-title"><i class="campaign-dot orange"></i><span><strong>Weekend Flash Sale</strong><small>48-hour offer</small></span></span></td><td>Website + SMS</td><td>Returning</td><td><span class="state-pill active">Active</span></td><td>4,860</td><td>12.4%</td><td><strong>NPR 48,400</strong></td><td>Jul 20 - Jul 22</td><td><button class="more-button" aria-label="Campaign actions"><i data-lucide="more-horizontal"></i></button></td></tr>
+        <tr><td><span class="table-title"><i class="campaign-dot blue"></i><span><strong>Welcome Coupon</strong><small>WELCOME20</small></span></span></td><td>Email</td><td>New customers</td><td><span class="state-pill active">Active</span></td><td>1,240</td><td>8.4%</td><td><strong>NPR 29,900</strong></td><td>Always on</td><td><button class="more-button" aria-label="Campaign actions"><i data-lucide="more-horizontal"></i></button></td></tr>
+        <tr><td><span class="table-title"><i class="campaign-dot green"></i><span><strong>Dashain Promotion</strong><small>Festival campaign</small></span></span></td><td>All channels</td><td>All customers</td><td><span class="state-pill scheduled">Scheduled</span></td><td>-</td><td>-</td><td><strong>-</strong></td><td>Sep 20 - Oct 10</td><td><button class="more-button" aria-label="Campaign actions"><i data-lucide="more-horizontal"></i></button></td></tr>
+        <tr><td><span class="table-title"><i class="campaign-dot red"></i><span><strong>Abandoned Cart Reminder</strong><small>3-message flow</small></span></span></td><td>Email + SMS</td><td>Abandoned carts</td><td><span class="state-pill active">Active</span></td><td>286</td><td>11.2%</td><td><strong>NPR 43,400</strong></td><td>Always on</td><td><button class="more-button" aria-label="Campaign actions"><i data-lucide="more-horizontal"></i></button></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="workspace-two-column marketing-bottom">
+  <article class="surface-card banner-manager">
+    <div class="section-heading"><div><h2>Promotional banner</h2><p>Homepage campaign currently live.</p></div><label class="switch"><input type="checkbox" checked aria-label="Banner active"><i></i></label></div>
+    <div class="banner-preview">
+      <div><span>WEEKEND EDIT</span><h3>Style that moves with you.</h3><p>Save up to 30% on selected fashion and accessories.</p><button type="button">Shop the offer</button></div>
+    </div>
+    <div class="compact-form-grid">
+      <label>Heading<input value="Style that moves with you."></label>
+      <label>Button label<input value="Shop the offer"></label>
+      <label>Link destination<select><option>/collections/weekend-edit</option></select></label>
+      <label>Schedule<span class="input-with-icon"><i data-lucide="calendar"></i><input value="Jul 20 - Jul 22"></span></label>
+    </div>
+  </article>
+  <article class="surface-card channel-performance">
+    <div class="section-heading"><div><h2>Channel performance</h2><p>Revenue contribution this month.</p></div><button class="quiet-btn" type="button">This month<i data-lucide="chevron-down"></i></button></div>
+    <div class="horizontal-bars">
+      <div><span><b>Website</b><small>NPR 82,400</small></span><i><em style="width:88%"></em></i><strong>44.7%</strong></div>
+      <div><span><b>Facebook</b><small>NPR 41,200</small></span><i><em style="width:64%"></em></i><strong>22.3%</strong></div>
+      <div><span><b>Instagram</b><small>NPR 32,500</small></span><i><em style="width:50%"></em></i><strong>17.6%</strong></div>
+      <div><span><b>Email</b><small>NPR 20,600</small></span><i><em style="width:34%"></em></i><strong>11.2%</strong></div>
+      <div><span><b>SMS</b><small>NPR 7,800</small></span><i><em style="width:18%"></em></i><strong>4.2%</strong></div>
+    </div>
+  </article>
+</section>
+{% endblock %}

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Business Suite · Tap2Connect</title>
+  {% include "partials/tap2connect_favicon.html" %}
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing:border-box; }
+    html, body { min-height:100%; margin:0; font-family:Inter, sans-serif; background:#f7f9fc; color:#10213d; }
+    .panel { border:1px solid #e2e8f0; border-radius:10px; background:#fff; }
+  </style>
+</head>
+<body>
+  <div class="flex min-h-screen">
+    {% include "dashboard/_sidebar.html" %}
+    <div class="min-w-0 flex-1">
+      <header class="sticky top-0 z-20 flex min-h-[72px] items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6">
+        <div class="flex items-center gap-3">
+          <button id="mobile-menu-btn" type="button" class="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 lg:hidden"><i data-lucide="menu" class="h-4 w-4"></i></button>
+          <div>
+            <h1 class="text-xl font-semibold tracking-tight text-slate-950">Business Suite</h1>
+            <p class="mt-0.5 text-[11px] text-slate-500">Manage Tap2Connect Shop clients, storefronts, orders, and subscriptions.</p>
+          </div>
+        </div>
+        <a href="/admin/shops/store/add/" class="inline-flex items-center gap-2 rounded-lg bg-blue-700 px-4 py-2.5 text-xs font-semibold text-white hover:bg-blue-800">
+          <i data-lucide="plus" class="h-4 w-4"></i>Add store
+        </a>
+      </header>
+
+      <main class="mx-auto max-w-[1440px] space-y-4 p-4 sm:p-6">
+        <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <article class="panel p-5"><div class="flex items-center justify-between text-xs text-slate-500"><span>Total stores</span><i data-lucide="store" class="h-4 w-4 text-blue-700"></i></div><div class="mt-2 text-2xl font-semibold text-slate-950">{{ stats.store_count }}</div><p class="mt-1 text-[10px] text-slate-500">{{ stats.published_store_count }} published storefronts</p></article>
+          <article class="panel p-5"><div class="flex items-center justify-between text-xs text-slate-500"><span>Active stores</span><i data-lucide="badge-check" class="h-4 w-4 text-emerald-600"></i></div><div class="mt-2 text-2xl font-semibold text-slate-950">{{ stats.active_store_count }}</div><p class="mt-1 text-[10px] text-slate-500">Allowed to operate</p></article>
+          <article class="panel p-5"><div class="flex items-center justify-between text-xs text-slate-500"><span>Products</span><i data-lucide="package" class="h-4 w-4 text-violet-600"></i></div><div class="mt-2 text-2xl font-semibold text-slate-950">{{ stats.product_count }}</div><p class="mt-1 text-[10px] text-slate-500">Across all stores</p></article>
+          <article class="panel p-5"><div class="flex items-center justify-between text-xs text-slate-500"><span>Total sales</span><i data-lucide="line-chart" class="h-4 w-4 text-amber-600"></i></div><div class="mt-2 text-2xl font-semibold text-slate-950">NPR {{ stats.total_sales|floatformat:0 }}</div><p class="mt-1 text-[10px] text-slate-500">{{ stats.pending_order_count }} pending orders</p></article>
+        </section>
+
+        <section class="grid gap-4 xl:grid-cols-[1fr_360px]">
+          <article class="panel overflow-hidden">
+            <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+              <div><h2 class="text-sm font-semibold text-slate-950">Store directory</h2><p class="mt-1 text-[11px] text-slate-500">Every row is scoped to one store tenant.</p></div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full min-w-[940px] text-left">
+                <thead class="bg-slate-50 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                  <tr><th class="px-5 py-3">Store</th><th class="px-5 py-3">Owner</th><th class="px-5 py-3">Plan</th><th class="px-5 py-3 text-center">Products</th><th class="px-5 py-3 text-center">Orders</th><th class="px-5 py-3 text-right">Actions</th></tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  {% for store in stores %}
+                    <tr class="hover:bg-slate-50">
+                      <td class="px-5 py-4">
+                        <div class="flex items-center gap-3">
+                          <div class="flex h-10 w-10 flex-none items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white text-xs font-bold text-blue-700">{% if store.logo %}<img src="{{ store.logo.url }}" alt="" class="h-full w-full object-contain p-1">{% else %}{{ store.name|slice:":1"|upper }}{% endif %}</div>
+                          <div class="min-w-0"><div class="truncate text-xs font-semibold text-slate-900">{{ store.name }}</div><div class="mt-1 truncate text-[10px] text-slate-500">/shop/{{ store.slug }}/</div></div>
+                        </div>
+                      </td>
+                      <td class="px-5 py-4"><div class="text-xs font-medium text-slate-700">{{ store.owner.username|default:"Unassigned" }}</div><div class="mt-1 text-[10px] text-slate-500">{{ store.email|default:"No store email" }}</div></td>
+                      <td class="px-5 py-4"><span class="rounded-md bg-blue-50 px-2 py-1 text-[10px] font-semibold text-blue-700">{{ store.get_subscription_plan_display }} · {{ store.get_subscription_status_display }}</span></td>
+                      <td class="px-5 py-4 text-center text-xs font-semibold text-slate-700">{{ store.product_count }}</td>
+                      <td class="px-5 py-4 text-center text-xs font-semibold text-slate-700">{{ store.order_count }}</td>
+                      <td class="px-5 py-4">
+                        <div class="flex justify-end gap-2">
+                          <a href="{% url 'shops:store_home' store.slug %}" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-[11px] font-semibold text-slate-700 hover:bg-white"><i data-lucide="external-link" class="h-3.5 w-3.5"></i>Preview</a>
+                          <a href="{% url 'shops:owner_dashboard' store.slug %}" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-[11px] font-semibold text-slate-700 hover:bg-white"><i data-lucide="layout-dashboard" class="h-3.5 w-3.5"></i>Dashboard</a>
+                          <a href="/admin/shops/store/{{ store.id }}/change/" class="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-[11px] font-semibold text-white hover:bg-slate-800"><i data-lucide="settings" class="h-3.5 w-3.5"></i>Admin</a>
+                        </div>
+                      </td>
+                    </tr>
+                  {% empty %}
+                    <tr><td colspan="6" class="px-5 py-14 text-center text-sm text-slate-500">No shop stores yet. Create a store to begin.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="panel p-5">
+            <h2 class="text-sm font-semibold text-slate-950">Recent orders</h2>
+            <div class="mt-4 space-y-3">
+              {% for order in recent_orders %}
+                <div class="rounded-lg border border-slate-100 p-3">
+                  <div class="flex items-center justify-between gap-3"><span class="text-xs font-semibold text-slate-900">{{ order.order_number }}</span><span class="text-[10px] text-slate-500">NPR {{ order.grand_total|floatformat:0 }}</span></div>
+                  <div class="mt-1 flex items-center justify-between gap-3 text-[10px] text-slate-500"><span>{{ order.store.name }}</span><span>{{ order.get_status_display }}</span></div>
+                </div>
+              {% empty %}
+                <p class="text-xs text-slate-500">Orders from all shop stores will appear here.</p>
+              {% endfor %}
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div id="mobile-sidebar" class="fixed bottom-0 left-0 top-0 z-50 hidden w-64 overflow-auto bg-white shadow-xl lg:hidden"></div>
+  <script>
+    lucide.createIcons();
+    const source = document.getElementById('sidebar');
+    const target = document.getElementById('mobile-sidebar');
+    if (source && target) target.innerHTML = source.innerHTML;
+    document.getElementById('mobile-menu-btn')?.addEventListener('click', () => target?.classList.toggle('hidden'));
+    target?.addEventListener('click', (event) => {
+      if (event.target.closest('a')) target.classList.add('hidden');
+    });
+  </script>
+</body>
+</html>

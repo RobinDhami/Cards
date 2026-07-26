@@ -1,0 +1,267 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Categories - Tap2Connect Shop</title>
+  {% include "partials/tap2connect_favicon.html" %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="stylesheet" href="{% static 'shop/css/owner_dashboard.css' %}">
+</head>
+<body>
+  <div class="owner-shell">
+    <aside class="owner-sidebar" aria-label="Store owner navigation">
+      <a class="owner-logo" href="{% url 'shops:owner_dashboard' store.slug %}" aria-label="Tap2Connect Shop dashboard">
+        <span class="bag-mark"><i data-lucide="shopping-bag"></i></span>
+        <span><strong>Tap2Connect</strong><small>SHOP</small></span>
+      </a>
+      <nav class="owner-menu">
+        <a href="{% url 'shops:owner_dashboard' store.slug %}"><i data-lucide="layout-dashboard"></i>Dashboard</a>
+        <a href="{% url 'shops:owner_orders' store.slug %}"><i data-lucide="shopping-cart"></i>Orders<span class="order-badge">23</span></a>
+        <a href="{% url 'shops:owner_products' store.slug %}"><i data-lucide="package"></i>Products</a>
+        <a class="active" href="{% url 'shops:owner_categories' store.slug %}"><i data-lucide="tags"></i>Categories</a>
+        <a href="{% url 'shops:owner_customers' store.slug %}"><i data-lucide="users"></i>Customers</a>
+        <a href="{% url 'shops:owner_discounts' store.slug %}"><i data-lucide="badge-percent"></i>Discounts</a>
+        <a href="#"><i data-lucide="star"></i>Reviews</a>
+        <a href="{% url 'shops:owner_marketing' store.slug %}"><i data-lucide="megaphone"></i>Marketing</a>
+        <a href="{% url 'shops:owner_reports' store.slug %}"><i data-lucide="bar-chart-3"></i>Reports</a>
+        <a href="{% url 'shops:owner_website' store.slug %}"><i data-lucide="monitor-smartphone"></i>Website</a>
+        <a href="{% url 'shops:owner_staff' store.slug %}"><i data-lucide="user-cog"></i>Staff</a>
+        <a href="{% url 'shops:owner_billing' store.slug %}"><i data-lucide="credit-card"></i>Billing</a>
+        <a href="{% url 'shops:owner_settings' store.slug %}"><i data-lucide="settings"></i>Settings</a>
+        <a href="{% url 'shops:owner_support' store.slug %}"><i data-lucide="life-buoy"></i>Support</a>
+      </nav>
+      <div class="sales-channel">
+        <span>Sales Channel</span>
+        <a href="{% url 'shops:store_home' store.slug %}"><i data-lucide="external-link"></i>View Store</a>
+        <a href="{% url 'shops:owner_store_preview' store.slug %}"><i data-lucide="eye"></i>Store Preview</a>
+      </div>
+      <button class="owner-profile" type="button">
+        <span class="avatar">DS</span>
+        <span><strong>Dipak Store</strong><small>Owner</small></span>
+        <i data-lucide="chevron-down"></i>
+      </button>
+    </aside>
+
+    <div class="dashboard-frame">
+      <header class="owner-topbar">
+        <div class="topbar-left">
+          <button class="icon-button" type="button" aria-label="Toggle sidebar"><i data-lucide="menu"></i></button>
+          <button class="store-selector" type="button">Dipak Store <i data-lucide="chevron-down"></i></button>
+          <span class="live-badge"><i data-lucide="radio"></i>Live</span>
+        </div>
+        <label class="global-search"><i data-lucide="search"></i><input placeholder="Search orders, products, customers..." aria-label="Search orders, products, customers"></label>
+        <div class="topbar-actions">
+          <button class="date-pill" type="button"><i data-lucide="calendar-days"></i>May 7 - Jun 4</button>
+          <a class="icon-button alert" href="{% url 'shops:owner_notifications' store.slug %}" aria-label="Notifications"><i data-lucide="bell"></i></a>
+          <button class="icon-button" type="button" aria-label="Help"><i data-lucide="circle-help"></i></button>
+          <button class="top-profile" type="button"><span class="avatar image-avatar">DS</span><span><strong>Dipak Sharma</strong><small>Store Owner</small></span><i data-lucide="chevron-down"></i></button>
+        </div>
+      </header>
+
+      <main class="owner-main categories-main">
+        <section class="welcome-row orders-header">
+          <div><h1>Categories</h1><p>Organise products into categories and subcategories.</p></div>
+          <div class="page-actions"><button class="primary-mini-action" id="openCategoryForm" type="button"><i data-lucide="plus"></i>Add Category</button></div>
+        </section>
+
+        <section class="order-summary-row category-summary-row" aria-label="Category summary">
+          {% for card in summary_cards %}
+            <article class="order-summary-card">
+              <span class="kpi-icon {{ card.tone }}"><i data-lucide="{{ card.icon }}"></i></span>
+              <div><small>{{ card.label }}</small><strong>{{ card.value }}</strong><em class="trend up">{{ card.trend }}</em></div>
+            </article>
+          {% endfor %}
+        </section>
+
+        <div class="category-management-grid">
+          <section class="dashboard-card category-tree-card">
+            <header class="management-card-head">
+              <div><h2>Category structure</h2><p>Drag rows to update the order shown in your store.</p></div>
+              <label class="compact-search"><i data-lucide="search"></i><input placeholder="Search categories" aria-label="Search categories"></label>
+            </header>
+            <div class="category-table-wrap">
+              <table class="category-table">
+                <thead><tr><th aria-label="Reorder"></th><th>Category</th><th>Products</th><th>Status</th><th>Display Order</th><th>Actions</th></tr></thead>
+                <tbody id="categoryRows">
+                  {% for category in categories %}
+                    <tr draggable="true" data-name="{{ category.name }}" data-image="{% static category.image %}" class="{% if category.depth %}subcategory-row{% else %}parent-category-row{% endif %}">
+                      <td><button class="drag-handle" type="button" aria-label="Drag {{ category.name }}"><i data-lucide="grip-vertical"></i></button></td>
+                      <td>
+                        <div class="category-name-cell depth-{{ category.depth }}">
+                          {% if category.depth %}<span class="tree-connector"></span>{% else %}<button class="tree-toggle" type="button" aria-label="Collapse {{ category.name }}"><i data-lucide="chevron-down"></i></button>{% endif %}
+                          <img src="{% static category.image %}" alt="">
+                          <span><strong>{{ category.name }}</strong><small>{% if category.depth %}Subcategory{% else %}Parent category{% endif %}</small></span>
+                        </div>
+                      </td>
+                      <td><strong>{{ category.count }}</strong></td>
+                      <td><span class="product-status {{ category.status|lower }}">{{ category.status }}</span></td>
+                      <td><label class="display-order-field"><input type="number" min="1" value="{{ category.order }}" aria-label="Display order for {{ category.name }}"><i data-lucide="move-vertical"></i></label></td>
+                      <td>
+                        <details class="row-actions">
+                          <summary aria-label="Open actions for {{ category.name }}"><i data-lucide="more-horizontal"></i></summary>
+                          <div><button class="edit-category" type="button">Edit Category</button><button type="button">Add Subcategory</button><button type="button">View Products</button><button type="button">Duplicate</button><button type="button" class="danger">Delete</button></div>
+                        </details>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <footer class="category-tree-footer"><span><i data-lucide="grip-vertical"></i>Drag and drop ordering is enabled</span><strong>12 categories</strong></footer>
+          </section>
+
+          <aside class="dashboard-card category-editor-card" id="categoryEditor">
+            <header class="management-card-head">
+              <div><h2 id="categoryFormTitle">Add Category</h2><p>Create a new category or subcategory.</p></div>
+              <span class="editor-mode"><i data-lucide="sparkles"></i>Live preview</span>
+            </header>
+            <form id="categoryForm">
+              <div class="category-editor-fields">
+                <label class="form-field"><span>Category name <em>*</em></span><input id="categoryName" type="text" placeholder="e.g. Fashion" required></label>
+                <label class="form-field"><span>Parent category</span><select id="parentCategory"><option>None - top level</option><option>Fashion</option><option>Accessories</option><option>Footwear</option></select></label>
+                <label class="form-field"><span>Slug</span><div class="slug-field"><span>/category/</span><input id="categorySlug" type="text" placeholder="fashion"></div></label>
+                <label class="form-field"><span>Description</span><textarea id="categoryDescription" rows="3" placeholder="Tell shoppers what they can find here."></textarea></label>
+                <div class="form-field">
+                  <span>Category image</span>
+                  <input id="categoryImageInput" type="file" accept="image/*" hidden>
+                  <button class="category-image-upload" id="categoryImageButton" type="button">
+                    <img id="categoryImagePreview" src="{% static 'shop/images/bag.jpg' %}" alt="Category preview">
+                    <span><strong>Upload image</strong><small>Recommended 800 x 600px</small></span>
+                    <i data-lucide="upload"></i>
+                  </button>
+                </div>
+                <label class="form-field"><span>Display order</span><input type="number" min="1" value="1"></label>
+                <label class="toggle-setting compact-toggle"><span><strong>Active status</strong><small>Make this category available in your store.</small></span><input type="checkbox" checked><i></i></label>
+                <label class="toggle-setting compact-toggle"><span><strong>Show on homepage</strong><small>Feature this category in the homepage collection.</small></span><input type="checkbox"><i></i></label>
+                <label class="form-field"><span>SEO title</span><input id="categorySeoTitle" type="text" maxlength="60" placeholder="Fashion Collection | Dipak Store"></label>
+                <label class="form-field"><span>SEO description</span><textarea rows="3" maxlength="160" placeholder="Browse curated products from Dipak Store."></textarea></label>
+              </div>
+
+              <div class="category-live-preview">
+                <span>Category card preview</span>
+                <article>
+                  <img id="liveCategoryImage" src="{% static 'shop/images/bag.jpg' %}" alt="">
+                  <div><small id="liveParent">Top-level category</small><h3 id="liveCategoryName">Category name</h3><p id="liveCategoryDescription">A short description will appear here.</p><strong>0 products <i data-lucide="arrow-right"></i></strong></div>
+                </article>
+              </div>
+
+              <footer class="editor-actions">
+                <button class="secondary-action" id="cancelCategory" type="button">Cancel</button>
+                <button class="primary-mini-action" type="submit"><i data-lucide="check"></i>Save Category</button>
+              </footer>
+            </form>
+          </aside>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div class="product-toast" id="categoryToast" role="status" aria-live="polite"><i data-lucide="circle-check"></i><span>Category saved</span></div>
+
+  <script>
+    lucide.createIcons();
+    const categoryName = document.getElementById('categoryName');
+    const categorySlug = document.getElementById('categorySlug');
+    const categoryDescription = document.getElementById('categoryDescription');
+    const parentCategory = document.getElementById('parentCategory');
+    const liveCategoryName = document.getElementById('liveCategoryName');
+    const liveCategoryDescription = document.getElementById('liveCategoryDescription');
+    const liveParent = document.getElementById('liveParent');
+    const categoryEditor = document.getElementById('categoryEditor');
+    const categoryToast = document.getElementById('categoryToast');
+    let categorySlugEdited = false;
+
+    function categorySlugify(value) {
+      return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    }
+
+    function updateCategoryPreview() {
+      liveCategoryName.textContent = categoryName.value.trim() || 'Category name';
+      liveCategoryDescription.textContent = categoryDescription.value.trim() || 'A short description will appear here.';
+      liveParent.textContent = parentCategory.value.indexOf('None') === 0 ? 'Top-level category' : 'Under ' + parentCategory.value;
+    }
+
+    categoryName.addEventListener('input', function () {
+      if (!categorySlugEdited) categorySlug.value = categorySlugify(categoryName.value);
+      updateCategoryPreview();
+    });
+    categorySlug.addEventListener('input', function () { categorySlugEdited = true; });
+    categoryDescription.addEventListener('input', updateCategoryPreview);
+    parentCategory.addEventListener('change', updateCategoryPreview);
+
+    document.getElementById('openCategoryForm').addEventListener('click', function () {
+      document.getElementById('categoryFormTitle').textContent = 'Add Category';
+      categoryName.value = '';
+      categoryDescription.value = '';
+      categorySlug.value = '';
+      categorySlugEdited = false;
+      updateCategoryPreview();
+      categoryEditor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      categoryName.focus();
+    });
+
+    document.querySelectorAll('.edit-category').forEach(function (button) {
+      button.addEventListener('click', function () {
+        const row = button.closest('tr');
+        const name = row.dataset.name;
+        document.getElementById('categoryFormTitle').textContent = 'Edit Category';
+        categoryName.value = name;
+        categorySlug.value = categorySlugify(name);
+        categoryDescription.value = 'Explore the latest ' + name.toLowerCase() + ' collection available from Dipak Store.';
+        document.getElementById('categoryImagePreview').src = row.dataset.image;
+        document.getElementById('liveCategoryImage').src = row.dataset.image;
+        updateCategoryPreview();
+        categoryEditor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
+    document.getElementById('categoryImageButton').addEventListener('click', function () {
+      document.getElementById('categoryImageInput').click();
+    });
+    document.getElementById('categoryImageInput').addEventListener('change', function () {
+      const file = this.files[0];
+      if (!file) return;
+      const imageUrl = URL.createObjectURL(file);
+      document.getElementById('categoryImagePreview').src = imageUrl;
+      document.getElementById('liveCategoryImage').src = imageUrl;
+    });
+
+    let draggedCategory = null;
+    document.querySelectorAll('#categoryRows tr').forEach(function (row) {
+      row.addEventListener('dragstart', function () {
+        draggedCategory = row;
+        row.classList.add('dragging-row');
+      });
+      row.addEventListener('dragend', function () {
+        row.classList.remove('dragging-row');
+        document.querySelectorAll('#categoryRows tr').forEach(function (item) { item.classList.remove('drag-over-row'); });
+      });
+      row.addEventListener('dragover', function (event) {
+        event.preventDefault();
+        if (row !== draggedCategory) row.classList.add('drag-over-row');
+      });
+      row.addEventListener('dragleave', function () { row.classList.remove('drag-over-row'); });
+      row.addEventListener('drop', function (event) {
+        event.preventDefault();
+        row.classList.remove('drag-over-row');
+        if (draggedCategory && draggedCategory !== row) row.before(draggedCategory);
+      });
+    });
+
+    document.getElementById('categoryForm').addEventListener('submit', function (event) {
+      event.preventDefault();
+      categoryToast.classList.add('show');
+      setTimeout(function () { categoryToast.classList.remove('show'); }, 2400);
+    });
+    document.getElementById('cancelCategory').addEventListener('click', function () {
+      document.getElementById('categoryForm').reset();
+      categorySlugEdited = false;
+      updateCategoryPreview();
+    });
+  </script>
+</body>
+</html>

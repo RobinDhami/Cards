@@ -1,0 +1,15 @@
+{% extends "shop/base.html" %}
+{% load static %}
+
+{% block title %}Order Confirmed - {{ store.name }}{% endblock %}
+{% block body_class %}success-page-body{% endblock %}
+{% block content %}
+<main id="top">
+  <section class="success-hero"><div class="success-check"><svg><use href="#i-check"></use></svg></div><span class="eyebrow">ORDER CONFIRMED</span><h1>Thank you, {{ order.customer_name }}.</h1><p>We have received your order and will contact you when it is ready to move.</p><div class="success-number"><span>Order number</span><strong>{{ order.order_number }}</strong></div></section>
+  <section class="container success-shell">
+    <div class="success-main"><div class="success-panel"><div class="panel-title"><div><h2>Order details</h2><p>{{ order.created_at|date:"F j, Y \a\t g:i A" }}</p></div><span class="status-badge {{ order.status }}">{{ order.get_status_display }}</span></div><div class="success-items">{% for item in order.items.all %}<article>{% if item.product and item.product.image %}<img src="{% static item.product.image %}" alt="{{ item.product_name }}">{% endif %}<span><strong>{{ item.product_name }}</strong><small>{{ item.product_sku }} / Quantity {{ item.quantity }}</small></span><b>NPR {{ item.line_total|floatformat:0 }}</b></article>{% endfor %}</div><div class="success-totals"><p><span>Subtotal</span><strong>NPR {{ order.subtotal|floatformat:0 }}</strong></p>{% if order.discount_amount %}<p class="discount-line"><span>Discount</span><strong>- NPR {{ order.discount_amount|floatformat:0 }}</strong></p>{% endif %}<p><span>Delivery</span><strong>{% if order.delivery_charge == 0 %}Free{% else %}NPR {{ order.delivery_charge|floatformat:0 }}{% endif %}</strong></p><p class="grand"><span>Total</span><strong>NPR {{ order.grand_total|floatformat:0 }}</strong></p></div></div></div>
+    <aside class="success-aside"><section><span class="eyebrow">DELIVERY</span><h2>{{ order.area }}, {{ order.city }}</h2><p>{{ order.detailed_address }}</p><small>{{ order.province }}, Nepal</small></section><section><span class="eyebrow">PAYMENT</span><h2>{{ order.get_payment_method_display }}</h2><p>{{ order.get_payment_status_display }}</p>{% if order.transaction_reference %}<small>Reference: {{ order.transaction_reference }}</small>{% endif %}</section><section class="next-step"><svg><use href="#i-truck"></use></svg><span><strong>What happens next?</strong><small>Our team confirms the order, prepares your items and shares delivery updates.</small></span></section></aside>
+  </section>
+  <div class="success-actions container"><a class="primary-btn" href="{% url 'shops:track_order' store.slug %}?order_number={{ order.order_number }}&phone={{ order.customer_phone|urlencode }}">Track this order <svg><use href="#i-truck"></use></svg></a><a class="secondary-btn" href="{% url 'shops:product_list' store.slug %}">Continue shopping</a></div>
+</main>
+{% endblock %}

@@ -1,0 +1,133 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Tap2Connect Shop{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="stylesheet" href="{% static 'shop/css/owner_dashboard.css' %}">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <div class="owner-shell">
+    <aside class="owner-sidebar" id="ownerSidebar" aria-label="Store owner navigation">
+      <a class="owner-logo" href="{% url 'shops:owner_dashboard' store.slug %}" aria-label="Tap2Connect Shop dashboard">
+        <span class="bag-mark"><i data-lucide="shopping-bag"></i></span>
+        <span><strong>Tap2Connect</strong><small>SHOP</small></span>
+      </a>
+
+      <nav class="owner-menu">
+        <a class="{% if active_section == 'dashboard' %}active{% endif %}" href="{% url 'shops:owner_dashboard' store.slug %}"><i data-lucide="layout-dashboard"></i>Dashboard</a>
+        <a class="{% if active_section == 'orders' %}active{% endif %}" href="{% url 'shops:owner_orders' store.slug %}"><i data-lucide="shopping-cart"></i>Orders<span class="order-badge">23</span></a>
+        <a class="{% if active_section == 'products' %}active{% endif %}" href="{% url 'shops:owner_products' store.slug %}"><i data-lucide="package"></i>Products</a>
+        <a class="{% if active_section == 'inventory' %}active{% endif %}" href="{% url 'shops:owner_inventory' store.slug %}"><i data-lucide="warehouse"></i>Inventory</a>
+        <a class="{% if active_section == 'categories' %}active{% endif %}" href="{% url 'shops:owner_categories' store.slug %}"><i data-lucide="tags"></i>Categories</a>
+        <a class="{% if active_section == 'customers' %}active{% endif %}" href="{% url 'shops:owner_customers' store.slug %}"><i data-lucide="users"></i>Customers</a>
+        <a class="{% if active_section == 'discounts' %}active{% endif %}" href="{% url 'shops:owner_discounts' store.slug %}"><i data-lucide="badge-percent"></i>Discounts</a>
+        <a href="#"><i data-lucide="star"></i>Reviews</a>
+        <a class="{% if active_section == 'marketing' %}active{% endif %}" href="{% url 'shops:owner_marketing' store.slug %}"><i data-lucide="megaphone"></i>Marketing</a>
+        <a class="{% if active_section == 'reports' %}active{% endif %}" href="{% url 'shops:owner_reports' store.slug %}"><i data-lucide="bar-chart-3"></i>Reports</a>
+        <a class="{% if active_section == 'website' %}active{% endif %}" href="{% url 'shops:owner_website' store.slug %}"><i data-lucide="monitor-smartphone"></i>Website</a>
+        <a class="{% if active_section == 'staff' %}active{% endif %}" href="{% url 'shops:owner_staff' store.slug %}"><i data-lucide="user-cog"></i>Staff</a>
+        <a class="{% if active_section == 'billing' %}active{% endif %}" href="{% url 'shops:owner_billing' store.slug %}"><i data-lucide="credit-card"></i>Billing</a>
+        <a class="{% if active_section == 'settings' %}active{% endif %}" href="{% url 'shops:owner_settings' store.slug %}"><i data-lucide="settings"></i>Settings</a>
+        <a class="{% if active_section == 'support' %}active{% endif %}" href="{% url 'shops:owner_support' store.slug %}"><i data-lucide="life-buoy"></i>Support</a>
+      </nav>
+
+      <div class="sales-channel">
+        <span>Sales Channel</span>
+        <a href="{% url 'shops:store_home' store.slug %}" target="_blank" rel="noopener"><i data-lucide="external-link"></i>View Store</a>
+        <a class="{% if active_section == 'preview' %}active{% endif %}" href="{% url 'shops:owner_store_preview' store.slug %}"><i data-lucide="eye"></i>Store Preview</a>
+      </div>
+
+      <button class="owner-profile" type="button">
+        <span class="avatar">DS</span>
+        <span><strong>Dipak Store</strong><small>Owner</small></span>
+        <i data-lucide="chevron-down"></i>
+      </button>
+    </aside>
+
+    <div class="dashboard-frame">
+      <header class="owner-topbar">
+        <div class="topbar-left">
+          <button class="icon-button sidebar-toggle" type="button" aria-label="Toggle sidebar" aria-controls="ownerSidebar" aria-expanded="false"><i data-lucide="menu"></i></button>
+          <button class="store-selector" type="button">Dipak Store <i data-lucide="chevron-down"></i></button>
+          <span class="live-badge"><i data-lucide="radio"></i>Live</span>
+        </div>
+        <label class="global-search">
+          <i data-lucide="search"></i>
+          <input placeholder="Search orders, products, customers..." aria-label="Search orders, products, customers">
+        </label>
+        <div class="topbar-actions">
+          <button class="date-pill" type="button"><i data-lucide="calendar-days"></i>May 7 - Jun 4</button>
+          <a class="icon-button alert {% if active_section == 'notifications' %}is-current{% endif %}" href="{% url 'shops:owner_notifications' store.slug %}" aria-label="Notifications"><i data-lucide="bell"></i></a>
+          <a class="icon-button" href="{% url 'shops:owner_support' store.slug %}" aria-label="Help"><i data-lucide="circle-help"></i></a>
+          <button class="top-profile" type="button">
+            <span class="avatar image-avatar">DS</span>
+            <span><strong>Dipak Sharma</strong><small>Store Owner</small></span>
+            <i data-lucide="chevron-down"></i>
+          </button>
+        </div>
+      </header>
+
+      <main class="owner-main workspace-main {% block main_class %}{% endblock %}">
+        {% block content %}{% endblock %}
+      </main>
+
+      <nav class="mobile-dashboard-nav" aria-label="Mobile dashboard navigation">
+        <a class="{% if active_section == 'dashboard' %}active{% endif %}" href="{% url 'shops:owner_dashboard' store.slug %}"><i data-lucide="home"></i><span>Home</span></a>
+        <a class="{% if active_section == 'orders' %}active{% endif %}" href="{% url 'shops:owner_orders' store.slug %}"><i data-lucide="shopping-cart"></i><span>Orders</span></a>
+        <a class="{% if active_section == 'products' or active_section == 'inventory' %}active{% endif %}" href="{% url 'shops:owner_products' store.slug %}"><i data-lucide="package"></i><span>Products</span></a>
+        <a class="{% if active_section == 'website' or active_section == 'preview' %}active{% endif %}" href="{% url 'shops:owner_store_preview' store.slug %}"><i data-lucide="store"></i><span>Store</span></a>
+        <button class="{% if active_section == 'settings' or active_section == 'support' or active_section == 'notifications' or active_section == 'billing' or active_section == 'staff' %}active{% endif %}" id="baseMobileMore" type="button"><i data-lucide="menu"></i><span>More</span></button>
+      </nav>
+      <div class="mobile-quick-create">
+        <div class="mobile-create-menu" id="baseCreateMenu" aria-hidden="true">
+          <a href="{% url 'shops:owner_product_create' store.slug %}"><i data-lucide="package-plus"></i><span><strong>Add Product</strong><small>Create a catalogue item</small></span></a>
+          <a href="{% url 'shops:owner_orders' store.slug %}"><i data-lucide="shopping-cart"></i><span><strong>Create Order</strong><small>Start a manual order</small></span></a>
+          <a href="{% url 'shops:owner_discounts' store.slug %}"><i data-lucide="badge-percent"></i><span><strong>Create Discount</strong><small>Launch a promotion</small></span></a>
+        </div>
+        <button class="mobile-fab" id="baseMobileFab" type="button" aria-label="Open quick actions" aria-expanded="false"><i data-lucide="plus"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="workspace-toast" id="workspaceToast" role="status" aria-live="polite"><i data-lucide="check-circle-2"></i><span>Changes saved</span></div>
+  <script>
+    lucide.createIcons();
+    const sidebarToggle = document.querySelector('.sidebar-toggle');
+    const sidebar = document.getElementById('ownerSidebar');
+    if (sidebarToggle && sidebar) {
+      sidebarToggle.addEventListener('click', () => {
+        const open = document.body.classList.toggle('sidebar-open');
+        sidebarToggle.setAttribute('aria-expanded', String(open));
+      });
+    }
+    const baseMobileMore = document.getElementById('baseMobileMore');
+    if (baseMobileMore) baseMobileMore.addEventListener('click', () => document.body.classList.toggle('sidebar-open'));
+    const baseMobileFab = document.getElementById('baseMobileFab');
+    const baseCreateMenu = document.getElementById('baseCreateMenu');
+    if (baseMobileFab && baseCreateMenu) baseMobileFab.addEventListener('click', () => {
+      const open = baseCreateMenu.classList.toggle('open');
+      baseCreateMenu.setAttribute('aria-hidden', String(!open));
+      baseMobileFab.setAttribute('aria-expanded', String(open));
+      baseMobileFab.classList.toggle('open', open);
+    });
+    window.showWorkspaceToast = function (message) {
+      const toast = document.getElementById('workspaceToast');
+      if (!toast) return;
+      toast.querySelector('span').textContent = message;
+      toast.classList.add('show');
+      window.clearTimeout(window.workspaceToastTimer);
+      window.workspaceToastTimer = window.setTimeout(() => toast.classList.remove('show'), 2200);
+    };
+    document.querySelectorAll('[data-toast]').forEach((button) => {
+      button.addEventListener('click', () => window.showWorkspaceToast(button.dataset.toast));
+    });
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

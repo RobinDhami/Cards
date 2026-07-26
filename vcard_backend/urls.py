@@ -4,6 +4,7 @@ from django.conf.urls.static import static
 from django.urls import include, path, re_path
 from django.views.static import serve as serve_media
 from django.contrib import admin
+from shops.views import business_suite
 from vcards.views import *
 from vcards.views import dashboard_qr_export, dashboard_qr_export_download
 
@@ -11,12 +12,14 @@ urlpatterns = [
     path('',home,name='home'),
     path('robots.txt', robots_txt, name='robots_txt'),
     path('sitemap.xml', sitemap_xml, name='sitemap_xml'),
+    path('shop/', include('shops.urls')),
     path('', include('professional_cards.urls')),
     path('login/', dashboard_login, name='dashboard_login'),
     path('logout/', dashboard_logout, name='dashboard_logout'),
     path('profile/<int:student_id>/',profile,name='profile'),
     path('admin/', admin.site.urls),
     path('dashboard/', admin_dashboard, name='admin_dashboard'),
+    path('dashboard/business-suite/', business_suite, name='business_suite'),
     path('dashboard/schools/', dashboard_schools, name='dashboard_schools'),
     path('dashboard/students/', dashboard_students, name='dashboard_students'),
     path('dashboard/teachers/', dashboard_teachers, name='dashboard_teachers'),

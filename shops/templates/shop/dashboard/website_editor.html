@@ -1,0 +1,106 @@
+{% extends 'shop/dashboard/owner_base.html' %}
+{% load static %}
+{% block title %}Website Editor | Tap2Connect Shop{% endblock %}
+{% block body_class %}editor-page{% endblock %}
+{% block main_class %}website-workspace{% endblock %}
+{% block content %}
+<header class="workspace-header editor-header">
+  <div><span class="page-eyebrow">Sales channel</span><h1>Website Customization</h1><p><span class="publish-dot"></span>Last published 12 minutes ago.</p></div>
+  <div class="workspace-actions"><button class="icon-action" type="button" aria-label="Undo"><i data-lucide="undo-2"></i></button><button class="icon-action" type="button" aria-label="Redo"><i data-lucide="redo-2"></i></button><button class="workspace-btn" type="button" data-toast="Draft saved"><i data-lucide="save"></i>Save Draft</button><a class="workspace-btn" href="{% url 'shops:owner_store_preview' store.slug %}"><i data-lucide="eye"></i>Preview</a><button class="workspace-btn primary" type="button" data-toast="Website changes published"><i data-lucide="rocket"></i>Publish Changes</button></div>
+</header>
+
+<section class="website-editor-shell">
+  <aside class="editor-controls">
+    <nav class="editor-tabs" aria-label="Website editor sections">
+      <button class="active" data-editor-tab="branding" type="button"><i data-lucide="palette"></i>Branding</button>
+      <button data-editor-tab="header" type="button"><i data-lucide="panel-top"></i>Header</button>
+      <button data-editor-tab="homepage" type="button"><i data-lucide="layout-template"></i>Homepage</button>
+      <button data-editor-tab="cards" type="button"><i data-lucide="layout-grid"></i>Product Cards</button>
+      <button data-editor-tab="footer" type="button"><i data-lucide="panel-bottom"></i>Footer</button>
+      <button data-editor-tab="social" type="button"><i data-lucide="share-2"></i>Social Links</button>
+      <button data-editor-tab="seo" type="button"><i data-lucide="search-check"></i>SEO</button>
+    </nav>
+    <div class="editor-panel-scroll">
+      <section class="editor-panel active" data-editor-panel="branding">
+        <div class="editor-panel-title"><div><h2>Branding</h2><p>Build a consistent storefront identity.</p></div></div>
+        <div class="brand-upload"><span class="bag-mark"><i data-lucide="shopping-bag"></i></span><div><strong>Store logo</strong><small>PNG or JPG, 800 x 400 recommended</small></div><button type="button">Replace</button></div>
+        <label class="editor-field">Favicon<span class="file-chip"><i data-lucide="image"></i>favicon.png<button aria-label="Remove favicon"><i data-lucide="x"></i></button></span></label>
+        <label class="editor-field">Store name<input value="Dipak Store"></label>
+        <label class="editor-field">Tagline<input value="Everyday style, thoughtfully selected."></label>
+        <div class="editor-field-row"><label class="editor-field">Primary colour<span class="color-input"><i style="background:#7c3aed"></i><input value="#7C3AED"></span></label><label class="editor-field">Secondary colour<span class="color-input"><i style="background:#171821"></i><input value="#171821"></span></label></div>
+        <label class="editor-field">Heading font<select><option>Inter</option><option>Manrope</option><option>DM Sans</option></select></label>
+        <label class="editor-field">Body font<select><option>Inter</option><option>Manrope</option><option>DM Sans</option></select></label>
+      </section>
+      <section class="editor-panel" data-editor-panel="header">
+        <div class="editor-panel-title"><h2>Header</h2><p>Configure navigation and shopping controls.</p></div>
+        <label class="editor-field">Header layout<select><option>Logo left, navigation centre</option><option>Logo centre</option><option>Compact header</option></select></label>
+        <label class="toggle-row"><span><strong>Announcement bar</strong><small>Show a promotion above navigation</small></span><input type="checkbox" checked></label>
+        <label class="editor-field">Announcement text<input value="Free delivery inside Kathmandu on orders over NPR 3,000"></label>
+        <label class="toggle-row"><span><strong>Search visibility</strong><small>Let shoppers search your catalogue</small></span><input type="checkbox" checked></label>
+        <label class="toggle-row"><span><strong>Wishlist icon</strong></span><input type="checkbox" checked></label>
+        <label class="toggle-row"><span><strong>Account icon</strong></span><input type="checkbox" checked></label>
+        <label class="toggle-row"><span><strong>Cart icon</strong></span><input type="checkbox" checked></label>
+        <label class="toggle-row"><span><strong>Sticky navigation</strong></span><input type="checkbox" checked></label>
+        <div class="editor-field"><span>Navigation links</span><div class="nav-link-list"><button><i data-lucide="grip-vertical"></i>Home<i data-lucide="more-horizontal"></i></button><button><i data-lucide="grip-vertical"></i>Shop<i data-lucide="more-horizontal"></i></button><button><i data-lucide="grip-vertical"></i>Collections<i data-lucide="more-horizontal"></i></button></div></div>
+      </section>
+      <section class="editor-panel" data-editor-panel="homepage">
+        <div class="editor-panel-title"><h2>Homepage Sections</h2><p>Drag to reorder the storefront.</p></div>
+        <div class="section-manager" id="sectionManager">
+          <div draggable="true"><i data-lucide="grip-vertical"></i><span><strong>Hero Banner</strong><small>Image, message and actions</small></span><button aria-label="Edit Hero Banner"><i data-lucide="pencil"></i></button><label class="switch"><input checked type="checkbox"><i></i></label></div>
+          <div draggable="true"><i data-lucide="grip-vertical"></i><span><strong>Shop by Category</strong><small>6 selected categories</small></span><button aria-label="Edit categories"><i data-lucide="pencil"></i></button><label class="switch"><input checked type="checkbox"><i></i></label></div>
+          <div draggable="true"><i data-lucide="grip-vertical"></i><span><strong>Trending Products</strong><small>8 selected products</small></span><button aria-label="Edit products"><i data-lucide="pencil"></i></button><label class="switch"><input checked type="checkbox"><i></i></label></div>
+          <div draggable="true"><i data-lucide="grip-vertical"></i><span><strong>Featured Products</strong><small>Automatic collection</small></span><button aria-label="Edit products"><i data-lucide="pencil"></i></button><label class="switch"><input checked type="checkbox"><i></i></label></div>
+          <div draggable="true"><i data-lucide="grip-vertical"></i><span><strong>New Arrivals</strong><small>Recently published</small></span><button aria-label="Edit products"><i data-lucide="pencil"></i></button><label class="switch"><input checked type="checkbox"><i></i></label></div>
+          <div draggable="true"><i data-lucide="grip-vertical"></i><span><strong>Promotional Banner</strong><small>Weekend promotion</small></span><button aria-label="Edit banner"><i data-lucide="pencil"></i></button><label class="switch"><input checked type="checkbox"><i></i></label></div>
+          <div draggable="true"><i data-lucide="grip-vertical"></i><span><strong>Best Sellers</strong><small>Top 8 by sales</small></span><button aria-label="Edit products"><i data-lucide="pencil"></i></button><label class="switch"><input checked type="checkbox"><i></i></label></div>
+          <div draggable="true"><i data-lucide="grip-vertical"></i><span><strong>Customer Reviews</strong><small>Latest 5-star reviews</small></span><button aria-label="Edit reviews"><i data-lucide="pencil"></i></button><label class="switch"><input checked type="checkbox"><i></i></label></div>
+          <div draggable="true"><i data-lucide="grip-vertical"></i><span><strong>Why Choose Us</strong><small>Store promises</small></span><button aria-label="Edit content"><i data-lucide="pencil"></i></button><label class="switch"><input checked type="checkbox"><i></i></label></div>
+          <div draggable="true"><i data-lucide="grip-vertical"></i><span><strong>Newsletter</strong><small>Email signup</small></span><button aria-label="Edit newsletter"><i data-lucide="pencil"></i></button><label class="switch"><input type="checkbox"><i></i></label></div>
+        </div>
+        <div class="hero-editor-inline"><h3>Hero Banner</h3><label>Hero image<button class="image-picker" type="button"><i data-lucide="image-plus"></i>Replace image</button></label><label>Heading<input value="Own your everyday look."></label><label>Description<textarea>Curated fashion, accessories and essentials delivered across Nepal.</textarea></label><div class="editor-field-row"><label>Button text<input value="Shop now"></label><label>Button link<input value="/collections/all"></label></div><div class="editor-field-row"><label>Discount badge<input value="UP TO 30% OFF"></label><label>Text alignment<select><option>Left</option><option>Center</option><option>Right</option></select></label></div></div>
+      </section>
+      <section class="editor-panel empty-editor-panel" data-editor-panel="cards"><i data-lucide="layout-grid"></i><h2>Product Cards</h2><p>Configure images, pricing, badges, ratings and quick actions.</p><button type="button">Open card settings</button></section>
+      <section class="editor-panel empty-editor-panel" data-editor-panel="footer"><i data-lucide="panel-bottom"></i><h2>Footer</h2><p>Manage store information, navigation, contact details and newsletter.</p><button type="button">Open footer settings</button></section>
+      <section class="editor-panel empty-editor-panel" data-editor-panel="social"><i data-lucide="share-2"></i><h2>Social Links</h2><p>Connect Facebook, Instagram, TikTok, YouTube and WhatsApp.</p><button type="button">Manage social links</button></section>
+      <section class="editor-panel empty-editor-panel" data-editor-panel="seo"><i data-lucide="search-check"></i><h2>Storefront SEO</h2><p>Set homepage title, description and social sharing image.</p><button type="button">Open SEO settings</button></section>
+    </div>
+  </aside>
+
+  <div class="live-preview-area">
+    <div class="preview-toolbar"><span><i data-lucide="eye"></i>Live Preview</span><div class="device-control" role="group" aria-label="Preview device"><button class="active" data-device="desktop" aria-label="Desktop preview"><i data-lucide="monitor"></i></button><button data-device="tablet" aria-label="Tablet preview"><i data-lucide="tablet"></i></button><button data-device="mobile" aria-label="Mobile preview"><i data-lucide="smartphone"></i></button><button data-device="full" aria-label="Full screen preview"><i data-lucide="maximize-2"></i></button></div><span class="preview-address">dipakstore.tap2connectnepal.com</span></div>
+    <div class="store-preview-canvas" data-preview-device="desktop">
+      <div class="mini-storefront">
+        <div class="store-announcement">Free delivery inside Kathmandu on orders over NPR 3,000</div>
+        <nav><strong>DIPAK STORE</strong><span>Home&nbsp;&nbsp;&nbsp; Shop&nbsp;&nbsp;&nbsp; Collections&nbsp;&nbsp;&nbsp; About</span><div><i data-lucide="search"></i><i data-lucide="heart"></i><i data-lucide="shopping-bag"></i></div></nav>
+        <section class="store-hero"><img src="{% static 'shop/images/hero-model.jpg' %}" alt="Model carrying shopping bags"><div><small>NEW SEASON / 2026</small><h2>Own your<br>everyday look.</h2><p>Curated fashion, accessories and essentials delivered across Nepal.</p><button>Shop now <i data-lucide="arrow-right"></i></button></div><span>UP TO<br><b>30%</b> OFF</span></section>
+        <section class="store-category-strip"><div><strong>Shop by category</strong><span>View all</span></div><div class="category-chips"><article><img src="{% static 'shop/images/shirt.jpg' %}" alt=""><b>Clothing</b></article><article><img src="{% static 'shop/images/bag.jpg' %}" alt=""><b>Bags</b></article><article><img src="{% static 'shop/images/shoes.jpg' %}" alt=""><b>Footwear</b></article><article><img src="{% static 'shop/images/watch.jpg' %}" alt=""><b>Accessories</b></article></div></section>
+        <section class="store-products"><div><strong>Trending now</strong><span>View all products</span></div><div><article><img src="{% static 'shop/images/watch.jpg' %}" alt=""><small>Accessories</small><b>Classic Wrist Watch</b><em>NPR 3,999</em></article><article><img src="{% static 'shop/images/bag.jpg' %}" alt=""><small>Bags</small><b>Leather Handbag</b><em>NPR 2,499</em></article><article><img src="{% static 'shop/images/shoes.jpg' %}" alt=""><small>Footwear</small><b>White Sneakers</b><em>NPR 2,999</em></article><article><img src="{% static 'shop/images/sunglasses.jpg' %}" alt=""><small>Accessories</small><b>Sunglasses</b><em>NPR 1,299</em></article></div></section>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+  const editorTabs = document.querySelectorAll('[data-editor-tab]');
+  const editorPanels = document.querySelectorAll('[data-editor-panel]');
+  editorTabs.forEach((tab) => tab.addEventListener('click', () => {
+    editorTabs.forEach((item) => item.classList.remove('active'));
+    editorPanels.forEach((panel) => panel.classList.toggle('active', panel.dataset.editorPanel === tab.dataset.editorTab));
+    tab.classList.add('active');
+  }));
+  document.querySelectorAll('[data-device]').forEach((button) => button.addEventListener('click', () => {
+    document.querySelectorAll('[data-device]').forEach((item) => item.classList.remove('active'));
+    button.classList.add('active');
+    const canvas = document.querySelector('.store-preview-canvas');
+    canvas.dataset.previewDevice = button.dataset.device;
+    if (button.dataset.device === 'full' && canvas.requestFullscreen) canvas.requestFullscreen();
+  }));
+  let draggedSection;
+  document.querySelectorAll('#sectionManager > div').forEach((item) => {
+    item.addEventListener('dragstart', () => { draggedSection = item; item.classList.add('dragging'); });
+    item.addEventListener('dragend', () => item.classList.remove('dragging'));
+    item.addEventListener('dragover', (event) => { event.preventDefault(); if (draggedSection && draggedSection !== item) item.parentNode.insertBefore(draggedSection, item); });
+  });
+</script>
+{% endblock %}

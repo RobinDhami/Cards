@@ -1,0 +1,15 @@
+{% load static %}
+<article class="product-card" data-product-id="{{ product.id }}" data-name="{{ product.name }}" data-category="{{ product.category.name|default:'Products' }}" data-url="{{ product.get_absolute_url }}" data-image="{% static product.image %}" data-price="NPR {{ product.current_price|floatformat:0 }}">
+  <div class="product-image">
+    <a href="{{ product.get_absolute_url }}" aria-label="View {{ product.name }}">{% if product.image %}<img src="{% static product.image %}" alt="{{ product.name }}" loading="lazy">{% endif %}</a>
+    {% if product.discount_percent %}<span class="badge sale">-{{ product.discount_percent }}%</span>{% elif product.is_new_arrival %}<span class="badge">New</span>{% endif %}
+    <button class="wish" type="button" aria-label="Save {{ product.name }} to wishlist"><svg><use href="#i-heart"></use></svg></button>
+    {% if product.is_in_stock %}<form method="post" action="{% url 'shops:cart_add' product.store.slug product.id %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="quick-add" type="submit"><svg><use href="#i-cart"></use></svg>Quick add</button></form>{% else %}<span class="sold-out">Out of stock</span>{% endif %}
+  </div>
+  <div class="product-info">
+    <small>{{ product.category.name|default:'Dipak Select' }}</small>
+    <h3><a href="{{ product.get_absolute_url }}">{{ product.name }}</a></h3>
+    <div class="product-rating"><span><svg><use href="#i-star"></use></svg>{{ product.demo_rating|default:'4.8' }}</span><small>({{ product.demo_review_count|default:'84' }})</small></div>
+    <div class="product-meta"><strong>NPR {{ product.current_price|floatformat:0 }}</strong>{% if product.discounted_price %}<del>NPR {{ product.regular_price|floatformat:0 }}</del>{% endif %}</div>
+  </div>
+</article>

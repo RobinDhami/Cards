@@ -1,0 +1,23 @@
+<header class="site-header">
+  <div class="header-main container">
+    <a class="brand" href="{% url 'shops:store_home' store.slug %}" aria-label="{{ store.name }} home"><span>DIPAK STORE</span></a>
+    <nav id="mainNav" class="nav" aria-label="Store navigation">
+      <a class="{% if request.resolver_match.url_name == 'store_home' %}active{% endif %}" href="{% url 'shops:store_home' store.slug %}">Home</a>
+      <a class="{% if request.resolver_match.url_name == 'product_list' or request.resolver_match.url_name == 'product_detail' %}active{% endif %}" href="{% url 'shops:product_list' store.slug %}">Shop</a>
+      <a href="{% url 'shops:product_list' store.slug %}?sort=newest">New Arrivals</a>
+      <a href="{% url 'shops:store_home' store.slug %}#categories">Collections</a>
+      <a href="{% url 'shops:store_home' store.slug %}#story">About</a>
+      <a class="mobile-only-link" href="{% url 'shops:track_order' store.slug %}">Track Order</a>
+    </nav>
+    <div class="header-actions">
+      <button id="searchToggle" type="button" aria-label="Open search" aria-expanded="false"><svg><use href="#i-search"></use></svg></button>
+      <button type="button" aria-label="Account"><svg><use href="#i-user"></use></svg></button>
+      <button type="button" aria-label="Wishlist" class="count-btn wishlist-btn" data-open-drawer><svg><use href="#i-heart"></use></svg><span id="wishlistCount">0</span></button>
+      <a href="{% url 'shops:cart' store.slug %}" aria-label="Cart" class="count-btn header-icon-link"><svg><use href="#i-cart"></use></svg><span id="cartCount">{{ cart.count|default:0 }}</span></a>
+      <button id="mobileMenuButton" class="mobile-menu-btn" type="button" aria-label="Toggle menu" aria-expanded="false"><svg><use id="menuUse" href="#i-menu"></use></svg></button>
+    </div>
+  </div>
+  <form id="searchPanel" class="header-search-panel" action="{% url 'shops:product_list' store.slug %}" method="get">
+    <div class="container"><svg><use href="#i-search"></use></svg><input id="searchInput" name="q" value="{{ query|default:'' }}" placeholder="Search products, brands or categories" aria-label="Search products"><button type="submit">Search</button><button id="searchClose" type="button" aria-label="Close search"><svg><use href="#i-close"></use></svg></button></div>
+  </form>
+</header>

@@ -1,0 +1,239 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orders - Tap2Connect Shop</title>
+  {% include "partials/tap2connect_favicon.html" %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="stylesheet" href="{% static 'shop/css/owner_dashboard.css' %}">
+</head>
+<body>
+  <div class="owner-shell">
+    <aside class="owner-sidebar" aria-label="Store owner navigation">
+      <a class="owner-logo" href="{% url 'shops:owner_dashboard' store.slug %}" aria-label="Tap2Connect Shop dashboard">
+        <span class="bag-mark"><i data-lucide="shopping-bag"></i></span>
+        <span><strong>Tap2Connect</strong><small>SHOP</small></span>
+      </a>
+      <nav class="owner-menu">
+        <a href="{% url 'shops:owner_dashboard' store.slug %}"><i data-lucide="layout-dashboard"></i>Dashboard</a>
+        <a class="active" href="{% url 'shops:owner_orders' store.slug %}"><i data-lucide="shopping-cart"></i>Orders<span class="order-badge">23</span></a>
+        <a href="{% url 'shops:owner_products' store.slug %}"><i data-lucide="package"></i>Products</a>
+        <a href="{% url 'shops:owner_categories' store.slug %}"><i data-lucide="tags"></i>Categories</a>
+        <a href="{% url 'shops:owner_customers' store.slug %}"><i data-lucide="users"></i>Customers</a>
+        <a href="{% url 'shops:owner_discounts' store.slug %}"><i data-lucide="badge-percent"></i>Discounts</a>
+        <a href="#"><i data-lucide="star"></i>Reviews</a>
+        <a href="{% url 'shops:owner_marketing' store.slug %}"><i data-lucide="megaphone"></i>Marketing</a>
+        <a href="{% url 'shops:owner_reports' store.slug %}"><i data-lucide="bar-chart-3"></i>Reports</a>
+        <a href="{% url 'shops:owner_website' store.slug %}"><i data-lucide="monitor-smartphone"></i>Website</a>
+        <a href="{% url 'shops:owner_staff' store.slug %}"><i data-lucide="user-cog"></i>Staff</a>
+        <a href="{% url 'shops:owner_billing' store.slug %}"><i data-lucide="credit-card"></i>Billing</a>
+        <a href="{% url 'shops:owner_settings' store.slug %}"><i data-lucide="settings"></i>Settings</a>
+        <a href="{% url 'shops:owner_support' store.slug %}"><i data-lucide="life-buoy"></i>Support</a>
+      </nav>
+      <div class="sales-channel">
+        <span>Sales Channel</span>
+        <a href="{% url 'shops:store_home' store.slug %}"><i data-lucide="external-link"></i>View Store</a>
+        <a href="{% url 'shops:owner_store_preview' store.slug %}"><i data-lucide="eye"></i>Store Preview</a>
+      </div>
+      <button class="owner-profile" type="button">
+        <span class="avatar">DS</span>
+        <span><strong>Dipak Store</strong><small>Owner</small></span>
+        <i data-lucide="chevron-down"></i>
+      </button>
+    </aside>
+
+    <div class="dashboard-frame">
+      <header class="owner-topbar">
+        <div class="topbar-left">
+          <button class="icon-button" type="button" aria-label="Toggle sidebar"><i data-lucide="menu"></i></button>
+          <button class="store-selector" type="button">Dipak Store <i data-lucide="chevron-down"></i></button>
+          <span class="live-badge"><i data-lucide="radio"></i>Live</span>
+        </div>
+        <label class="global-search">
+          <i data-lucide="search"></i>
+          <input placeholder="Search orders, products, customers..." aria-label="Search orders, products, customers">
+        </label>
+        <div class="topbar-actions">
+          <button class="date-pill" type="button"><i data-lucide="calendar-days"></i>May 7 - Jun 4</button>
+          <a class="icon-button alert" href="{% url 'shops:owner_notifications' store.slug %}" aria-label="Notifications"><i data-lucide="bell"></i></a>
+          <button class="icon-button" type="button" aria-label="Help"><i data-lucide="circle-help"></i></button>
+          <button class="top-profile" type="button">
+            <span class="avatar image-avatar">DS</span>
+            <span><strong>Dipak Sharma</strong><small>Store Owner</small></span>
+            <i data-lucide="chevron-down"></i>
+          </button>
+        </div>
+      </header>
+
+      <main class="owner-main orders-main">
+        <section class="welcome-row orders-header">
+          <div>
+            <h1>Orders</h1>
+            <p>Manage, process and track all customer orders.</p>
+          </div>
+          <div class="page-actions">
+            <button class="secondary-action" type="button"><i data-lucide="download"></i>Export Orders</button>
+            <button class="primary-mini-action" type="button"><i data-lucide="plus"></i>Create Manual Order</button>
+          </div>
+        </section>
+
+        <section class="order-summary-row" aria-label="Order summary">
+          {% for card in summary_cards %}
+            <article class="order-summary-card">
+              <span class="kpi-icon {{ card.tone }}"><i data-lucide="{{ card.icon }}"></i></span>
+              <div><small>{{ card.label }}</small><strong>{{ card.value }}</strong><em class="trend up">{{ card.trend }} this month</em></div>
+            </article>
+          {% endfor %}
+        </section>
+
+        <section class="order-tabs" aria-label="Order status filters">
+          {% for label, count in tabs %}
+            <button class="{% if forloop.first %}active{% endif %}" type="button">{{ label }} <span>{{ count }}</span></button>
+          {% endfor %}
+        </section>
+
+        <section class="orders-workspace">
+          <div class="orders-left">
+            <article class="dashboard-card order-filter-card">
+              <label class="order-search"><i data-lucide="search"></i><input placeholder="Search by order ID, customer or phone" aria-label="Search orders"></label>
+              <button type="button"><i data-lucide="calendar-days"></i>Date Range</button>
+              <button type="button">Payment Method <i data-lucide="chevron-down"></i></button>
+              <button type="button">Payment Status <i data-lucide="chevron-down"></i></button>
+              <button type="button">Order Status <i data-lucide="chevron-down"></i></button>
+              <button type="button">Delivery Area <i data-lucide="chevron-down"></i></button>
+              <button class="filter-submit" type="button"><i data-lucide="filter"></i>Filter</button>
+              <a href="#">Clear Filters</a>
+            </article>
+
+            <div class="bulk-actions">
+              <span>3 selected</span>
+              <button type="button">Confirm Orders</button>
+              <button type="button">Mark Processing</button>
+              <button type="button">Mark Shipped</button>
+              <button type="button">Print Invoices</button>
+              <button type="button">Export Selected</button>
+            </div>
+
+            <article class="dashboard-card orders-table-card">
+              <div class="orders-table-wrap">
+                <table class="orders-table">
+                  <thead>
+                    <tr>
+                      <th><input type="checkbox" aria-label="Select all orders"></th>
+                      <th>Order ID</th><th>Customer</th><th>Products</th><th>Amount</th><th>Payment</th><th>Payment Status</th><th>Order Status</th><th>Date</th><th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for order in orders %}
+                      <tr>
+                        <td><input type="checkbox" aria-label="Select {{ order.id }}"></td>
+                        <td><strong>{{ order.id }}</strong></td>
+                        <td><div class="customer-cell"><strong>{{ order.customer }}</strong><small>{{ order.phone }}</small></div></td>
+                        <td>{{ order.products }}</td>
+                        <td><strong>{{ order.amount }}</strong></td>
+                        <td>{{ order.payment }}</td>
+                        <td><span class="payment-badge {{ order.payment_status|slugify }}">{{ order.payment_status }}</span></td>
+                        <td><span class="status-badge {{ order.status|lower|slugify }}">{{ order.status }}</span></td>
+                        <td>{{ order.date }}</td>
+                        <td>
+                          <details class="row-actions">
+                            <summary aria-label="Open order actions"><i data-lucide="more-horizontal"></i></summary>
+                            <div>
+                              <button type="button">View Order</button>
+                              <button type="button">Print Invoice</button>
+                              <button type="button">Contact Customer</button>
+                              <button type="button">Update Status</button>
+                              <button type="button" class="danger">Cancel Order</button>
+                            </div>
+                          </details>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              <footer class="table-footer">
+                <span>Showing 1-{{ orders|length }} of {{ total_orders }} orders</span>
+                <div>
+                  <button type="button">Rows per page: 10 <i data-lucide="chevron-down"></i></button>
+                  <button type="button"><i data-lucide="chevron-left"></i>Previous</button>
+                  <button type="button">Next<i data-lucide="chevron-right"></i></button>
+                </div>
+              </footer>
+            </article>
+          </div>
+
+          <aside class="order-detail-panel" aria-label="Order detail panel">
+            <div class="detail-panel-head">
+              <div><span>Order ID</span><h2>#ORD-00234</h2></div>
+              <button type="button" aria-label="Close order details"><i data-lucide="x"></i></button>
+            </div>
+            <p class="detail-date">Placed 2 min ago · May 7, 2026</p>
+
+            <section class="detail-section">
+              <h3>Customer</h3>
+              <p><strong>Ram Bahadur</strong><span>+977 9800000001</span><span>ram.bahadur@email.com</span></p>
+            </section>
+
+            <section class="detail-section">
+              <h3>Delivery</h3>
+              <p><strong>Kathmandu, Bagmati</strong><span>New Baneshwor, Kathmandu, Nepal</span><span>Delivery instructions: Call before arrival.</span></p>
+            </section>
+
+            <section class="detail-section">
+              <h3>Products</h3>
+              <div class="detail-products">
+                {% for product in detail_products %}
+                  <div class="detail-product">
+                    <img src="{% static product.image %}" alt="{{ product.name }}">
+                    <div><strong>{{ product.name }}</strong><span>{{ product.variation }}</span><small>Qty {{ product.quantity }}</small></div>
+                    <em>{{ product.price }}</em>
+                  </div>
+                {% endfor %}
+              </div>
+            </section>
+
+            <section class="detail-section totals-section">
+              <p><span>Subtotal</span><strong>NPR 3,998</strong></p>
+              <p><span>Delivery charge</span><strong>NPR 150</strong></p>
+              <p><span>Discount</span><strong>- NPR 0</strong></p>
+              <p class="grand"><span>Grand total</span><strong>NPR 4,498</strong></p>
+            </section>
+
+            <section class="detail-section payment-summary">
+              <h3>Payment</h3>
+              <p><span>Cash on Delivery</span><strong>Unpaid</strong></p>
+            </section>
+
+            <section class="detail-section">
+              <h3>Order Timeline</h3>
+              <div class="order-timeline">
+                {% for item in timeline %}
+                  <p class="{% if item.done %}done{% endif %}"><i></i><span>{{ item.label }}</span><small>{{ item.time }}</small></p>
+                {% endfor %}
+              </div>
+            </section>
+
+            <section class="detail-section">
+              <h3>Internal Notes</h3>
+              <textarea placeholder="Add note for staff..."></textarea>
+            </section>
+
+            <div class="detail-actions">
+              <button class="primary-mini-action" type="button">Update Status</button>
+              <button type="button">Print Invoice</button>
+              <button type="button">Contact Customer</button>
+            </div>
+          </aside>
+        </section>
+      </main>
+    </div>
+  </div>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

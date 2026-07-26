@@ -46,6 +46,9 @@
       <a href="{% url 'professional_cards:list' %}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'professional_cards' %}bg-blue-700 font-semibold text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
         <i data-lucide="badge-check" class="h-4 w-4 flex-none"></i>Professional Cards
       </a>
+      <a href="{% url 'business_suite' %}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'business_suite' %}bg-blue-700 font-semibold text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+        <i data-lucide="briefcase-business" class="h-4 w-4 flex-none"></i>Business Suite
+      </a>
     {% endif %}
     <a href="{% url 'dashboard_reports' %}{{ nav_school_query }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if active_module == 'reports' %}bg-blue-700 font-semibold text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
       <i data-lucide="bar-chart-3" class="h-4 w-4 flex-none"></i>Reports
