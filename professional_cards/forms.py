@@ -84,6 +84,10 @@ class ProfessionalProfileForm(forms.ModelForm):
             'brand_name',
             'brand_tagline',
             'industry',
+            'work_role',
+            'work_organization',
+            'work_experience',
+            'work_address',
             'academic_section',
             'academic_title',
             'academic_institution',
@@ -91,6 +95,7 @@ class ProfessionalProfileForm(forms.ModelForm):
             'academic_year',
             'academic_specialization',
             'academic_certification',
+            'academic_address',
             'short_tagline',
             'about',
             'current_focus',
@@ -124,6 +129,8 @@ class ProfessionalProfileForm(forms.ModelForm):
             'about': forms.Textarea(attrs={'rows': 5}),
             'current_focus': forms.Textarea(attrs={'rows': 3}),
             'featured_interest': forms.Textarea(attrs={'rows': 3}),
+            'work_address': forms.Textarea(attrs={'rows': 2}),
+            'academic_address': forms.Textarea(attrs={'rows': 2}),
             'office_address': forms.Textarea(attrs={'rows': 3}),
             'accent_color': forms.TextInput(attrs={'type': 'color'}),
             'profession': forms.TextInput(attrs={'list': 'profession-options'}),
@@ -139,6 +146,10 @@ class ProfessionalProfileForm(forms.ModelForm):
             'brand_name': 'Brand or Business Name',
             'brand_tagline': 'Brand Tagline',
             'industry': 'Industry / Field / Course',
+            'work_role': 'Work role',
+            'work_organization': 'Work organization name',
+            'work_experience': 'Work experience',
+            'work_address': 'Work address',
             'academic_section': 'Class / Batch / Section',
             'academic_title': 'Degree / Academic Title',
             'academic_institution': 'Academic Institution',
@@ -146,6 +157,7 @@ class ProfessionalProfileForm(forms.ModelForm):
             'academic_year': 'Graduated / Study Year',
             'academic_specialization': 'Specialization',
             'academic_certification': 'Certification / Achievement',
+            'academic_address': 'Academic address',
             'short_tagline': 'Profile tagline',
             'current_focus': "What I'm working on",
             'featured_interest': 'Featured interest',
@@ -185,6 +197,11 @@ class ProfessionalProfileForm(forms.ModelForm):
         self.fields['networking_statement'].widget.attrs.update({
             'placeholder': 'Interested in connecting with educators, developers, and technology teams.',
         })
+        self.fields['work_role'].widget.attrs.update({'placeholder': 'Software Engineer, Designer, Manager'})
+        self.fields['work_organization'].widget.attrs.update({'placeholder': 'Company or organization name'})
+        self.fields['work_experience'].widget.attrs.update({'placeholder': '2 years, 6 months, Internship'})
+        self.fields['work_address'].widget.attrs.update({'placeholder': 'Office, city, or work location'})
+        self.fields['academic_address'].widget.attrs.update({'placeholder': 'Campus, city, or academic location'})
         owner = self.instance.owner if self.instance and self.instance.owner_id else None
         owner_is_profile_user = bool(owner and not owner.is_staff and not owner.is_superuser)
         if owner_is_profile_user:

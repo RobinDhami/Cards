@@ -83,6 +83,29 @@ class ProfessionalProfile(models.Model):
     )
     profile_identifier = models.CharField(max_length=120, blank=True, default='')
     industry = models.CharField(max_length=120, blank=True, default='')
+    work_role = models.CharField(
+        max_length=160,
+        blank=True,
+        default='',
+        help_text='Role shown only in the Work Identity card.',
+    )
+    work_organization = models.CharField(
+        max_length=180,
+        blank=True,
+        default='',
+        help_text='Organization shown only in the Work Identity card.',
+    )
+    work_experience = models.CharField(
+        max_length=120,
+        blank=True,
+        default='',
+        help_text='Experience shown only in the Work Identity card.',
+    )
+    work_address = models.TextField(
+        blank=True,
+        default='',
+        help_text='Address shown only in the Work Identity card.',
+    )
     academic_section = models.CharField(
         max_length=80,
         blank=True,
@@ -115,6 +138,11 @@ class ProfessionalProfile(models.Model):
     )
     academic_specialization = models.CharField(max_length=160, blank=True, default='')
     academic_certification = models.CharField(max_length=160, blank=True, default='')
+    academic_address = models.TextField(
+        blank=True,
+        default='',
+        help_text='Address shown only in the Academic Identity card.',
+    )
     short_tagline = models.CharField(max_length=255, blank=True, default='')
     about = models.TextField(blank=True, default='')
     current_focus = models.TextField(

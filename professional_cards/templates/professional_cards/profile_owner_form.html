@@ -126,12 +126,6 @@
         <option value="{{ profession }}"></option>
       {% endfor %}
     </datalist>
-    {% if profile.profile_type == "student" %}
-      <div class="hidden">{{ form.industry }}{{ form.years_of_experience }}{{ form.business_hours }}</div>
-    {% else %}
-      <div class="hidden">{{ form.academic_section }}</div>
-    {% endif %}
-
     <section class="section-card">
       <div>
         <div class="flex items-start justify-between gap-3">
@@ -386,25 +380,17 @@
       <div>
         <div class="flex items-start justify-between gap-3">
           <div>
-            <h2 class="font-semibold">{% if profile.profile_type == "student" %}Student Identity{% else %}Professional Identity{% endif %}</h2>
-            <p class="builder-helper">{% if profile.profile_type == "student" %}Present your current study information and career direction.{% else %}Summarize your current professional role and availability.{% endif %}</p>
+            <h2 class="font-semibold">Work Identity</h2>
+            <p class="builder-helper">These fields only feed the Work Identity card on the public profile.</p>
           </div>
-          <span class="section-status">{{ profile.get_profile_type_display }}</span>
+          <span class="section-status">Own fields</span>
         </div>
       </div>
       <div class="space-y-3">
-        {% if profile.profile_type == "student" %}
-          <label><span class="field-label">Institution</span>{{ form.academic_institution }}</label>
-          <label><span class="field-label">Program or course</span>{{ form.academic_title }}</label>
-          <div class="grid grid-cols-2 gap-3">
-            <label><span class="field-label">Current year / semester</span>{{ form.academic_section }}</label>
-            <label><span class="field-label">Expected graduation</span>{{ form.academic_year }}</label>
-          </div>
-        {% else %}
-          <label><span class="field-label">{{ form.industry.label }}</span>{{ form.industry }}</label>
-          <label><span class="field-label">Years of experience</span>{{ form.years_of_experience }}</label>
-          <label><span class="field-label">Availability or business hours</span>{{ form.business_hours }}</label>
-        {% endif %}
+        <label><span class="field-label">Role</span>{{ form.work_role }}</label>
+        <label><span class="field-label">Organization name</span>{{ form.work_organization }}</label>
+        <label><span class="field-label">Experience</span>{{ form.work_experience }}</label>
+        <label><span class="field-label">Address</span>{{ form.work_address }}</label>
       </div>
     </section>
 
@@ -412,21 +398,20 @@
       <div>
         <div class="flex items-start justify-between gap-3">
           <div>
-            <h2 class="font-semibold">Academic Background</h2>
-            <p class="builder-helper">Add your main academic qualification.</p>
+            <h2 class="font-semibold">Academic Identity</h2>
+            <p class="builder-helper">These fields only feed the Academic Identity card on the public profile.</p>
           </div>
-          <span class="section-status">Optional</span>
+          <span class="section-status">Own fields</span>
         </div>
       </div>
       <div class="space-y-3">
-        {% if profile.profile_type != "student" %}
-          <label><span class="field-label">{{ form.academic_title.label }}</span>{{ form.academic_title }}</label>
-          <label><span class="field-label">{{ form.academic_institution.label }}</span>{{ form.academic_institution }}</label>
-          <label><span class="field-label">Graduation or expected year</span>{{ form.academic_year }}</label>
-        {% endif %}
+        <label><span class="field-label">Role / program / degree</span>{{ form.academic_title }}</label>
+        <label><span class="field-label">Organization / institution name</span>{{ form.academic_institution }}</label>
+        <label><span class="field-label">Experience / year / semester</span>{{ form.academic_year }}</label>
         <label><span class="field-label">{{ form.academic_level.label }}</span>{{ form.academic_level }}</label>
         <label><span class="field-label">{{ form.academic_specialization.label }}</span>{{ form.academic_specialization }}</label>
         <label><span class="field-label">{{ form.academic_certification.label }}</span>{{ form.academic_certification }}</label>
+        <label><span class="field-label">Address</span>{{ form.academic_address }}</label>
       </div>
     </section>
 
@@ -434,7 +419,7 @@
       <div class="mb-3 flex items-center justify-between gap-3">
         <div>
           <h2 class="font-semibold">Highlights</h2>
-          <p class="builder-helper">Show projects, work experience, achievements, or activities that support your profile.</p>
+          <p class="builder-helper">Each highlight uses only its own title, organization, project link, photo, and description.</p>
         </div>
         <button type="button" data-add-formset="portfolio" class="action-add"><i data-lucide="plus" class="h-4 w-4"></i> Add highlight</button>
       </div>
@@ -444,14 +429,14 @@
           <div class="formset-row rounded-lg border border-gray-200 bg-white p-3">
             {% for hidden in item_form.hidden_fields %}{{ hidden }}{% endfor %}
             <div class="space-y-3">
-              <label><span class="field-label">Title</span>{{ item_form.title }}</label>
+              <label><span class="field-label">Project / highlight name</span>{{ item_form.title }}</label>
               <div class="grid grid-cols-2 gap-3">
                 <label><span class="field-label">Type</span>{{ item_form.highlight_type }}</label>
                 <label><span class="field-label">Date / period</span>{{ item_form.period }}</label>
               </div>
-              <label><span class="field-label">Organization or client</span>{{ item_form.organization }}</label>
+              <label><span class="field-label">Organization name</span>{{ item_form.organization }}</label>
               <label><span class="field-label">Description</span>{{ item_form.description }}</label>
-              <label><span class="field-label">Link</span>{{ item_form.link }}</label>
+              <label><span class="field-label">Project link</span>{{ item_form.link }}</label>
               <label>
                 <span class="field-label">Image</span>
                 <input type="file" name="{{ item_form.image.html_name }}" id="{{ item_form.image.id_for_label }}" accept="image/*" class="upload-input">
@@ -471,14 +456,14 @@
         <div class="formset-row rounded-lg border border-gray-200 bg-white p-3">
           {% for hidden in formsets.portfolio.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
           <div class="space-y-3">
-            <label><span class="field-label">Title</span>{{ formsets.portfolio.empty_form.title }}</label>
+            <label><span class="field-label">Project / highlight name</span>{{ formsets.portfolio.empty_form.title }}</label>
             <div class="grid grid-cols-2 gap-3">
               <label><span class="field-label">Type</span>{{ formsets.portfolio.empty_form.highlight_type }}</label>
               <label><span class="field-label">Date / period</span>{{ formsets.portfolio.empty_form.period }}</label>
             </div>
-            <label><span class="field-label">Organization or client</span>{{ formsets.portfolio.empty_form.organization }}</label>
+            <label><span class="field-label">Organization name</span>{{ formsets.portfolio.empty_form.organization }}</label>
             <label><span class="field-label">Description</span>{{ formsets.portfolio.empty_form.description }}</label>
-            <label><span class="field-label">Link</span>{{ formsets.portfolio.empty_form.link }}</label>
+            <label><span class="field-label">Project link</span>{{ formsets.portfolio.empty_form.link }}</label>
             <label>
               <span class="field-label">Image</span>
               <input type="file" name="{{ formsets.portfolio.empty_form.image.html_name }}" id="{{ formsets.portfolio.empty_form.image.id_for_label }}" accept="image/*" class="upload-input">
