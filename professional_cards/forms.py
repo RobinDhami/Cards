@@ -94,6 +94,7 @@ class ProfessionalProfileForm(forms.ModelForm):
             'academic_level',
             'academic_year',
             'academic_specialization',
+            'academic_status',
             'academic_certification',
             'academic_address',
             'short_tagline',
@@ -151,11 +152,12 @@ class ProfessionalProfileForm(forms.ModelForm):
             'work_experience': 'Work experience',
             'work_address': 'Work address',
             'academic_section': 'Class / Batch / Section',
-            'academic_title': 'Degree / Academic Title',
-            'academic_institution': 'Academic Institution',
-            'academic_level': 'Academic Level',
-            'academic_year': 'Graduated / Study Year',
+            'academic_title': 'Degree / Program',
+            'academic_institution': 'Institution',
+            'academic_level': 'Level',
+            'academic_year': 'Year / Semester',
             'academic_specialization': 'Specialization',
+            'academic_status': 'Status',
             'academic_certification': 'Certification / Achievement',
             'academic_address': 'Academic address',
             'short_tagline': 'Profile tagline',
@@ -201,6 +203,12 @@ class ProfessionalProfileForm(forms.ModelForm):
         self.fields['work_organization'].widget.attrs.update({'placeholder': 'Company or organization name'})
         self.fields['work_experience'].widget.attrs.update({'placeholder': '2 years, 6 months, Internship'})
         self.fields['work_address'].widget.attrs.update({'placeholder': 'Office, city, or work location'})
+        self.fields['academic_title'].widget.attrs.update({'placeholder': 'BSc CSIT'})
+        self.fields['academic_institution'].widget.attrs.update({'placeholder': 'Kathmandu Bernhardt College'})
+        self.fields['academic_level'].widget.attrs.update({'placeholder': "Bachelor's"})
+        self.fields['academic_year'].widget.attrs.update({'placeholder': 'Final Year / 6th Semester'})
+        self.fields['academic_specialization'].widget.attrs.update({'placeholder': 'Web Development / Networking'})
+        self.fields['academic_status'].widget.attrs.update({'placeholder': 'Seeking Internship / Open to Work'})
         self.fields['academic_address'].widget.attrs.update({'placeholder': 'Campus, city, or academic location'})
         owner = self.instance.owner if self.instance and self.instance.owner_id else None
         owner_is_profile_user = bool(owner and not owner.is_staff and not owner.is_superuser)

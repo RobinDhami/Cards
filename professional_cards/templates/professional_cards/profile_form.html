@@ -145,7 +145,7 @@
       </div>
       <div class="grid gap-4 sm:grid-cols-2">
         {% for field in form.visible_fields %}
-          {% if field.name != "about" and field.name != "office_address" and field.name != "is_verified" and field.name != "is_active" and field.name != "login_username" and field.name != "login_password" and field.name != "profile_photo" and field.name != "cover_photo" and field.name != "google_maps_url" and field.name != "show_map_on_profile" and field.name != "template_name" and field.name != "accent_color" and field.name != "work_role" and field.name != "work_organization" and field.name != "work_experience" and field.name != "work_address" and field.name != "academic_title" and field.name != "academic_institution" and field.name != "academic_level" and field.name != "academic_year" and field.name != "academic_specialization" and field.name != "academic_certification" and field.name != "academic_address" %}
+          {% if field.name != "about" and field.name != "office_address" and field.name != "is_verified" and field.name != "is_active" and field.name != "login_username" and field.name != "login_password" and field.name != "profile_photo" and field.name != "cover_photo" and field.name != "google_maps_url" and field.name != "show_map_on_profile" and field.name != "template_name" and field.name != "accent_color" and field.name != "work_role" and field.name != "work_organization" and field.name != "work_experience" and field.name != "work_address" and field.name != "academic_title" and field.name != "academic_institution" and field.name != "academic_level" and field.name != "academic_year" and field.name != "academic_specialization" and field.name != "academic_status" and field.name != "academic_certification" and field.name != "academic_address" %}
             <label class="block">
               <span class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">{{ field.label }}</span>
               {{ field }}
@@ -194,11 +194,11 @@
         </div>
         <div class="grid gap-4 sm:grid-cols-2">
           <label class="block">
-            <span class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Role / program / degree</span>
+            <span class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Degree / Program</span>
             {{ form.academic_title }}
           </label>
           <label class="block">
-            <span class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Organization / institution name</span>
+            <span class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Institution</span>
             {{ form.academic_institution }}
           </label>
           <label class="block">
@@ -214,12 +214,8 @@
             {{ form.academic_specialization }}
           </label>
           <label class="block">
-            <span class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">{{ form.academic_certification.label }}</span>
-            {{ form.academic_certification }}
-          </label>
-          <label class="block sm:col-span-2">
-            <span class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Address</span>
-            {{ form.academic_address }}
+            <span class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Status</span>
+            {{ form.academic_status }}
           </label>
         </div>
       </div>

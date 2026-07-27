@@ -137,6 +137,12 @@ class ProfessionalProfile(models.Model):
         help_text='Graduation year, current year, batch, or expected completion.',
     )
     academic_specialization = models.CharField(max_length=160, blank=True, default='')
+    academic_status = models.CharField(
+        max_length=160,
+        blank=True,
+        default='',
+        help_text='Status shown only in the Academic Identity card.',
+    )
     academic_certification = models.CharField(max_length=160, blank=True, default='')
     academic_address = models.TextField(
         blank=True,

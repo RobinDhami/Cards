@@ -414,11 +414,11 @@
         </section>
       {% endif %}
 
-      {% if profile.work_role or profile.work_organization or profile.work_experience or profile.work_address or profile.academic_section or profile.academic_title or profile.academic_institution or profile.academic_level or profile.academic_year or profile.academic_specialization or profile.academic_certification or profile.academic_address %}
+      {% if profile.work_role or profile.work_organization or profile.work_experience or profile.work_address or profile.academic_title or profile.academic_institution or profile.academic_level or profile.academic_year or profile.academic_specialization or profile.academic_status %}
       <section class="section identity-stack">
         <div class="identity-rail" aria-hidden="true">
           <span class="identity-node work"><i data-lucide="briefcase-business"></i></span>
-          {% if profile.academic_section or profile.academic_title or profile.academic_institution or profile.academic_level or profile.academic_year or profile.academic_specialization or profile.academic_certification or profile.academic_address %}
+          {% if profile.academic_title or profile.academic_institution or profile.academic_level or profile.academic_year or profile.academic_specialization or profile.academic_status %}
             <span class="identity-rail-line"></span>
             <span class="identity-node academic"><i data-lucide="graduation-cap"></i></span>
           {% endif %}
@@ -438,20 +438,19 @@
             </article>
           {% endif %}
 
-          {% if profile.academic_section or profile.academic_title or profile.academic_institution or profile.academic_level or profile.academic_year or profile.academic_specialization or profile.academic_certification or profile.academic_address %}
+          {% if profile.academic_title or profile.academic_institution or profile.academic_level or profile.academic_year or profile.academic_specialization or profile.academic_status %}
             <article class="identity-card academic">
               <span class="identity-badge" aria-hidden="true"><i data-lucide="graduation-cap"></i></span>
-              <p class="identity-eyebrow">Academic identity</p>
-              <h2 class="identity-title">{{ profile.academic_title|default:"Academic role not added" }}</h2>
-              <p class="identity-subtitle">{{ profile.academic_institution|default:"Institution not added" }}</p>
+              <p class="identity-eyebrow">Academic background</p>
+              <h2 class="identity-title">Academic Profile</h2>
               <div class="identity-divider"></div>
               <div class="identity-facts">
+                {% if profile.academic_title %}<div class="identity-fact"><span>Degree / Program</span><strong>{{ profile.academic_title }}</strong></div>{% endif %}
+                {% if profile.academic_institution %}<div class="identity-fact"><span>Institution</span><strong>{{ profile.academic_institution }}</strong></div>{% endif %}
                 {% if profile.academic_level %}<div class="identity-fact"><span>Level</span><strong>{{ profile.academic_level }}</strong></div>{% endif %}
-                {% if profile.academic_year %}<div class="identity-fact"><span>Experience</span><strong>{{ profile.academic_year }}</strong></div>{% endif %}
-                {% if profile.academic_section %}<div class="identity-fact"><span>Section</span><strong>{{ profile.academic_section }}</strong></div>{% endif %}
+                {% if profile.academic_year %}<div class="identity-fact"><span>Year / Semester</span><strong>{{ profile.academic_year }}</strong></div>{% endif %}
                 {% if profile.academic_specialization %}<div class="identity-fact"><span>Specialization</span><strong>{{ profile.academic_specialization }}</strong></div>{% endif %}
-                {% if profile.academic_certification %}<div class="identity-fact"><span>Certification</span><strong>{{ profile.academic_certification }}</strong></div>{% endif %}
-                {% if profile.academic_address %}<div class="identity-fact"><span>Address</span><strong>{{ profile.academic_address }}</strong></div>{% endif %}
+                {% if profile.academic_status %}<div class="identity-fact"><span>Status</span><strong>{{ profile.academic_status }}</strong></div>{% endif %}
               </div>
             </article>
           {% endif %}
