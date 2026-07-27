@@ -284,13 +284,14 @@ class ProfessionalProfileOwnerForm(ProfessionalProfileForm):
 class ProfessionalServiceForm(forms.ModelForm):
     class Meta:
         model = ProfessionalService
-        fields = ['title', 'icon', 'display_order']
+        fields = ['title', 'description', 'icon', 'display_order']
         widgets = {
             'description': forms.Textarea(attrs={'rows': 2}),
             'icon': forms.Select(choices=SERVICE_ICON_CHOICES),
         }
         labels = {
-            'title': 'Service / Skill',
+            'title': 'Service / Offering',
+            'description': 'Service Description',
             'icon': 'Icon',
         }
 
