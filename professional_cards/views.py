@@ -482,6 +482,7 @@ def public_professional_profile(request, slug):
     }
     template_path = {
         'modern_identity': 'professional_cards/modern_identity.html',
+        'organization_focus': 'professional_cards/organization_focus.html',
     }.get(profile.template_name, 'professional_cards/modern_identity.html')
     return render(request, template_path, context)
 

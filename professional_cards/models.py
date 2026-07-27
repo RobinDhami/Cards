@@ -7,6 +7,7 @@ from django.utils.text import slugify
 class ProfessionalProfile(models.Model):
     TEMPLATE_CHOICES = [
         ('modern_identity', 'Modern Identity'),
+        ('organization_focus', 'Organization Focus'),
     ]
     PROFILE_TYPE_CHOICES = [
         ('student', 'Student'),
