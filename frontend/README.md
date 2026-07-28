@@ -31,7 +31,10 @@ http://127.0.0.1:5173
 3. Connect React to Django REST Framework APIs.
 4. Move routes from Django templates to React gradually after each screen is stable.
 
-The current demo includes React preview components for:
+The React root page now mirrors the existing Django homepage content and styling. Keep the
+Django homepage template in place until the React version is fully connected and accepted.
+
+The project also includes early React preview components for:
 
 - Organization Focus
 - Modern Identity
