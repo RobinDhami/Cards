@@ -57,6 +57,7 @@ urlpatterns = [
     path('ai-chat/', ai_chat, name='ai_chat'),
     path('send-message/', send_site_message, name='send_message'),
     path('api/card/lookup/', api_card_lookup, name='api_card_lookup'),
+    path('api/dashboard/overview/', dashboard_overview_api, name='dashboard_overview_api'),
 ]
 
 if settings.DEBUG:

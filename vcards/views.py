@@ -1702,6 +1702,127 @@ def admin_dashboard(request):
     return render(request, 'dashboard/home.html', context)
 
 
+def _dashboard_school_payload(school):
+    if not school:
+        return None
+    return {
+        'id': school.id,
+        'name': school.name,
+        'address': school.address or '',
+        'principalName': school.principal_name or '',
+        'logoUrl': _media_url(school.logo),
+    }
+
+
+def _dashboard_analytics_payload(school, analytics):
+    if not school or not analytics:
+        return None
+
+    top_profiles = []
+    for profile in analytics['top_profiles']:
+        class_label = profile.get_academic_level_display() if profile.academic_level else 'Class not set'
+        if profile.section:
+            class_label = f'{class_label} - Section {profile.section}'
+        top_profiles.append({
+            'id': profile.id,
+            'name': profile.name,
+            'classLabel': class_label,
+            'interactions': profile.interactions,
+            'photoUrl': _media_url(profile.profile_photo),
+            'url': reverse('student_contact_card', args=[profile.id]),
+        })
+
+    return {
+        'studentCount': analytics['student_count'],
+        'teacherCount': analytics['teacher_count'],
+        'liveCount': analytics['live_count'],
+        'activeCardCount': analytics['active_card_count'],
+        'profileViews': analytics['profile_views'],
+        'contactActions': analytics['contact_actions'],
+        'vcardDownloads': analytics['vcard_downloads'],
+        'totalEngagement': analytics['total_engagement'],
+        'liveCoverage': analytics['live_coverage'],
+        'cardCoverage': analytics['card_coverage'],
+        'classRows': analytics['class_rows'],
+        'activityMix': analytics['activity_mix'],
+        'donutStyle': analytics['donut_style'],
+        'dailyEngagement': analytics['daily_engagement'],
+        'engagementPoints': analytics['engagement_points'],
+        'topProfiles': top_profiles,
+        'links': {
+            'manageStudents': f"{reverse('dashboard_students')}{_build_dashboard_query(school)}",
+            'addStudent': reverse('add_student_to_college', args=[school.id]),
+            'reports': f"{reverse('dashboard_reports')}{_build_dashboard_query(school)}",
+            'printStudio': f"{reverse('dashboard_print')}{_build_dashboard_query(school)}",
+        },
+    }
+
+
+@login_required
+def dashboard_overview_api(request):
+    role = _get_user_role(request.user)
+    professional_profile = _get_owned_professional_profile(request.user)
+    if professional_profile and role == 'public':
+        return JsonResponse({
+            'redirectTo': reverse('professional_cards:owner_edit', args=[professional_profile.slug]),
+        }, status=403)
+    if role in {'student', 'teacher'}:
+        owned_profile = _get_owned_profile(request.user)
+        if owned_profile:
+            return JsonResponse({
+                'redirectTo': reverse('student_owner_dashboard', args=[owned_profile.id]),
+            }, status=403)
+    if role not in {'super_admin', 'school_admin'}:
+        return JsonResponse({'error': 'You do not have access to the admin dashboard.'}, status=403)
+
+    school, schools = _resolve_dashboard_school(request, required=False)
+    analytics = _school_analytics(school) if school else None
+    nav_school_query = _build_dashboard_query(school)
+    is_super_admin = _is_super_admin(request.user)
+    display_name = request.user.first_name or request.user.username
+    initials = (display_name[:2] or 'U').upper()
+    school_options = [
+        {'id': item.id, 'name': item.name}
+        for item in schools
+    ]
+    nav_items = [
+        {'key': 'home', 'label': 'Overview', 'href': f"{reverse('admin_dashboard')}{nav_school_query}", 'icon': 'layout-grid'},
+    ]
+    if is_super_admin:
+        nav_items.append({'key': 'schools', 'label': 'Schools', 'href': reverse('dashboard_schools'), 'icon': 'school'})
+    nav_items.extend([
+        {'key': 'students', 'label': 'Students', 'href': f"{reverse('dashboard_students')}{nav_school_query}", 'icon': 'users'},
+        {'key': 'print', 'label': 'ID Card Studio', 'href': f"{reverse('dashboard_print')}{nav_school_query}", 'icon': 'credit-card'},
+    ])
+    if is_super_admin:
+        nav_items.extend([
+            {'key': 'professional_cards', 'label': 'Professional Cards', 'href': reverse('professional_cards:list'), 'icon': 'badge-check'},
+            {'key': 'business_suite', 'label': 'Business Suite', 'href': reverse('business_suite'), 'icon': 'briefcase-business'},
+        ])
+    nav_items.extend([
+        {'key': 'reports', 'label': 'Reports', 'href': f"{reverse('dashboard_reports')}{nav_school_query}", 'icon': 'bar-chart-3'},
+        {'key': 'settings', 'label': 'Settings', 'href': f"{reverse('dashboard_settings')}{nav_school_query}", 'icon': 'settings'},
+    ])
+
+    return JsonResponse({
+        'activeModule': 'home',
+        'isSuperAdmin': is_super_admin,
+        'user': {
+            'username': request.user.username,
+            'displayName': display_name,
+            'initials': initials,
+            'roleLabel': 'Super Admin' if is_super_admin else 'School Administrator',
+        },
+        'currentSchool': _dashboard_school_payload(school),
+        'schoolOptions': school_options,
+        'navSchoolQuery': nav_school_query,
+        'navItems': nav_items,
+        'logoutUrl': reverse('dashboard_logout'),
+        'schoolsUrl': reverse('dashboard_schools'),
+        'analytics': _dashboard_analytics_payload(school, analytics),
+    })
+
+
 @login_required
 def dashboard_schools(request):
     if not _is_super_admin(request.user):
