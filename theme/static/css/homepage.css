@@ -1347,7 +1347,12 @@ p {
 
 .option-grid input {
   position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
   opacity: 0;
+  pointer-events: none;
 }
 
 .option-grid span {
@@ -1410,6 +1415,21 @@ textarea:focus {
   justify-content: space-between;
   gap: 18px;
   margin-top: 18px;
+}
+
+.inquiry-form-status {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.inquiry-form-status.is-success {
+  color: #047857;
+}
+
+.inquiry-form-status.is-error {
+  color: #b91c1c;
 }
 
 .privacy {

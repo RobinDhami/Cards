@@ -1,17 +1,19 @@
 # React Migration Inventory
 
-This project is moving toward a React frontend with Django kept as the backend. The homepage has an initial React mirror already. The Django templates should stay in place until each React replacement is working, tested, and wired to real backend data.
+This project uses React for the migrated frontend and Django for authentication, data, uploads, generated files, and JSON APIs. The production build is emitted to `theme/static/react/` and served by Django through `vcard_backend.react_views.react_app`.
 
 ## Current React State
 
-- `frontend/src/pages/home/HomePage.tsx` mirrors the Django homepage.
-- `frontend/src/pages/dashboard/DashboardHome.tsx` migrates the dashboard overview screen and reads from `/api/dashboard/overview/`.
-- `frontend/src/pages/profiles/PublicProfessionalProfile.tsx` migrates the live professional public profile route for `modern_identity` and `organization_focus`, reading from `/api/professional-profiles/<slug>/`.
-- `frontend/src/components/ModernIdentityPreview.tsx` and `OrganizationFocusPreview.tsx` are older preview/demo components and should be removed or refactored after the live React profile route fully replaces them.
-- `frontend/src/data/demoProfile.ts` is demo data only.
-- The React app still needs authenticated form APIs, CSRF handling, upload handling, and the remaining dashboard/shop/profile editor endpoints.
+- Homepage, login, and dashboard overview.
+- Professional public templates, owner login/edit, admin list/create/edit/delete, independent identity sections, repeatable services/highlights/testimonials/documents, and media uploads.
+- Student public digital card, owner dashboard, manual editor, visibility/password controls, documents, social links, and media uploads.
+- School management for schools, students, teachers/staff, reports, settings, credentials, bulk upload, print controls, and QR/data export controls.
+- Shop-owner overview, products, categories, orders, customers, discounts, and website editor.
+- Public storefront, catalog/category pages, product detail, session cart, checkout, order success, and order tracking.
+- Authenticated CSRF-aware API client, shared management shell/form controls, production React delivery, and Django-backed file/export URLs.
+- Old React-only preview components and demo profile data have been removed.
 
-## Foundation To Convert First
+## Foundation Completed
 
 - App routing for public pages, auth pages, dashboards, profile editors, and shop screens.
 - Session auth helpers: current user, login, logout, permission redirects, CSRF token handling.
@@ -276,20 +278,16 @@ Backend/API behavior to support:
 
 During React migration, CSS can be reused first, then cleaned up once each page is stable.
 
-## Suggested Migration Order
+## Remaining Legacy-Only Areas
 
-1. Build the React routing/auth/API foundation.
-2. Convert public professional profile templates first: `modern_identity` and `organization_focus`. Done as an initial React route; keep validating against more real profiles.
-3. Convert professional owner profile editor because it directly feeds the public templates.
-4. Convert professional admin list/create/edit/delete.
-5. Convert student digital contact card.
-6. Convert student owner dashboard and manual edit form.
-7. Convert school/admin dashboard core: home, schools, students, teachers. Dashboard overview is started; schools/students/teachers remain.
-8. Convert school settings, reports, credentials, bulk upload.
-9. Convert print/QR dashboard controls while keeping export generation in Django.
-10. Convert shop owner dashboard core: overview, products, product create, orders.
-11. Convert shop categories, customers, discounts, website editor, staff/settings/billing.
-12. Convert public shop storefront after product/cart APIs are stable.
+These were outside the requested migration scope and still use Django templates:
+
+- Platform Business Suite store administration.
+- Shop marketing, reports, staff, billing, settings, support, inventory, payment verification, notifications, and owner preview pages.
+- Legacy college detail/add/edit/delete URLs and the generic dashboard create-user page.
+- Server-rendered AI chat and miscellaneous legacy profile routes.
+
+Django remains intentionally responsible for vCard downloads, tracked contact redirects, QR images, ID-card previews, PDF generation, and QR ZIP generation.
 
 ## Delete-After-Migration Checklist
 

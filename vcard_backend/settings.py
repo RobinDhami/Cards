@@ -40,6 +40,11 @@ extra_csrf = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
 CSRF_TRUSTED_ORIGINS.extend(
     [origin.strip() for origin in extra_csrf.split(",") if origin.strip()]
 )
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS.extend([
+        "http://127.0.0.1:5173",
+        "http://localhost:5173",
+    ])
 # Application definition
 
 INSTALLED_APPS = [

@@ -36,7 +36,7 @@ class College(models.Model):
 class BaseProfile(models.Model):
     name = models.CharField(max_length=255)
     phone = models.CharField(max_length=20)
-    email = models.EmailField()
+    email = models.EmailField(blank=True, default='')
     bio = models.TextField(blank=True, null=True)
     username = models.CharField(max_length=150, unique=True)
     password = models.CharField(max_length=128)
@@ -49,7 +49,7 @@ class BaseProfile(models.Model):
     show_contact_card = models.BooleanField(default=True)
     facebook = models.URLField(blank=True, null=True)
     messenger= models.URLField(blank=True, null=True)
-    whatsapp = models.CharField(max_length=20,null=True)
+    whatsapp = models.CharField(max_length=20, blank=True, null=True)
     instagram = models.URLField(blank=True, null=True)
     twitter = models.URLField(blank=True, null=True)
     linkedin = models.URLField(blank=True, null=True)

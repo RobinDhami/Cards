@@ -1751,7 +1751,7 @@ def _dashboard_analytics_payload(school, analytics):
         'topProfiles': top_profiles,
         'links': {
             'manageStudents': f"{reverse('dashboard_students')}{_build_dashboard_query(school)}",
-            'addStudent': reverse('add_student_to_college', args=[school.id]),
+            'addStudent': f"{reverse('dashboard_students')}?school={school.id}&create=1",
             'reports': f"{reverse('dashboard_reports')}{_build_dashboard_query(school)}",
             'printStudio': f"{reverse('dashboard_print')}{_build_dashboard_query(school)}",
         },
@@ -2867,6 +2867,11 @@ This message was sent from the Tap2Connect website contact form.
             email,  # from user's email
             [settings.DEFAULT_FROM_EMAIL],  # your Gmail address
         )
+        if 'application/json' in request.headers.get('Accept', ''):
+            return JsonResponse({
+                'ok': True,
+                'message': 'Thank you. Your inquiry has been sent.',
+            })
         return redirect('home')  # or show a success message
 
     return redirect('home')

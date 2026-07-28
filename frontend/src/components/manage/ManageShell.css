@@ -1,0 +1,362 @@
+:root {
+  --manage-ink: #0f172a;
+  --manage-muted: #64748b;
+  --manage-line: #e2e8f0;
+  --manage-surface: #ffffff;
+  --manage-page: #f5f7fb;
+}
+* {
+  box-sizing: border-box;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.manage-app {
+  min-height: 100vh;
+  background: var(--manage-page);
+  color: var(--manage-ink);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+.manage-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 20;
+  display: flex;
+  width: 240px;
+  flex-direction: column;
+  border-right: 1px solid var(--manage-line);
+  background: #fff;
+}
+
+.manage-brand {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  gap: 11px;
+  border-bottom: 1px solid var(--manage-line);
+  padding: 14px 18px;
+}
+
+.manage-brand-mark {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--manage-accent);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.manage-brand-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.manage-brand strong,
+.manage-brand small,
+.manage-account strong,
+.manage-account small {
+  display: block;
+}
+
+.manage-brand strong {
+  max-width: 154px;
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.manage-brand small,
+.manage-account small {
+  margin-top: 2px;
+  color: var(--manage-muted);
+  font-size: 9px;
+}
+
+.manage-nav {
+  display: grid;
+  gap: 3px;
+  overflow-y: auto;
+  padding: 14px 10px;
+}
+
+.manage-nav a {
+  display: flex;
+  min-height: 39px;
+  align-items: center;
+  gap: 10px;
+  border-radius: 7px;
+  padding: 8px 10px;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.manage-nav a:hover {
+  background: #f8fafc;
+  color: var(--manage-ink);
+}
+
+.manage-nav a.is-active {
+  background: color-mix(in srgb, var(--manage-accent) 9%, white);
+  color: var(--manage-accent);
+}
+
+.manage-account {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 30px;
+  align-items: center;
+  gap: 9px;
+  margin-top: auto;
+  border-top: 1px solid var(--manage-line);
+  padding: 13px;
+}
+
+.manage-avatar {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 50%;
+  background: #e8eefc;
+  color: var(--manage-accent);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.manage-account strong {
+  overflow: hidden;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.manage-account button,
+.manage-icon-button {
+  display: inline-grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid var(--manage-line);
+  border-radius: 7px;
+  background: #fff;
+  color: #475569;
+  cursor: pointer;
+}
+
+.manage-main {
+  min-width: 0;
+  margin-left: 240px;
+}
+
+.manage-header {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--manage-line);
+  background: rgba(255, 255, 255, 0.94);
+  padding: 12px 20px;
+  backdrop-filter: blur(12px);
+}
+
+.manage-title {
+  min-width: 0;
+  flex: 1;
+}
+
+.manage-title h1 {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.3;
+}
+
+.manage-title p {
+  margin: 3px 0 0;
+  color: var(--manage-muted);
+  font-size: 10px;
+}
+
+.manage-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.manage-school-select {
+  position: relative;
+}
+
+.manage-school-select select {
+  min-width: 170px;
+  appearance: none;
+  border: 1px solid var(--manage-line);
+  border-radius: 7px;
+  background: #fff;
+  padding: 8px 29px 8px 10px;
+  color: #334155;
+  font: inherit;
+  font-size: 10px;
+}
+
+.manage-school-select svg {
+  position: absolute;
+  top: 50%;
+  right: 9px;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.manage-content {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 18px;
+}
+
+.manage-menu,
+.manage-overlay,
+.manage-mobile-drawer {
+  display: none;
+}
+
+.manage-mobile-drawer .manage-sidebar {
+  position: static;
+  display: flex;
+  min-height: 100vh;
+}
+
+.manage-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+}
+
+.manage-button {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--manage-line);
+  border-radius: 7px;
+  background: #fff;
+  padding: 7px 11px;
+  color: #334155;
+  cursor: pointer;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.manage-button.is-primary {
+  border-color: var(--manage-accent);
+  background: var(--manage-accent);
+  color: #fff;
+}
+
+.manage-button.is-danger {
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.manage-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.manage-card {
+  border: 1px solid var(--manage-line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.manage-state {
+  display: grid;
+  min-height: 60vh;
+  place-items: center;
+  color: var(--manage-muted);
+  font: 13px Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+.manage-alert {
+  border: 1px solid #fecaca;
+  border-radius: 7px;
+  background: #fff1f2;
+  padding: 11px 13px;
+  color: #9f1239;
+  font-size: 11px;
+}
+
+.manage-alert.is-success {
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+  color: #047857;
+}
+
+@media (max-width: 960px) {
+  .manage-app > .manage-sidebar {
+    display: none;
+  }
+
+  .manage-main {
+    margin-left: 0;
+  }
+
+  .manage-menu {
+    display: inline-grid;
+  }
+
+  .manage-overlay.is-open {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: block;
+    background: rgba(15, 23, 42, 0.42);
+  }
+
+  .manage-mobile-drawer.is-open {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 31;
+    display: block;
+    width: min(280px, 88vw);
+    overflow-y: auto;
+    background: #fff;
+  }
+}
+
+@media (max-width: 640px) {
+  .manage-header {
+    padding: 10px 12px;
+  }
+
+  .manage-title p,
+  .manage-school-select,
+  .manage-header-actions > .manage-icon-button {
+    display: none;
+  }
+
+  .manage-content {
+    padding: 12px;
+  }
+}

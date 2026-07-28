@@ -1,7 +1,11 @@
+import json
+
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import Client, TestCase
 from django.urls import reverse
 
+from professional_cards.models import ProfessionalProfile
+from shops.models import Category, Discount, Order, Product, Store
 from vcards.models import College, ProfileActivity, Skill, StudentProfile
 
 
@@ -41,84 +45,88 @@ class StudentDigitalCardTests(TestCase):
         self.student.skills.add(self.skill)
 
     def test_public_card_shows_about_but_hides_private_details(self):
-        response = self.client.get(reverse('student_contact_card', args=[self.student.id]))
+        response = self.client.get(
+            reverse('react_student_public_api', args=[self.student.id])
+        )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Current focus')
-        self.assertContains(response, self.student.about_intro)
-        self.assertContains(response, self.student.about_featured)
-        self.assertContains(response, self.student.about_current)
-        self.assertContains(response, self.skill.name)
-        self.assertContains(response, 'Login is required')
-        self.assertNotContains(response, self.student.emergency_contact_name)
-        self.assertNotContains(response, self.student.emergency_contact_phone)
-        self.assertNotContains(response, self.student.address)
+        profile = response.json()['profile']
+        self.assertEqual(profile['intro'], self.student.about_intro)
+        self.assertEqual(profile['featured'], self.student.about_featured)
+        self.assertEqual(profile['current'], self.student.about_current)
+        self.assertEqual(profile['skills'], [self.skill.name])
+        self.assertFalse(profile['canViewPrivateDetails'])
+        self.assertEqual(profile['guardianName'], '')
+        self.assertEqual(profile['emergencyPhone'], '')
+        self.assertEqual(profile['bloodGroup'], '')
 
     def test_owner_can_view_private_details(self):
         self.client.force_login(self.owner)
 
-        response = self.client.get(reverse('student_contact_card', args=[self.student.id]))
+        response = self.client.get(
+            reverse('react_student_public_api', args=[self.student.id])
+        )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, self.student.emergency_contact_name)
-        self.assertContains(response, self.student.emergency_contact_phone)
-        self.assertContains(response, self.student.address)
+        profile = response.json()['profile']
+        self.assertTrue(profile['canViewPrivateDetails'])
+        self.assertEqual(profile['guardianName'], self.student.emergency_contact_name)
+        self.assertEqual(profile['emergencyPhone'], self.student.emergency_contact_phone)
+        self.assertEqual(profile['address'], self.student.address)
 
     def test_profile_credentials_create_full_owner_session(self):
         response = self.client.post(
-            reverse('edit_student_auth', args=[self.student.id]),
-            {
+            reverse('react_student_login_api', args=[self.student.id]),
+            data=json.dumps({
                 'username': self.student.username,
                 'password': 'OwnerPass123!',
-            },
+            }),
+            content_type='application/json',
         )
 
-        self.assertRedirects(
-            response,
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json()['redirectPath'],
             reverse('student_owner_dashboard', args=[self.student.id]),
-            fetch_redirect_response=False,
         )
         self.assertEqual(int(self.client.session['_auth_user_id']), self.owner.id)
         dashboard = self.client.get(
-            reverse('student_owner_dashboard', args=[self.student.id])
+            reverse('react_student_dashboard_api', args=[self.student.id])
         )
         self.assertEqual(dashboard.status_code, 200)
 
     def test_main_login_routes_student_to_owner_dashboard(self):
         response = self.client.post(
-            reverse('dashboard_login'),
-            {'username': self.owner.username, 'password': 'OwnerPass123!'},
+            reverse('react_session_login_api'),
+            data=json.dumps({
+                'username': self.owner.username,
+                'password': 'OwnerPass123!',
+            }),
+            content_type='application/json',
         )
 
-        self.assertRedirects(
-            response,
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json()['redirectPath'],
             reverse('student_owner_dashboard', args=[self.student.id]),
-            fetch_redirect_response=False,
         )
 
     def test_owner_can_edit_about_fields(self):
         self.client.force_login(self.owner)
 
         response = self.client.post(
-            reverse('edit_student_manual', args=[self.student.id]),
-            {
-                'name': self.student.name,
-                'username': self.student.username,
-                'email': self.student.email,
-                'phone': self.student.phone,
+            reverse('react_student_manage_api', args=[self.student.id]),
+            data=json.dumps({
                 'about_intro': 'Updated public introduction.',
                 'about_featured': 'Updated achievement.',
                 'about_current': 'Available for a science club project.',
-                'custom_skills': 'Python, Robotics',
-                'show_contact_card': 'on',
-            },
+                'skills': ['Python', 'Robotics'],
+                'show_contact_card': True,
+            }),
+            content_type='application/json',
         )
 
-        self.assertRedirects(
-            response,
-            reverse('contact_card', args=[self.student.id]),
-            fetch_redirect_response=False,
-        )
+        self.assertEqual(response.status_code, 200)
         self.student.refresh_from_db()
         self.assertEqual(self.student.about_intro, 'Updated public introduction.')
         self.assertEqual(self.student.about_featured, 'Updated achievement.')
@@ -139,14 +147,10 @@ class StudentDigitalCardTests(TestCase):
         self.client.force_login(outsider)
 
         response = self.client.get(
-            reverse('edit_student_manual', args=[self.student.id])
+            reverse('react_student_manage_api', args=[self.student.id])
         )
 
-        self.assertRedirects(
-            response,
-            reverse('edit_student_auth', args=[self.student.id]),
-            fetch_redirect_response=False,
-        )
+        self.assertEqual(response.status_code, 403)
 
     def test_contact_action_is_tracked(self):
         response = self.client.get(
@@ -215,45 +219,45 @@ class SchoolDashboardScopeTests(TestCase):
         self.client.force_login(self.school_admin_a)
 
         response = self.client.get(
-            reverse('admin_dashboard'),
+            reverse('dashboard_overview_api'),
             {'school': self.school_b.id},
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['current_school'], self.school_a)
-        self.assertEqual(response.context['analytics']['student_count'], 1)
-        self.assertContains(response, 'School A')
-        self.assertNotContains(response, 'Student B')
+        payload = response.json()
+        self.assertEqual(payload['currentSchool']['id'], self.school_a.id)
+        self.assertEqual(payload['analytics']['studentCount'], 1)
 
     def test_school_admin_cannot_open_platform_school_directory(self):
         self.client.force_login(self.school_admin_a)
 
-        response = self.client.get(reverse('dashboard_schools'))
+        response = self.client.get(reverse('react_dashboard_schools_api'))
 
-        self.assertRedirects(response, reverse('admin_dashboard'))
+        self.assertEqual(response.status_code, 403)
 
     def test_reports_are_scoped_to_the_assigned_school(self):
         self.client.force_login(self.school_admin_a)
 
         response = self.client.get(
-            reverse('dashboard_reports'),
+            reverse('react_dashboard_reports_api'),
             {'school': self.school_b.id},
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['current_school'], self.school_a)
-        self.assertEqual(response.context['student_count'], 1)
+        payload = response.json()
+        self.assertEqual(payload['shell']['currentSchool']['id'], self.school_a.id)
+        self.assertEqual(payload['report']['studentCount'], 1)
 
     def test_super_admin_can_switch_school_workspaces(self):
         self.client.force_login(self.super_admin)
 
         response = self.client.get(
-            reverse('admin_dashboard'),
+            reverse('dashboard_overview_api'),
             {'school': self.school_b.id},
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['current_school'], self.school_b)
+        self.assertEqual(response.json()['currentSchool']['id'], self.school_b.id)
 
     def test_school_username_format_only_updates_assigned_school(self):
         self.client.force_login(self.school_admin_a)
@@ -295,3 +299,184 @@ class SchoolDashboardScopeTests(TestCase):
         self.student_a.refresh_from_db()
         self.assertNotEqual(self.student_a.password, old_password)
         self.assertTrue(self.student_a.password.startswith('pbkdf2_'))
+
+
+class ReactMigrationApiTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser(
+            username='react.admin',
+            password='ReactAdminPass123!',
+        )
+        self.school = College.objects.create(name='React Test School')
+        self.store = Store.objects.create(
+            owner=self.admin,
+            name='React Test Store',
+            slug='react-test-store',
+            is_active=True,
+            is_published=True,
+        )
+        self.client.force_login(self.admin)
+
+    def test_vite_origin_can_complete_csrf_login(self):
+        csrf_client = Client(enforce_csrf_checks=True, HTTP_HOST='127.0.0.1:8000')
+        session_response = csrf_client.get(reverse('react_session_api'))
+        token = session_response.json()['csrfToken']
+
+        response = csrf_client.post(
+            reverse('react_session_login_api'),
+            data=json.dumps({
+                'username': self.admin.username,
+                'password': 'ReactAdminPass123!',
+            }),
+            content_type='application/json',
+            HTTP_X_CSRFTOKEN=token,
+            HTTP_ORIGIN='http://127.0.0.1:5173',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['authenticated'])
+        self.assertEqual(response.json()['redirectPath'], '/dashboard/')
+
+    def test_professional_profile_and_independent_service_are_created(self):
+        response = self.client.post(
+            reverse('react_professional_profiles_api'),
+            {
+                'profile_type': 'professional',
+                'full_name': 'React Professional',
+                'slug': 'react-professional',
+                'header_identity': 'organization',
+                'work_role': 'Chief Executive Officer',
+                'work_organization': 'React International School',
+                'academic_title': 'BSc CSIT',
+                'academic_institution': 'Kathmandu Bernhardt College',
+                'academic_level': "Bachelor's",
+                'academic_year': 'Final Year / 6th Semester',
+                'academic_specialization': 'Web Development / Networking',
+                'academic_status': 'Seeking Internship / Open to Work',
+                'is_active': 'on',
+                'template_name': 'modern_identity',
+                'accent_color': '#0f766e',
+                'login_username': 'react.professional',
+                'login_password': 'ProfessionalPass123!',
+                'collections': json.dumps({
+                    'services': [{
+                        'title': 'School admissions',
+                        'description': 'Organization service',
+                        'icon': 'graduation-cap',
+                    }],
+                    'portfolio': [{
+                        'title': 'Digital campus',
+                        'highlight_type': 'project',
+                        'organization': 'React International School',
+                        'description': 'Independent highlight data',
+                        'link': 'https://example.com/project',
+                    }],
+                    'testimonials': [],
+                    'documents': [],
+                }),
+            },
+        )
+
+        self.assertEqual(response.status_code, 201)
+        profile = ProfessionalProfile.objects.get(slug='react-professional')
+        self.assertEqual(profile.work_role, 'Chief Executive Officer')
+        self.assertEqual(profile.academic_status, 'Seeking Internship / Open to Work')
+        self.assertEqual(profile.services.get().title, 'School admissions')
+        self.assertEqual(
+            profile.portfolio_items.get().organization,
+            'React International School',
+        )
+
+    def test_school_member_can_be_created_without_email_or_whatsapp(self):
+        response = self.client.post(
+            f"{reverse('react_dashboard_members_api')}?school={self.school.id}",
+            data=json.dumps({
+                'name': 'Optional Contact Student',
+                'phone': '9800000000',
+                'email': '',
+                'member_type': 'student',
+                'academic_level': 'grade_10',
+                'section': 'A',
+            }),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 201)
+        member = StudentProfile.objects.get(name='Optional Contact Student')
+        self.assertEqual(member.email, '')
+        self.assertIsNone(member.whatsapp)
+        self.assertEqual(member.academic_level, 'grade_10')
+
+    def test_shop_management_cart_and_checkout_flow(self):
+        category_response = self.client.post(
+            reverse('react_shop_owner_categories_api', args=[self.store.slug]),
+            data=json.dumps({
+                'name': 'Accessories',
+                'slug': 'accessories',
+                'isActive': True,
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(category_response.status_code, 201)
+        category_id = category_response.json()['category']['id']
+
+        product_response = self.client.post(
+            reverse('react_shop_owner_products_api', args=[self.store.slug]),
+            data=json.dumps({
+                'name': 'Classic Watch',
+                'slug': 'classic-watch',
+                'regularPrice': '3999',
+                'discountedPrice': '3499',
+                'stockQuantity': 5,
+                'status': 'active',
+                'categoryId': category_id,
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(product_response.status_code, 201)
+        product_id = product_response.json()['product']['id']
+
+        discount_response = self.client.post(
+            reverse('react_shop_owner_discounts_api', args=[self.store.slug]),
+            data=json.dumps({
+                'name': 'Launch offer',
+                'code': 'LAUNCH10',
+                'discountType': 'percentage',
+                'value': '10',
+                'isActive': True,
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(discount_response.status_code, 201)
+
+        cart_response = self.client.post(
+            reverse('react_shop_cart_api', args=[self.store.slug]),
+            data=json.dumps({
+                'action': 'add',
+                'productId': product_id,
+                'quantity': 1,
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(cart_response.status_code, 200)
+        self.assertEqual(cart_response.json()['cart']['count'], 1)
+
+        checkout_response = self.client.post(
+            reverse('react_shop_checkout_api', args=[self.store.slug]),
+            data=json.dumps({
+                'fullName': 'React Customer',
+                'phone': '9811111111',
+                'email': 'customer@example.com',
+                'province': 'Bagmati',
+                'city': 'Kathmandu',
+                'area': 'Rabibhawan',
+                'detailedAddress': 'React Test Street',
+                'paymentMethod': 'cod',
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(checkout_response.status_code, 201)
+        self.assertEqual(Order.objects.count(), 1)
+        self.assertEqual(Product.objects.get(pk=product_id).stock_quantity, 4)
+        self.assertTrue(Category.objects.filter(pk=category_id).exists())
+        self.assertTrue(Discount.objects.filter(code='LAUNCH10').exists())

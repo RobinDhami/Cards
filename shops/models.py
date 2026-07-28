@@ -69,6 +69,11 @@ class Store(TimeStampedModel):
     promo_title = models.CharField(max_length=180, default='Get 20% Off On First Order')
     promo_code = models.CharField(max_length=40, default='WELCOME20')
     promo_image = models.CharField(max_length=255, blank=True, default='shop/images/promo-model.jpg')
+    website_config = models.JSONField(
+        blank=True,
+        default=dict,
+        help_text='React storefront section visibility, order, navigation, and presentation settings.',
+    )
 
     class Meta:
         ordering = ['name']
@@ -222,6 +227,55 @@ class ProductVariant(TimeStampedModel):
     @property
     def current_price(self):
         return self.price if self.price is not None else self.product.current_price
+
+
+class Discount(TimeStampedModel):
+    DISCOUNT_TYPE_CHOICES = [
+        ('percentage', 'Percentage'),
+        ('fixed', 'Fixed amount'),
+        ('free_delivery', 'Free delivery'),
+    ]
+
+    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='discounts')
+    name = models.CharField(max_length=160)
+    code = models.CharField(max_length=50)
+    discount_type = models.CharField(
+        max_length=30,
+        choices=DISCOUNT_TYPE_CHOICES,
+        default='percentage',
+    )
+    value = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    minimum_order_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True,
+    )
+    starts_at = models.DateTimeField(blank=True, null=True)
+    ends_at = models.DateTimeField(blank=True, null=True)
+    usage_limit = models.PositiveIntegerField(blank=True, null=True)
+    usage_count = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['-is_active', '-created_at']
+        constraints = [
+            models.UniqueConstraint(fields=['store', 'code'], name='unique_discount_code_per_store')
+        ]
+
+    def __str__(self):
+        return f'{self.code} - {self.store}'
+
+    @property
+    def status(self):
+        now = timezone.now()
+        if not self.is_active:
+            return 'inactive'
+        if self.starts_at and self.starts_at > now:
+            return 'scheduled'
+        if self.ends_at and self.ends_at < now:
+            return 'expired'
+        return 'active'
 
 
 class PaymentSetting(TimeStampedModel):

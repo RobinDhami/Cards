@@ -22,6 +22,7 @@ import UserCheck from 'lucide-react/dist/esm/icons/user-check.mjs'
 import Users from 'lucide-react/dist/esm/icons/users.mjs'
 import Wifi from 'lucide-react/dist/esm/icons/wifi.mjs'
 import X from 'lucide-react/dist/esm/icons/x.mjs'
+import { backendHref } from '../../lib/api'
 import './DashboardHome.css'
 
 type LucideIcon = ComponentType<SVGProps<SVGSVGElement> & { size?: number }>
@@ -131,15 +132,6 @@ const iconMap: Record<string, LucideIcon> = {
   users: Users,
 }
 
-const backendOrigin = import.meta.env.DEV ? 'http://127.0.0.1:8000' : ''
-
-function legacyHref(href: string) {
-  if (!href || href.startsWith('http') || href.startsWith('#')) {
-    return href
-  }
-  return `${backendOrigin}${href}`
-}
-
 function reactOverviewHref(search = window.location.search) {
   return `/dashboard/${search}`
 }
@@ -197,7 +189,11 @@ function Sidebar({
       <nav className="dashboard-nav" aria-label="Dashboard navigation">
         {data.navItems.map((item) => {
           const isOverview = item.key === 'home'
-          const href = isOverview ? reactOverviewHref() : legacyHref(item.href)
+          const href = isOverview
+            ? reactOverviewHref()
+            : item.key === 'business_suite'
+              ? backendHref(item.href)
+              : item.href
           return (
             <a
               key={item.key}
@@ -227,7 +223,7 @@ function Sidebar({
               <strong>{data.user.username}</strong>
               <span>Signed-in account</span>
             </div>
-            <a className="dashboard-logout" href={legacyHref(data.logoutUrl)}>
+            <a className="dashboard-logout" href={backendHref(data.logoutUrl)}>
               <LogOut size={16} aria-hidden="true" />
               Sign out
             </a>
@@ -295,11 +291,11 @@ function SchoolSummary({ school, analytics }: { school: CurrentSchool; analytics
         </div>
       </div>
       <div className="dashboard-school-actions">
-        <a className="dashboard-button is-secondary" href={legacyHref(analytics.links.manageStudents)}>
+        <a className="dashboard-button is-secondary" href={analytics.links.manageStudents}>
           <Users size={15} aria-hidden="true" />
           Manage students
         </a>
-        <a className="dashboard-button is-primary" href={legacyHref(analytics.links.addStudent)}>
+        <a className="dashboard-button is-primary" href={analytics.links.addStudent}>
           <Plus size={15} aria-hidden="true" />
           Add student
         </a>
@@ -362,7 +358,7 @@ function TopProfiles({ analytics }: { analytics: Analytics }) {
       <div className="dashboard-profile-list">
         {analytics.topProfiles.length > 0 ? (
           analytics.topProfiles.map((profile) => (
-            <a className="dashboard-profile-row" href={legacyHref(profile.url)} target="_blank" rel="noreferrer" key={profile.id}>
+            <a className="dashboard-profile-row" href={profile.url} target="_blank" rel="noreferrer" key={profile.id}>
               <div className="dashboard-profile-photo">
                 {profile.photoUrl ? <img src={profile.photoUrl} alt="" /> : <User size={14} aria-hidden="true" />}
               </div>
@@ -377,7 +373,7 @@ function TopProfiles({ analytics }: { analytics: Analytics }) {
           <div className="dashboard-empty-chart">Engagement will appear after cards are opened.</div>
         )}
       </div>
-      <a className="dashboard-list-link" href={legacyHref(analytics.links.reports)}>
+      <a className="dashboard-list-link" href={analytics.links.reports}>
         View all reports
       </a>
     </article>
@@ -461,7 +457,7 @@ function WorkflowCard({ analytics }: { analytics: Analytics }) {
           </div>
         </div>
       </div>
-      <a className="dashboard-card-link" href={legacyHref(analytics.links.manageStudents)}>
+      <a className="dashboard-card-link" href={analytics.links.manageStudents}>
         Review students
         <ArrowRight size={14} aria-hidden="true" />
       </a>
@@ -484,7 +480,7 @@ function AnalyticsContent({ data }: { data: DashboardData }) {
             : 'Ask the platform administrator to assign your account to a school.'}
         </p>
         {data.isSuperAdmin ? (
-          <a className="dashboard-button is-primary" href={legacyHref(data.schoolsUrl)}>
+          <a className="dashboard-button is-primary" href={data.schoolsUrl}>
             Open Schools
             <ArrowRight size={16} aria-hidden="true" />
           </a>
@@ -538,7 +534,7 @@ function AnalyticsContent({ data }: { data: DashboardData }) {
           <p>Create digital IDs, issue NFC cards, choose card designs, and export print-ready files.</p>
         </div>
         <div className="dashboard-cta-actions">
-          <a className="dashboard-button is-primary" href={legacyHref(analytics.links.printStudio)}>
+          <a className="dashboard-button is-primary" href={analytics.links.printStudio}>
             Go to ID Card Studio
             <ArrowRight size={16} aria-hidden="true" />
           </a>
@@ -566,12 +562,12 @@ export function DashboardHome() {
         })
         const contentType = response.headers.get('content-type') ?? ''
         if (!contentType.includes('application/json')) {
-          window.location.href = legacyHref('/login/')
+          window.location.href = '/login/'
           return
         }
         const payload = (await response.json()) as DashboardData & { error?: string; redirectTo?: string }
         if (payload.redirectTo) {
-          window.location.href = legacyHref(payload.redirectTo)
+          window.location.href = payload.redirectTo
           return
         }
         if (!response.ok) {

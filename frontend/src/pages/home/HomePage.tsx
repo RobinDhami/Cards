@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import djangoHomeTemplate from '../../../../vcards/Templates/home.html?raw'
+import { apiFetch, displayError } from '../../lib/api'
 import '../../../../theme/static/css/homepage.css'
 
 function renderLogoInclude(match: string) {
@@ -43,6 +44,7 @@ function useHomepageInteractions() {
     const dropdownToggle = document.querySelector('.nav-dropdown-toggle')
     const navLinks = document.querySelectorAll<HTMLAnchorElement>('.site-nav a[href^="#"]')
     const primaryLinks = document.querySelectorAll<HTMLAnchorElement>('.site-nav > a.nav-link[href^="#"]')
+    const inquiryForm = document.querySelector<HTMLFormElement>('.inquiry-form')
 
     const closeNavigation = () => {
       siteNav?.classList.remove('is-open')
@@ -97,6 +99,36 @@ function useHomepageInteractions() {
       primaryLinks.forEach((link) => link.classList.toggle('is-active', link === activeItem?.link))
     }
 
+    const handleInquirySubmit = async (event: SubmitEvent) => {
+      event.preventDefault()
+      if (!inquiryForm) return
+      const submitButton = inquiryForm.querySelector<HTMLButtonElement>('button[type="submit"]')
+      let status = inquiryForm.querySelector<HTMLParagraphElement>('.inquiry-form-status')
+      if (!status) {
+        status = document.createElement('p')
+        status.className = 'inquiry-form-status'
+        status.setAttribute('role', 'status')
+        inquiryForm.append(status)
+      }
+      submitButton?.setAttribute('disabled', 'true')
+      status.classList.remove('is-error', 'is-success')
+      status.textContent = 'Sending your inquiry...'
+      try {
+        await apiFetch('/send-message/', {
+          method: 'POST',
+          body: new FormData(inquiryForm),
+        })
+        inquiryForm.reset()
+        status.classList.add('is-success')
+        status.textContent = 'Thank you. Your inquiry has been sent.'
+      } catch (error) {
+        status.classList.add('is-error')
+        status.textContent = displayError(error)
+      } finally {
+        submitButton?.removeAttribute('disabled')
+      }
+    }
+
     updateHeaderState()
     setActiveLink()
     window.addEventListener('scroll', updateHeaderState, { passive: true })
@@ -106,6 +138,7 @@ function useHomepageInteractions() {
     navLinks.forEach((link) => link.addEventListener('click', closeNavigation))
     document.addEventListener('click', handleDocumentClick)
     document.addEventListener('keydown', handleKeydown)
+    inquiryForm?.addEventListener('submit', handleInquirySubmit)
 
     return () => {
       window.clearTimeout(loaderFallback)
@@ -116,6 +149,7 @@ function useHomepageInteractions() {
       navLinks.forEach((link) => link.removeEventListener('click', closeNavigation))
       document.removeEventListener('click', handleDocumentClick)
       document.removeEventListener('keydown', handleKeydown)
+      inquiryForm?.removeEventListener('submit', handleInquirySubmit)
     }
   }, [])
 }
