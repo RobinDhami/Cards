@@ -259,6 +259,16 @@ class SchoolDashboardScopeTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['currentSchool']['id'], self.school_b.id)
 
+    def test_super_admin_overview_defaults_to_first_school(self):
+        self.client.force_login(self.super_admin)
+
+        response = self.client.get(reverse('dashboard_overview_api'))
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload['currentSchool']['id'], self.school_a.id)
+        self.assertEqual(payload['analytics']['studentCount'], 1)
+
     def test_school_username_format_only_updates_assigned_school(self):
         self.client.force_login(self.school_admin_a)
         original_school_b_username = self.student_b.username

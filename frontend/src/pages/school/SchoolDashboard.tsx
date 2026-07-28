@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import Activity from 'lucide-react/dist/esm/icons/activity.mjs'
 import BadgeCheck from 'lucide-react/dist/esm/icons/badge-check.mjs'
-import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3.mjs'
 import Download from 'lucide-react/dist/esm/icons/download.mjs'
 import Edit3 from 'lucide-react/dist/esm/icons/edit-3.mjs'
 import Eye from 'lucide-react/dist/esm/icons/eye.mjs'
@@ -10,11 +9,9 @@ import FileSpreadsheet from 'lucide-react/dist/esm/icons/file-spreadsheet.mjs'
 import GraduationCap from 'lucide-react/dist/esm/icons/graduation-cap.mjs'
 import IdCard from 'lucide-react/dist/esm/icons/id-card.mjs'
 import KeyRound from 'lucide-react/dist/esm/icons/key-round.mjs'
-import LayoutDashboard from 'lucide-react/dist/esm/icons/layout-dashboard.mjs'
 import Plus from 'lucide-react/dist/esm/icons/plus.mjs'
 import Phone from 'lucide-react/dist/esm/icons/phone.mjs'
 import Printer from 'lucide-react/dist/esm/icons/printer.mjs'
-import QrCode from 'lucide-react/dist/esm/icons/qr-code.mjs'
 import Save from 'lucide-react/dist/esm/icons/save.mjs'
 import School from 'lucide-react/dist/esm/icons/school.mjs'
 import Search from 'lucide-react/dist/esm/icons/search.mjs'
@@ -22,7 +19,6 @@ import Settings from 'lucide-react/dist/esm/icons/settings.mjs'
 import Trash2 from 'lucide-react/dist/esm/icons/trash-2.mjs'
 import Upload from 'lucide-react/dist/esm/icons/upload.mjs'
 import UserRound from 'lucide-react/dist/esm/icons/user-round.mjs'
-import Users from 'lucide-react/dist/esm/icons/users.mjs'
 import {
   Field,
   FileInput,
@@ -33,6 +29,7 @@ import {
 } from '../../components/manage/FormControls'
 import { ManageShell } from '../../components/manage/ManageShell'
 import { apiFetch, backendHref, displayError, jsonBody, queryString } from '../../lib/api'
+import { schoolWorkspaceNav, withSchool } from './schoolWorkspaceNav'
 import './SchoolDashboard.css'
 
 type Choice = { value: string; label: string }
@@ -107,25 +104,6 @@ function selectedSchoolId() {
   return Number(new URLSearchParams(window.location.search).get('school') ?? 0)
 }
 
-function withSchool(path: string, schoolId?: number | null) {
-  return `${path}${schoolId ? queryString({ school: schoolId }) : ''}`
-}
-
-function schoolNav(schoolId?: number | null) {
-  const path = window.location.pathname
-  return [
-    { label: 'Overview', href: withSchool('/dashboard/', schoolId), icon: LayoutDashboard, active: path === '/dashboard/' || path === '/dashboard' },
-    { label: 'Schools', href: '/dashboard/schools/', icon: School, active: path.includes('/schools') },
-    { label: 'Students', href: withSchool('/dashboard/students/', schoolId), icon: GraduationCap, active: path.includes('/students') || path.includes('/credentials') },
-    { label: 'Teachers & Staff', href: withSchool('/dashboard/teachers/', schoolId), icon: Users, active: path.includes('/teachers') },
-    { label: 'Reports', href: withSchool('/dashboard/reports/', schoolId), icon: BarChart3, active: path.includes('/reports') },
-    { label: 'Bulk Upload', href: withSchool('/dashboard/bulk-upload/', schoolId), icon: Upload, active: path.includes('/bulk-upload') },
-    { label: 'ID Card Studio', href: withSchool('/dashboard/print/', schoolId), icon: Printer, active: path.includes('/print') },
-    { label: 'QR & Data Export', href: withSchool('/dashboard/qr-export/', schoolId), icon: QrCode, active: path.includes('/qr-export') },
-    { label: 'Settings', href: withSchool('/dashboard/settings/', schoolId), icon: Settings, active: path.includes('/settings') },
-  ]
-}
-
 function SchoolShell({
   shell,
   title,
@@ -145,7 +123,7 @@ function SchoolShell({
       brand={school?.name || 'Tap2Connect'}
       brandDetail={school ? 'School administration' : 'Platform administration'}
       logo={school?.logo || '/static/branding/tap2connect-logo.png'}
-      nav={schoolNav(school?.id)}
+      nav={schoolWorkspaceNav(school?.id, shell.isSuperAdmin)}
       title={title}
       subtitle={subtitle}
       userName={shell.user.displayName}

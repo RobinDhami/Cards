@@ -1693,7 +1693,7 @@ def admin_dashboard(request):
         messages.error(request, 'You do not have access to the admin dashboard.')
         return redirect('dashboard_login')
 
-    school, schools = _resolve_dashboard_school(request, required=False)
+    school, schools = _resolve_dashboard_school(request, required=True)
     analytics = _school_analytics(school) if school else None
     context = {
         **_school_dashboard_context(request, 'home', school, schools),
@@ -1711,6 +1711,7 @@ def _dashboard_school_payload(school):
         'address': school.address or '',
         'principalName': school.principal_name or '',
         'logoUrl': _media_url(school.logo),
+        'themePrimary': school.theme_primary or '#0b4bcb',
     }
 
 
@@ -1775,7 +1776,7 @@ def dashboard_overview_api(request):
     if role not in {'super_admin', 'school_admin'}:
         return JsonResponse({'error': 'You do not have access to the admin dashboard.'}, status=403)
 
-    school, schools = _resolve_dashboard_school(request, required=False)
+    school, schools = _resolve_dashboard_school(request, required=True)
     analytics = _school_analytics(school) if school else None
     nav_school_query = _build_dashboard_query(school)
     is_super_admin = _is_super_admin(request.user)

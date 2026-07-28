@@ -3,26 +3,18 @@ import type { ComponentType, SVGProps } from 'react'
 import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right.mjs'
 import BadgeCheck from 'lucide-react/dist/esm/icons/badge-check.mjs'
 import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3.mjs'
-import Bell from 'lucide-react/dist/esm/icons/bell.mjs'
-import BriefcaseBusiness from 'lucide-react/dist/esm/icons/briefcase-business.mjs'
 import Check from 'lucide-react/dist/esm/icons/check.mjs'
-import ChevronUp from 'lucide-react/dist/esm/icons/chevron-up.mjs'
 import CreditCard from 'lucide-react/dist/esm/icons/credit-card.mjs'
 import Eye from 'lucide-react/dist/esm/icons/eye.mjs'
-import GraduationCap from 'lucide-react/dist/esm/icons/graduation-cap.mjs'
-import LayoutGrid from 'lucide-react/dist/esm/icons/layout-grid.mjs'
-import LogOut from 'lucide-react/dist/esm/icons/log-out.mjs'
 import MapPin from 'lucide-react/dist/esm/icons/map-pin.mjs'
-import Menu from 'lucide-react/dist/esm/icons/menu.mjs'
 import Plus from 'lucide-react/dist/esm/icons/plus.mjs'
 import School from 'lucide-react/dist/esm/icons/school.mjs'
-import Settings from 'lucide-react/dist/esm/icons/settings.mjs'
 import User from 'lucide-react/dist/esm/icons/user.mjs'
 import UserCheck from 'lucide-react/dist/esm/icons/user-check.mjs'
 import Users from 'lucide-react/dist/esm/icons/users.mjs'
 import Wifi from 'lucide-react/dist/esm/icons/wifi.mjs'
-import X from 'lucide-react/dist/esm/icons/x.mjs'
-import { backendHref } from '../../lib/api'
+import { ManageShell } from '../../components/manage/ManageShell'
+import { schoolWorkspaceNav } from '../school/schoolWorkspaceNav'
 import './DashboardHome.css'
 
 type LucideIcon = ComponentType<SVGProps<SVGSVGElement> & { size?: number }>
@@ -36,6 +28,7 @@ type CurrentSchool = SchoolOption & {
   address: string
   principalName: string
   logoUrl: string
+  themePrimary: string
 }
 
 type UserSummary = {
@@ -43,13 +36,6 @@ type UserSummary = {
   displayName: string
   initials: string
   roleLabel: string
-}
-
-type NavItem = {
-  key: string
-  label: string
-  href: string
-  icon: string
 }
 
 type ClassRow = {
@@ -109,129 +95,16 @@ type Analytics = {
 }
 
 type DashboardData = {
-  activeModule: string
   isSuperAdmin: boolean
   user: UserSummary
   currentSchool: CurrentSchool | null
   schoolOptions: SchoolOption[]
-  navSchoolQuery: string
-  navItems: NavItem[]
-  logoutUrl: string
   schoolsUrl: string
   analytics: Analytics | null
 }
 
-const iconMap: Record<string, LucideIcon> = {
-  'badge-check': BadgeCheck,
-  'bar-chart-3': BarChart3,
-  'briefcase-business': BriefcaseBusiness,
-  'credit-card': CreditCard,
-  'layout-grid': LayoutGrid,
-  school: School,
-  settings: Settings,
-  users: Users,
-}
-
-function reactOverviewHref(search = window.location.search) {
-  return `/dashboard/${search}`
-}
-
 function formatNumber(value: number) {
   return new Intl.NumberFormat('en-US').format(value)
-}
-
-function NavIcon({ name }: { name: string }) {
-  const Icon = iconMap[name] ?? LayoutGrid
-  return <Icon aria-hidden="true" />
-}
-
-function Sidebar({
-  data,
-  onNavigate,
-}: {
-  data: DashboardData
-  onNavigate?: () => void
-}) {
-  return (
-    <aside className="dashboard-sidebar">
-      <div className="dashboard-sidebar-header">
-        <div className="dashboard-brand-row">
-          {data.currentSchool ? (
-            <>
-              <div className="dashboard-school-mark">
-                {data.currentSchool.logoUrl ? (
-                  <img src={data.currentSchool.logoUrl} alt={data.currentSchool.name} />
-                ) : (
-                  <GraduationCap size={20} aria-hidden="true" />
-                )}
-              </div>
-              <div className="dashboard-brand-copy">
-                <div className="dashboard-brand-title">{data.currentSchool.name}</div>
-                <div className="dashboard-brand-subtitle">School administration</div>
-                <div className="dashboard-brand-powered">
-                  <span>by</span>
-                  <img className="dashboard-mini-logo" src="/static/branding/tap2connect-logo.png" alt="Tap2Connect platform" />
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <img className="dashboard-logo" src="/static/branding/tap2connect-logo.png" alt="Tap2Connect" />
-              <div className="dashboard-brand-copy">
-                <div className="dashboard-brand-title">Tap2Connect</div>
-                <div className="dashboard-brand-subtitle">Platform administration</div>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      <nav className="dashboard-nav" aria-label="Dashboard navigation">
-        {data.navItems.map((item) => {
-          const isOverview = item.key === 'home'
-          const href = isOverview
-            ? reactOverviewHref()
-            : item.key === 'business_suite'
-              ? backendHref(item.href)
-              : item.href
-          return (
-            <a
-              key={item.key}
-              className={`dashboard-nav-link${item.key === data.activeModule ? ' is-active' : ''}`}
-              href={href}
-              onClick={isOverview ? onNavigate : undefined}
-            >
-              <NavIcon name={item.icon} />
-              {item.label}
-            </a>
-          )
-        })}
-      </nav>
-
-      <div className="dashboard-sidebar-footer">
-        <details className="dashboard-user-card">
-          <summary className="dashboard-user-summary">
-            <div className="dashboard-avatar">{data.user.initials}</div>
-            <div className="dashboard-user-meta">
-              <strong>{data.user.displayName}</strong>
-              <span>{data.user.roleLabel}</span>
-            </div>
-            <ChevronUp size={16} aria-hidden="true" />
-          </summary>
-          <div className="dashboard-user-menu">
-            <div className="dashboard-user-menu-header">
-              <strong>{data.user.username}</strong>
-              <span>Signed-in account</span>
-            </div>
-            <a className="dashboard-logout" href={backendHref(data.logoutUrl)}>
-              <LogOut size={16} aria-hidden="true" />
-              Sign out
-            </a>
-          </div>
-        </details>
-      </div>
-    </aside>
-  )
 }
 
 function MetricCard({
@@ -547,7 +420,6 @@ function AnalyticsContent({ data }: { data: DashboardData }) {
 export function DashboardHome() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [error, setError] = useState('')
-  const [mobileOpen, setMobileOpen] = useState(false)
 
   const endpoint = useMemo(() => `/api/dashboard/overview/${window.location.search}`, [])
 
@@ -589,13 +461,6 @@ export function DashboardHome() {
     }
   }, [endpoint])
 
-  useEffect(() => {
-    document.body.style.overflow = mobileOpen ? 'hidden' : ''
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [mobileOpen])
-
   if (error) {
     return (
       <div className="dashboard-state-screen">
@@ -618,67 +483,29 @@ export function DashboardHome() {
     )
   }
 
+  const school = data.currentSchool
   return (
-    <div className="dashboard-page">
-      <div className="dashboard-layout">
-        <Sidebar data={data} />
-
-        <div className="dashboard-main">
-          <header className="dashboard-header">
-            <div className="dashboard-heading-row">
-              <button className="dashboard-menu-button" type="button" aria-label="Open navigation" onClick={() => setMobileOpen(true)}>
-                <Menu size={18} aria-hidden="true" />
-              </button>
-              <h1 className="dashboard-title">Overview</h1>
-            </div>
-
-            <div className="dashboard-actions">
-              {data.isSuperAdmin && data.schoolOptions.length > 0 ? (
-                <select
-                  className="dashboard-school-select"
-                  aria-label="Select school"
-                  value={data.currentSchool?.id ?? ''}
-                  onChange={(event) => {
-                    const nextSchool = event.target.value
-                    window.location.href = nextSchool ? `/dashboard/?school=${nextSchool}` : '/dashboard/'
-                  }}
-                >
-                  <option value="">Select a school</option>
-                  {data.schoolOptions.map((school) => (
-                    <option value={school.id} key={school.id}>
-                      {school.name}
-                    </option>
-                  ))}
-                </select>
-              ) : null}
-              <button className="dashboard-icon-button" type="button" aria-label="Notifications">
-                <Bell size={17} aria-hidden="true" />
-              </button>
-              <div className="dashboard-user-inline">
-                <div className="dashboard-avatar">{data.user.initials}</div>
-                <div className="dashboard-user-inline-copy dashboard-user-meta">
-                  <strong>{data.user.displayName}</strong>
-                  <span>{data.user.roleLabel}</span>
-                </div>
-              </div>
-            </div>
-          </header>
-
-          <main className="dashboard-content">
-            <div className="dashboard-stack">
-              <AnalyticsContent data={data} />
-            </div>
-          </main>
+    <ManageShell
+      brand={school?.name || 'Tap2Connect'}
+      brandDetail={school ? 'School administration' : 'Platform administration'}
+      logo={school?.logoUrl || '/static/branding/tap2connect-logo.png'}
+      nav={schoolWorkspaceNav(school?.id, data.isSuperAdmin)}
+      title="Overview"
+      subtitle={school ? `School identity and engagement for ${school.name}` : 'Choose a school workspace to view analytics'}
+      userName={data.user.displayName}
+      userRole={data.user.roleLabel}
+      accent={school?.themePrimary || '#0b4bcb'}
+      schoolOptions={data.isSuperAdmin ? data.schoolOptions : undefined}
+      selectedSchool={school?.id ?? null}
+      onSchoolChange={(schoolId) => {
+        window.location.href = `/dashboard/?school=${schoolId}`
+      }}
+    >
+      <div className="dashboard-page dashboard-overview-page">
+        <div className="dashboard-stack">
+          <AnalyticsContent data={data} />
         </div>
       </div>
-
-      <div className={`dashboard-mobile-overlay${mobileOpen ? ' is-open' : ''}`} onClick={() => setMobileOpen(false)} />
-      <div className={`dashboard-mobile-drawer${mobileOpen ? ' is-open' : ''}`}>
-        <button className="dashboard-mobile-close" type="button" aria-label="Close navigation" onClick={() => setMobileOpen(false)}>
-          <X size={18} aria-hidden="true" />
-        </button>
-        <Sidebar data={data} onNavigate={() => setMobileOpen(false)} />
-      </div>
-    </div>
+    </ManageShell>
   )
 }
