@@ -1,30 +1,30 @@
 import { useEffect, useMemo, useState } from 'react'
-import {
-  ArrowRight,
-  BadgeCheck,
-  BarChart3,
-  Bell,
-  BriefcaseBusiness,
-  Check,
-  ChevronUp,
-  CreditCard,
-  Eye,
-  GraduationCap,
-  LayoutGrid,
-  LogOut,
-  MapPin,
-  Menu,
-  Plus,
-  School,
-  Settings,
-  User,
-  UserCheck,
-  Users,
-  Wifi,
-  X,
-} from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
+import type { ComponentType, SVGProps } from 'react'
+import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right.mjs'
+import BadgeCheck from 'lucide-react/dist/esm/icons/badge-check.mjs'
+import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3.mjs'
+import Bell from 'lucide-react/dist/esm/icons/bell.mjs'
+import BriefcaseBusiness from 'lucide-react/dist/esm/icons/briefcase-business.mjs'
+import Check from 'lucide-react/dist/esm/icons/check.mjs'
+import ChevronUp from 'lucide-react/dist/esm/icons/chevron-up.mjs'
+import CreditCard from 'lucide-react/dist/esm/icons/credit-card.mjs'
+import Eye from 'lucide-react/dist/esm/icons/eye.mjs'
+import GraduationCap from 'lucide-react/dist/esm/icons/graduation-cap.mjs'
+import LayoutGrid from 'lucide-react/dist/esm/icons/layout-grid.mjs'
+import LogOut from 'lucide-react/dist/esm/icons/log-out.mjs'
+import MapPin from 'lucide-react/dist/esm/icons/map-pin.mjs'
+import Menu from 'lucide-react/dist/esm/icons/menu.mjs'
+import Plus from 'lucide-react/dist/esm/icons/plus.mjs'
+import School from 'lucide-react/dist/esm/icons/school.mjs'
+import Settings from 'lucide-react/dist/esm/icons/settings.mjs'
+import User from 'lucide-react/dist/esm/icons/user.mjs'
+import UserCheck from 'lucide-react/dist/esm/icons/user-check.mjs'
+import Users from 'lucide-react/dist/esm/icons/users.mjs'
+import Wifi from 'lucide-react/dist/esm/icons/wifi.mjs'
+import X from 'lucide-react/dist/esm/icons/x.mjs'
 import './DashboardHome.css'
+
+type LucideIcon = ComponentType<SVGProps<SVGSVGElement> & { size?: number }>
 
 type SchoolOption = {
   id: number
