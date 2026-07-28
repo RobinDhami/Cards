@@ -150,6 +150,15 @@ def _public_map_url(profile):
     )
 
 
+def _file_url(file_field):
+    if not file_field:
+        return ''
+    try:
+        return file_field.url
+    except ValueError:
+        return ''
+
+
 def _looking_for_labels(profile):
     values = [
         value.strip()
@@ -485,6 +494,162 @@ def public_professional_profile(request, slug):
         'organization_focus': 'professional_cards/organization_focus.html',
     }.get(profile.template_name, 'professional_cards/modern_identity.html')
     return render(request, template_path, context)
+
+
+def _public_profile_payload(request, profile):
+    whatsapp_digits = _normalize_phone(profile.whatsapp_number or profile.phone)
+    primary_actions, extra_actions = _build_public_actions(profile, whatsapp_digits)
+    public_url = _absolute_public_url(request, profile)
+    seo_description = (
+        profile.short_tagline
+        or profile.networking_statement
+        or profile.about
+        or f'{profile.full_name} digital profile on Tap2Connect Nepal.'
+    )[:160]
+    is_profile_owner_view = bool(
+        request.user.is_authenticated
+        and profile.owner_id
+        and profile.owner_id == request.user.id
+    )
+
+    return {
+        'seo': {
+            'title': f'{profile.full_name} | Tap2Connect Nepal Digital Profile',
+            'description': seo_description,
+            'publicUrl': public_url,
+            'schema': {
+                '@context': 'https://schema.org',
+                '@type': 'Person',
+                'name': profile.full_name,
+                'jobTitle': profile.designation or profile.profession,
+                'worksFor': profile.company_name,
+                'url': public_url,
+                'email': profile.email,
+                'telephone': profile.phone,
+                'address': profile.location or profile.office_address,
+            },
+        },
+        'profile': {
+            'id': profile.id,
+            'slug': profile.slug,
+            'templateName': profile.template_name,
+            'profileType': profile.profile_type,
+            'fullName': profile.full_name,
+            'initials': (profile.full_name[:2] or 'P').upper(),
+            'profilePhotoUrl': _file_url(profile.profile_photo),
+            'coverPhotoUrl': _file_url(profile.cover_photo),
+            'profession': profile.profession,
+            'designation': profile.designation,
+            'companyName': profile.company_name,
+            'headerIdentity': profile.header_identity,
+            'organizationLogoUrl': _file_url(profile.organization_logo),
+            'organizationTagline': profile.organization_tagline,
+            'personalLogoUrl': _file_url(profile.personal_logo),
+            'brandName': profile.brand_name,
+            'brandTagline': profile.brand_tagline,
+            'profileIdentifierLabel': profile.profile_identifier_label,
+            'profileIdentifier': profile.profile_identifier,
+            'industry': profile.industry,
+            'workRole': profile.work_role,
+            'workOrganization': profile.work_organization,
+            'workExperience': profile.work_experience,
+            'workAddress': profile.work_address,
+            'academicSection': profile.academic_section,
+            'academicTitle': profile.academic_title,
+            'academicInstitution': profile.academic_institution,
+            'academicLevel': profile.academic_level,
+            'academicYear': profile.academic_year,
+            'academicSpecialization': profile.academic_specialization,
+            'academicStatus': profile.academic_status,
+            'academicCertification': profile.academic_certification,
+            'academicAddress': profile.academic_address,
+            'shortTagline': profile.short_tagline,
+            'about': profile.about,
+            'currentFocus': profile.current_focus,
+            'featuredInterest': profile.featured_interest,
+            'currentStatus': profile.current_status,
+            'currentStatusLabel': profile.get_current_status_display() if profile.current_status else '',
+            'lookingForLabels': _looking_for_labels(profile),
+            'preferredWorkMode': profile.preferred_work_mode,
+            'preferredWorkModeLabel': profile.get_preferred_work_mode_display() if profile.preferred_work_mode else '',
+            'networkingStatement': profile.networking_statement,
+            'phone': profile.phone,
+            'whatsappNumber': profile.whatsapp_number,
+            'email': profile.email,
+            'website': profile.website,
+            'bookingUrl': profile.booking_url,
+            'officeAddress': profile.office_address,
+            'publicMapUrl': _public_map_url(profile),
+            'businessHours': profile.business_hours,
+            'yearsOfExperience': profile.years_of_experience,
+            'location': profile.location,
+            'isVerified': profile.is_verified,
+            'accentColor': profile.accent_color or '#3154d7',
+        },
+        'actions': {
+            'primary': primary_actions[:4],
+            'extra': extra_actions,
+            'qrCodeUrl': reverse('professional_cards:qr_code', args=[profile.slug]),
+            'vcardUrl': reverse('professional_cards:vcard', args=[profile.slug]),
+            'editLoginUrl': reverse('professional_cards:edit_login', args=[profile.slug]),
+            'isProfileOwnerView': is_profile_owner_view,
+        },
+        'services': [
+            {
+                'id': service.id,
+                'title': service.title,
+                'description': service.description,
+                'icon': service.icon,
+                'displayOrder': service.display_order,
+            }
+            for service in profile.services.all()
+        ],
+        'highlights': [
+            {
+                'id': item.id,
+                'title': item.title,
+                'highlightType': item.highlight_type,
+                'highlightTypeLabel': item.get_highlight_type_display(),
+                'organization': item.organization,
+                'period': item.period,
+                'description': item.description,
+                'imageUrl': _file_url(item.image),
+                'link': item.link,
+                'displayOrder': item.display_order,
+            }
+            for item in profile.portfolio_items.all()
+        ],
+        'testimonials': [
+            {
+                'id': testimonial.id,
+                'clientName': testimonial.client_name,
+                'clientRole': testimonial.client_role,
+                'organization': testimonial.organization,
+                'profilePhotoUrl': _file_url(testimonial.profile_photo),
+                'reviewText': testimonial.review_text,
+                'rating': testimonial.rating,
+                'displayOrder': testimonial.display_order,
+            }
+            for testimonial in profile.testimonials.all()
+        ],
+        'documents': [
+            {
+                'id': document.id,
+                'title': document.title,
+                'url': document.file.url,
+                'documentType': document.document_type,
+                'documentTypeLabel': document.get_document_type_display(),
+                'displayOrder': document.display_order,
+            }
+            for document in profile.documents.filter(is_public=True).exclude(file='')
+        ],
+    }
+
+
+def public_professional_profile_api(request, slug):
+    profile = get_object_or_404(ProfessionalProfile, slug=slug, is_active=True)
+    ProfessionalProfile.objects.filter(pk=profile.pk).update(views=profile.views + 1)
+    return JsonResponse(_public_profile_payload(request, profile))
 
 
 def professional_profile_edit_login(request, slug):

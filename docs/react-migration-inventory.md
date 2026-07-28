@@ -5,9 +5,11 @@ This project is moving toward a React frontend with Django kept as the backend. 
 ## Current React State
 
 - `frontend/src/pages/home/HomePage.tsx` mirrors the Django homepage.
-- `frontend/src/components/ModernIdentityPreview.tsx` and `OrganizationFocusPreview.tsx` are preview/demo components, not yet full replacements for the live public profile pages.
+- `frontend/src/pages/dashboard/DashboardHome.tsx` migrates the dashboard overview screen and reads from `/api/dashboard/overview/`.
+- `frontend/src/pages/profiles/PublicProfessionalProfile.tsx` migrates the live professional public profile route for `modern_identity` and `organization_focus`, reading from `/api/professional-profiles/<slug>/`.
+- `frontend/src/components/ModernIdentityPreview.tsx` and `OrganizationFocusPreview.tsx` are older preview/demo components and should be removed or refactored after the live React profile route fully replaces them.
 - `frontend/src/data/demoProfile.ts` is demo data only.
-- The React app still needs routing, authenticated API calls, CSRF handling, upload handling, and dashboard/profile data endpoints.
+- The React app still needs authenticated form APIs, CSRF handling, upload handling, and the remaining dashboard/shop/profile editor endpoints.
 
 ## Foundation To Convert First
 
@@ -277,12 +279,12 @@ During React migration, CSS can be reused first, then cleaned up once each page 
 ## Suggested Migration Order
 
 1. Build the React routing/auth/API foundation.
-2. Convert public professional profile templates first: `modern_identity` and `organization_focus`.
+2. Convert public professional profile templates first: `modern_identity` and `organization_focus`. Done as an initial React route; keep validating against more real profiles.
 3. Convert professional owner profile editor because it directly feeds the public templates.
 4. Convert professional admin list/create/edit/delete.
 5. Convert student digital contact card.
 6. Convert student owner dashboard and manual edit form.
-7. Convert school/admin dashboard core: home, schools, students, teachers.
+7. Convert school/admin dashboard core: home, schools, students, teachers. Dashboard overview is started; schools/students/teachers remain.
 8. Convert school settings, reports, credentials, bulk upload.
 9. Convert print/QR dashboard controls while keeping export generation in Django.
 10. Convert shop owner dashboard core: overview, products, product create, orders.

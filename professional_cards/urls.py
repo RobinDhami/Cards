@@ -15,4 +15,5 @@ urlpatterns = [
     path('p/<slug:slug>/vcard/', views.professional_vcard, name='vcard'),
     path('p/<slug:slug>/qr.png', views.professional_qr_code, name='qr_code'),
     path('api/professions/', views.profession_suggestions_api, name='profession_suggestions_api'),
+    path('api/professional-profiles/<slug:slug>/', views.public_professional_profile_api, name='public_profile_api'),
 ]
