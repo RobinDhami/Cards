@@ -137,6 +137,23 @@ def _normalize_phone(number):
     return re.sub(r'\D+', '', number or '')
 
 
+def _vcard_value(value):
+    return (
+        str(value or '')
+        .replace('\\', '\\\\')
+        .replace(';', r'\;')
+        .replace(',', r'\,')
+        .replace('\r\n', r'\n')
+        .replace('\n', r'\n')
+        .strip()
+    )
+
+
+def _vcard_line(name, value):
+    value = _vcard_value(value)
+    return f'{name}:{value}' if value else ''
+
+
 def _google_maps_search_url(query):
     query = (query or '').strip()
     if not query:
@@ -687,19 +704,35 @@ def profession_suggestions_api(request):
 def professional_vcard(request, slug):
     profile = get_object_or_404(ProfessionalProfile, slug=slug, is_active=True)
     ProfessionalProfile.objects.filter(pk=profile.pk).update(downloads=profile.downloads + 1)
-    vcard = f"""BEGIN:VCARD
-VERSION:3.0
-FN:{profile.full_name}
-ORG:{profile.company_name}
-TITLE:{profile.designation or profile.profession}
-TEL;TYPE=CELL:{profile.phone}
-EMAIL;TYPE=INTERNET:{profile.email}
-URL:{profile.website}
-ADR;TYPE=WORK:;;{profile.office_address}
-END:VCARD
-"""
+    public_url = _absolute_public_url(request, profile)
+    organization = (
+        profile.company_name
+        or profile.work_organization
+        or profile.academic_institution
+        or profile.brand_name
+    )
+    note_parts = [f'Tap2Connect profile: {public_url}']
+    if profile.whatsapp_number:
+        note_parts.append(f'WhatsApp: {profile.whatsapp_number}')
+    lines = [
+        'BEGIN:VCARD',
+        'VERSION:3.0',
+        _vcard_line('FN', profile.full_name),
+        _vcard_line('ORG', organization),
+        _vcard_line('TITLE', profile.designation or profile.profession or profile.work_role),
+        _vcard_line('TEL;TYPE=CELL,VOICE', profile.phone),
+        _vcard_line('TEL;TYPE=CELL,WHATSAPP', profile.whatsapp_number),
+        _vcard_line('EMAIL;TYPE=INTERNET', profile.email),
+        _vcard_line('URL;TYPE=Tap2Connect', public_url),
+        _vcard_line('URL;TYPE=WORK', profile.website),
+        f'ADR;TYPE=WORK:;;{_vcard_value(profile.office_address)}' if profile.office_address else '',
+        _vcard_line('NOTE', ' | '.join(note_parts)),
+        'END:VCARD',
+        '',
+    ]
+    vcard = '\r\n'.join(line for line in lines if line)
     filename = slugify(profile.full_name) or 'professional-contact'
-    response = HttpResponse(vcard, content_type='text/vcard')
+    response = HttpResponse(vcard, content_type='text/vcard; charset=utf-8')
     response['Content-Disposition'] = f'attachment; filename="{filename}.vcf"'
     return response
 
