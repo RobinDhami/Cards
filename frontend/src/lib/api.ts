@@ -18,6 +18,15 @@ export class ApiError extends Error {
 
 export const backendOrigin = import.meta.env.DEV ? 'http://127.0.0.1:8000' : ''
 
+export function appHref(href: string) {
+  if (!href || href.startsWith('/') || !backendOrigin || !href.startsWith(backendOrigin)) {
+    return href
+  }
+
+  const url = new URL(href)
+  return `${url.pathname}${url.search}${url.hash}`
+}
+
 export function backendHref(href: string) {
   if (
     !href

@@ -151,6 +151,7 @@
   border: 1px solid var(--profile-line);
   border-radius: 13px;
   background: #ffffff;
+  color: var(--profile-ink);
   transition: 0.18s ease;
 }
 
@@ -709,6 +710,11 @@
   font-size: 12px;
   font-weight: 900;
   box-shadow: 0 8px 18px rgba(11, 31, 74, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.profile-social svg {
+  width: 18px;
+  height: 18px;
 }
 
 .profile-social:not(:first-child)::before {

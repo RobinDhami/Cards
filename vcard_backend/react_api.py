@@ -373,13 +373,14 @@ def _professional_form_data(request):
 
 
 def _sync_professional_collections(profile, collections, files):
-    services = collections.get('services', [])
-    portfolio = collections.get('portfolio', [])
-    testimonials = collections.get('testimonials', [])
-    documents = collections.get('documents', [])
+    collections = collections or {}
+    services = collections.get('services')
+    portfolio = collections.get('portfolio')
+    testimonials = collections.get('testimonials')
+    documents = collections.get('documents')
 
     public_documents = [
-        item for item in documents
+        item for item in (documents or [])
         if not item.get('_delete') and _bool(item.get('is_public'), True)
     ]
     if len(public_documents) > 2:
@@ -392,69 +393,73 @@ def _sync_professional_collections(profile, collections, files):
             if _int(row.get('id')) and not row.get('_delete')
         }
 
-    profile.services.exclude(id__in=keep_ids(services)).delete()
-    for index, row in enumerate(services):
-        if row.get('_delete') or not str(row.get('title') or '').strip():
-            continue
-        item = profile.services.filter(id=_int(row.get('id'))).first() or ProfessionalService(profile=profile)
-        item.title = str(row.get('title') or '').strip()
-        item.description = str(row.get('description') or '').strip()
-        item.icon = str(row.get('icon') or '').strip()
-        item.display_order = _int(row.get('display_order'), index)
-        item.full_clean()
-        item.save()
+    if services is not None:
+        profile.services.exclude(id__in=keep_ids(services)).delete()
+        for index, row in enumerate(services):
+            if row.get('_delete') or not str(row.get('title') or '').strip():
+                continue
+            item = profile.services.filter(id=_int(row.get('id'))).first() or ProfessionalService(profile=profile)
+            item.title = str(row.get('title') or '').strip()
+            item.description = str(row.get('description') or '').strip()
+            item.icon = str(row.get('icon') or '').strip()
+            item.display_order = _int(row.get('display_order'), index)
+            item.full_clean()
+            item.save()
 
-    profile.portfolio_items.exclude(id__in=keep_ids(portfolio)).delete()
-    for index, row in enumerate(portfolio):
-        if row.get('_delete') or not str(row.get('title') or '').strip():
-            continue
-        item = profile.portfolio_items.filter(id=_int(row.get('id'))).first() or ProfessionalPortfolioItem(profile=profile)
-        item.title = str(row.get('title') or '').strip()
-        item.highlight_type = str(row.get('highlight_type') or 'project')
-        item.organization = str(row.get('organization') or '').strip()
-        item.period = str(row.get('period') or '').strip()
-        item.description = str(row.get('description') or '').strip()
-        item.link = str(row.get('link') or '').strip()
-        item.display_order = _int(row.get('display_order'), index)
-        upload = files.get(f"portfolio_file_{row.get('uploadKey', index)}")
-        if upload:
-            item.image = upload
-        item.full_clean()
-        item.save()
+    if portfolio is not None:
+        profile.portfolio_items.exclude(id__in=keep_ids(portfolio)).delete()
+        for index, row in enumerate(portfolio):
+            if row.get('_delete') or not str(row.get('title') or '').strip():
+                continue
+            item = profile.portfolio_items.filter(id=_int(row.get('id'))).first() or ProfessionalPortfolioItem(profile=profile)
+            item.title = str(row.get('title') or '').strip()
+            item.highlight_type = str(row.get('highlight_type') or 'project')
+            item.organization = str(row.get('organization') or '').strip()
+            item.period = str(row.get('period') or '').strip()
+            item.description = str(row.get('description') or '').strip()
+            item.link = str(row.get('link') or '').strip()
+            item.display_order = _int(row.get('display_order'), index)
+            upload = files.get(f"portfolio_file_{row.get('uploadKey', index)}")
+            if upload:
+                item.image = upload
+            item.full_clean()
+            item.save()
 
-    profile.testimonials.exclude(id__in=keep_ids(testimonials)).delete()
-    for index, row in enumerate(testimonials):
-        if row.get('_delete') or not str(row.get('client_name') or '').strip():
-            continue
-        item = profile.testimonials.filter(id=_int(row.get('id'))).first() or ProfessionalTestimonial(profile=profile)
-        item.review_text = str(row.get('review_text') or '').strip()
-        item.client_name = str(row.get('client_name') or '').strip()
-        item.client_role = str(row.get('client_role') or '').strip()
-        item.organization = str(row.get('organization') or '').strip()
-        item.rating = _int(row.get('rating')) or None
-        item.display_order = _int(row.get('display_order'), index)
-        upload = files.get(f"testimonial_file_{row.get('uploadKey', index)}")
-        if upload:
-            item.profile_photo = upload
-        item.full_clean()
-        item.save()
+    if testimonials is not None:
+        profile.testimonials.exclude(id__in=keep_ids(testimonials)).delete()
+        for index, row in enumerate(testimonials):
+            if row.get('_delete') or not str(row.get('client_name') or '').strip():
+                continue
+            item = profile.testimonials.filter(id=_int(row.get('id'))).first() or ProfessionalTestimonial(profile=profile)
+            item.review_text = str(row.get('review_text') or '').strip()
+            item.client_name = str(row.get('client_name') or '').strip()
+            item.client_role = str(row.get('client_role') or '').strip()
+            item.organization = str(row.get('organization') or '').strip()
+            item.rating = _int(row.get('rating')) or None
+            item.display_order = _int(row.get('display_order'), index)
+            upload = files.get(f"testimonial_file_{row.get('uploadKey', index)}")
+            if upload:
+                item.profile_photo = upload
+            item.full_clean()
+            item.save()
 
-    profile.documents.exclude(id__in=keep_ids(documents)).delete()
-    for index, row in enumerate(documents):
-        if row.get('_delete') or not str(row.get('title') or '').strip():
-            continue
-        item = profile.documents.filter(id=_int(row.get('id'))).first() or ProfessionalDocument(profile=profile)
-        item.title = str(row.get('title') or '').strip()
-        item.document_type = str(row.get('document_type') or 'other')
-        item.is_public = _bool(row.get('is_public'), True)
-        item.display_order = _int(row.get('display_order'), index)
-        upload = files.get(f"document_file_{row.get('uploadKey', index)}")
-        if upload:
-            item.file = upload
-        if not item.file:
-            raise ValidationError(f'Choose a file for {item.title}.')
-        item.full_clean()
-        item.save()
+    if documents is not None:
+        profile.documents.exclude(id__in=keep_ids(documents)).delete()
+        for index, row in enumerate(documents):
+            if row.get('_delete') or not str(row.get('title') or '').strip():
+                continue
+            item = profile.documents.filter(id=_int(row.get('id'))).first() or ProfessionalDocument(profile=profile)
+            item.title = str(row.get('title') or '').strip()
+            item.document_type = str(row.get('document_type') or 'other')
+            item.is_public = _bool(row.get('is_public'), True)
+            item.display_order = _int(row.get('display_order'), index)
+            upload = files.get(f"document_file_{row.get('uploadKey', index)}")
+            if upload:
+                item.file = upload
+            if not item.file:
+                raise ValidationError(f'Choose a file for {item.title}.')
+            item.full_clean()
+            item.save()
 
 
 @require_http_methods(['GET', 'POST'])

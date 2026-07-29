@@ -1,28 +1,44 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ComponentType, CSSProperties, SVGProps } from 'react'
 import Badge from 'lucide-react/dist/esm/icons/badge.mjs'
+import BarChart2 from 'lucide-react/dist/esm/icons/bar-chart-2.mjs'
+import BookOpen from 'lucide-react/dist/esm/icons/book-open.mjs'
 import BriefcaseBusiness from 'lucide-react/dist/esm/icons/briefcase-business.mjs'
 import Building2 from 'lucide-react/dist/esm/icons/building-2.mjs'
 import CalendarCheck from 'lucide-react/dist/esm/icons/calendar-check.mjs'
+import Camera from 'lucide-react/dist/esm/icons/camera.mjs'
 import Check from 'lucide-react/dist/esm/icons/check.mjs'
 import Clock3 from 'lucide-react/dist/esm/icons/clock-3.mjs'
+import Code from 'lucide-react/dist/esm/icons/code.mjs'
+import Database from 'lucide-react/dist/esm/icons/database.mjs'
 import ExternalLink from 'lucide-react/dist/esm/icons/external-link.mjs'
 import FileText from 'lucide-react/dist/esm/icons/file-text.mjs'
 import Globe2 from 'lucide-react/dist/esm/icons/globe-2.mjs'
 import GraduationCap from 'lucide-react/dist/esm/icons/graduation-cap.mjs'
+import HeartHandshake from 'lucide-react/dist/esm/icons/heart-handshake.mjs'
+import Home from 'lucide-react/dist/esm/icons/home.mjs'
+import Landmark from 'lucide-react/dist/esm/icons/landmark.mjs'
 import LinkIcon from 'lucide-react/dist/esm/icons/link.mjs'
 import Mail from 'lucide-react/dist/esm/icons/mail.mjs'
 import MapPin from 'lucide-react/dist/esm/icons/map-pin.mjs'
 import MapPinned from 'lucide-react/dist/esm/icons/map-pinned.mjs'
+import Megaphone from 'lucide-react/dist/esm/icons/megaphone.mjs'
 import MessageCircle from 'lucide-react/dist/esm/icons/message-circle.mjs'
+import Monitor from 'lucide-react/dist/esm/icons/monitor.mjs'
+import Palette from 'lucide-react/dist/esm/icons/palette.mjs'
+import PenTool from 'lucide-react/dist/esm/icons/pen-tool.mjs'
 import Phone from 'lucide-react/dist/esm/icons/phone.mjs'
+import Pencil from 'lucide-react/dist/esm/icons/pencil.mjs'
 import QrCode from 'lucide-react/dist/esm/icons/qr-code.mjs'
 import Radar from 'lucide-react/dist/esm/icons/radar.mjs'
 import Share2 from 'lucide-react/dist/esm/icons/share-2.mjs'
 import ShieldCheck from 'lucide-react/dist/esm/icons/shield-check.mjs'
+import Smartphone from 'lucide-react/dist/esm/icons/smartphone.mjs'
 import Sparkles from 'lucide-react/dist/esm/icons/sparkles.mjs'
 import UserPlus from 'lucide-react/dist/esm/icons/user-plus.mjs'
+import Users from 'lucide-react/dist/esm/icons/users.mjs'
 import X from 'lucide-react/dist/esm/icons/x.mjs'
+import { appHref, backendHref } from '../../lib/api'
 import './PublicProfessionalProfile.css'
 
 type LucideIcon = ComponentType<SVGProps<SVGSVGElement> & { size?: number }>
@@ -132,6 +148,7 @@ type PublicProfileData = {
     vcardUrl: string
     editLoginUrl: string
     isProfileOwnerView: boolean
+    canEditProfile?: boolean
   }
   services: ServiceItem[]
   highlights: HighlightItem[]
@@ -141,34 +158,84 @@ type PublicProfileData = {
 
 const actionIcons: Record<string, LucideIcon> = {
   'calendar-check': CalendarCheck,
-  github: LinkIcon,
   globe: Globe2,
-  linkedin: LinkIcon,
   mail: Mail,
   'map-pin': MapPin,
   'message-circle': MessageCircle,
   phone: Phone,
-  youtube: LinkIcon,
-  facebook: LinkIcon,
-  instagram: LinkIcon,
 }
 
 const serviceIcons: Record<string, LucideIcon> = {
+  'bar-chart-2': BarChart2,
+  'book-open': BookOpen,
+  'building-2': Building2,
   briefcase: BriefcaseBusiness,
-  school: GraduationCap,
+  camera: Camera,
+  code: Code,
+  database: Database,
+  'graduation-cap': GraduationCap,
   globe: Globe2,
+  'heart-handshake': HeartHandshake,
+  home: Home,
+  landmark: Landmark,
   link: LinkIcon,
+  megaphone: Megaphone,
+  monitor: Monitor,
+  palette: Palette,
+  'pen-tool': PenTool,
+  school: GraduationCap,
+  'shield-check': ShieldCheck,
+  smartphone: Smartphone,
   sparkles: Sparkles,
-  users: UserPlus,
+  users: Users,
 }
 
-const backendOrigin = import.meta.env.DEV ? 'http://127.0.0.1:8000' : ''
+function FacebookIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
+      <path fill="currentColor" d="M14 8.5V6.7c0-.9.6-1.1 1-1.1h2.7V2.1L14.2 2C10.8 2 9 4.1 9 6.4v2.1H6v3.9h3V22h4.1v-9.6h3.3l.5-3.9H13Z" />
+    </svg>
+  )
+}
 
-function legacyHref(href: string) {
-  if (!href || href.startsWith('http') || href.startsWith('mailto:') || href.startsWith('tel:')) {
-    return href
-  }
-  return `${backendOrigin}${href}`
+function GitHubIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
+      <path fill="currentColor" d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.5-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 0 1.6 1.1 1.6 1.1.9 1.5 2.4 1.1 2.9.8.1-.7.4-1.1.7-1.4-2.2-.3-4.6-1.1-4.6-5A3.9 3.9 0 0 1 6.8 8.7c-.1-.3-.5-1.3.1-2.8 0 0 .9-.3 2.9 1.1A9.8 9.8 0 0 1 12 6.7c.8 0 1.5.1 2.2.3 2-1.4 2.9-1.1 2.9-1.1.6 1.5.2 2.5.1 2.8a3.9 3.9 0 0 1 1.1 2.8c0 3.9-2.4 4.7-4.6 5 .4.3.7.9.7 1.8V21c0 .3.2.6.7.5A10 10 0 0 0 12 2Z" />
+    </svg>
+  )
+}
+
+function InstagramIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
+      <path fill="currentColor" d="M7.8 2h8.4A5.8 5.8 0 0 1 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8A5.8 5.8 0 0 1 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2Zm0 2A3.8 3.8 0 0 0 4 7.8v8.4A3.8 3.8 0 0 0 7.8 20h8.4a3.8 3.8 0 0 0 3.8-3.8V7.8A3.8 3.8 0 0 0 16.2 4H7.8Zm4.2 3.2a4.8 4.8 0 1 1 0 9.6 4.8 4.8 0 0 1 0-9.6Zm0 2a2.8 2.8 0 1 0 0 5.6 2.8 2.8 0 0 0 0-5.6Zm5-2.7a1.1 1.1 0 1 1 0 2.2 1.1 1.1 0 0 1 0-2.2Z" />
+    </svg>
+  )
+}
+
+function LinkedInIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
+      <path fill="currentColor" d="M5 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM3 9h4v12H3V9Zm6.5 0h3.8v1.6h.1c.5-.9 1.8-1.9 3.7-1.9 4 0 4.7 2.6 4.7 6V21h-4v-5.2c0-1.2 0-2.8-1.7-2.8s-2 1.3-2 2.7V21h-4V9Z" />
+    </svg>
+  )
+}
+
+function YouTubeIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
+      <path fill="currentColor" d="M21.6 7.2s-.2-1.6-.8-2.3c-.8-.8-1.7-.8-2.1-.9C15.8 3.8 12 3.8 12 3.8s-3.8 0-6.7.2c-.4 0-1.3.1-2.1.9-.6.7-.8 2.3-.8 2.3S2.2 9.1 2.2 11v1.8c0 1.9.2 3.8.2 3.8s.2 1.6.8 2.3c.8.8 1.9.8 2.4.9 1.7.2 6.4.2 6.4.2s3.8 0 6.7-.2c.4-.1 1.3-.1 2.1-.9.6-.7.8-2.3.8-2.3s.2-1.9.2-3.8V11c0-1.9-.2-3.8-.2-3.8ZM10 15.2V8.6l6.2 3.3-6.2 3.3Z" />
+    </svg>
+  )
+}
+
+const socialIcons: Record<string, LucideIcon> = {
+  facebook: FacebookIcon,
+  github: GitHubIcon,
+  instagram: InstagramIcon,
+  linkedin: LinkedInIcon,
+  youtube: YouTubeIcon,
 }
 
 function profileSlugFromPath() {
@@ -212,10 +279,15 @@ function TopBar({ data, onShare }: { data: PublicProfileData; onShare: () => voi
         <div className="profile-brand is-hidden" />
       )}
       <div className="profile-top-actions">
+        {data.actions.editLoginUrl ? (
+          <a className="profile-top-action" href={appHref(data.actions.editLoginUrl)} aria-label="Edit profile" title="Edit profile">
+            <Pencil size={18} aria-hidden="true" />
+          </a>
+        ) : null}
         <button className="profile-top-action" type="button" aria-label="Share profile" onClick={onShare}>
           <Share2 size={18} aria-hidden="true" />
         </button>
-        <a className="profile-top-action" href={legacyHref(data.actions.qrCodeUrl)} aria-label="Open QR code">
+        <a className="profile-top-action" href={backendHref(data.actions.qrCodeUrl)} aria-label="Open QR code">
           <QrCode size={18} aria-hidden="true" />
         </a>
       </div>
@@ -266,7 +338,7 @@ function PrimaryActions({ actions }: { actions: PublicAction[] }) {
       {actions.map((action) => {
         const Icon = actionIcons[action.icon] ?? LinkIcon
         return (
-          <a className="profile-action" href={legacyHref(action.href)} target={action.external ? '_blank' : undefined} rel={action.external ? 'noopener noreferrer' : undefined} key={action.label}>
+          <a className="profile-action" href={appHref(action.href)} target={action.external ? '_blank' : undefined} rel={action.external ? 'noopener noreferrer' : undefined} key={action.label}>
             <span className={`profile-action-icon ${action.brand_class}`}>
               <Icon size={16} aria-hidden="true" />
             </span>
@@ -473,11 +545,15 @@ function SocialLinks({ actions }: { actions: PublicAction[] }) {
     <section className="profile-section">
       <h2 className="profile-section-title">Find Me Online</h2>
       <div className="profile-social-row">
-        {actions.map((action) => (
-          <a className={`profile-social is-${socialTone(action.label)}`} href={legacyHref(action.href)} target="_blank" rel="noopener noreferrer" aria-label={action.label} key={action.label}>
-            {action.label.slice(0, 2)}
-          </a>
-        ))}
+        {actions.map((action) => {
+          const tone = socialTone(action.label)
+          const Icon = socialIcons[action.icon] ?? actionIcons[action.icon] ?? LinkIcon
+          return (
+            <a className={`profile-social is-${tone}`} href={appHref(action.href)} target="_blank" rel="noopener noreferrer" aria-label={action.label} title={action.label} key={action.label}>
+              <Icon size={18} aria-hidden="true" />
+            </a>
+          )
+        })}
       </div>
     </section>
   )
@@ -492,7 +568,7 @@ function Documents({ documents }: { documents: DocumentItem[] }) {
       <h2 className="profile-section-title">Documents</h2>
       <div className="profile-documents">
         {documents.slice(0, 2).map((document) => (
-          <a className="profile-document" href={legacyHref(document.url)} target="_blank" rel="noopener noreferrer" key={document.id}>
+          <a className="profile-document" href={backendHref(document.url)} target="_blank" rel="noopener noreferrer" key={document.id}>
             <span className="profile-document-icon">
               <FileText size={14} aria-hidden="true" />
             </span>
@@ -648,7 +724,7 @@ function DetailsDrawer({ data, open, onClose }: { data: PublicProfileData; open:
             </div>
           ))}
         </div>
-        <a className="profile-save-contact" href={legacyHref(data.actions.vcardUrl)}>
+        <a className="profile-save-contact" href={backendHref(data.actions.vcardUrl)}>
           <UserPlus size={17} aria-hidden="true" />
           Save contact
         </a>
@@ -693,7 +769,7 @@ function OrganizationTemplate({ data, showToast }: { data: PublicProfileData; sh
       <Services services={data.services} title="What We Provide" />
       <BusinessDetails profile={profile} />
       <SocialLinks actions={data.actions.extra} />
-      <a className="profile-save-contact" href={legacyHref(data.actions.vcardUrl)}>
+      <a className="profile-save-contact" href={backendHref(data.actions.vcardUrl)}>
         <UserPlus size={17} aria-hidden="true" />
         Save Business Contact
       </a>
@@ -796,7 +872,7 @@ export function PublicProfessionalProfile() {
       {data.actions.isProfileOwnerView ? (
         <nav className="profile-owner-bar" aria-label="Profile owner navigation">
           <span>Owner preview · This is how visitors see your profile.</span>
-          <a href={legacyHref(data.actions.editLoginUrl)}>Edit profile</a>
+          <a href={appHref(data.actions.editLoginUrl)}>Edit profile</a>
         </nav>
       ) : null}
       <article className="public-profile-card">
