@@ -8,6 +8,7 @@ import Building2 from 'lucide-react/dist/esm/icons/building-2.mjs'
 import CalendarCheck from 'lucide-react/dist/esm/icons/calendar-check.mjs'
 import Camera from 'lucide-react/dist/esm/icons/camera.mjs'
 import Check from 'lucide-react/dist/esm/icons/check.mjs'
+import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right.mjs'
 import Clock3 from 'lucide-react/dist/esm/icons/clock-3.mjs'
 import Code from 'lucide-react/dist/esm/icons/code.mjs'
 import Database from 'lucide-react/dist/esm/icons/database.mjs'
@@ -75,6 +76,7 @@ type PublicProfile = {
   workExperience: string
   workAddress: string
   academicTitle: string
+  academicSection: string
   academicInstitution: string
   academicLevel: string
   academicYear: string
@@ -90,6 +92,9 @@ type PublicProfile = {
   lookingForLabels: string[]
   preferredWorkModeLabel: string
   networkingStatement: string
+  phone: string
+  whatsappNumber: string
+  email: string
   website: string
   bookingUrl: string
   officeAddress: string
@@ -442,62 +447,110 @@ function Services({ services, title }: { services: ServiceItem[]; title: string 
   )
 }
 
+type IdentityFact = {
+  icon: LucideIcon
+  label: string
+  value: string
+}
+
+function IdentityPanel({
+  facts,
+  headline,
+  icon: Icon,
+  subtitle,
+  title,
+  tone,
+}: {
+  facts: IdentityFact[]
+  headline: string
+  icon: LucideIcon
+  subtitle: string
+  title: string
+  tone: 'work' | 'academic'
+}) {
+  return (
+    <article className={`profile-identity-card is-${tone}`}>
+      <header className="profile-identity-card-head">
+        <span className="profile-identity-badge">
+          <Icon size={18} aria-hidden="true" />
+        </span>
+        <h2>{title}</h2>
+      </header>
+      <div className="profile-identity-summary">
+        <h3>{headline}</h3>
+        {subtitle ? <p><Building2 size={15} aria-hidden="true" />{subtitle}</p> : null}
+      </div>
+      {facts.length > 0 ? (
+        <dl className="profile-facts">
+          {facts.map((fact) => <Fact {...fact} key={fact.label} />)}
+        </dl>
+      ) : null}
+    </article>
+  )
+}
+
 function IdentityCards({ profile }: { profile: PublicProfile }) {
-  const hasWork = profile.workRole || profile.workOrganization || profile.workExperience || profile.workAddress
-  const academicFacts = [
-    ['Degree / Program', profile.academicTitle],
-    ['Institution', profile.academicInstitution],
-    ['Level', profile.academicLevel],
-    ['Year / Semester', profile.academicYear],
-    ['Specialization', profile.academicSpecialization],
-    ['Status', profile.academicStatus],
-  ].filter(([, value]) => isTruthy(value))
-  if (!hasWork && academicFacts.length === 0) {
+  const hasWork = Boolean(profile.workRole || profile.workOrganization || profile.workExperience || profile.workAddress)
+  const hasAcademic = Boolean(
+    profile.academicTitle
+    || profile.academicSection
+    || profile.academicInstitution
+    || profile.academicLevel
+    || profile.academicYear
+    || profile.academicSpecialization
+    || profile.academicStatus
+    || profile.academicCertification
+    || profile.academicAddress,
+  )
+  const workFacts: IdentityFact[] = [
+    { icon: Clock3, label: 'Experience', value: profile.workExperience },
+    { icon: MapPin, label: 'Work location', value: profile.workAddress },
+  ].filter((fact) => isTruthy(fact.value))
+  const academicFacts: IdentityFact[] = [
+    { icon: BookOpen, label: 'Level', value: profile.academicLevel },
+    { icon: CalendarCheck, label: 'Year / Semester', value: profile.academicYear },
+    { icon: Users, label: 'Class / Batch / Section', value: profile.academicSection },
+    { icon: Sparkles, label: 'Specialization', value: profile.academicSpecialization },
+    { icon: ShieldCheck, label: 'Status', value: profile.academicStatus },
+    { icon: Badge, label: 'Certification', value: profile.academicCertification },
+    { icon: MapPinned, label: 'Campus', value: profile.academicAddress },
+  ].filter((fact) => isTruthy(fact.value))
+  if (!hasWork && !hasAcademic) {
     return null
   }
   return (
-    <section className="profile-section">
-      <h2 className="profile-section-title">Identity</h2>
+    <section className="profile-section profile-identity-section" aria-label="Work and academic identity">
       <div className="profile-identity-cards">
         {hasWork ? (
-          <article className="profile-identity-card is-work">
-            <span className="profile-identity-badge">
-              <BriefcaseBusiness size={18} aria-hidden="true" />
-            </span>
-            <p className="profile-identity-eyebrow">Work Identity</p>
-            <h2 className="profile-identity-title">{profile.workRole || 'Work role not added'}</h2>
-            <p className="profile-identity-subtitle">{profile.workOrganization || 'Organization not added'}</p>
-            <div className="profile-facts">
-              {profile.workExperience ? <Fact label="Experience" value={profile.workExperience} /> : null}
-              {profile.workAddress ? <Fact label="Address" value={profile.workAddress} /> : null}
-            </div>
-          </article>
+          <IdentityPanel
+            facts={workFacts}
+            headline={profile.workRole || 'Professional role'}
+            icon={BriefcaseBusiness}
+            subtitle={profile.workOrganization}
+            title="Work Identity"
+            tone="work"
+          />
         ) : null}
-        {academicFacts.length > 0 ? (
-          <article className="profile-identity-card is-academic">
-            <span className="profile-identity-badge">
-              <GraduationCap size={18} aria-hidden="true" />
-            </span>
-            <p className="profile-identity-eyebrow">Academic Background</p>
-            <h2 className="profile-identity-title">{profile.academicTitle || 'Academic profile'}</h2>
-            <p className="profile-identity-subtitle">{profile.academicInstitution || profile.academicLevel}</p>
-            <div className="profile-facts">
-              {academicFacts.map(([label, value]) => (
-                <Fact label={label} value={value} key={label} />
-              ))}
-            </div>
-          </article>
+        {hasAcademic ? (
+          <IdentityPanel
+            facts={academicFacts}
+            headline={profile.academicTitle || profile.academicLevel || 'Academic profile'}
+            icon={GraduationCap}
+            subtitle={profile.academicInstitution}
+            title="Academic Background"
+            tone="academic"
+          />
         ) : null}
       </div>
     </section>
   )
 }
 
-function Fact({ label, value }: { label: string; value: string }) {
+function Fact({ icon: Icon, label, value }: IdentityFact) {
   return (
     <div className="profile-fact">
-      <span>{label}</span>
-      <strong>{value}</strong>
+      <dt><Icon size={15} aria-hidden="true" /><span>{label}</span></dt>
+      <dd>{value}</dd>
     </div>
   )
 }
@@ -559,24 +612,42 @@ function SocialLinks({ actions }: { actions: PublicAction[] }) {
   )
 }
 
+function documentExtension(url: string) {
+  const path = url.split(/[?#]/, 1)[0]
+  const extension = path.split('.').pop()
+  return extension && extension.length <= 5 ? extension.toUpperCase() : 'FILE'
+}
+
 function Documents({ documents }: { documents: DocumentItem[] }) {
   if (documents.length === 0) {
     return null
   }
   return (
-    <section className="profile-section">
-      <h2 className="profile-section-title">Documents</h2>
+    <section className="profile-section profile-documents-section">
+      <div className="profile-section-heading">
+        <span className="profile-section-heading-icon"><FileText size={17} aria-hidden="true" /></span>
+        <h2>Documents</h2>
+      </div>
       <div className="profile-documents">
-        {documents.slice(0, 2).map((document) => (
-          <a className="profile-document" href={backendHref(document.url)} target="_blank" rel="noopener noreferrer" key={document.id}>
+        {documents.map((document) => (
+          <a
+            aria-label={`Open ${document.title} in a new tab`}
+            className="profile-document"
+            href={backendHref(document.url)}
+            target="_blank"
+            rel="noopener noreferrer"
+            key={document.id}
+          >
             <span className="profile-document-icon">
-              <FileText size={14} aria-hidden="true" />
+              <FileText size={18} aria-hidden="true" />
             </span>
-            <span>
+            <span className="profile-document-copy">
               <strong>{document.title}</strong>
-              <span>{document.documentTypeLabel}</span>
+              <span>{documentExtension(document.url)} / {document.documentTypeLabel}</span>
             </span>
-            <ExternalLink size={14} aria-hidden="true" />
+            <span className="profile-document-open">
+              <ExternalLink size={16} aria-hidden="true" />
+            </span>
           </a>
         ))}
       </div>
@@ -654,26 +725,32 @@ function DetailsTrigger({ onClick }: { onClick: () => void }) {
       </span>
       <span>
         <strong>View complete details</strong>
-        <span>Website, booking, address, and profile details.</span>
+        <span>Work, education, contact and profile information</span>
       </span>
-      <ExternalLink size={16} aria-hidden="true" />
+      <ChevronRight size={18} aria-hidden="true" />
     </button>
   )
 }
 
 function ConnectSoon({ onClick }: { onClick: () => void }) {
   return (
-    <button className="profile-connect-soon" type="button" onClick={onClick} aria-label="Let's Connect coming soon">
-      <span className="profile-connect-art">
-        <UserPlus size={27} aria-hidden="true" />
+    <button className="profile-connect-soon" type="button" onClick={onClick} aria-describedby="profile-connect-status">
+      <span className="profile-connect-main">
+        <span className="profile-connect-art">
+          <Users size={25} aria-hidden="true" />
+        </span>
+        <span className="profile-connect-copy">
+          <strong>Let&apos;s Connect</strong>
+          <span>Grow your professional network and keep this profile close.</span>
+        </span>
       </span>
-      <span className="profile-connect-copy">
-        <strong>Let&apos;s Connect</strong>
-        <span>Tap to preview</span>
-        <p>A friend-connection feature is on the way for Tap2Connect profiles.</p>
+      <span className="profile-connect-status" id="profile-connect-status">
+        <Clock3 size={15} aria-hidden="true" />
+        Connection requests are coming soon
       </span>
-      <span className="profile-connect-arrow">
-        <ExternalLink size={16} aria-hidden="true" />
+      <span className="profile-connect-action">
+        Preview connection
+        <ChevronRight size={17} aria-hidden="true" />
       </span>
     </button>
   )
@@ -696,33 +773,110 @@ function Footer({ profile }: { profile: PublicProfile }) {
 
 function DetailsDrawer({ data, open, onClose }: { data: PublicProfileData; open: boolean; onClose: () => void }) {
   const { profile } = data
-  const rows = [
-    ['About', profile.about],
-    ['Website', profile.website],
-    ['Booking', profile.bookingUrl],
-    ['Office / campus', profile.officeAddress],
-    [profile.profileIdentifierLabel || 'Profile ID', profile.profileIdentifier],
-    ['Industry', profile.industry],
-  ].filter(([, value]) => isTruthy(value))
+  const groups = [
+    {
+      icon: Badge,
+      title: 'Profile',
+      rows: [
+        ['About', profile.about],
+        [profile.profileIdentifierLabel || 'Profile ID', profile.profileIdentifier],
+        ['Industry / field', profile.industry],
+      ],
+    },
+    {
+      icon: BriefcaseBusiness,
+      title: 'Work identity',
+      rows: [
+        ['Role', profile.workRole],
+        ['Organization', profile.workOrganization],
+        ['Experience', profile.workExperience],
+        ['Work location', profile.workAddress],
+      ],
+    },
+    {
+      icon: GraduationCap,
+      title: 'Academic background',
+      rows: [
+        ['Degree / Program', profile.academicTitle],
+        ['Institution', profile.academicInstitution],
+        ['Level', profile.academicLevel],
+        ['Year / Semester', profile.academicYear],
+        ['Class / Batch / Section', profile.academicSection],
+        ['Specialization', profile.academicSpecialization],
+        ['Status', profile.academicStatus],
+        ['Certification', profile.academicCertification],
+        ['Campus', profile.academicAddress],
+      ],
+    },
+    {
+      icon: Globe2,
+      title: 'Contact and links',
+      rows: [
+        ['Phone', profile.phone],
+        ['WhatsApp', profile.whatsappNumber],
+        ['Email', profile.email],
+        ['Website', profile.website],
+        ['Booking / Inquiry', profile.bookingUrl],
+        ['Office / campus', profile.officeAddress],
+        ['Business hours', profile.businessHours],
+      ],
+    },
+  ].map((group) => ({
+    ...group,
+    rows: group.rows.filter(([, value]) => isTruthy(value)),
+  })).filter((group) => group.rows.length > 0)
+
+  useEffect(() => {
+    if (!open) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [onClose, open])
+
+  if (!open) return null
+
   return (
-    <div className={`profile-drawer${open ? ' is-open' : ''}`} onClick={onClose}>
-      <section className="profile-drawer-panel" onClick={(event) => event.stopPropagation()}>
+    <div className="profile-drawer is-open" onClick={onClose} role="presentation">
+      <section
+        aria-labelledby="profile-details-title"
+        aria-modal="true"
+        className="profile-drawer-panel"
+        onClick={(event) => event.stopPropagation()}
+        role="dialog"
+      >
         <header className="profile-drawer-head">
           <div>
-            <h2>{profile.fullName}</h2>
-            <p>{profile.designation || profile.profession || profile.companyName}</p>
+            <h2 id="profile-details-title">Complete details</h2>
+            <p>Verified information shared by {profile.fullName}.</p>
           </div>
-          <button className="profile-close" type="button" aria-label="Close details" onClick={onClose}>
+          <button autoFocus className="profile-close" type="button" aria-label="Close details" onClick={onClose}>
             <X size={18} aria-hidden="true" />
           </button>
         </header>
-        <div className="profile-detail-list">
-          {rows.map(([label, value]) => (
-            <div className="profile-drawer-row" key={label}>
-              <span>{label}</span>
-              <strong>{value}</strong>
-            </div>
-          ))}
+        <div className="profile-drawer-groups">
+          {groups.map((group) => {
+            const Icon = group.icon
+            return (
+              <section className="profile-drawer-group" key={group.title}>
+                <h3><Icon size={16} aria-hidden="true" />{group.title}</h3>
+                <dl>
+                  {group.rows.map(([label, value]) => (
+                    <div className="profile-drawer-row" key={label}>
+                      <dt>{label}</dt>
+                      <dd>{value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            )
+          })}
         </div>
         <a className="profile-save-contact" href={backendHref(data.actions.vcardUrl)}>
           <UserPlus size={17} aria-hidden="true" />
@@ -759,6 +913,7 @@ function ModernTemplate({ data, showToast }: { data: PublicProfileData; showToas
 }
 
 function OrganizationTemplate({ data, showToast }: { data: PublicProfileData; showToast: (message: string) => void }) {
+  const [detailsOpen, setDetailsOpen] = useState(false)
   const { profile } = data
   return (
     <>
@@ -768,12 +923,17 @@ function OrganizationTemplate({ data, showToast }: { data: PublicProfileData; sh
       <Intro>{profile.about || profile.shortTagline || profile.organizationTagline}</Intro>
       <Services services={data.services} title="What We Provide" />
       <BusinessDetails profile={profile} />
+      <IdentityCards profile={profile} />
       <SocialLinks actions={data.actions.extra} />
+      <Documents documents={data.documents} />
       <a className="profile-save-contact" href={backendHref(data.actions.vcardUrl)}>
         <UserPlus size={17} aria-hidden="true" />
         Save Business Contact
       </a>
+      <DetailsTrigger onClick={() => setDetailsOpen(true)} />
+      <ConnectSoon onClick={() => showToast('This feature will be available soon, and you will be able to connect with friends.')} />
       <Footer profile={profile} />
+      <DetailsDrawer data={data} open={detailsOpen} onClose={() => setDetailsOpen(false)} />
     </>
   )
 }
@@ -875,7 +1035,7 @@ export function PublicProfessionalProfile() {
           <a href={appHref(data.actions.editLoginUrl)}>Edit profile</a>
         </nav>
       ) : null}
-      <article className="public-profile-card">
+      <article className={`public-profile-card is-${isOrganization ? 'organization' : 'modern'}-template`}>
         <div className="public-profile-inner">
           {isOrganization ? <OrganizationTemplate data={data} showToast={setToast} /> : <ModernTemplate data={data} showToast={setToast} />}
         </div>

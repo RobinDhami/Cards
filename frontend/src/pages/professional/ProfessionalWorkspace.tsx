@@ -181,8 +181,11 @@ const academicFields: FieldConfig[] = [
   { key: 'academic_institution', label: 'Institution', placeholder: 'Kathmandu Bernhardt College' },
   { key: 'academic_level', label: 'Level', placeholder: 'Bachelor’s' },
   { key: 'academic_year', label: 'Year / Semester', placeholder: 'Final Year / 6th Semester' },
+  { key: 'academic_section', label: 'Class / Batch / Section', placeholder: '2026 Batch / Section A' },
   { key: 'academic_specialization', label: 'Specialization', placeholder: 'Web Development / Networking' },
   { key: 'academic_status', label: 'Status', placeholder: 'Seeking Internship / Open to Work' },
+  { key: 'academic_certification', label: 'Certification', placeholder: 'AWS Cloud Practitioner' },
+  { key: 'academic_address', label: 'Campus address', placeholder: 'Campus or institution address', type: 'textarea', wide: true },
 ]
 
 const aboutFields: FieldConfig[] = [
@@ -676,7 +679,7 @@ export function ProfessionalProfileEditor() {
           </div>
         </FormSection>
 
-        <FormSection title="Academic background" description="Only the six academic fields used by the public academic card.">
+        <FormSection title="Academic background" description="Complete education details shown on the public academic card.">
           <div className="form-grid">
             {academicFields.map((config) => <ConfiguredField key={config.key} config={config} fields={fields} errors={fieldErrors} onChange={updateField} />)}
           </div>
