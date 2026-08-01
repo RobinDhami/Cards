@@ -5,7 +5,7 @@ import ChevronDown from 'lucide-react/dist/esm/icons/chevron-down.mjs'
 import LogOut from 'lucide-react/dist/esm/icons/log-out.mjs'
 import Menu from 'lucide-react/dist/esm/icons/menu.mjs'
 import X from 'lucide-react/dist/esm/icons/x.mjs'
-import { apiFetch, jsonBody } from '../../lib/api'
+import { apiFetch, backendHref } from '../../lib/api'
 import './ManageShell.css'
 
 export type ShellIcon = ComponentType<SVGProps<SVGSVGElement> & { size?: number }>
@@ -50,13 +50,19 @@ export function ManageShell({
   onSchoolChange,
 }: ManageShellProps) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [isSigningOut, setIsSigningOut] = useState(false)
 
   async function signOut() {
-    await apiFetch('/api/session/logout/', {
-      method: 'POST',
-      body: jsonBody({}),
-    })
-    window.location.href = '/login/'
+    if (isSigningOut) return
+    setIsSigningOut(true)
+    try {
+      const response = await apiFetch<{ redirectPath?: string }>('/api/session/logout/', {
+        method: 'POST',
+      })
+      window.location.assign(response.redirectPath || '/login/')
+    } catch {
+      window.location.assign(backendHref('/logout/'))
+    }
   }
 
   const sidebar = (
@@ -92,7 +98,7 @@ export function ManageShell({
           <strong>{userName}</strong>
           <small>{userRole}</small>
         </span>
-        <button type="button" onClick={signOut} title="Sign out" aria-label="Sign out">
+        <button type="button" onClick={signOut} title="Sign out" aria-label="Sign out" disabled={isSigningOut}>
           <LogOut size={16} />
         </button>
       </div>

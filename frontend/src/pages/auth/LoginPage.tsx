@@ -1,9 +1,5 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right.mjs'
-import LockKeyhole from 'lucide-react/dist/esm/icons/lock-keyhole.mjs'
-import UserRound from 'lucide-react/dist/esm/icons/user-round.mjs'
-import { Field, TextInput } from '../../components/manage/FormControls'
 import { apiFetch, displayError, jsonBody } from '../../lib/api'
 import './LoginPage.css'
 
@@ -14,7 +10,7 @@ export function LoginPage() {
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    document.title = 'Sign in | Tap2Connect'
+    document.title = 'Login | Tap2Connect'
     apiFetch<{ authenticated: boolean; redirectPath: string }>('/api/session/')
       .then((session) => {
         if (session.authenticated) window.location.replace(session.redirectPath)
@@ -40,51 +36,50 @@ export function LoginPage() {
 
   return (
     <main className="auth-page">
-      <section className="auth-brand-panel">
-        <a href="/" className="auth-logo">
-          <img src="/static/branding/tap2connect-logo.png" alt="Tap2Connect" />
+      <header className="auth-topbar">
+        <a href="/" className="auth-logo" aria-label="Tap2Connect home">
+          <span><img src="/static/branding/tap2connect-logo.png" alt="Tap2Connect" /></span>
         </a>
-        <div>
-          <span>Digital identity platform</span>
-          <h1>Manage every card, school, and business from one secure workspace.</h1>
-          <p>Use the credentials assigned to your platform, school, professional profile, or organization account.</p>
-        </div>
-      </section>
-      <form className="auth-form-panel" onSubmit={submit}>
-        <span className="auth-lock"><LockKeyhole size={21} /></span>
-        <h2>Welcome back</h2>
-        <p>Sign in to open your Tap2Connect dashboard.</p>
+        <a className="auth-top-action" href="/">Back to website</a>
+      </header>
+
+      <section className="auth-card" aria-labelledby="login-title">
+        <h1 id="login-title">Welcome back!</h1>
+        <p className="auth-copy">Login to manage your Tap2Connect profiles, cards, and workspace.</p>
+
         {error ? <div className="manage-alert">{error}</div> : null}
-        <Field label="Username">
-          <span className="auth-input">
-            <UserRound size={15} aria-hidden="true" />
-            <TextInput
+
+        <form className="auth-form" onSubmit={submit}>
+          <label>
+            <span>Username</span>
+            <input
+              type="text"
+              name="username"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
               autoComplete="username"
               required
               autoFocus
             />
-          </span>
-        </Field>
-        <Field label="Password">
-          <span className="auth-input">
-            <LockKeyhole size={15} aria-hidden="true" />
-            <TextInput
+          </label>
+          <label>
+            <span>Password</span>
+            <input
               type="password"
+              name="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               autoComplete="current-password"
               required
             />
-          </span>
-        </Field>
-        <button className="manage-button is-primary auth-submit" type="submit" disabled={submitting}>
-          {submitting ? 'Signing in…' : 'Sign in'}
-          <ArrowRight size={15} />
-        </button>
-        <a href="/">Return to Tap2Connect home</a>
-      </form>
+          </label>
+          <button className="auth-submit" type="submit" disabled={submitting}>
+            {submitting ? 'Logging in...' : 'Login to your account'}
+          </button>
+        </form>
+
+        <p className="auth-support">Need access? Contact your school or Tap2Connect admin.</p>
+      </section>
     </main>
   )
 }

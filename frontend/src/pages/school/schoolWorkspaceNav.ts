@@ -9,7 +9,7 @@ import School from 'lucide-react/dist/esm/icons/school.mjs'
 import Settings from 'lucide-react/dist/esm/icons/settings.mjs'
 import Upload from 'lucide-react/dist/esm/icons/upload.mjs'
 import Users from 'lucide-react/dist/esm/icons/users.mjs'
-import { backendHref, queryString } from '../../lib/api'
+import { queryString } from '../../lib/api'
 
 export function withSchool(path: string, schoolId?: number | null) {
   return `${path}${schoolId ? queryString({ school: schoolId }) : ''}`
@@ -28,7 +28,7 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
     { label: 'QR & Data Export', href: withSchool('/dashboard/qr-export/', schoolId), icon: QrCode, active: path.includes('/qr-export') },
     ...(isSuperAdmin ? [
       { label: 'Professional Cards', href: '/dashboard/professional-cards/', icon: BadgeCheck, active: path.includes('/professional-cards') },
-      { label: 'Business Suite', href: backendHref('/dashboard/business-suite/'), icon: BriefcaseBusiness, active: path.includes('/business-suite') },
+      { label: 'Business Suite', href: '/dashboard/business-suite/', icon: BriefcaseBusiness, active: path.includes('/business-suite') },
     ] : []),
     { label: 'Settings', href: withSchool('/dashboard/settings/', schoolId), icon: Settings, active: path.includes('/settings') },
   ]

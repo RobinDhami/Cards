@@ -8,7 +8,6 @@ import Pencil from 'lucide-react/dist/esm/icons/pencil.mjs'
 import Plus from 'lucide-react/dist/esm/icons/plus.mjs'
 import Save from 'lucide-react/dist/esm/icons/save.mjs'
 import Search from 'lucide-react/dist/esm/icons/search.mjs'
-import ShieldCheck from 'lucide-react/dist/esm/icons/shield-check.mjs'
 import Trash2 from 'lucide-react/dist/esm/icons/trash-2.mjs'
 import UserRound from 'lucide-react/dist/esm/icons/user-round.mjs'
 import X from 'lucide-react/dist/esm/icons/x.mjs'
@@ -398,7 +397,7 @@ export function ProfessionalProfileList() {
                       <a href={profile.publicUrl} target="_blank" rel="noreferrer" title="View public profile">
                         <Eye size={15} />
                       </a>
-                      <a href={profile.editUrl} title="Edit profile">
+                      <a href={`/p/${profile.slug}/edit/`} title="Edit profile">
                         <Pencil size={15} />
                       </a>
                       <button type="button" onClick={() => removeProfile(profile)} title="Delete profile">
@@ -580,7 +579,7 @@ export function ProfessionalProfileEditor() {
       setLoginPassword('')
       setSuccess('Profile saved successfully.')
       if (route.isCreate) {
-        window.history.replaceState({}, '', `/dashboard/professional-cards/${response.profile.id}/edit/`)
+        window.history.replaceState({}, '', `/p/${response.profile.slug}/edit/`)
       }
     } catch (reason) {
       if (reason instanceof ApiError) setFieldErrors(reason.errors)
@@ -889,7 +888,7 @@ export function ProfessionalProfileDelete() {
         <p>This removes the public profile and its services, highlights, testimonials, and documents.</p>
         {error ? <div className="manage-alert">{error}</div> : null}
         <div>
-          <a className="manage-button" href={`/dashboard/professional-cards/${id}/edit/`}>Cancel</a>
+          <a className="manage-button" href={profile ? `/p/${profile.slug}/edit/` : '/dashboard/professional-cards/'}>Cancel</a>
           <button className="manage-button is-danger" type="button" onClick={remove} disabled={deleting}>
             {deleting ? 'Deleting…' : 'Delete permanently'}
           </button>
@@ -901,10 +900,28 @@ export function ProfessionalProfileDelete() {
 
 export function ProfessionalEditLogin() {
   const slug = decodeURIComponent(window.location.pathname.match(/^\/p\/([^/]+)/)?.[1] ?? '')
+  const [profileName, setProfileName] = useState('this profile')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    let active = true
+    document.title = 'Edit profile | Tap2Connect'
+    apiFetch<{ profile: { fullName: string }; redirectPath?: string }>(`/api/professional-profiles/${slug}/edit-login/`)
+      .then((response) => {
+        if (!active) return
+        const fullName = response.profile.fullName || 'this profile'
+        setProfileName(fullName)
+        document.title = `Edit ${fullName} | Tap2Connect`
+        if (response.redirectPath) window.location.replace(response.redirectPath)
+      })
+      .catch(() => undefined)
+    return () => {
+      active = false
+    }
+  }, [slug])
 
   async function submit(event: FormEvent) {
     event.preventDefault()
@@ -928,17 +945,38 @@ export function ProfessionalEditLogin() {
   return (
     <main className="profile-login-page">
       <form className="profile-login-card" onSubmit={submit}>
-        <img src="/static/branding/tap2connect-logo.png" alt="Tap2Connect" />
-        <span className="profile-login-icon"><ShieldCheck size={22} /></span>
-        <h1>Edit professional profile</h1>
-        <p>Sign in with the username and password assigned to this digital card.</p>
+        <a href="/" className="profile-login-logo" aria-label="Tap2Connect home">
+          <img src="/static/branding/tap2connect-logo.png" alt="Tap2Connect" />
+        </a>
+        <h1>Edit profile</h1>
+        <p>Log in with the account that manages {profileName} to update this networking card.</p>
         {error ? <div className="manage-alert">{error}</div> : null}
-        <Field label="Username"><TextInput value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" required /></Field>
-        <Field label="Password"><TextInput type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required /></Field>
-        <button className="manage-button is-primary" type="submit" disabled={submitting}>
-          {submitting ? 'Signing in…' : 'Sign in to edit'}
+        <label>
+          <span>Username</span>
+          <input
+            type="text"
+            name="username"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            autoComplete="username"
+            required
+          />
+        </label>
+        <label>
+          <span>Password</span>
+          <input
+            type="password"
+            name="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            autoComplete="current-password"
+            required
+          />
+        </label>
+        <button type="submit" disabled={submitting}>
+          {submitting ? 'Logging in...' : 'Login to Edit'}
         </button>
-        <a href={`/p/${slug}/`}>Back to public profile</a>
+        <a className="profile-login-back" href={`/p/${slug}/`}>Back to profile</a>
       </form>
     </main>
   )

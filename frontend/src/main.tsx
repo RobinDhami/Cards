@@ -1,4 +1,6 @@
 import { createRoot } from 'react-dom/client'
+import './design-system/tokens.css'
+import './design-system/foundations.css'
 import './index.css'
 import App from './App.tsx'
 

@@ -2,24 +2,26 @@ import { useCallback, useEffect, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import Activity from 'lucide-react/dist/esm/icons/activity.mjs'
 import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left.mjs'
-import BadgeCheck from 'lucide-react/dist/esm/icons/badge-check.mjs'
+import BookOpen from 'lucide-react/dist/esm/icons/book-open.mjs'
+import Camera from 'lucide-react/dist/esm/icons/camera.mjs'
+import CheckCircle from 'lucide-react/dist/esm/icons/check-circle.mjs'
 import Download from 'lucide-react/dist/esm/icons/download.mjs'
 import Edit3 from 'lucide-react/dist/esm/icons/edit-3.mjs'
 import Eye from 'lucide-react/dist/esm/icons/eye.mjs'
-import FileText from 'lucide-react/dist/esm/icons/file-text.mjs'
-import GraduationCap from 'lucide-react/dist/esm/icons/graduation-cap.mjs'
+import FileBadge from 'lucide-react/dist/esm/icons/file-badge.mjs'
+import ImageIcon from 'lucide-react/dist/esm/icons/image.mjs'
+import ImagePlus from 'lucide-react/dist/esm/icons/image-plus.mjs'
+import Info from 'lucide-react/dist/esm/icons/info.mjs'
 import LayoutDashboard from 'lucide-react/dist/esm/icons/layout-dashboard.mjs'
-import Mail from 'lucide-react/dist/esm/icons/mail.mjs'
 import MapPin from 'lucide-react/dist/esm/icons/map-pin.mjs'
-import MessageCircle from 'lucide-react/dist/esm/icons/message-circle.mjs'
 import Phone from 'lucide-react/dist/esm/icons/phone.mjs'
 import QrCode from 'lucide-react/dist/esm/icons/qr-code.mjs'
 import Save from 'lucide-react/dist/esm/icons/save.mjs'
 import Share2 from 'lucide-react/dist/esm/icons/share-2.mjs'
 import ShieldCheck from 'lucide-react/dist/esm/icons/shield-check.mjs'
+import UploadIcon from 'lucide-react/dist/esm/icons/upload.mjs'
+import User from 'lucide-react/dist/esm/icons/user.mjs'
 import UserRound from 'lucide-react/dist/esm/icons/user-round.mjs'
-import Users from 'lucide-react/dist/esm/icons/users.mjs'
-import X from 'lucide-react/dist/esm/icons/x.mjs'
 import {
   Field,
   FileInput,
@@ -30,7 +32,11 @@ import {
   Toggle,
 } from '../../components/manage/FormControls'
 import { ManageShell } from '../../components/manage/ManageShell'
-import { apiFetch, backendHref, displayError, jsonBody } from '../../lib/api'
+import { Feedback } from '../../design-system/Feedback'
+import { DigitalContactCard } from '../../features/digital-card/DigitalContactCard'
+import { fetchPublicStudent } from '../../features/digital-card/api'
+import type { PublicStudent } from '../../features/digital-card/types'
+import { apiFetch, displayError, jsonBody } from '../../lib/api'
 import './StudentWorkspace.css'
 
 type Choice = { value: string | number; label: string; description?: string; palette?: string[] }
@@ -66,55 +72,6 @@ type StudentManageProfile = {
   options: StudentOptions
 }
 
-type PublicStudent = {
-  id: number
-  name: string
-  email: string
-  phone: string
-  school: {
-    name: string
-    website: string
-    websiteUrl: string
-    phone: string
-    address: string
-    logo: string
-  }
-  profilePhoto: string
-  coverPhoto: string
-  memberType: string
-  gradeLabel: string
-  section: string
-  gradeSection: string
-  identifier: string
-  identifierLabel: string
-  role: string
-  organization: string
-  address: string
-  guardianLabel: string
-  guardianName: string
-  emergencyPhone: string
-  bloodGroup: string
-  additionalInfoHeading: string
-  additionalInfoDescription: string
-  intro: string
-  featured: string
-  current: string
-  skills: string[]
-  socials: Array<{ key: string; url: string; label: string }>
-  actions: {
-    phone: string
-    whatsapp: string
-    map: string
-    website: string
-    vcard: string
-    qr: string
-    edit: string
-    birthCertificate: string
-  }
-  canViewPrivateDetails: boolean
-  publicUrl: string
-}
-
 type OwnerDashboard = {
   profile: StudentManageProfile
   organization: string
@@ -131,60 +88,21 @@ type OwnerDashboard = {
 }
 
 function studentIdFromPath() {
-  return Number(window.location.pathname.match(/student(?:\/edit)?\/(\d+)/)?.[1] ?? 0)
-}
-
-function socialMonogram(key: string) {
-  const labels: Record<string, string> = {
-    linkedin: 'in',
-    instagram: 'ig',
-    facebook: 'f',
-    messenger: 'm',
-    twitter: 'x',
-    youtube: '▶',
-    tiktok: 'tt',
-    github: 'gh',
-    figma: 'fi',
-    upwork: 'up',
-    website: 'www',
-  }
-  return labels[key] ?? key.slice(0, 2)
-}
-
-function CardAction({
-  href,
-  label,
-  icon,
-  className = '',
-}: {
-  href: string
-  label: string
-  icon: ReactNode
-  className?: string
-}) {
-  if (!href) return null
-  return (
-      <a className={`student-card-action ${className}`} href={backendHref(href)}>
-      <span>{icon}</span>
-      {label}
-    </a>
-  )
+  return Number(window.location.pathname.match(/(?:student(?:\/edit)?|dashboard\/edit)\/(\d+)/)?.[1] ?? 0)
 }
 
 export function PublicStudentCard() {
   const studentId = studentIdFromPath()
   const [profile, setProfile] = useState<PublicStudent | null>(null)
   const [error, setError] = useState('')
-  const [detailsOpen, setDetailsOpen] = useState(false)
-  const [toast, setToast] = useState('')
 
   useEffect(() => {
     let current = true
-    apiFetch<{ profile: PublicStudent }>(`/api/students/${studentId}/`)
-      .then((payload) => {
+    fetchPublicStudent(studentId)
+      .then((student) => {
         if (!current) return
-        setProfile(payload.profile)
-        document.title = `${payload.profile.name} | Tap2Connect Digital ID`
+        setProfile(student)
+        document.title = `${student.name} | Tap2Connect Digital ID`
       })
       .catch((reason) => {
         if (current) setError(displayError(reason))
@@ -194,164 +112,10 @@ export function PublicStudentCard() {
     }
   }, [studentId])
 
-  async function shareProfile() {
-    if (!profile) return
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: profile.name, url: profile.publicUrl })
-      } else {
-        await navigator.clipboard.writeText(profile.publicUrl)
-        setToast('Profile link copied.')
-      }
-    } catch {
-      setToast('Sharing was cancelled.')
-    }
-  }
+  if (error) return <Feedback title="Digital identity unavailable" message={error} />
+  if (!profile) return <Feedback loading message="Loading digital identity…" />
 
-  if (error) return <div className="student-public-state"><div className="manage-alert">{error}</div></div>
-  if (!profile) return <div className="student-public-state">Loading digital ID…</div>
-
-  return (
-    <main className="student-public-page">
-      {toast ? <button className="student-toast" type="button" onClick={() => setToast('')}>{toast}</button> : null}
-      <article className="student-digital-card">
-        <div className="student-card-body">
-          <header className="student-school-header">
-            <div className="student-school-brand">
-              <span>
-                {profile.school.logo ? <img src={profile.school.logo} alt="" /> : <GraduationCap size={20} />}
-              </span>
-              <div>
-                <strong>{profile.school.name || profile.organization}</strong>
-                <small>Tap2Connect verified digital identity</small>
-              </div>
-            </div>
-            <div className="student-card-top-actions">
-              <button type="button" onClick={shareProfile} aria-label="Share profile" title="Share profile"><Share2 size={16} /></button>
-              <a href={backendHref(profile.actions.qr)} target="_blank" rel="noreferrer" aria-label="Open QR code" title="Open QR code"><QrCode size={16} /></a>
-            </div>
-          </header>
-
-          <section className="student-card-hero">
-            <div className="student-card-cover">
-              {profile.coverPhoto ? <img src={profile.coverPhoto} alt="" /> : null}
-              {profile.identifier ? (
-                <span className="student-card-id">
-                  <small>{profile.identifierLabel}</small>
-                  <strong>{profile.identifier}</strong>
-                </span>
-              ) : null}
-            </div>
-            <span className="student-card-photo">
-              {profile.profilePhoto ? <img src={profile.profilePhoto} alt={profile.name} /> : profile.name.slice(0, 1)}
-            </span>
-          </section>
-
-          <section className="student-card-identity">
-            <div className="student-name-row">
-              <h1>{profile.name}</h1>
-              <BadgeCheck size={18} aria-label="Verified identity" />
-            </div>
-            <p>{profile.role} · {profile.organization}</p>
-            {profile.address ? <span className="student-location"><MapPin size={12} />{profile.address}</span> : null}
-          </section>
-
-          <div className="student-card-actions">
-            <CardAction href={profile.actions.phone} label="Call" icon={<Phone size={17} />} />
-            <CardAction href={profile.actions.whatsapp} label="WhatsApp" icon={<MessageCircle size={17} />} className="is-whatsapp" />
-            <CardAction href={profile.email ? `mailto:${profile.email}` : ''} label="Email" icon={<Mail size={17} />} />
-            <CardAction href={profile.actions.map} label="Map" icon={<MapPin size={17} />} />
-          </div>
-
-          {profile.intro ? <blockquote className="student-card-quote"><span>“</span>{profile.intro}</blockquote> : null}
-
-          {profile.current || profile.featured ? (
-            <section className="student-card-section">
-              <h2>{profile.memberType.toLowerCase().includes('teacher') ? 'About & Availability' : 'About & Current Focus'}</h2>
-              <div className="student-focus-list">
-                {profile.current ? <div><strong>Current focus</strong><p>{profile.current}</p></div> : null}
-                {profile.featured ? <div><strong>Featured</strong><p>{profile.featured}</p></div> : null}
-              </div>
-            </section>
-          ) : null}
-
-          {profile.skills.length > 0 ? (
-            <section className="student-card-section">
-              <h2>Skills & Interests</h2>
-              <div className="student-skill-row">
-                {profile.skills.map((skill) => <span key={skill}>{skill}</span>)}
-              </div>
-            </section>
-          ) : null}
-
-          {profile.socials.length > 0 ? (
-            <section className="student-card-section">
-              <h2>Find me online</h2>
-              <div className="student-social-row">
-                {profile.socials.map((social) => (
-                  <a href={backendHref(social.url)} key={social.key} title={social.label} aria-label={social.label}>
-                    {socialMonogram(social.key)}
-                  </a>
-                ))}
-              </div>
-            </section>
-          ) : null}
-
-          <section className="student-card-section student-documents">
-            <h2>Documents</h2>
-            <div>
-              <a href={backendHref(profile.actions.vcard)}>
-                <span><FileText size={17} /></span>
-                <strong>Save contact<small>Download vCard</small></strong>
-                <Download size={15} />
-              </a>
-              {profile.actions.birthCertificate ? (
-                <a href={backendHref(profile.actions.birthCertificate)}>
-                  <span><ShieldCheck size={17} /></span>
-                  <strong>Identity document<small>Authorized access</small></strong>
-                  <Eye size={15} />
-                </a>
-              ) : null}
-            </div>
-          </section>
-
-          <button className="student-details-button" type="button" onClick={() => setDetailsOpen(true)}>
-            <span><UserRound size={17} /></span>
-            <strong>View complete details<small>School, identity, and contact information</small></strong>
-            <Eye size={15} />
-          </button>
-
-          <button className="student-connect-preview" type="button" onClick={() => setToast('Friend connections will be available soon.')}>
-            <span><Users size={22} /></span>
-            <strong>Let’s Connect<small>Tap to preview · connect with friends soon</small></strong>
-            <Share2 size={17} />
-          </button>
-        </div>
-
-        <footer className="student-card-footer">
-          <span><ShieldCheck size={12} />Verified identity</span>
-          <span>{profile.school.name || profile.organization}</span>
-          <span>Powered by <img src="/static/branding/tap2connect-logo.png" alt="Tap2Connect" /></span>
-        </footer>
-      </article>
-
-      <div className={`student-details-overlay${detailsOpen ? ' is-open' : ''}`} onClick={() => setDetailsOpen(false)} />
-      <aside className={`student-details-drawer${detailsOpen ? ' is-open' : ''}`}>
-        <button type="button" onClick={() => setDetailsOpen(false)} aria-label="Close details"><X size={17} /></button>
-        <h2>Complete details</h2>
-        <dl>
-          <div><dt>Role</dt><dd>{profile.role}</dd></div>
-          <div><dt>Organization</dt><dd>{profile.organization}</dd></div>
-          <div><dt>Class / level</dt><dd>{profile.gradeSection || 'Not provided'}</dd></div>
-          <div><dt>{profile.identifierLabel}</dt><dd>{profile.identifier || 'Not provided'}</dd></div>
-          {profile.bloodGroup ? <div><dt>Blood group</dt><dd>{profile.bloodGroup}</dd></div> : null}
-          {profile.guardianName ? <div><dt>{profile.guardianLabel}</dt><dd>{profile.guardianName}</dd></div> : null}
-          {profile.additionalInfoHeading ? <div><dt>{profile.additionalInfoHeading}</dt><dd>{profile.additionalInfoDescription}</dd></div> : null}
-        </dl>
-        <a className="manage-button is-primary" href={`/student/${profile.id}/login/`}><Edit3 size={14} />Manage profile</a>
-      </aside>
-    </main>
-  )
+  return <DigitalContactCard profile={profile} />
 }
 
 function ownerNav(studentId: number, publicUrl = '') {
@@ -536,7 +300,360 @@ const socialFields = [
   ['whatsapp', 'WhatsApp'],
 ] as const
 
+function fieldString(fields: Record<string, string | boolean | number | null>, key: string) {
+  return String(fields[key] ?? '')
+}
+
+function fileNameFromUrl(url: string) {
+  if (!url) return ''
+  const name = url.split('?')[0].split('/').filter(Boolean).pop() ?? ''
+  return name.replaceAll('%20', ' ')
+}
+
+function EditSection({
+  icon,
+  title,
+  description,
+  children,
+  delay,
+}: {
+  icon: ReactNode
+  title: string
+  description?: string
+  children: ReactNode
+  delay: number
+}) {
+  return (
+    <section className="student-edit-section" style={{ animationDelay: `${delay}s` }}>
+      <header className="student-edit-section-head">
+        <span>{icon}</span>
+        <div>
+          <h2>{title}</h2>
+          {description ? <p>{description}</p> : null}
+        </div>
+      </header>
+      {children}
+    </section>
+  )
+}
+
+function EditField({
+  label,
+  children,
+  wide,
+  help,
+}: {
+  label: string
+  children: ReactNode
+  wide?: boolean
+  help?: string
+}) {
+  return (
+    <label className={`student-edit-field${wide ? ' is-wide' : ''}`}>
+      <span>{label}</span>
+      {children}
+      {help ? <small>{help}</small> : null}
+    </label>
+  )
+}
+
+function UploadZone({
+  label,
+  icon,
+  currentUrl,
+  file,
+  emptyText,
+  onPick,
+}: {
+  label: string
+  icon: ReactNode
+  currentUrl?: string
+  file?: File | null
+  emptyText: string
+  onPick: () => void
+}) {
+  return (
+    <div>
+      <span className="student-edit-upload-label">{label}</span>
+      <button className={`student-edit-upload${currentUrl || file ? ' has-file' : ''}`} type="button" onClick={onPick}>
+        {icon}
+        <span>{file?.name || fileNameFromUrl(currentUrl || '') || emptyText}</span>
+      </button>
+    </div>
+  )
+}
+
 export function StudentEditor() {
+  const studentId = studentIdFromPath()
+  const [profile, setProfile] = useState<StudentManageProfile | null>(null)
+  const [fields, setFields] = useState<Record<string, string | boolean | number | null>>({})
+  const [skills, setSkills] = useState('')
+  const [files, setFiles] = useState<Record<string, File | null>>({})
+  const [previews, setPreviews] = useState<Record<string, string>>({})
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [toast, setToast] = useState('')
+
+  useEffect(() => {
+    apiFetch<{ profile: StudentManageProfile }>(`/api/manage/students/${studentId}/`)
+      .then((payload) => {
+        setProfile(payload.profile)
+        setFields(payload.profile.fields)
+        setSkills(payload.profile.skills.join(', '))
+        document.title = `Edit ${payload.profile.fields.name} | Tap2Connect`
+      })
+      .catch((reason) => setError(displayError(reason)))
+  }, [studentId])
+
+  useEffect(() => {
+    if (!toast) return
+    const timer = window.setTimeout(() => setToast(''), 2400)
+    return () => window.clearTimeout(timer)
+  }, [toast])
+
+  useEffect(() => () => {
+    Object.values(previews).forEach((url) => URL.revokeObjectURL(url))
+  }, [previews])
+
+  function update(key: string, value: string | boolean) {
+    setFields((current) => ({ ...current, [key]: value }))
+    setSuccess('')
+  }
+
+  function updateFile(key: string, file: File | null) {
+    setFiles((current) => ({ ...current, [key]: file }))
+    if (!file) return
+    setPreviews((current) => {
+      if (current[key]) URL.revokeObjectURL(current[key])
+      return { ...current, [key]: URL.createObjectURL(file) }
+    })
+    setSuccess('')
+  }
+
+  function toggleSocial(value: string, checked: boolean) {
+    const selected = new Set(fieldString(fields, 'social_stack').split(',').map((item) => item.trim()).filter(Boolean))
+    if (checked) selected.add(value)
+    else selected.delete(value)
+    update('social_stack', Array.from(selected).join(','))
+  }
+
+  async function save(event: FormEvent) {
+    event.preventDefault()
+    if (!profile) return
+    setSaving(true)
+    setError('')
+    setSuccess('')
+    const body = new FormData()
+    Object.entries(fields).forEach(([key, value]) => body.append(key, value === null ? '' : String(value)))
+    body.set('college', String(fields.college ?? profile.collegeId ?? ''))
+    body.append('skills', JSON.stringify(skills.split(',').map((item) => item.trim()).filter(Boolean)))
+    Object.entries(files).forEach(([key, file]) => {
+      if (file) body.append(key, file)
+    })
+    try {
+      const response = await apiFetch<{ profile: StudentManageProfile }>(`/api/manage/students/${studentId}/`, {
+        method: 'POST',
+        body,
+      })
+      setProfile(response.profile)
+      setFields(response.profile.fields)
+      setSkills(response.profile.skills.join(', '))
+      setFiles({})
+      setPreviews((current) => {
+        Object.values(current).forEach((url) => URL.revokeObjectURL(url))
+        return {}
+      })
+      setSuccess('Profile saved successfully.')
+      setToast('Student data saved successfully!')
+    } catch (reason) {
+      setError(displayError(reason))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (!profile) return <div className="manage-state">{error || 'Loading profile editor...'}</div>
+
+  const selectedSocials = new Set(fieldString(fields, 'social_stack').split(',').map((item) => item.trim()).filter(Boolean))
+  const profilePhoto = previews.profile_photo || profile.profilePhoto
+  const coverPhoto = previews.cover_photo || profile.coverPhoto
+  const profileInputId = `student-profile-photo-${studentId}`
+  const coverInputId = `student-cover-photo-${studentId}`
+  const birthInputId = `student-birth-certificate-${studentId}`
+
+  return (
+    <main className="student-edit-page">
+      <header className="student-edit-hero">
+        <div>
+          <a href={profile.publicUrl}><ArrowLeft size={15} aria-hidden="true" />Back to card</a>
+          <h1>Edit Student Profile</h1>
+          <p>Update digital identity, contact details, and public card settings.</p>
+        </div>
+      </header>
+
+      <form className="student-edit-form" onSubmit={save}>
+        {error ? <div className="manage-alert student-owner-message">{error}</div> : null}
+        {success ? <div className="manage-alert is-success student-owner-message">{success}</div> : null}
+
+        <section className="student-edit-preview">
+          <button className="student-edit-cover" type="button" onClick={() => document.getElementById(coverInputId)?.click()}>
+            {coverPhoto ? <img src={coverPhoto} alt={`${fieldString(fields, 'name')} cover photo`} /> : null}
+            <span><ImagePlus size={16} aria-hidden="true" />Change cover</span>
+          </button>
+          <div className="student-edit-avatar-row">
+            <button className="student-edit-avatar" type="button" onClick={() => document.getElementById(profileInputId)?.click()}>
+              {profilePhoto ? <img src={profilePhoto} alt={`${fieldString(fields, 'name')} profile photo`} /> : <span>{fieldString(fields, 'name').slice(0, 1).toUpperCase() || 'S'}</span>}
+            </button>
+            <button className="student-edit-avatar-action" type="button" aria-label="Change profile photo" onClick={() => document.getElementById(profileInputId)?.click()}>
+              <Camera size={16} aria-hidden="true" />
+            </button>
+            <div>
+              <h2>{fieldString(fields, 'name')}</h2>
+              <p>{fieldString(fields, 'role') || fieldString(fields, 'member_type')} - {fieldString(fields, 'organization_name') || profile.collegeName}</p>
+            </div>
+          </div>
+          <input id={profileInputId} type="file" accept="image/*" hidden onChange={(event) => updateFile('profile_photo', event.target.files?.[0] ?? null)} />
+          <input id={coverInputId} type="file" accept="image/*" hidden onChange={(event) => updateFile('cover_photo', event.target.files?.[0] ?? null)} />
+        </section>
+
+        <EditSection icon={<User size={16} />} title="Profile Basics" delay={0.4}>
+          <div className="student-edit-grid is-two">
+            <EditField label="Full Name"><input className="student-edit-input" name="name" value={fieldString(fields, 'name')} placeholder="Full name" onChange={(event) => update('name', event.target.value)} /></EditField>
+            <EditField label="Username"><input className="student-edit-input" name="username" value={fieldString(fields, 'username')} placeholder="Username" onChange={(event) => update('username', event.target.value)} /></EditField>
+            <EditField label="IEMIS No."><input className="student-edit-input" value={profile.uniqueIdentifier} readOnly /></EditField>
+            {profile.canManageSchoolFields ? (
+              <EditField label="Member Type">
+                <select className="student-edit-input" value={fieldString(fields, 'member_type')} onChange={(event) => update('member_type', event.target.value)}>
+                  {profile.options.memberTypes.map((choice) => <option key={choice.value} value={choice.value}>{choice.label}</option>)}
+                </select>
+              </EditField>
+            ) : null}
+            <EditField label="Role"><input className="student-edit-input" name="role" value={fieldString(fields, 'role')} placeholder="Role" onChange={(event) => update('role', event.target.value)} /></EditField>
+            {profile.canManageSchoolFields ? (
+              <EditField label="School / College">
+                <select className="student-edit-input" value={String(fields.college ?? profile.collegeId ?? '')} onChange={(event) => update('college', event.target.value)}>
+                  <option value="">Choose a registered school</option>
+                  {profile.options.colleges.map((choice) => <option key={choice.value} value={choice.value}>{choice.label}</option>)}
+                </select>
+              </EditField>
+            ) : null}
+            <EditField label="Organization / Brand Name" wide><input className="student-edit-input" name="organization_name" value={fieldString(fields, 'organization_name')} placeholder="Organization" onChange={(event) => update('organization_name', event.target.value)} /></EditField>
+          </div>
+        </EditSection>
+
+        <EditSection icon={<BookOpen size={16} />} title="Academic Data" delay={0.5}>
+          <div className="student-edit-grid is-three">
+            <EditField label="Class / Grade">
+              <select className="student-edit-input" name="academic_level" value={fieldString(fields, 'academic_level')} onChange={(event) => update('academic_level', event.target.value)}>
+                <option value="">Select class / grade</option>
+                {profile.options.academicLevels.map((choice) => <option key={choice.value} value={choice.value}>{choice.label}</option>)}
+              </select>
+            </EditField>
+            <EditField label="Section"><input className="student-edit-input" name="section" value={fieldString(fields, 'section')} placeholder="Section" onChange={(event) => update('section', event.target.value)} /></EditField>
+            <EditField label="Roll Number"><input className="student-edit-input" name="roll_number" value={fieldString(fields, 'roll_number')} placeholder="Roll #" onChange={(event) => update('roll_number', event.target.value)} /></EditField>
+            <EditField label="Gender">
+              <select className="student-edit-input" name="gender" value={fieldString(fields, 'gender')} onChange={(event) => update('gender', event.target.value)}>
+                <option value="">Not set</option>
+                {profile.options.genders.map((choice) => <option key={choice.value} value={choice.value}>{choice.label}</option>)}
+              </select>
+            </EditField>
+            <EditField label="Blood Group"><input className="student-edit-input" name="blood_group" value={fieldString(fields, 'blood_group')} placeholder="Blood group" onChange={(event) => update('blood_group', event.target.value)} /></EditField>
+          </div>
+        </EditSection>
+
+        <EditSection icon={<Phone size={16} />} title="Contact" delay={0.6}>
+          <div className="student-edit-grid is-two">
+            <EditField label="Email"><input className="student-edit-input" type="email" name="email" value={fieldString(fields, 'email')} placeholder="Email" onChange={(event) => update('email', event.target.value)} /></EditField>
+            <EditField label="Phone"><input className="student-edit-input" type="tel" name="phone" value={fieldString(fields, 'phone')} placeholder="Phone" onChange={(event) => update('phone', event.target.value)} /></EditField>
+            <EditField label="Address" wide><input className="student-edit-input" name="address" value={fieldString(fields, 'address')} placeholder="Full address" onChange={(event) => update('address', event.target.value)} /></EditField>
+            <EditField label="Emergency Contact Name"><input className="student-edit-input" name="emergency_contact_name" value={fieldString(fields, 'emergency_contact_name')} placeholder="Name" onChange={(event) => update('emergency_contact_name', event.target.value)} /></EditField>
+            <EditField label="Emergency Contact Phone"><input className="student-edit-input" type="tel" name="emergency_contact_phone" value={fieldString(fields, 'emergency_contact_phone')} placeholder="Phone" onChange={(event) => update('emergency_contact_phone', event.target.value)} /></EditField>
+            <div className="student-edit-note">
+              <header>
+                <span><Info size={16} aria-hidden="true" /></span>
+                <div><h3>Custom Additional Info</h3><p>Optional note shown inside the profile info menu.</p></div>
+              </header>
+              <div className="student-edit-grid is-two">
+                <EditField label="Heading"><input className="student-edit-input" name="additional_info_heading" value={fieldString(fields, 'additional_info_heading')} placeholder="Transport, Allergy, House, Note" onChange={(event) => update('additional_info_heading', event.target.value)} /></EditField>
+                <EditField label="Description"><textarea className="student-edit-input" rows={2} name="additional_info_description" value={fieldString(fields, 'additional_info_description')} placeholder="Write the detail students or visitors should see" onChange={(event) => update('additional_info_description', event.target.value)} /></EditField>
+              </div>
+            </div>
+            <EditField label="Map / Navigation Link" wide>
+              <span className="student-edit-input-wrap">
+                <input className="student-edit-input" name="map_url" value={fieldString(fields, 'map_url')} placeholder="Google Maps link" onChange={(event) => update('map_url', event.target.value)} />
+                <MapPin size={16} aria-hidden="true" />
+              </span>
+            </EditField>
+          </div>
+        </EditSection>
+
+        <EditSection
+          icon={<UserRound size={16} />}
+          title="About & Availability"
+          description="Public information that helps visitors understand the person, their strengths, and their current focus."
+          delay={0.63}
+        >
+          <div className="student-edit-grid is-two">
+            <EditField label="Short Introduction" wide help="Who they are, what they study or teach, and what matters to them.">
+              <textarea className="student-edit-input" rows={3} name="about_intro" maxLength={500} value={fieldString(fields, 'about_intro') || fieldString(fields, 'bio')} placeholder="A concise public introduction" onChange={(event) => update('about_intro', event.target.value)} />
+            </EditField>
+            <EditField label="Featured Strength or Achievement"><textarea className="student-edit-input" rows={3} name="about_featured" maxLength={300} value={fieldString(fields, 'about_featured')} placeholder="Example: Science fair finalist and robotics club member" onChange={(event) => update('about_featured', event.target.value)} /></EditField>
+            <EditField label="Current Focus / Availability"><textarea className="student-edit-input" rows={3} name="about_current" maxLength={300} value={fieldString(fields, 'about_current')} placeholder="Example: Currently learning Python and open to student projects" onChange={(event) => update('about_current', event.target.value)} /></EditField>
+            <EditField label="Skills & Interests" wide help="Separate each skill or interest with a comma."><input className="student-edit-input" name="custom_skills" value={skills} placeholder="Python, public speaking, football, graphic design" onChange={(event) => setSkills(event.target.value)} /></EditField>
+          </div>
+        </EditSection>
+
+        <EditSection icon={<Share2 size={16} />} title="Digital Card Settings" delay={0.65}>
+          <div className="student-edit-settings">
+            <label className="student-edit-toggle">
+              <span><strong>Public contact card</strong><small>Turn this on to keep the digital card publicly viewable.</small></span>
+              <input type="checkbox" name="show_contact_card" checked={Boolean(fields.show_contact_card)} onChange={(event) => update('show_contact_card', event.target.checked)} />
+            </label>
+
+            <div>
+              <span className="student-edit-upload-label">Social Icons To Show On Card</span>
+              <div className="student-edit-social-choices">
+                {profile.options.socials.map((choice) => (
+                  <label key={choice.value}>
+                    <input type="checkbox" name="social_stack" value={choice.value} checked={selectedSocials.has(String(choice.value))} onChange={(event) => toggleSocial(String(choice.value), event.target.checked)} />
+                    <span>{choice.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="student-edit-grid is-two">
+              {socialFields.map(([key, label]) => (
+                <EditField label={label} key={key}>
+                  <input className="student-edit-input" type={key === 'whatsapp' ? 'tel' : 'url'} name={key} value={fieldString(fields, key)} placeholder={key === 'whatsapp' ? '+97798XXXXXXXX' : label === 'Website' ? 'https://example.com' : `https://${String(key).replace('twitter', 'x')}.com/username`} onChange={(event) => update(key, event.target.value)} />
+                </EditField>
+              ))}
+            </div>
+          </div>
+        </EditSection>
+
+        <EditSection icon={<UploadIcon size={16} />} title="Uploads" delay={0.7}>
+          <div className="student-edit-upload-grid">
+            <UploadZone label="Profile Photo" icon={<Camera size={24} />} currentUrl={profile.profilePhoto} file={files.profile_photo} emptyText="Tap preview above or here" onPick={() => document.getElementById(profileInputId)?.click()} />
+            <UploadZone label="Cover Photo" icon={<ImageIcon size={24} />} currentUrl={profile.coverPhoto} file={files.cover_photo} emptyText="Tap preview above or here" onPick={() => document.getElementById(coverInputId)?.click()} />
+            <UploadZone label="DOB Certificate" icon={<FileBadge size={24} />} currentUrl={profile.birthCertificate} file={files.birth_certificate} emptyText="Upload birth / DOB certificate" onPick={() => document.getElementById(birthInputId)?.click()} />
+            <input id={birthInputId} type="file" accept=".pdf,image/*" hidden onChange={(event) => updateFile('birth_certificate', event.target.files?.[0] ?? null)} />
+          </div>
+        </EditSection>
+
+        <div className="student-edit-actions">
+          <button type="submit" disabled={saving}><CheckCircle size={16} aria-hidden="true" />{saving ? 'Saving...' : 'Save Changes'}</button>
+          <a href={profile.publicUrl}><Eye size={16} aria-hidden="true" />Preview</a>
+        </div>
+      </form>
+
+      <div className={`student-edit-toast${toast ? ' is-visible' : ''}`}>{toast}</div>
+    </main>
+  )
+}
+
+export function LegacyStudentEditor() {
   const studentId = studentIdFromPath()
   const [profile, setProfile] = useState<StudentManageProfile | null>(null)
   const [fields, setFields] = useState<Record<string, string | boolean | number | null>>({})
@@ -713,7 +830,7 @@ export function StudentEditLogin() {
         method: 'POST',
         body: jsonBody({ username, password }),
       })
-      window.location.href = response.redirectPath
+      window.location.href = new URLSearchParams(window.location.search).get('next') || response.redirectPath
     } catch (reason) {
       setError(displayError(reason))
       setSubmitting(false)

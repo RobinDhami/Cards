@@ -1,0 +1,89 @@
+.migration-page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  background: #f5f7fb;
+  padding: 28px 16px;
+  color: #0f172a;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+.migration-card {
+  display: grid;
+  width: min(440px, 100%);
+  gap: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #fff;
+  padding: 26px;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.1);
+}
+
+.migration-logo {
+  display: inline-flex;
+  width: fit-content;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 3px 9px;
+}
+
+.migration-logo img {
+  width: 112px;
+  height: 34px;
+  object-fit: contain;
+}
+
+.migration-eyebrow {
+  width: fit-content;
+  border-radius: 999px;
+  background: #eff6ff;
+  padding: 5px 9px;
+  color: #1d4ed8;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.migration-card h1 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.migration-card p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.migration-card code {
+  overflow-wrap: anywhere;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 10px;
+  color: #334155;
+  font-size: 12px;
+}
+
+.migration-card div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.migration-card a:not(.migration-logo) {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px 12px;
+  color: #0b4bcb;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}

@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'cloudinary',
     'vcards',
     'professional_cards',
+    'card_designer',
     'shops',
     'rest_framework',
     'corsheaders',
@@ -170,6 +171,9 @@ STATIC_URL = '/static/'
 # Media files (uploaded files)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = Path(os.environ.get("MEDIA_ROOT", BASE_DIR / "media"))
+PRIVATE_CARD_MEDIA_ROOT = Path(
+    os.environ.get("PRIVATE_CARD_MEDIA_ROOT", BASE_DIR / "private_card_media")
+)
 SERVE_MEDIA_FILES = os.environ.get("SERVE_MEDIA_FILES", "True" if RENDER else "False").lower() == "true"
 CLOUDINARY_CLOUD_NAME = os.environ.get("CLOUDINARY_CLOUD_NAME", "")
 CLOUDINARY_API_KEY = os.environ.get("CLOUDINARY_API_KEY", "")

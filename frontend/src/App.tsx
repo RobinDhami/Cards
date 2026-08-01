@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { HomePage } from './pages/home/HomePage'
 import { DashboardHome } from './pages/dashboard/DashboardHome'
 import { PublicProfessionalProfile } from './pages/profiles/PublicProfessionalProfile'
@@ -17,12 +18,95 @@ import {
 import { SchoolDashboardRouter } from './pages/school/SchoolDashboard'
 import { ShopDashboardRouter } from './pages/shop/ShopDashboard'
 import { StorefrontApp } from './pages/storefront/StorefrontApp'
+import { MigrationNeededPage } from './pages/migration/MigrationNeededPage'
+
+const CardEditorPage = lazy(() =>
+  import('./features/card-editor/CardEditorPage').then((module) => ({
+    default: module.CardEditorPage,
+  })),
+)
+
+function routeMatches(path: string, patterns: RegExp[]) {
+  return patterns.some((pattern) => pattern.test(path))
+}
+
+const schoolDashboardRoutes = [
+  /^\/dashboard\/schools\/?$/,
+  /^\/dashboard\/students\/?$/,
+  /^\/dashboard\/teachers\/?$/,
+  /^\/dashboard\/reports\/?$/,
+  /^\/dashboard\/settings\/?$/,
+  /^\/dashboard\/print\/?$/,
+  /^\/dashboard\/qr-export\/?$/,
+  /^\/dashboard\/bulk-upload\/?$/,
+  /^\/dashboard\/student\/\d+\/credentials\/?$/,
+]
+
+const shopOwnerRoutes = [
+  /^\/shop\/[^/]+\/owner\/?$/,
+  /^\/shop\/[^/]+\/owner\/orders\/?$/,
+  /^\/shop\/[^/]+\/owner\/products\/?$/,
+  /^\/shop\/[^/]+\/owner\/products\/new\/?$/,
+  /^\/shop\/[^/]+\/owner\/categories\/?$/,
+  /^\/shop\/[^/]+\/owner\/customers\/?$/,
+  /^\/shop\/[^/]+\/owner\/discounts\/?$/,
+  /^\/shop\/[^/]+\/owner\/website\/?$/,
+]
+
+const storefrontRoutes = [
+  /^\/shop\/[^/]+\/?$/,
+  /^\/shop\/[^/]+\/products\/?$/,
+  /^\/shop\/[^/]+\/product\/[^/]+\/?$/,
+  /^\/shop\/[^/]+\/category\/[^/]+\/?$/,
+  /^\/shop\/[^/]+\/cart\/?$/,
+  /^\/shop\/[^/]+\/checkout\/?$/,
+  /^\/shop\/[^/]+\/order-success\/[^/]+\/?$/,
+  /^\/shop\/[^/]+\/track-order\/?$/,
+]
+
+const oldProjectRoutesNeedingMigration = [
+  /^\/profile\/\d+\/?$/,
+  /^\/dashboard\/business-suite\/?$/,
+  /^\/dashboard\/create\/?$/,
+  /^\/dashboard\/college_details\/\d+\/?$/,
+  /^\/dashboard\/edit_college\/\d+\/?$/,
+  /^\/dashboard\/add_college\/?$/,
+  /^\/dashboard\/delete_college\/\d+\/?$/,
+  /^\/dashboard\/delete\/\d+\/?$/,
+  /^\/dashboard\/reset-password\/\d+\/?$/,
+  /^\/dashboard\/students\/assign-usernames\/?$/,
+  /^\/bulk-upload\/?$/,
+  /^\/dashboard\/college\/\d+\/add_student\/?$/,
+  /^\/ai-chat\/?$/,
+  /^\/shop\/[^/]+\/owner\/marketing\/?$/,
+  /^\/shop\/[^/]+\/owner\/reports\/?$/,
+  /^\/shop\/[^/]+\/owner\/staff\/?$/,
+  /^\/shop\/[^/]+\/owner\/billing\/?$/,
+  /^\/shop\/[^/]+\/owner\/settings\/?$/,
+  /^\/shop\/[^/]+\/owner\/support\/?$/,
+  /^\/shop\/[^/]+\/owner\/inventory\/?$/,
+  /^\/shop\/[^/]+\/owner\/payments\/verify\/?$/,
+  /^\/shop\/[^/]+\/owner\/notifications\/?$/,
+  /^\/shop\/[^/]+\/owner\/store-preview\/?$/,
+]
 
 function App() {
   const path = window.location.pathname
 
+  if (path === '/' || path === '') {
+    return <HomePage />
+  }
+
   if (path === '/login/' || path === '/login') {
     return <LoginPage />
+  }
+
+  if (path === '/card-editor/' || path === '/card-editor') {
+    return (
+      <Suspense fallback={<div className="route-loading-screen">Opening card editor…</div>}>
+        <CardEditorPage />
+      </Suspense>
+    )
   }
 
   if (/^\/p\/[^/]+\/edit-login\/?$/.test(path)) {
@@ -65,24 +149,37 @@ function App() {
     return <PublicStudentCard />
   }
 
-  if (path.startsWith('/shop/') && path.includes('/owner')) {
-    return <ShopDashboardRouter />
-  }
-
-  if (path.startsWith('/shop/')) {
-    return <StorefrontApp />
-  }
-
   if (path === '/dashboard/' || path === '/dashboard') {
     return <DashboardHome />
   }
 
-  if (path.startsWith('/dashboard/')) {
-    const page = <SchoolDashboardRouter />
-    if (page) return page
+  if (routeMatches(path, schoolDashboardRoutes)) {
+    return <SchoolDashboardRouter />
   }
 
-  return <HomePage />
+  if (routeMatches(path, shopOwnerRoutes)) {
+    return <ShopDashboardRouter />
+  }
+
+  if (routeMatches(path, storefrontRoutes)) {
+    return <StorefrontApp />
+  }
+
+  if (routeMatches(path, oldProjectRoutesNeedingMigration)) {
+    return <MigrationNeededPage />
+  }
+
+  if (
+    path.startsWith('/dashboard/')
+    || path.startsWith('/shop/')
+    || path.startsWith('/student/')
+    || path.startsWith('/profile/')
+    || path.startsWith('/p/')
+  ) {
+    return <MigrationNeededPage />
+  }
+
+  return <MigrationNeededPage title="Route not found in React" />
 }
 
 export default App

@@ -528,6 +528,7 @@ def _public_profile_payload(request, profile):
         and profile.owner_id
         and profile.owner_id == request.user.id
     )
+    can_edit_profile = can_manage_professional_profile(request.user, profile)
 
     return {
         'seo': {
@@ -610,6 +611,7 @@ def _public_profile_payload(request, profile):
             'vcardUrl': reverse('professional_cards:vcard', args=[profile.slug]),
             'editLoginUrl': reverse('professional_cards:edit_login', args=[profile.slug]),
             'isProfileOwnerView': is_profile_owner_view,
+            'canEditProfile': can_edit_profile,
         },
         'services': [
             {

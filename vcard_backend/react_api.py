@@ -281,7 +281,7 @@ def _professional_payload(profile, detailed=True):
         'downloads': profile.downloads,
         'updatedAt': profile.updated_at.isoformat(),
         'publicUrl': reverse('professional_cards:public_profile', args=[profile.slug]),
-        'editUrl': f'/dashboard/professional-cards/{profile.id}/edit/',
+        'editUrl': reverse('professional_cards:owner_edit', args=[profile.slug]),
     }
     if not detailed:
         return data
@@ -563,15 +563,31 @@ def professional_profile_owner_api(request, slug):
     return JsonResponse({'ok': True, 'profile': _professional_payload(profile)})
 
 
-@require_http_methods(['POST'])
+@require_http_methods(['GET', 'POST'])
 def professional_profile_login_api(request, slug):
     profile = get_object_or_404(ProfessionalProfile.objects.select_related('owner'), slug=slug, is_active=True)
+
+    if request.method == 'GET':
+        redirect_path = ''
+        if can_manage_professional_profile(request.user, profile):
+            redirect_path = f'/p/{slug}/edit/'
+        return JsonResponse({
+            'ok': True,
+            'profile': {
+                'fullName': profile.full_name,
+                'slug': profile.slug,
+            },
+            'redirectPath': redirect_path,
+        })
+
     payload = _json_body(request)
     username = str(payload.get('username') or '').strip()
     password = str(payload.get('password') or '')
     user = authenticate(request, username=username, password=password)
-    if not user or not profile.owner_id or profile.owner_id != user.id:
-        return _json_error('Invalid profile username or password.')
+    if user is None:
+        return _json_error('Invalid username or password.')
+    if not can_manage_professional_profile(user, profile):
+        return _json_error('This account does not have permission to edit this profile.')
     login(request, user)
     return JsonResponse({'ok': True, 'redirectPath': f'/p/{slug}/edit/'})
 
