@@ -259,6 +259,7 @@ def _professional_options():
         'statuses': _choice_list(ProfessionalProfile.CURRENT_STATUS_CHOICES),
         'workModes': _choice_list(ProfessionalProfile.WORK_MODE_CHOICES),
         'templates': _choice_list(ProfessionalProfile.TEMPLATE_CHOICES),
+        'ctaTypes': _choice_list(ProfessionalProfile.CTA_TYPE_CHOICES),
         'lookingFor': _choice_list(LOOKING_FOR_CHOICES),
         'serviceIcons': _choice_list(SERVICE_ICON_CHOICES),
         'highlightTypes': _choice_list(ProfessionalPortfolioItem.HIGHLIGHT_TYPES),

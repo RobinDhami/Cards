@@ -119,6 +119,10 @@ class ProfessionalProfileForm(forms.ModelForm):
             'google_maps_url',
             'show_map_on_profile',
             'business_hours',
+            'show_primary_cta',
+            'primary_cta_type',
+            'primary_cta_label',
+            'primary_cta_url',
             'years_of_experience',
             'location',
             'is_verified',
@@ -171,6 +175,10 @@ class ProfessionalProfileForm(forms.ModelForm):
             'google_maps_url': 'Google Maps Link',
             'show_map_on_profile': 'Show map on public profile',
             'business_hours': 'Availability / Business Hours',
+            'show_primary_cta': 'Show primary CTA',
+            'primary_cta_type': 'Primary CTA',
+            'primary_cta_label': 'CTA label',
+            'primary_cta_url': 'Custom CTA link',
             'years_of_experience': 'Experience / Study Year',
         }
 
@@ -210,6 +218,8 @@ class ProfessionalProfileForm(forms.ModelForm):
         self.fields['academic_specialization'].widget.attrs.update({'placeholder': 'Web Development / Networking'})
         self.fields['academic_status'].widget.attrs.update({'placeholder': 'Seeking Internship / Open to Work'})
         self.fields['academic_address'].widget.attrs.update({'placeholder': 'Campus, city, or academic location'})
+        self.fields['primary_cta_label'].widget.attrs.update({'placeholder': 'Contact T2C, Visit website, Book a meeting'})
+        self.fields['primary_cta_url'].widget.attrs.update({'placeholder': 'Required only for Custom Link'})
         owner = self.instance.owner if self.instance and self.instance.owner_id else None
         owner_is_profile_user = bool(owner and not owner.is_staff and not owner.is_superuser)
         if owner_is_profile_user:

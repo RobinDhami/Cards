@@ -37,6 +37,13 @@ class ProfessionalProfile(models.Model):
         ('hybrid', 'Hybrid'),
         ('flexible', 'Flexible'),
     ]
+    CTA_TYPE_CHOICES = [
+        ('contact', 'Contact'),
+        ('website', 'Visit Website'),
+        ('booking', 'Book a Meeting'),
+        ('save_contact', 'Save Contact'),
+        ('custom', 'Custom Link'),
+    ]
 
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -195,6 +202,14 @@ class ProfessionalProfile(models.Model):
     google_maps_url = models.URLField(blank=True, default='')
     show_map_on_profile = models.BooleanField(default=False)
     business_hours = models.CharField(max_length=180, blank=True, default='')
+    show_primary_cta = models.BooleanField(default=True)
+    primary_cta_type = models.CharField(
+        max_length=30,
+        choices=CTA_TYPE_CHOICES,
+        default='contact',
+    )
+    primary_cta_label = models.CharField(max_length=80, blank=True, default='')
+    primary_cta_url = models.URLField(blank=True, default='')
     years_of_experience = models.PositiveIntegerField(blank=True, null=True)
     location = models.CharField(max_length=160, blank=True, default='')
     is_verified = models.BooleanField(default=False)

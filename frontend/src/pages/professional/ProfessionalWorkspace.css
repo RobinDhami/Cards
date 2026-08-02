@@ -123,6 +123,26 @@
   margin-top: 13px;
 }
 
+.professional-template-note {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 12px;
+  border-color: #bfdbfe;
+  background: linear-gradient(135deg, #eff6ff, #ffffff);
+  padding: 13px 14px;
+}
+
+.professional-template-note strong {
+  color: #0f172a;
+  font-size: 12px;
+}
+
+.professional-template-note span {
+  color: #475569;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
 .professional-choice-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

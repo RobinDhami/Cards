@@ -38,6 +38,7 @@ type ProfessionalOptions = {
   statuses: Choice[]
   workModes: Choice[]
   templates: Choice[]
+  ctaTypes: Choice[]
   lookingFor: Choice[]
   serviceIcons: Choice[]
   highlightTypes: Choice[]
@@ -92,6 +93,7 @@ const defaultOptions: ProfessionalOptions = {
   statuses: [],
   workModes: [],
   templates: [],
+  ctaTypes: [],
   lookingFor: [],
   serviceIcons: [],
   highlightTypes: [],
@@ -146,6 +148,10 @@ const defaultFields: Record<string, string | number | boolean | null> = {
   google_maps_url: '',
   show_map_on_profile: false,
   business_hours: '',
+  show_primary_cta: true,
+  primary_cta_type: 'contact',
+  primary_cta_label: '',
+  primary_cta_url: '',
   years_of_experience: '',
   location: '',
   is_verified: false,
@@ -211,6 +217,11 @@ const contactFields: FieldConfig[] = [
   { key: 'business_hours', label: 'Availability / business hours' },
   { key: 'office_address', label: 'Office / campus address', type: 'textarea', wide: true },
   { key: 'google_maps_url', label: 'Google Maps link', type: 'url', wide: true },
+]
+
+const ctaFields: FieldConfig[] = [
+  { key: 'primary_cta_label', label: 'CTA label', placeholder: 'Contact us, Visit website, Book a meeting' },
+  { key: 'primary_cta_url', label: 'Custom link', type: 'url', placeholder: 'Only used when Custom Link is selected', wide: true },
 ]
 
 const professionalNav = [
@@ -596,6 +607,7 @@ export function ProfessionalProfileEditor() {
 
   const ownerLabel = route.isOwner ? 'My Professional Card' : (profileId ? 'Edit Professional Card' : 'Create Professional Card')
   const lookingFor = new Set(fieldString(fields.looking_for).split(',').filter(Boolean))
+  const isOrganizationTemplate = fieldString(fields.template_name) === 'organization_focus'
 
   return (
     <ManageShell
@@ -622,7 +634,10 @@ export function ProfessionalProfileEditor() {
         {error ? <div className="manage-alert professional-message">{error}</div> : null}
         {success ? <div className="manage-alert is-success professional-message">{success}</div> : null}
 
-        <FormSection title="Main identity" description="The headline information at the top of the public card.">
+        <FormSection
+          title="Main identity"
+          description={isOrganizationTemplate ? 'The person appears as the brand representative for this organization card.' : 'The headline information at the top of the public card.'}
+        >
           <div className="form-grid">
             {!route.isOwner ? (
               <Field label="Profile type" error={fieldErrors.profile_type?.[0]}>
@@ -658,7 +673,10 @@ export function ProfessionalProfileEditor() {
           </div>
         </FormSection>
 
-        <FormSection title="Header identity" description="Choose which organization or brand identity appears above the profile.">
+        <FormSection
+          title="Header identity"
+          description={isOrganizationTemplate ? 'Use this area for the organization logo, name, and tagline.' : 'Choose which organization or brand identity appears above the profile.'}
+        >
           <div className="form-grid">
             <Field label="Header style">
               <SelectInput value={fieldString(fields.header_identity)} onChange={(event) => updateField('header_identity', event.target.value)}>
@@ -673,58 +691,69 @@ export function ProfessionalProfileEditor() {
           </div>
         </FormSection>
 
-        <FormSection title="Work identity" description="This section uses its own role, organization, experience, and address.">
-          <div className="form-grid">
-            {workFields.map((config) => <ConfiguredField key={config.key} config={config} fields={fields} errors={fieldErrors} onChange={updateField} />)}
-          </div>
-        </FormSection>
+        {!isOrganizationTemplate ? (
+          <>
+            <FormSection title="Work identity" description="This section uses its own role, organization, experience, and address.">
+              <div className="form-grid">
+                {workFields.map((config) => <ConfiguredField key={config.key} config={config} fields={fields} errors={fieldErrors} onChange={updateField} />)}
+              </div>
+            </FormSection>
 
-        <FormSection title="Academic background" description="Complete education details shown on the public academic card.">
-          <div className="form-grid">
-            {academicFields.map((config) => <ConfiguredField key={config.key} config={config} fields={fields} errors={fieldErrors} onChange={updateField} />)}
+            <FormSection title="Academic background" description="Complete education details shown on the public academic card.">
+              <div className="form-grid">
+                {academicFields.map((config) => <ConfiguredField key={config.key} config={config} fields={fields} errors={fieldErrors} onChange={updateField} />)}
+              </div>
+            </FormSection>
+          </>
+        ) : (
+          <div className="professional-template-note manage-card">
+            <strong>Organization Focus is brand-first.</strong>
+            <span>Work identity, academic background, opportunity status, and public documents stay out of the main profile view.</span>
           </div>
-        </FormSection>
+        )}
 
-        <FormSection title="About and current focus">
+        <FormSection title={isOrganizationTemplate ? 'Brand story and focus' : 'About and current focus'}>
           <div className="form-grid">
             {aboutFields.map((config) => <ConfiguredField key={config.key} config={config} fields={fields} errors={fieldErrors} onChange={updateField} />)}
           </div>
         </FormSection>
 
-        <FormSection title="Opportunity status">
-          <div className="form-grid is-three">
-            <Field label="Current status">
-              <SelectInput value={fieldString(fields.current_status)} onChange={(event) => updateField('current_status', event.target.value)}>
-                {options.statuses.map((choice) => <option value={choice.value} key={choice.value}>{choice.label}</option>)}
-              </SelectInput>
-            </Field>
-            <Field label="Preferred work mode">
-              <SelectInput value={fieldString(fields.preferred_work_mode)} onChange={(event) => updateField('preferred_work_mode', event.target.value)}>
-                {options.workModes.map((choice) => <option value={choice.value} key={choice.value}>{choice.label}</option>)}
-              </SelectInput>
-            </Field>
-            <Field label="Experience / study year">
-              <TextInput type="number" min="0" value={fieldString(fields.years_of_experience)} onChange={(event) => updateField('years_of_experience', event.target.value)} />
-            </Field>
-          </div>
-          <div className="professional-choice-grid">
-            {options.lookingFor.map((choice) => (
-              <label key={choice.value}>
-                <input
-                  type="checkbox"
-                  checked={lookingFor.has(choice.value)}
-                  onChange={(event) => {
-                    const next = new Set(lookingFor)
-                    if (event.target.checked) next.add(choice.value)
-                    else next.delete(choice.value)
-                    updateField('looking_for', [...next].join(','))
-                  }}
-                />
-                {choice.label}
-              </label>
-            ))}
-          </div>
-        </FormSection>
+        {!isOrganizationTemplate ? (
+          <FormSection title="Opportunity status">
+            <div className="form-grid is-three">
+              <Field label="Current status">
+                <SelectInput value={fieldString(fields.current_status)} onChange={(event) => updateField('current_status', event.target.value)}>
+                  {options.statuses.map((choice) => <option value={choice.value} key={choice.value}>{choice.label}</option>)}
+                </SelectInput>
+              </Field>
+              <Field label="Preferred work mode">
+                <SelectInput value={fieldString(fields.preferred_work_mode)} onChange={(event) => updateField('preferred_work_mode', event.target.value)}>
+                  {options.workModes.map((choice) => <option value={choice.value} key={choice.value}>{choice.label}</option>)}
+                </SelectInput>
+              </Field>
+              <Field label="Experience / study year">
+                <TextInput type="number" min="0" value={fieldString(fields.years_of_experience)} onChange={(event) => updateField('years_of_experience', event.target.value)} />
+              </Field>
+            </div>
+            <div className="professional-choice-grid">
+              {options.lookingFor.map((choice) => (
+                <label key={choice.value}>
+                  <input
+                    type="checkbox"
+                    checked={lookingFor.has(choice.value)}
+                    onChange={(event) => {
+                      const next = new Set(lookingFor)
+                      if (event.target.checked) next.add(choice.value)
+                      else next.delete(choice.value)
+                      updateField('looking_for', [...next].join(','))
+                    }}
+                  />
+                  {choice.label}
+                </label>
+              ))}
+            </div>
+          </FormSection>
+        ) : null}
 
         <FormSection title="Contact and social links">
           <div className="form-grid">
@@ -732,6 +761,20 @@ export function ProfessionalProfileEditor() {
             <Toggle label="Show map on public profile" checked={Boolean(fields.show_map_on_profile)} onChange={(checked) => updateField('show_map_on_profile', checked)} />
           </div>
         </FormSection>
+
+        {isOrganizationTemplate ? (
+          <FormSection title="Primary CTA" description="Choose one useful action visitors should take after scanning the organization card.">
+            <div className="form-grid is-three">
+              <Field label="CTA type">
+                <SelectInput value={fieldString(fields.primary_cta_type)} onChange={(event) => updateField('primary_cta_type', event.target.value)}>
+                  {options.ctaTypes.map((choice) => <option value={choice.value} key={choice.value}>{choice.label}</option>)}
+                </SelectInput>
+              </Field>
+              {ctaFields.map((config) => <ConfiguredField key={config.key} config={config} fields={fields} errors={fieldErrors} onChange={updateField} />)}
+              <Toggle label="Show CTA on organization card" checked={Boolean(fields.show_primary_cta)} onChange={(checked) => updateField('show_primary_cta', checked)} />
+            </div>
+          </FormSection>
+        ) : null}
 
         <FormSection
           title="Services / organization offerings"

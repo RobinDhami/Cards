@@ -149,6 +149,7 @@ type PublicProfileData = {
   actions: {
     primary: PublicAction[]
     extra: PublicAction[]
+    featuredCta: PublicAction | null
     qrCodeUrl: string
     vcardUrl: string
     editLoginUrl: string
@@ -163,11 +164,13 @@ type PublicProfileData = {
 
 const actionIcons: Record<string, LucideIcon> = {
   'calendar-check': CalendarCheck,
+  'external-link': ExternalLink,
   globe: Globe2,
   mail: Mail,
   'map-pin': MapPin,
   'message-circle': MessageCircle,
   phone: Phone,
+  'user-plus': UserPlus,
 }
 
 const serviceIcons: Record<string, LucideIcon> = {
@@ -254,6 +257,10 @@ function isTruthy(value: string | number | null | undefined) {
 
 function socialTone(label: string) {
   return label.toLowerCase().replace(/\s+/g, '-')
+}
+
+function actionHref(href: string) {
+  return href.startsWith('/') ? backendHref(href) : appHref(href)
 }
 
 function TopBar({ data, onShare }: { data: PublicProfileData; onShare: () => void }) {
@@ -343,7 +350,7 @@ function PrimaryActions({ actions }: { actions: PublicAction[] }) {
       {actions.map((action) => {
         const Icon = actionIcons[action.icon] ?? LinkIcon
         return (
-          <a className="profile-action" href={appHref(action.href)} target={action.external ? '_blank' : undefined} rel={action.external ? 'noopener noreferrer' : undefined} key={action.label}>
+          <a className="profile-action" href={actionHref(action.href)} target={action.external ? '_blank' : undefined} rel={action.external ? 'noopener noreferrer' : undefined} key={action.label}>
             <span className={`profile-action-icon ${action.brand_class}`}>
               <Icon size={16} aria-hidden="true" />
             </span>
@@ -602,7 +609,7 @@ function SocialLinks({ actions }: { actions: PublicAction[] }) {
           const tone = socialTone(action.label)
           const Icon = socialIcons[action.icon] ?? actionIcons[action.icon] ?? LinkIcon
           return (
-            <a className={`profile-social is-${tone}`} href={appHref(action.href)} target="_blank" rel="noopener noreferrer" aria-label={action.label} title={action.label} key={action.label}>
+            <a className={`profile-social is-${tone}`} href={actionHref(action.href)} target="_blank" rel="noopener noreferrer" aria-label={action.label} title={action.label} key={action.label}>
               <Icon size={18} aria-hidden="true" />
             </a>
           )
@@ -655,48 +662,6 @@ function Documents({ documents }: { documents: DocumentItem[] }) {
   )
 }
 
-function BusinessDetails({ profile }: { profile: PublicProfile }) {
-  const details = [
-    { label: 'Hours', value: profile.businessHours, href: '', icon: Clock3 },
-    { label: 'Address', value: profile.officeAddress, href: '', icon: MapPinned },
-    { label: 'Website', value: profile.website, href: profile.website, icon: Globe2 },
-    { label: 'Booking / Inquiry', value: profile.bookingUrl ? 'Open appointment or inquiry link' : '', href: profile.bookingUrl, icon: CalendarCheck },
-  ].filter((item) => item.value)
-  if (details.length === 0) {
-    return null
-  }
-  return (
-    <section className="profile-section">
-      <h2 className="profile-section-title">Inquiry Details</h2>
-      <div className="profile-details-list">
-        {details.map((detail) => {
-          const Icon = detail.icon
-          const content = (
-            <>
-              <span className="profile-detail-icon">
-                <Icon size={16} aria-hidden="true" />
-              </span>
-              <p>
-                <span>{detail.label}</span>
-                <strong>{detail.value}</strong>
-              </p>
-            </>
-          )
-          return detail.href ? (
-            <a className="profile-detail-row" href={detail.href} target="_blank" rel="noopener noreferrer" key={detail.label}>
-              {content}
-            </a>
-          ) : (
-            <div className="profile-detail-row" key={detail.label}>
-              {content}
-            </div>
-          )
-        })}
-      </div>
-    </section>
-  )
-}
-
 function Testimonials({ testimonials }: { testimonials: TestimonialItem[] }) {
   if (testimonials.length === 0) {
     return null
@@ -717,18 +682,47 @@ function Testimonials({ testimonials }: { testimonials: TestimonialItem[] }) {
   )
 }
 
-function DetailsTrigger({ onClick }: { onClick: () => void }) {
+function DetailsTrigger({
+  description = 'Work, education, contact and profile information',
+  label = 'View complete details',
+  onClick,
+}: {
+  description?: string
+  label?: string
+  onClick: () => void
+}) {
   return (
     <button className="profile-details-trigger" type="button" onClick={onClick}>
       <span className="profile-detail-icon">
         <ShieldCheck size={18} aria-hidden="true" />
       </span>
       <span>
-        <strong>View complete details</strong>
-        <span>Work, education, contact and profile information</span>
+        <strong>{label}</strong>
+        <span>{description}</span>
       </span>
       <ChevronRight size={18} aria-hidden="true" />
     </button>
+  )
+}
+
+function FeaturedCta({ action }: { action: PublicAction | null }) {
+  if (!action) {
+    return null
+  }
+  const Icon = actionIcons[action.icon] ?? LinkIcon
+  return (
+    <a
+      className={`profile-featured-cta ${action.brand_class}`}
+      href={actionHref(action.href)}
+      target={action.external ? '_blank' : undefined}
+      rel={action.external ? 'noopener noreferrer' : undefined}
+    >
+      <span>
+        <Icon size={20} aria-hidden="true" />
+      </span>
+      <strong>{action.label}</strong>
+      <ChevronRight size={18} aria-hidden="true" />
+    </a>
   )
 }
 
@@ -756,7 +750,25 @@ function ConnectSoon({ onClick }: { onClick: () => void }) {
   )
 }
 
-function Footer({ profile }: { profile: PublicProfile }) {
+function Footer({ profile, variant = 'modern' }: { profile: PublicProfile; variant?: 'modern' | 'organization' }) {
+  if (variant === 'organization') {
+    const brandTitle = profile.companyName || profile.brandName || 'Organization'
+    const brandSubtitle = profile.organizationTagline || profile.brandTagline || profile.industry || 'Digital business card'
+    return (
+      <footer className="profile-footer profile-brand-footer">
+        <span className="profile-footer-brand-mark">
+          {profile.organizationLogoUrl ? <img src={profile.organizationLogoUrl} alt={`${brandTitle} logo`} /> : <Building2 size={18} aria-hidden="true" />}
+        </span>
+        <span className="profile-footer-brand-copy">
+          <strong>{brandTitle}</strong>
+          <span>{brandSubtitle}</span>
+        </span>
+        <span className="profile-powered">
+          Powered by <b>T2C</b>
+        </span>
+      </footer>
+    )
+  }
   return (
     <footer className="profile-footer">
       <ShieldCheck size={12} aria-hidden="true" />
@@ -773,7 +785,40 @@ function Footer({ profile }: { profile: PublicProfile }) {
 
 function DetailsDrawer({ data, open, onClose }: { data: PublicProfileData; open: boolean; onClose: () => void }) {
   const { profile } = data
-  const groups = [
+  const isOrganization = profile.templateName === 'organization_focus'
+  const groups = (isOrganization ? [
+    {
+      icon: Building2,
+      title: 'Brand profile',
+      rows: [
+        ['Organization', profile.companyName || profile.brandName],
+        ['Tagline', profile.organizationTagline || profile.brandTagline],
+        ['About', profile.about || profile.shortTagline],
+        ['Industry / field', profile.industry],
+      ],
+    },
+    {
+      icon: Badge,
+      title: 'Representative',
+      rows: [
+        ['Name', profile.fullName],
+        ['Role', profile.designation || profile.profession],
+      ],
+    },
+    {
+      icon: Globe2,
+      title: 'Business contact',
+      rows: [
+        ['Phone', profile.phone],
+        ['WhatsApp', profile.whatsappNumber],
+        ['Email', profile.email],
+        ['Website', profile.website],
+        ['Booking / Inquiry', profile.bookingUrl],
+        ['Office address', profile.officeAddress],
+        ['Business hours', profile.businessHours],
+      ],
+    },
+  ] : [
     {
       icon: Badge,
       title: 'Profile',
@@ -821,7 +866,7 @@ function DetailsDrawer({ data, open, onClose }: { data: PublicProfileData; open:
         ['Business hours', profile.businessHours],
       ],
     },
-  ].map((group) => ({
+  ]).map((group) => ({
     ...group,
     rows: group.rows.filter(([, value]) => isTruthy(value)),
   })).filter((group) => group.rows.length > 0)
@@ -853,8 +898,8 @@ function DetailsDrawer({ data, open, onClose }: { data: PublicProfileData; open:
       >
         <header className="profile-drawer-head">
           <div>
-            <h2 id="profile-details-title">Complete details</h2>
-            <p>Verified information shared by {profile.fullName}.</p>
+            <h2 id="profile-details-title">{isOrganization ? 'Business details' : 'Complete details'}</h2>
+            <p>{isOrganization ? `Brand and contact information for ${profile.companyName || profile.brandName || profile.fullName}.` : `Verified information shared by ${profile.fullName}.`}</p>
           </div>
           <button autoFocus className="profile-close" type="button" aria-label="Close details" onClick={onClose}>
             <X size={18} aria-hidden="true" />
@@ -877,6 +922,23 @@ function DetailsDrawer({ data, open, onClose }: { data: PublicProfileData; open:
               </section>
             )
           })}
+          {isOrganization && data.documents.length > 0 ? (
+            <section className="profile-drawer-group">
+              <h3><FileText size={16} aria-hidden="true" />Documents</h3>
+              <div className="profile-drawer-documents">
+                {data.documents.map((document) => (
+                  <a href={backendHref(document.url)} target="_blank" rel="noopener noreferrer" key={document.id}>
+                    <FileText size={16} aria-hidden="true" />
+                    <span>
+                      <strong>{document.title}</strong>
+                      <small>{documentExtension(document.url)} / {document.documentTypeLabel}</small>
+                    </span>
+                    <ExternalLink size={14} aria-hidden="true" />
+                  </a>
+                ))}
+              </div>
+            </section>
+          ) : null}
         </div>
         <a className="profile-save-contact" href={backendHref(data.actions.vcardUrl)}>
           <UserPlus size={17} aria-hidden="true" />
@@ -922,17 +984,15 @@ function OrganizationTemplate({ data, showToast }: { data: PublicProfileData; sh
       <PrimaryActions actions={data.actions.primary} />
       <Intro>{profile.about || profile.shortTagline || profile.organizationTagline}</Intro>
       <Services services={data.services} title="What We Provide" />
-      <BusinessDetails profile={profile} />
-      <IdentityCards profile={profile} />
+      <Highlights highlights={data.highlights} />
       <SocialLinks actions={data.actions.extra} />
-      <Documents documents={data.documents} />
-      <a className="profile-save-contact" href={backendHref(data.actions.vcardUrl)}>
-        <UserPlus size={17} aria-hidden="true" />
-        Save Business Contact
-      </a>
-      <DetailsTrigger onClick={() => setDetailsOpen(true)} />
-      <ConnectSoon onClick={() => showToast('This feature will be available soon, and you will be able to connect with friends.')} />
-      <Footer profile={profile} />
+      <FeaturedCta action={data.actions.featuredCta} />
+      <DetailsTrigger
+        label="View business details"
+        description="Brand contact, useful links and business documents"
+        onClick={() => setDetailsOpen(true)}
+      />
+      <Footer profile={profile} variant="organization" />
       <DetailsDrawer data={data} open={detailsOpen} onClose={() => setDetailsOpen(false)} />
     </>
   )

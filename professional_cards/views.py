@@ -303,6 +303,57 @@ def _build_public_actions(profile, whatsapp_digits):
     return primary_actions, extra_actions
 
 
+def _build_primary_cta(profile, whatsapp_digits):
+    if not profile.show_primary_cta:
+        return None
+
+    def action(href, label, icon, brand_class, external=False):
+        if not href:
+            return None
+        return {
+            'href': href,
+            'label': (profile.primary_cta_label or label).strip()[:80],
+            'icon': icon,
+            'brand_class': brand_class,
+            'external': external,
+        }
+
+    cta_type = profile.primary_cta_type or 'contact'
+    if cta_type == 'website':
+        selected = action(profile.website, 'Visit Website', 'globe', 'brand-website', True)
+    elif cta_type == 'booking':
+        selected = action(profile.booking_url, 'Book a Meeting', 'calendar-check', 'brand-booking', True)
+    elif cta_type == 'save_contact':
+        selected = action(reverse('professional_cards:vcard', args=[profile.slug]), 'Save Contact', 'user-plus', 'brand-save')
+    elif cta_type == 'custom':
+        selected = action(profile.primary_cta_url, 'Open Link', 'external-link', 'brand-custom', True)
+    else:
+        contact_href = ''
+        contact_icon = 'message-circle'
+        contact_external = False
+        if whatsapp_digits:
+            contact_href = f'https://wa.me/{whatsapp_digits}'
+            contact_external = True
+        elif profile.phone:
+            contact_href = f'tel:{profile.phone}'
+            contact_icon = 'phone'
+        elif profile.email:
+            contact_href = f'mailto:{profile.email}'
+            contact_icon = 'mail'
+        selected = action(contact_href, 'Contact Us', contact_icon, 'brand-contact', contact_external)
+
+    if selected:
+        return selected
+    for fallback in (
+        action(profile.website, 'Visit Website', 'globe', 'brand-website', True),
+        action(profile.booking_url, 'Book a Meeting', 'calendar-check', 'brand-booking', True),
+        action(reverse('professional_cards:vcard', args=[profile.slug]), 'Save Contact', 'user-plus', 'brand-save'),
+    ):
+        if fallback:
+            return fallback
+    return None
+
+
 def _profile_formsets(profile, data=None, files=None):
     kwargs = {'instance': profile}
     if data is not None:
@@ -470,6 +521,7 @@ def public_professional_profile(request, slug):
     ProfessionalProfile.objects.filter(pk=profile.pk).update(views=profile.views + 1)
     whatsapp_digits = _normalize_phone(profile.whatsapp_number or profile.phone)
     primary_actions, extra_actions = _build_public_actions(profile, whatsapp_digits)
+    featured_cta = _build_primary_cta(profile, whatsapp_digits)
     public_url = _absolute_public_url(request, profile)
     seo_description = (
         profile.short_tagline
@@ -501,6 +553,7 @@ def public_professional_profile(request, slug):
         'whatsapp_digits': whatsapp_digits,
         'primary_actions': primary_actions,
         'extra_actions': extra_actions,
+        'featured_cta': featured_cta,
         'looking_for_labels': _looking_for_labels(profile),
         'edit_login_url': reverse('professional_cards:edit_login', args=[profile.slug]),
         'is_profile_owner_view': is_profile_owner_view,
@@ -516,6 +569,7 @@ def public_professional_profile(request, slug):
 def _public_profile_payload(request, profile):
     whatsapp_digits = _normalize_phone(profile.whatsapp_number or profile.phone)
     primary_actions, extra_actions = _build_public_actions(profile, whatsapp_digits)
+    featured_cta = _build_primary_cta(profile, whatsapp_digits)
     public_url = _absolute_public_url(request, profile)
     seo_description = (
         profile.short_tagline
@@ -607,6 +661,7 @@ def _public_profile_payload(request, profile):
         'actions': {
             'primary': primary_actions[:4],
             'extra': extra_actions,
+            'featuredCta': featured_cta,
             'qrCodeUrl': reverse('professional_cards:qr_code', args=[profile.slug]),
             'vcardUrl': reverse('professional_cards:vcard', args=[profile.slug]),
             'editLoginUrl': reverse('professional_cards:edit_login', args=[profile.slug]),
