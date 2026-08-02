@@ -2697,6 +2697,50 @@ details p {
   gap: 10px;
 }
 
+.studio-template-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.studio-template-options button {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  min-height: 64px;
+  padding: 12px;
+  border: 1px solid #d9dde5;
+  border-radius: 6px;
+  color: #111827;
+  text-align: left;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  cursor: pointer;
+}
+
+.studio-template-options button:hover,
+.studio-template-options button.is-selected {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+}
+
+.studio-template-options span,
+.studio-template-options small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.studio-template-options span {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.studio-template-options small {
+  color: #667085;
+  font-size: 11px;
+  text-transform: capitalize;
+}
+
 .studio-design-option {
   display: grid;
   gap: 7px;
@@ -3239,7 +3283,8 @@ details p {
   }
 
   .studio-design-options,
-  .studio-finish-options {
+  .studio-finish-options,
+  .studio-template-options {
     gap: 7px;
   }
 

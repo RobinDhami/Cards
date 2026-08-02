@@ -45,6 +45,14 @@ type PendingTemplateAction = {
   action: 'publish' | 'unpublish' | 'archive' | 'delete'
 } | null
 
+const templateAudienceOptions = [
+  { value: 'public', label: 'Homepage visitors' },
+  { value: 'student', label: 'Students' },
+  { value: 'teacher', label: 'Teachers and staff' },
+  { value: 'school_admin', label: 'School admins' },
+  { value: 'super_admin', label: 'Platform admins' },
+]
+
 export function TemplateManager({
   open,
   snapshot,
@@ -210,8 +218,8 @@ export function TemplateManager({
       >
         <header>
           <div>
-            <h2 id="template-manager-title">Template manager</h2>
-            <p>Publish reusable card foundations without storing personal profile values.</p>
+            <h2 id="template-manager-title">Template Studio</h2>
+            <p>Publish reusable card designs with smart placeholders for homepage and school users.</p>
           </div>
           <button type="button" onClick={onClose} aria-label="Close template manager">
             <X size={19} />
@@ -350,32 +358,31 @@ export function TemplateManager({
               </fieldset>
               <fieldset>
                 <legend>Eligible account types</legend>
-                {['public', 'student', 'teacher', 'school_admin', 'super_admin'].map(
-                  (accountType) => (
-                    <label key={accountType}>
+                {templateAudienceOptions.map((option) => (
+                    <label key={option.value}>
                       <input
                         type="checkbox"
-                        checked={draft.eligibleAccountTypes.includes(accountType)}
+                        checked={draft.eligibleAccountTypes.includes(option.value)}
                         onChange={(event) =>
                           setDraft((current) => ({
                             ...current,
                             eligibleAccountTypes: event.target.checked
-                              ? [...current.eligibleAccountTypes, accountType]
-                              : current.eligibleAccountTypes.filter((value) => value !== accountType),
+                              ? [...current.eligibleAccountTypes, option.value]
+                              : current.eligibleAccountTypes.filter((value) => value !== option.value),
                           }))
                         }
                       />
-                      {accountType.replace('_', ' ')}
+                      {option.label}
                     </label>
-                  ),
-                )}
+                ))}
                 <p>Leave all unchecked to allow every account type.</p>
               </fieldset>
               <div className="t2c-template-document-note">
                 <PackageCheck size={18} />
                 <span>
-                  The current front and back artwork will be saved with placeholders such as
-                  <code>{'{{full_name}}'}</code>. User copies stay independent from future template versions.
+                  Save the current front and back canvas with placeholders like
+                  <code>{'{{full_name}}'}</code>, <code>{'{{company}}'}</code>, and <code>{'{{qr_code}}'}</code>.
+                  Published templates appear for eligible users to fill with their own details.
                 </span>
               </div>
             </div>
@@ -717,4 +724,3 @@ export function VersionHistoryDialog({
     </div>
   )
 }
-

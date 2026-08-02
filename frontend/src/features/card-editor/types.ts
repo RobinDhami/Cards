@@ -221,6 +221,7 @@ export type CardDesignerProps = {
   initialFrontDesign: CardDesignId
   initialBackDesign: CardDesignId
   finish: CardFinishId
+  mode?: 'design' | 'template-studio'
+  initialTemplateId?: string | null
   onClose: () => void
 }
-

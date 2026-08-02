@@ -15,8 +15,6 @@ export const CARD_WIDTH = 900
 export const CARD_HEIGHT = 500
 export const SAFE_MARGIN = 30
 export const BLEED_SIZE = 20
-const LUXURY_CANVA_FRONT_URL = '/static/card-templates/luxury-gold-blue-front.svg'
-const LUXURY_CANVA_BACK_URL = '/static/card-templates/luxury-gold-blue-back.svg'
 
 export const SAMPLE_PROFILE_FIELDS: ProfileFields = {
   full_name: 'Aarav Sharma',
@@ -371,200 +369,13 @@ function templateDocument(
   return document
 }
 
-function luxuryCanvaTemplateDocument(side: CardSide): CardDocument {
-  const document = createBlankDocument('#07111f')
-  document.background = {
-    type: 'image',
-    color: '#07111f',
-    gradient: { from: '#07111f', to: '#d8b15f', angle: 135 },
-    imageUrl: side === 'front' ? LUXURY_CANVA_FRONT_URL : LUXURY_CANVA_BACK_URL,
-    pattern: 'none',
-    opacity: 1,
-    locked: true,
-  }
-
-  if (side === 'back') {
-    document.elements = [
-      {
-        ...createShapeElement('rounded'),
-        id: 'luxury-back-qr-panel',
-        name: 'QR Panel',
-        x: 95,
-        y: 58,
-        width: 300,
-        height: 384,
-        locked: false,
-        maintainProportion: false,
-        opacity: 0.9,
-        style: {
-          ...baseStyle('#07111f'),
-          stroke: '#d8b15f',
-          strokeWidth: 2,
-          cornerRadius: 28,
-          shadowColor: '#000000',
-          shadowBlur: 24,
-          shadowOpacity: 0.24,
-        },
-      },
-      {
-        ...createQrElement(),
-        id: 'luxury-back-qr',
-        name: 'Profile QR Code',
-        x: 150,
-        y: 98,
-        width: 190,
-        height: 190,
-        qrOptions: {
-          ...defaultQrOptions(),
-          foreground: '#07111f',
-          background: '#ffffff',
-          margin: 2,
-        },
-      },
-      {
-        ...createTextElement('SCAN TO CONNECT', 'subheading'),
-        id: 'luxury-back-scan-label',
-        name: 'Scan Label',
-        x: 116,
-        y: 316,
-        width: 258,
-        height: 42,
-        style: textStyle('#f8fafc', 22, 800, 'center'),
-      },
-      {
-        ...createTextElement('{{website}}', 'small'),
-        id: 'luxury-back-website',
-        name: 'Website',
-        x: 116,
-        y: 368,
-        width: 258,
-        height: 30,
-        style: textStyle('#d8b15f', 13, 600, 'center'),
-      },
-      {
-        ...createImageElement('/static/branding/tap2connect-logo.png', 'Company Logo'),
-        id: 'luxury-back-logo',
-        x: 560,
-        y: 164,
-        width: 190,
-        height: 74,
-      },
-      {
-        ...createTextElement('{{company}}', 'subheading'),
-        id: 'luxury-back-company',
-        name: 'Company Name',
-        x: 486,
-        y: 258,
-        width: 340,
-        height: 42,
-        style: textStyle('#f8fafc', 24, 800, 'center'),
-      },
-      {
-        ...createTextElement('{{social_username}}', 'small'),
-        id: 'luxury-back-social',
-        name: 'Social Handle',
-        x: 486,
-        y: 306,
-        width: 340,
-        height: 30,
-        style: textStyle('#d8b15f', 14, 600, 'center'),
-      },
-    ]
-    return document
-  }
-
-  document.elements = [
-    {
-      ...createShapeElement('rounded'),
-      id: 'luxury-front-info-panel',
-      name: 'Identity Panel',
-      x: 468,
-      y: 54,
-      width: 364,
-      height: 392,
-      locked: false,
-      maintainProportion: false,
-      opacity: 0.9,
-      style: {
-        ...baseStyle('#07111f'),
-        stroke: '#d8b15f',
-        strokeWidth: 2,
-        cornerRadius: 28,
-        shadowColor: '#000000',
-        shadowBlur: 24,
-        shadowOpacity: 0.26,
-      },
-    },
-    {
-      ...createImageElement('/static/branding/tap2connect-logo.png', 'Company Logo'),
-      id: 'luxury-front-logo',
-      x: 548,
-      y: 86,
-      width: 204,
-      height: 78,
-    },
-    {
-      ...createTextElement('{{full_name}}', 'heading'),
-      id: 'luxury-front-name',
-      name: 'Full Name',
-      x: 510,
-      y: 202,
-      width: 280,
-      height: 58,
-      style: textStyle('#f8fafc', 34, 800, 'center'),
-    },
-    {
-      ...createTextElement('{{job_title}} | {{company}}', 'body'),
-      id: 'luxury-front-role',
-      name: 'Role and Company',
-      x: 506,
-      y: 268,
-      width: 288,
-      height: 34,
-      style: textStyle('#d8b15f', 15, 700, 'center'),
-    },
-    {
-      ...createTextElement('{{phone}}', 'contact'),
-      id: 'luxury-front-phone',
-      name: 'Phone',
-      x: 512,
-      y: 336,
-      width: 276,
-      height: 28,
-      style: textStyle('#f8fafc', 13, 500, 'center'),
-    },
-    {
-      ...createTextElement('{{email}}', 'contact'),
-      id: 'luxury-front-email',
-      name: 'Email',
-      x: 512,
-      y: 369,
-      width: 276,
-      height: 28,
-      style: textStyle('#f8fafc', 13, 500, 'center'),
-    },
-    {
-      ...createTextElement('{{website}}', 'small'),
-      id: 'luxury-front-website',
-      name: 'Website',
-      x: 512,
-      y: 402,
-      width: 276,
-      height: 28,
-      style: textStyle('#d8b15f', 13, 700, 'center'),
-    },
-  ]
-  return document
-}
-
 export function createFallbackTemplates(): CardTemplateRecord[] {
   const definitions: Array<{
-    id: CardDesignId | 'linework' | 'luxury-gold-blue'
+    id: CardDesignId | 'linework'
     label: string
     category: string
     premium?: boolean
   }> = [
-    { id: 'luxury-gold-blue', label: 'Luxury Gold Blue', category: 'business' },
     { id: 'midnight', label: 'Midnight', category: 'professional' },
     { id: 'signature', label: 'Signature Blue', category: 'corporate' },
     { id: 'minimal', label: 'Minimal White', category: 'minimal' },
@@ -574,17 +385,11 @@ export function createFallbackTemplates(): CardTemplateRecord[] {
     id: `built-in-${item.id}`,
     name: item.label,
     slug: item.id,
-    description: item.id === 'luxury-gold-blue'
-      ? 'A Canva-inspired luxury business card with editable profile fields.'
-      : `A clean ${item.category} Tap2Connect card.`,
+    description: `A clean ${item.category} Tap2Connect card.`,
     category: item.category,
     status: 'published',
-    frontData: item.id === 'luxury-gold-blue'
-      ? luxuryCanvaTemplateDocument('front')
-      : templateDocument(item.id, 'front'),
-    backData: item.id === 'luxury-gold-blue'
-      ? luxuryCanvaTemplateDocument('back')
-      : templateDocument(item.id, 'back'),
+    frontData: templateDocument(item.id, 'front'),
+    backData: templateDocument(item.id, 'back'),
     supportsBack: true,
     isFeatured: index < 2,
     isPremium: Boolean(item.premium),

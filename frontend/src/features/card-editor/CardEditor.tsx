@@ -142,6 +142,8 @@ export function AdvancedCardEditor({
   initialFrontDesign,
   initialBackDesign,
   finish,
+  mode = 'design',
+  initialTemplateId = null,
   onClose,
 }: CardDesignerProps) {
   const fallbackTemplates = useMemo(createFallbackTemplates, [])
@@ -188,6 +190,7 @@ export function AdvancedCardEditor({
   const [topMenuOpen, setTopMenuOpen] = useState(false)
   const clipboardRef = useRef<EditorElement[]>([])
   const openedRef = useRef(false)
+  const templateStudioOpenedRef = useRef(false)
   const remoteSaveInFlightRef = useRef(false)
   const latestSnapshotRef = useRef(snapshot)
   const latestDesignRef = useRef(design)
@@ -279,7 +282,7 @@ export function AdvancedCardEditor({
     document.body.style.overflow = 'hidden'
     if (!openedRef.current) {
       const localDraft = safeLocalDraft()
-      if (localDraft) {
+      if (localDraft && !initialTemplateId) {
         setSnapshot(localDraft.snapshot)
         latestSnapshotRef.current = localDraft.snapshot
         setCurrentTemplateId(localDraft.currentTemplateId)
@@ -309,6 +312,29 @@ export function AdvancedCardEditor({
         setBootstrap(response)
         setTemplates(response.templates.length ? response.templates : fallbackTemplates)
         setAssets(response.assets)
+        if (initialTemplateId) {
+          const initialTemplate = response.templates.find((template) => template.id === initialTemplateId)
+          if (initialTemplate) {
+            const templateSnapshot: DesignSnapshot = {
+              name: `${initialTemplate.name} card`,
+              finish,
+              front: deepClone(initialTemplate.frontData),
+              back: deepClone(initialTemplate.backData),
+            }
+            setSnapshot(templateSnapshot)
+            latestSnapshotRef.current = templateSnapshot
+            setCurrentTemplateId(initialTemplate.id)
+            setDesign(null)
+            setDirty(false)
+            setLastAction(`Open ${initialTemplate.name} template`)
+          }
+        }
+        if (mode === 'template-studio' && response.isSuperuser && !templateStudioOpenedRef.current) {
+          templateStudioOpenedRef.current = true
+          setTemplateManagerOpen(true)
+          setActiveTool('text')
+          setMessage('Design with placeholders, then publish from Template Studio.')
+        }
         setSaveStatus((current) =>
           response.authenticated
             ? current === 'offline'
@@ -347,7 +373,7 @@ export function AdvancedCardEditor({
     return () => {
       document.body.style.overflow = previousOverflow
     }
-  }, [fallbackTemplates, initialSnapshot, open])
+  }, [fallbackTemplates, finish, initialSnapshot, initialTemplateId, mode, open])
 
   useEffect(() => {
     if (!open) return
@@ -1024,7 +1050,7 @@ export function AdvancedCardEditor({
           <span className={`t2c-save-state is-${saveStatus}`}>
             {saveStatus === 'saved' ? <Check size={13} /> : null}
             {saveStatus === 'error' ? <AlertCircle size={13} /> : null}
-            {saveStatusLabel(saveStatus, authenticated)}
+            {mode === 'template-studio' ? 'Template Studio' : saveStatusLabel(saveStatus, authenticated)}
           </span>
         </div>
 

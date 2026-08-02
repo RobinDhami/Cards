@@ -101,7 +101,12 @@ function App() {
     return <LoginPage />
   }
 
-  if (path === '/card-editor/' || path === '/card-editor') {
+  if (
+    path === '/card-editor/'
+    || path === '/card-editor'
+    || path === '/dashboard/templates/'
+    || path === '/dashboard/templates'
+  ) {
     return (
       <Suspense fallback={<div className="route-loading-screen">Opening card editor…</div>}>
         <CardEditorPage />

@@ -22,6 +22,7 @@ urlpatterns = [
     path('profile/<int:student_id>/', react_app, name='profile'),
     path('admin/', admin.site.urls),
     path('dashboard/', react_app, name='admin_dashboard'),
+    path('dashboard/templates/', react_app, name='dashboard_template_studio'),
     path('dashboard/business-suite/', react_app, name='business_suite'),
     path('dashboard/schools/', react_app, name='dashboard_schools'),
     path('dashboard/students/', react_app, name='dashboard_students'),

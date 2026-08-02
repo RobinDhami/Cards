@@ -3,6 +3,7 @@ import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3.mjs'
 import BriefcaseBusiness from 'lucide-react/dist/esm/icons/briefcase-business.mjs'
 import GraduationCap from 'lucide-react/dist/esm/icons/graduation-cap.mjs'
 import LayoutDashboard from 'lucide-react/dist/esm/icons/layout-dashboard.mjs'
+import LayoutTemplate from 'lucide-react/dist/esm/icons/layout-template.mjs'
 import Printer from 'lucide-react/dist/esm/icons/printer.mjs'
 import QrCode from 'lucide-react/dist/esm/icons/qr-code.mjs'
 import School from 'lucide-react/dist/esm/icons/school.mjs'
@@ -27,6 +28,7 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
     { label: 'ID Card Studio', href: withSchool('/dashboard/print/', schoolId), icon: Printer, active: path.includes('/print') },
     { label: 'QR & Data Export', href: withSchool('/dashboard/qr-export/', schoolId), icon: QrCode, active: path.includes('/qr-export') },
     ...(isSuperAdmin ? [
+      { label: 'Template Studio', href: '/dashboard/templates/', icon: LayoutTemplate, active: path.includes('/templates') },
       { label: 'Professional Cards', href: '/dashboard/professional-cards/', icon: BadgeCheck, active: path.includes('/professional-cards') },
       { label: 'Business Suite', href: '/dashboard/business-suite/', icon: BriefcaseBusiness, active: path.includes('/business-suite') },
     ] : []),

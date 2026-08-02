@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import Check from 'lucide-react/dist/esm/icons/check.mjs'
 import CreditCard from 'lucide-react/dist/esm/icons/credit-card.mjs'
 import Layers3 from 'lucide-react/dist/esm/icons/layers-3.mjs'
@@ -9,7 +9,9 @@ import type {
   CardDesignId,
   CardFinishId,
   CardSide,
+  CardTemplateRecord,
 } from '../../features/card-editor/types'
+import { loadEditorBootstrap } from '../../features/card-editor/api'
 
 const loadAdvancedCardEditor = () => import('../../features/card-editor/CardEditor')
 const AdvancedCardEditor = lazy(() =>
@@ -34,18 +36,35 @@ export function CardDesignStudio() {
   const [backDesign, setBackDesign] = useState<CardDesignId>('minimal')
   const [finish, setFinish] = useState<CardFinishId>('pvc')
   const [editorOpen, setEditorOpen] = useState(false)
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
+  const [publishedTemplates, setPublishedTemplates] = useState<CardTemplateRecord[]>([])
 
   const activeDesign = side === 'front' ? frontDesign : backDesign
   const frontLabel = designOptions.find((option) => option.id === frontDesign)?.label ?? 'Midnight'
   const backLabel = designOptions.find((option) => option.id === backDesign)?.label ?? 'Minimal White'
 
   const chooseDesign = (design: CardDesignId) => {
+    setSelectedTemplateId(null)
     if (side === 'front') {
       setFrontDesign(design)
       return
     }
     setBackDesign(design)
   }
+
+  useEffect(() => {
+    let active = true
+    loadEditorBootstrap()
+      .then((response) => {
+        if (active) setPublishedTemplates(response.templates.slice(0, 6))
+      })
+      .catch(() => {
+        if (active) setPublishedTemplates([])
+      })
+    return () => {
+      active = false
+    }
+  }, [])
 
   return (
     <>
@@ -99,6 +118,34 @@ export function CardDesignStudio() {
                 </div>
               </fieldset>
 
+              {publishedTemplates.length ? (
+                <fieldset className="studio-control-group studio-template-group">
+                  <legend className="studio-control-label">Published templates</legend>
+                  <div className="studio-template-options">
+                    {publishedTemplates.map((template) => {
+                      const isSelected = selectedTemplateId === template.id
+                      return (
+                        <button
+                          type="button"
+                          className={isSelected ? 'is-selected' : ''}
+                          aria-pressed={isSelected}
+                          onClick={() => {
+                            setSelectedTemplateId(template.id)
+                            setEditorOpen(true)
+                          }}
+                          onMouseEnter={() => void loadAdvancedCardEditor()}
+                          onFocus={() => void loadAdvancedCardEditor()}
+                          key={template.id}
+                        >
+                          <span>{template.name}</span>
+                          <small>{template.category}</small>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </fieldset>
+              ) : null}
+
               <fieldset className="studio-control-group">
                 <legend className="studio-control-label">Finish</legend>
                 <div className="studio-finish-options">
@@ -126,7 +173,10 @@ export function CardDesignStudio() {
               <button
                 type="button"
                 className="btn btn-primary"
-                onClick={() => setEditorOpen(true)}
+                onClick={() => {
+                  setSelectedTemplateId(null)
+                  setEditorOpen(true)
+                }}
                 onMouseEnter={() => void loadAdvancedCardEditor()}
                 onFocus={() => void loadAdvancedCardEditor()}
               >
@@ -189,6 +239,7 @@ export function CardDesignStudio() {
             initialFrontDesign={frontDesign}
             initialBackDesign={backDesign}
             finish={finish}
+            initialTemplateId={selectedTemplateId}
             onClose={() => setEditorOpen(false)}
           />
         </Suspense>
