@@ -597,13 +597,13 @@ function Highlights({ highlights }: { highlights: HighlightItem[] }) {
   )
 }
 
-function SocialLinks({ actions }: { actions: PublicAction[] }) {
+function SocialLinks({ actions, variant = 'modern' }: { actions: PublicAction[]; variant?: 'modern' | 'organization' }) {
   if (actions.length === 0) {
     return null
   }
   return (
-    <section className="profile-section">
-      <h2 className="profile-section-title">Find Me Online</h2>
+    <section className={`profile-section profile-social-section is-${variant}`}>
+      <h2 className="profile-section-title">{variant === 'organization' ? 'Brand Channels' : 'Find Me Online'}</h2>
       <div className="profile-social-row">
         {actions.map((action) => {
           const tone = socialTone(action.label)
@@ -611,6 +611,7 @@ function SocialLinks({ actions }: { actions: PublicAction[] }) {
           return (
             <a className={`profile-social is-${tone}`} href={actionHref(action.href)} target="_blank" rel="noopener noreferrer" aria-label={action.label} title={action.label} key={action.label}>
               <Icon size={18} aria-hidden="true" />
+              {variant === 'organization' ? <span className="profile-social-label">{action.label}</span> : null}
             </a>
           )
         })}
@@ -717,10 +718,13 @@ function FeaturedCta({ action }: { action: PublicAction | null }) {
       target={action.external ? '_blank' : undefined}
       rel={action.external ? 'noopener noreferrer' : undefined}
     >
-      <span>
+      <span className="profile-featured-cta-icon">
         <Icon size={20} aria-hidden="true" />
       </span>
-      <strong>{action.label}</strong>
+      <span className="profile-featured-cta-copy">
+        <small>Primary action</small>
+        <strong>{action.label}</strong>
+      </span>
       <ChevronRight size={18} aria-hidden="true" />
     </a>
   )
@@ -984,8 +988,7 @@ function OrganizationTemplate({ data, showToast }: { data: PublicProfileData; sh
       <PrimaryActions actions={data.actions.primary} />
       <Intro>{profile.about || profile.shortTagline || profile.organizationTagline}</Intro>
       <Services services={data.services} title="What We Provide" />
-      <Highlights highlights={data.highlights} />
-      <SocialLinks actions={data.actions.extra} />
+      <SocialLinks actions={data.actions.extra} variant="organization" />
       <FeaturedCta action={data.actions.featuredCta} />
       <DetailsTrigger
         label="View business details"
