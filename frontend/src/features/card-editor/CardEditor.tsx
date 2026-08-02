@@ -54,7 +54,10 @@ import {
 } from './api'
 import {
   SAMPLE_PROFILE_FIELDS,
+  createBlankSnapshot,
+  createDecorationElement,
   createFallbackTemplates,
+  createIconElement,
   createImageElement,
   createInitialSnapshot,
   createLineElement,
@@ -72,10 +75,12 @@ import type {
   CardSide,
   CardTemplateRecord,
   DesignSnapshot,
+  DecorationType,
   EditorBootstrap,
   EditorElement,
   EditorTool,
   EditorValidationIssue,
+  IconType,
   SaveStatus,
   ShapeType,
 } from './types'
@@ -707,6 +712,17 @@ export function AdvancedCardEditor({
     setTemplateManagerOpen(false)
   }
 
+  const createBlankDesign = () => {
+    const blank = createBlankSnapshot(finish)
+    commitSnapshot(blank, 'Create blank design')
+    setCurrentTemplateId(null)
+    setDesign(null)
+    latestDesignRef.current = null
+    setSelectedIds([])
+    setSide('front')
+    setTemplateManagerOpen(false)
+  }
+
   const handleCanvasPatches = (patches: CanvasElementPatch[], label: string) => {
     const patchMap = new Map(patches.map((item) => [item.id, item.patch]))
     const sourcePatch = patches[0]
@@ -1138,7 +1154,12 @@ export function AdvancedCardEditor({
             uploading={uploading}
             onCollapse={() => setLeftCollapsed(true)}
             onApplyTemplate={applyTemplate}
+            onCreateBlank={createBlankDesign}
             onAddShape={(shape: ShapeType) => addElement(createShapeElement(shape), `Add ${shape}`)}
+            onAddIcon={(icon: IconType) => addElement(createIconElement(icon), `Add ${icon} icon`)}
+            onAddDecoration={(decoration: DecorationType) =>
+              addElement(createDecorationElement(decoration), `Add ${decoration}`)
+            }
             onAddLine={(arrow) => addElement(createLineElement(arrow), arrow ? 'Add arrow' : 'Add line')}
             onAddText={(variant, value, name) => {
               const element = createTextElement(value ?? 'Your text', variant)

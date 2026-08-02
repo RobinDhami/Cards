@@ -13,7 +13,7 @@ export type EditorTool =
   | 'background'
   | 'layers'
 
-export type ElementType = 'text' | 'shape' | 'image' | 'qr' | 'line' | 'group'
+export type ElementType = 'text' | 'shape' | 'image' | 'qr' | 'line' | 'icon' | 'decoration' | 'group'
 export type ShapeType =
   | 'circle'
   | 'oval'
@@ -24,17 +24,38 @@ export type ShapeType =
   | 'polygon'
   | 'star'
   | 'corner'
+export type IconType = 'contact' | 'address' | 'website' | 'mail' | 'telephone'
+export type DecorationType =
+  | 'abstract-waves'
+  | 'geometric-pattern'
+  | 'gradient-circles'
+  | 'corner-decoration'
+  | 'dots-grid'
+  | 'minimal-leaves'
+  | 'brush-stroke'
+  | 'curves'
+  | 'business-pattern'
+  | 'technology-pattern'
+  | 'luxury-gold-accent'
+  | 'transparent-overlay'
 export type TextAlignment = 'left' | 'center' | 'right' | 'justify'
 export type ImageFit = 'contain' | 'cover' | 'fill'
 export type ImageMask = 'none' | 'circle' | 'square' | 'rounded'
 export type BorderStyle = 'solid' | 'dashed' | 'dotted'
+export type FillType = 'solid' | 'gradient' | 'transparent'
 
 export type ElementStyle = {
+  fillType?: FillType
   fill: string
   stroke: string
   strokeWidth: number
   borderStyle: BorderStyle
   cornerRadius: number
+  gradient?: {
+    from: string
+    to: string
+    angle: number
+  }
   shadowColor: string
   shadowBlur: number
   shadowOpacity: number
@@ -77,6 +98,8 @@ export type EditorElement = {
   text?: string
   placeholder?: string
   shape?: ShapeType
+  icon?: IconType
+  decoration?: DecorationType
   points?: number[]
   assetUrl?: string
   assetId?: string

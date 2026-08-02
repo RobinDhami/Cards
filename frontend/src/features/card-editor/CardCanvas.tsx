@@ -16,6 +16,7 @@ import {
   Image as KonvaImage,
   Layer,
   Line,
+  Path,
   Rect,
   RegularPolygon,
   Stage,
@@ -83,6 +84,40 @@ function dashForStyle(style: EditorElement['style']) {
   if (style.borderStyle === 'dashed') return [12, 8]
   if (style.borderStyle === 'dotted') return [3, 7]
   return []
+}
+
+function gradientPoints(width: number, height: number, angle = 135) {
+  const radians = (angle * Math.PI) / 180
+  return {
+    start: {
+      x: width / 2 - Math.cos(radians) * width / 2,
+      y: height / 2 - Math.sin(radians) * height / 2,
+    },
+    end: {
+      x: width / 2 + Math.cos(radians) * width / 2,
+      y: height / 2 + Math.sin(radians) * height / 2,
+    },
+  }
+}
+
+function fillProps(element: EditorElement, width = element.width, height = element.height) {
+  if (element.style.fillType === 'transparent') {
+    return { fill: 'transparent' }
+  }
+  if (element.style.fillType === 'gradient') {
+    const gradient = element.style.gradient ?? {
+      from: element.style.fill,
+      to: '#2563eb',
+      angle: 135,
+    }
+    const points = gradientPoints(width, height, gradient.angle)
+    return {
+      fillLinearGradientStartPoint: points.start,
+      fillLinearGradientEndPoint: points.end,
+      fillLinearGradientColorStops: [0, gradient.from, 1, gradient.to],
+    }
+  }
+  return { fill: element.style.fill }
 }
 
 function ElementImage({
@@ -294,7 +329,6 @@ function QrImage({
 
 function ShapeNode({ element }: { element: EditorElement }) {
   const common = {
-    fill: element.style.fill,
     stroke: element.style.stroke,
     strokeWidth: element.style.strokeWidth,
     dash: dashForStyle(element.style),
@@ -302,6 +336,7 @@ function ShapeNode({ element }: { element: EditorElement }) {
     shadowColor: element.style.shadowColor,
     shadowBlur: element.style.shadowBlur,
     shadowOpacity: element.style.shadowOpacity,
+    ...fillProps(element),
   }
   const width = element.width
   const height = element.height
@@ -360,6 +395,183 @@ function ShapeNode({ element }: { element: EditorElement }) {
       {...common}
     />
   )
+}
+
+const iconPaths: Record<NonNullable<EditorElement['icon']>, string[]> = {
+  contact: [
+    'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z',
+    'M4 22v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2',
+  ],
+  address: [
+    'M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z',
+    'M12 10.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
+  ],
+  website: [
+    'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z',
+    'M2 12h20',
+    'M12 2c2.6 2.7 4 6 4 10s-1.4 7.3-4 10',
+    'M12 2c-2.6 2.7-4 6-4 10s1.4 7.3 4 10',
+  ],
+  mail: [
+    'M4 5h16v14H4Z',
+    'M4 7l8 6 8-6',
+  ],
+  telephone: [
+    'M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.5-1.1a2 2 0 0 1 2.1-.5c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2Z',
+  ],
+}
+
+function IconNode({ element }: { element: EditorElement }) {
+  const paths = iconPaths[element.icon ?? 'contact']
+  const color = element.style.fill === 'transparent' ? element.style.stroke : element.style.fill
+  return (
+    <Group scaleX={element.width / 24} scaleY={element.height / 24}>
+      {paths.map((data, index) => (
+        <Path
+          key={`${element.id}-icon-${index}`}
+          data={data}
+          fill="transparent"
+          stroke={color === 'transparent' ? '#111111' : color}
+          strokeWidth={Math.max(element.style.strokeWidth || 2, 0.5)}
+          lineCap="round"
+          lineJoin="round"
+          opacity={element.opacity}
+        />
+      ))}
+    </Group>
+  )
+}
+
+function DecorationNode({ element }: { element: EditorElement }) {
+  const width = element.width
+  const height = element.height
+  const stroke = element.style.stroke === 'transparent' ? element.style.fill : element.style.stroke
+  const fill = fillProps(element, width, height)
+  const commonStroke = {
+    stroke,
+    strokeWidth: Math.max(element.style.strokeWidth, 1),
+    dash: dashForStyle(element.style),
+    lineCap: 'round' as const,
+    lineJoin: 'round' as const,
+    opacity: element.opacity,
+  }
+  const decoration = element.decoration ?? 'abstract-waves'
+
+  if (decoration === 'abstract-waves') {
+    return (
+      <Group>
+        {[0.24, 0.5, 0.76].map((ratio, index) => (
+          <Line
+            key={ratio}
+            points={[0, height * ratio, width * 0.24, height * (ratio - 0.18), width * 0.5, height * ratio, width * 0.76, height * (ratio + 0.18), width, height * ratio]}
+            tension={0.55}
+            {...commonStroke}
+            opacity={element.opacity * (1 - index * 0.18)}
+          />
+        ))}
+      </Group>
+    )
+  }
+
+  if (decoration === 'geometric-pattern') {
+    return (
+      <Group>
+        <RegularPolygon x={width * 0.24} y={height * 0.28} sides={6} radius={Math.min(width, height) * 0.18} {...commonStroke} {...fill} />
+        <Rect x={width * 0.52} y={height * 0.14} width={width * 0.26} height={height * 0.26} rotation={12} {...commonStroke} {...fill} />
+        <Circle x={width * 0.68} y={height * 0.72} radius={Math.min(width, height) * 0.16} {...commonStroke} {...fill} />
+      </Group>
+    )
+  }
+
+  if (decoration === 'gradient-circles') {
+    return (
+      <Group>
+        <Circle x={width * 0.38} y={height * 0.5} radius={Math.min(width, height) * 0.32} {...fill} opacity={element.opacity} />
+        <Circle x={width * 0.62} y={height * 0.5} radius={Math.min(width, height) * 0.32} {...fill} opacity={element.opacity * 0.68} />
+      </Group>
+    )
+  }
+
+  if (decoration === 'corner-decoration' || decoration === 'luxury-gold-accent') {
+    return (
+      <Group>
+        <Line points={[width, 0, 0, 0, 0, height]} {...commonStroke} />
+        <Line points={[width * 0.78, height * 0.16, width * 0.16, height * 0.16, width * 0.16, height * 0.78]} {...commonStroke} opacity={element.opacity * 0.72} />
+        {decoration === 'luxury-gold-accent' ? (
+          <Circle x={width * 0.16} y={height * 0.16} radius={Math.min(width, height) * 0.08} {...fill} opacity={element.opacity} />
+        ) : null}
+      </Group>
+    )
+  }
+
+  if (decoration === 'dots-grid' || decoration === 'technology-pattern') {
+    return (
+      <Group>
+        {Array.from({ length: 6 }).flatMap((_, column) =>
+          Array.from({ length: 4 }).map((__, row) => (
+            <Circle
+              key={`${column}-${row}`}
+              x={(column + 0.5) * (width / 6)}
+              y={(row + 0.5) * (height / 4)}
+              radius={decoration === 'technology-pattern' ? 3 : 4}
+              fill={element.style.fill}
+              opacity={element.opacity * 0.75}
+            />
+          )),
+        )}
+        {decoration === 'technology-pattern' ? (
+          <Line points={[width * 0.08, height * 0.5, width * 0.92, height * 0.5, width * 0.72, height * 0.2, width * 0.72, height * 0.82]} {...commonStroke} opacity={element.opacity * 0.45} />
+        ) : null}
+      </Group>
+    )
+  }
+
+  if (decoration === 'minimal-leaves') {
+    return (
+      <Group>
+        <Line points={[width * 0.12, height * 0.88, width * 0.86, height * 0.14]} {...commonStroke} />
+        {[0.25, 0.45, 0.65].map((ratio) => (
+          <Ellipse key={ratio} x={width * ratio} y={height * (1 - ratio)} radiusX={width * 0.08} radiusY={height * 0.18} rotation={-35} {...commonStroke} {...fill} />
+        ))}
+      </Group>
+    )
+  }
+
+  if (decoration === 'brush-stroke') {
+    return (
+      <Line
+        points={[0, height * 0.55, width * 0.18, height * 0.28, width * 0.4, height * 0.66, width * 0.62, height * 0.36, width, height * 0.5]}
+        tension={0.65}
+        stroke={element.style.fill}
+        strokeWidth={Math.max(height * 0.28, 12)}
+        lineCap="round"
+        lineJoin="round"
+        opacity={element.opacity * 0.5}
+      />
+    )
+  }
+
+  if (decoration === 'curves') {
+    return (
+      <Group>
+        <Line points={[0, height, width * 0.32, 0, width * 0.68, height, width, 0]} tension={0.5} {...commonStroke} />
+        <Line points={[0, height * 0.72, width * 0.36, height * 0.08, width * 0.7, height * 0.82, width, height * 0.2]} tension={0.5} {...commonStroke} opacity={element.opacity * 0.52} />
+      </Group>
+    )
+  }
+
+  if (decoration === 'business-pattern') {
+    return (
+      <Group>
+        {[0.18, 0.42, 0.66].map((ratio, index) => (
+          <Rect key={ratio} x={width * ratio} y={height * (0.72 - index * 0.18)} width={width * 0.12} height={height * (0.22 + index * 0.18)} {...fill} opacity={element.opacity * 0.72} />
+        ))}
+        <Line points={[width * 0.08, height * 0.84, width * 0.92, height * 0.84]} {...commonStroke} />
+      </Group>
+    )
+  }
+
+  return <Rect width={width} height={height} cornerRadius={element.style.cornerRadius || 24} {...fill} opacity={element.opacity} />
 }
 
 const ElementNode = memo(function ElementNode({
@@ -450,6 +662,8 @@ const ElementNode = memo(function ElementNode({
         </Group>
       ) : null}
       {element.type === 'shape' ? <ShapeNode element={element} /> : null}
+      {element.type === 'icon' ? <IconNode element={element} /> : null}
+      {element.type === 'decoration' ? <DecorationNode element={element} /> : null}
       {element.type === 'image' ? (
         <ElementImage element={element} width={element.width} height={element.height} />
       ) : null}

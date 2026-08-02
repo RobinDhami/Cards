@@ -81,6 +81,52 @@ class CardDesignerApiTests(TestCase):
         denied = self.client.get(f"/api/card-designer/designs/{design_id}/")
         self.assertEqual(denied.status_code, 403)
 
+    def test_designs_accept_editor_icons_and_decorations(self):
+        document = deepcopy(TEST_DOCUMENT)
+        document["elements"].extend(
+            [
+                {
+                    "id": "phone-icon",
+                    "type": "icon",
+                    "name": "Phone Icon",
+                    "x": 40,
+                    "y": 40,
+                    "width": 72,
+                    "height": 72,
+                    "rotation": 0,
+                    "opacity": 1,
+                    "icon": "telephone",
+                },
+                {
+                    "id": "corner-accent",
+                    "type": "decoration",
+                    "name": "Corner Accent",
+                    "x": 0,
+                    "y": 0,
+                    "width": 180,
+                    "height": 180,
+                    "rotation": 0,
+                    "opacity": 0.8,
+                    "decoration": "luxury-gold-accent",
+                },
+            ]
+        )
+        self.client.login(username="owner", password="secret")
+        response = self.client.post(
+            "/api/card-designer/designs/",
+            data=json.dumps(
+                {
+                    "name": "Element library card",
+                    "frontData": document,
+                    "backData": TEST_DOCUMENT,
+                }
+            ),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()["design"]["frontData"]["elements"][1]["type"], "icon")
+        self.assertEqual(response.json()["design"]["frontData"]["elements"][2]["type"], "decoration")
+
     def test_using_template_copies_document(self):
         self.client.login(username="owner", password="secret")
         response = self.client.post(

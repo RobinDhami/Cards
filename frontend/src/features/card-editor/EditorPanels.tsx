@@ -22,8 +22,11 @@ import Image from 'lucide-react/dist/esm/icons/image.mjs'
 import Italic from 'lucide-react/dist/esm/icons/italic.mjs'
 import Layers3 from 'lucide-react/dist/esm/icons/layers-3.mjs'
 import Lock from 'lucide-react/dist/esm/icons/lock.mjs'
+import Mail from 'lucide-react/dist/esm/icons/mail.mjs'
+import MapPin from 'lucide-react/dist/esm/icons/map-pin.mjs'
 import Minus from 'lucide-react/dist/esm/icons/minus.mjs'
 import MoveRight from 'lucide-react/dist/esm/icons/move-right.mjs'
+import Phone from 'lucide-react/dist/esm/icons/phone.mjs'
 import Plus from 'lucide-react/dist/esm/icons/plus.mjs'
 import QrCode from 'lucide-react/dist/esm/icons/qr-code.mjs'
 import RotateCcw from 'lucide-react/dist/esm/icons/rotate-ccw.mjs'
@@ -31,17 +34,22 @@ import Search from 'lucide-react/dist/esm/icons/search.mjs'
 import Shapes from 'lucide-react/dist/esm/icons/shapes.mjs'
 import Square from 'lucide-react/dist/esm/icons/square.mjs'
 import Star from 'lucide-react/dist/esm/icons/star.mjs'
+import Globe2 from 'lucide-react/dist/esm/icons/globe-2.mjs'
+import Sparkles from 'lucide-react/dist/esm/icons/sparkles.mjs'
 import Trash2 from 'lucide-react/dist/esm/icons/trash-2.mjs'
 import Type from 'lucide-react/dist/esm/icons/type.mjs'
 import Underline from 'lucide-react/dist/esm/icons/underline.mjs'
 import Ungroup from 'lucide-react/dist/esm/icons/ungroup.mjs'
 import Unlock from 'lucide-react/dist/esm/icons/unlock.mjs'
 import UploadCloud from 'lucide-react/dist/esm/icons/upload-cloud.mjs'
+import Waves from 'lucide-react/dist/esm/icons/waves.mjs'
 import X from 'lucide-react/dist/esm/icons/x.mjs'
 import {
   BRAND_COLORS,
   FONT_FAMILIES,
   contactComponents,
+  decorationChoices,
+  iconChoices,
   shapeChoices,
   smartFieldChoices,
 } from './defaults'
@@ -50,9 +58,12 @@ import type {
   CardAssetRecord,
   CardDocument,
   CardTemplateRecord,
+  DecorationType,
   EditorElement,
   EditorTool,
   ElementStyle,
+  FillType,
+  IconType,
   ImageFit,
   ImageMask,
   ProfileFields,
@@ -142,6 +153,39 @@ function ShapeGlyph({ shape }: { shape: ShapeType }) {
   return <span className={`t2c-shape-glyph t2c-shape-glyph--${shape}`} aria-hidden="true" />
 }
 
+function EditorIconGlyph({ icon }: { icon: IconType }) {
+  const icons = {
+    contact: ContactRound,
+    address: MapPin,
+    website: Globe2,
+    mail: Mail,
+    telephone: Phone,
+  }
+  const Icon = icons[icon]
+  return <Icon size={28} />
+}
+
+function DecorationGlyph({ decoration }: { decoration: DecorationType }) {
+  if (decoration === 'abstract-waves' || decoration === 'curves') return <Waves size={29} />
+  if (decoration === 'gradient-circles') return <Circle size={29} />
+  if (decoration === 'luxury-gold-accent') return <Sparkles size={29} />
+  return <Shapes size={29} />
+}
+
+const fillTypes: Array<{ id: FillType; label: string }> = [
+  { id: 'solid', label: 'Solid' },
+  { id: 'gradient', label: 'Gradient' },
+  { id: 'transparent', label: 'Transparent' },
+]
+
+const borderPresets: Array<{ label: string; patch: Partial<ElementStyle> }> = [
+  { label: 'None', patch: { stroke: 'transparent', strokeWidth: 0, borderStyle: 'solid' } },
+  { label: 'Thin', patch: { stroke: '#111111', strokeWidth: 1, borderStyle: 'solid' } },
+  { label: 'Medium', patch: { stroke: '#111111', strokeWidth: 3, borderStyle: 'solid' } },
+  { label: 'Dashed', patch: { stroke: '#2563eb', strokeWidth: 2, borderStyle: 'dashed' } },
+  { label: 'Gold', patch: { stroke: '#d6a84f', strokeWidth: 3, borderStyle: 'solid' } },
+]
+
 type LibraryPanelProps = {
   tool: EditorTool
   templates: CardTemplateRecord[]
@@ -156,7 +200,10 @@ type LibraryPanelProps = {
   uploading: boolean
   onCollapse: () => void
   onApplyTemplate: (template: CardTemplateRecord) => void
+  onCreateBlank: () => void
   onAddShape: (shape: ShapeType) => void
+  onAddIcon: (icon: IconType) => void
+  onAddDecoration: (decoration: DecorationType) => void
   onAddLine: (arrow: boolean) => void
   onAddText: (
     variant: 'heading' | 'subheading' | 'body' | 'small' | 'contact',
@@ -188,7 +235,10 @@ export function EditorLibraryPanel({
   uploading,
   onCollapse,
   onApplyTemplate,
+  onCreateBlank,
   onAddShape,
+  onAddIcon,
+  onAddDecoration,
   onAddLine,
   onAddText,
   onAddImage,
@@ -252,25 +302,34 @@ export function EditorLibraryPanel({
 
       <div className="t2c-editor-library-content">
         {tool === 'templates' ? (
-          <div className="t2c-template-grid">
-            {filteredTemplates.map((template) => (
-              <button
-                type="button"
-                className={currentTemplateId === template.id ? 'is-active' : ''}
-                onClick={() => onApplyTemplate(template)}
-                key={template.id}
-              >
-                <TemplatePreview template={template} />
-                <span>
-                  <b>{template.name}</b>
-                  <small>
-                    {template.category}
-                    {template.isPremium ? ' · Premium' : ''}
-                  </small>
-                </span>
-              </button>
-            ))}
-          </div>
+          <>
+            <button type="button" className="t2c-create-blank-button" onClick={onCreateBlank}>
+              <Plus size={17} />
+              <span>
+                <b>Create from scratch</b>
+                <small>Blank front and back canvas</small>
+              </span>
+            </button>
+            <div className="t2c-template-grid">
+              {filteredTemplates.map((template) => (
+                <button
+                  type="button"
+                  className={currentTemplateId === template.id ? 'is-active' : ''}
+                  onClick={() => onApplyTemplate(template)}
+                  key={template.id}
+                >
+                  <TemplatePreview template={template} />
+                  <span>
+                    <b>{template.name}</b>
+                    <small>
+                      {template.category}
+                      {template.isPremium ? ' - Premium' : ''}
+                    </small>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </>
         ) : null}
 
         {tool === 'elements' ? (
@@ -282,6 +341,32 @@ export function EditorLibraryPanel({
                   <button type="button" onClick={() => onAddShape(shape.id)} key={shape.id}>
                     <ShapeGlyph shape={shape.id} />
                     <span>{shape.label}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+            <section className="t2c-library-section">
+              <h3>Contact icons</h3>
+              <div className="t2c-shape-grid">
+                {iconChoices.map((icon) => (
+                  <button type="button" onClick={() => onAddIcon(icon.id)} key={icon.id}>
+                    <EditorIconGlyph icon={icon.id} />
+                    <span>{icon.label}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+            <section className="t2c-library-section">
+              <h3>Decorations and patterns</h3>
+              <div className="t2c-decoration-grid">
+                {decorationChoices.map((decoration) => (
+                  <button
+                    type="button"
+                    onClick={() => onAddDecoration(decoration.id)}
+                    key={decoration.id}
+                  >
+                    <DecorationGlyph decoration={decoration.id} />
+                    <span>{decoration.label}</span>
                   </button>
                 ))}
               </div>
@@ -628,6 +713,8 @@ export function EditorLibraryPanel({
                     <span className="t2c-layer-type-icon">
                       {element.type === 'text' ? <Type size={14} /> : null}
                       {element.type === 'shape' ? <Shapes size={14} /> : null}
+                      {element.type === 'icon' ? <ContactRound size={14} /> : null}
+                      {element.type === 'decoration' ? <Waves size={14} /> : null}
                       {element.type === 'image' ? <Image size={14} /> : null}
                       {element.type === 'qr' ? <QrCode size={14} /> : null}
                       {element.type === 'line' ? <Minus size={14} /> : null}
@@ -971,16 +1058,36 @@ export function EditorInspectorPanel({
           </>
         ) : null}
 
-        {!multiple && selected.type === 'shape' ? (
+        {!multiple && ['shape', 'icon', 'decoration'].includes(selected.type) ? (
           <section className="t2c-inspector-section">
-            <h3>Shape</h3>
+            <h3>{selected.type === 'shape' ? 'Shape' : selected.type === 'icon' ? 'Icon' : 'Decoration'}</h3>
+            <div className="t2c-segmented t2c-segmented--wrap">
+              {fillTypes.map((fillType) => (
+                <button
+                  type="button"
+                  className={(selected.style.fillType ?? 'solid') === fillType.id ? 'is-active' : ''}
+                  onClick={() => onStylePatch({ fillType: fillType.id }, `Use ${fillType.label.toLowerCase()} fill`)}
+                  key={fillType.id}
+                >
+                  {fillType.label}
+                </button>
+              ))}
+            </div>
             <div className="t2c-inspector-color-row">
               <label>
-                <span>Fill</span>
+                <span>{selected.type === 'icon' ? 'Icon color' : 'Fill'}</span>
                 <input
                   type="color"
-                  value={selected.style.fill}
-                  onChange={(event) => onStylePatch({ fill: event.target.value }, 'Change fill')}
+                  value={selected.style.fill === 'transparent' ? '#2563eb' : selected.style.fill}
+                  onChange={(event) =>
+                    onStylePatch(
+                      {
+                        fill: event.target.value,
+                        fillType: selected.style.fillType === 'transparent' ? 'solid' : selected.style.fillType,
+                      },
+                      'Change fill',
+                    )
+                  }
                 />
               </label>
               <label>
@@ -991,6 +1098,82 @@ export function EditorInspectorPanel({
                   onChange={(event) => onStylePatch({ stroke: event.target.value }, 'Change border')}
                 />
               </label>
+            </div>
+            {(selected.style.fillType ?? 'solid') === 'gradient' ? (
+              <>
+                <div className="t2c-inspector-color-row">
+                  <label>
+                    <span>Gradient from</span>
+                    <input
+                      type="color"
+                      value={selected.style.gradient?.from ?? selected.style.fill ?? '#2563eb'}
+                      onChange={(event) =>
+                        onStylePatch(
+                          {
+                            gradient: {
+                              from: event.target.value,
+                              to: selected.style.gradient?.to ?? '#14b8a6',
+                              angle: selected.style.gradient?.angle ?? 135,
+                            },
+                          },
+                          'Change gradient start',
+                        )
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>Gradient to</span>
+                    <input
+                      type="color"
+                      value={selected.style.gradient?.to ?? '#14b8a6'}
+                      onChange={(event) =>
+                        onStylePatch(
+                          {
+                            gradient: {
+                              from: selected.style.gradient?.from ?? selected.style.fill ?? '#2563eb',
+                              to: event.target.value,
+                              angle: selected.style.gradient?.angle ?? 135,
+                            },
+                          },
+                          'Change gradient end',
+                        )
+                      }
+                    />
+                  </label>
+                </div>
+                <label className="t2c-control-field">
+                  <span>Gradient angle</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="360"
+                    value={selected.style.gradient?.angle ?? 135}
+                    onChange={(event) =>
+                      onStylePatch(
+                        {
+                          gradient: {
+                            from: selected.style.gradient?.from ?? selected.style.fill ?? '#2563eb',
+                            to: selected.style.gradient?.to ?? '#14b8a6',
+                            angle: Number(event.target.value),
+                          },
+                        },
+                        'Change gradient angle',
+                      )
+                    }
+                  />
+                </label>
+              </>
+            ) : null}
+            <div className="t2c-border-preset-grid">
+              {borderPresets.map((preset) => (
+                <button
+                  type="button"
+                  onClick={() => onStylePatch(preset.patch, `Use ${preset.label.toLowerCase()} border`)}
+                  key={preset.label}
+                >
+                  {preset.label}
+                </button>
+              ))}
             </div>
             <div className="t2c-two-column-fields">
               <NumericField

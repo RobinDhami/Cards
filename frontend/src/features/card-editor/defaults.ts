@@ -6,6 +6,8 @@ import type {
   CardTemplateRecord,
   EditorElement,
   ElementStyle,
+  DecorationType,
+  IconType,
   ProfileFields,
   QrOptions,
   ShapeType,
@@ -53,11 +55,13 @@ export const BRAND_COLORS = [
 ]
 
 const baseStyle = (fill = '#111111'): ElementStyle => ({
+  fillType: fill === 'transparent' ? 'transparent' : 'solid',
   fill,
   stroke: 'transparent',
   strokeWidth: 0,
   borderStyle: 'solid',
   cornerRadius: 0,
+  gradient: { from: fill === 'transparent' ? '#ffffff' : fill, to: '#2563eb', angle: 135 },
   shadowColor: '#000000',
   shadowBlur: 0,
   shadowOpacity: 0,
@@ -139,6 +143,84 @@ export function createShapeElement(shape: ShapeType): EditorElement {
       ...baseStyle('#2563eb'),
       stroke: '#2563eb',
       cornerRadius: shape === 'rounded' ? 24 : 0,
+    },
+  }
+}
+
+export function createIconElement(icon: IconType): EditorElement {
+  const labels: Record<IconType, string> = {
+    contact: 'Contact Icon',
+    address: 'Address Icon',
+    website: 'Website Icon',
+    mail: 'Mail Icon',
+    telephone: 'Telephone Icon',
+  }
+  return {
+    id: nextEditorElementId('icon'),
+    type: 'icon',
+    name: labels[icon],
+    icon,
+    x: 380,
+    y: 180,
+    width: 72,
+    height: 72,
+    rotation: 0,
+    opacity: 1,
+    visible: true,
+    locked: false,
+    maintainProportion: true,
+    style: {
+      ...baseStyle('transparent'),
+      stroke: '#111111',
+      strokeWidth: 2.4,
+    },
+  }
+}
+
+export function createDecorationElement(decoration: DecorationType): EditorElement {
+  const labels: Record<DecorationType, string> = {
+    'abstract-waves': 'Abstract Waves',
+    'geometric-pattern': 'Geometric Pattern',
+    'gradient-circles': 'Gradient Circles',
+    'corner-decoration': 'Corner Decoration',
+    'dots-grid': 'Dots and Grid',
+    'minimal-leaves': 'Minimal Leaves',
+    'brush-stroke': 'Brush Stroke',
+    curves: 'Curves',
+    'business-pattern': 'Business Pattern',
+    'technology-pattern': 'Technology Pattern',
+    'luxury-gold-accent': 'Luxury Gold Accent',
+    'transparent-overlay': 'Transparent Overlay',
+  }
+  const isOverlay = decoration === 'transparent-overlay'
+  const isWide = ['abstract-waves', 'brush-stroke', 'curves', 'business-pattern', 'technology-pattern'].includes(decoration)
+  return {
+    id: nextEditorElementId('deco'),
+    type: 'decoration',
+    name: labels[decoration],
+    decoration,
+    x: isOverlay ? 80 : 260,
+    y: isOverlay ? 70 : 150,
+    width: isOverlay ? 520 : isWide ? 360 : 180,
+    height: isOverlay ? 320 : isWide ? 120 : 180,
+    rotation: 0,
+    opacity: isOverlay ? 0.28 : 1,
+    visible: true,
+    locked: false,
+    maintainProportion: false,
+    style: {
+      ...baseStyle(decoration === 'luxury-gold-accent' ? '#d6a84f' : '#2563eb'),
+      fillType: ['gradient-circles', 'transparent-overlay', 'luxury-gold-accent'].includes(decoration)
+        ? 'gradient'
+        : 'solid',
+      stroke: decoration === 'transparent-overlay' ? '#ffffff' : '#111111',
+      strokeWidth: decoration === 'transparent-overlay' ? 0 : 2,
+      cornerRadius: isOverlay ? 28 : 0,
+      gradient: {
+        from: decoration === 'luxury-gold-accent' ? '#f7d778' : '#2563eb',
+        to: decoration === 'luxury-gold-accent' ? '#9f6b1f' : '#14b8a6',
+        angle: 135,
+      },
     },
   }
 }
@@ -415,6 +497,17 @@ export function createInitialSnapshot(
   }
 }
 
+export function createBlankSnapshot(
+  finish: 'pvc' | 'metal' | 'wood' = 'pvc',
+): { name: string; finish: 'pvc' | 'metal' | 'wood'; front: CardDocument; back: CardDocument } {
+  return {
+    name: 'Untitled card design',
+    finish,
+    front: createBlankDocument('#ffffff'),
+    back: createBlankDocument('#ffffff'),
+  }
+}
+
 export const shapeChoices: Array<{ id: ShapeType; label: string }> = [
   { id: 'circle', label: 'Circle' },
   { id: 'oval', label: 'Oval' },
@@ -425,6 +518,29 @@ export const shapeChoices: Array<{ id: ShapeType; label: string }> = [
   { id: 'polygon', label: 'Polygon' },
   { id: 'star', label: 'Star' },
   { id: 'corner', label: 'Corner' },
+]
+
+export const iconChoices: Array<{ id: IconType; label: string }> = [
+  { id: 'contact', label: 'Contact' },
+  { id: 'address', label: 'Address' },
+  { id: 'website', label: 'Website' },
+  { id: 'mail', label: 'Mail' },
+  { id: 'telephone', label: 'Telephone' },
+]
+
+export const decorationChoices: Array<{ id: DecorationType; label: string }> = [
+  { id: 'abstract-waves', label: 'Abstract waves' },
+  { id: 'geometric-pattern', label: 'Geometric patterns' },
+  { id: 'gradient-circles', label: 'Gradient circles' },
+  { id: 'corner-decoration', label: 'Corner decorations' },
+  { id: 'dots-grid', label: 'Dots and grids' },
+  { id: 'minimal-leaves', label: 'Minimal leaves' },
+  { id: 'brush-stroke', label: 'Brush strokes' },
+  { id: 'curves', label: 'Curves' },
+  { id: 'business-pattern', label: 'Business patterns' },
+  { id: 'technology-pattern', label: 'Technology patterns' },
+  { id: 'luxury-gold-accent', label: 'Luxury gold accents' },
+  { id: 'transparent-overlay', label: 'Transparent overlays' },
 ]
 
 export const smartFieldChoices: Array<{ key: keyof ProfileFields; label: string }> = [

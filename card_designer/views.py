@@ -23,7 +23,7 @@ from .models import (
 
 
 MAX_DOCUMENT_ELEMENTS = 400
-ALLOWED_ELEMENT_TYPES = {"text", "shape", "image", "qr", "line", "group"}
+ALLOWED_ELEMENT_TYPES = {"text", "shape", "image", "qr", "line", "group", "icon", "decoration"}
 
 
 def _error(message, status=400, errors=None):

@@ -493,6 +493,52 @@
   text-transform: capitalize;
 }
 
+.t2c-create-blank-button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 12px;
+  border: 1px solid #cdd7e5;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #ffffff, #eef6ff);
+  color: #162033;
+  cursor: pointer;
+  text-align: left;
+}
+
+.t2c-create-blank-button svg {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  padding: 6px;
+  border-radius: 999px;
+  background: #0f172a;
+  color: #ffffff;
+}
+
+.t2c-create-blank-button b,
+.t2c-create-blank-button small {
+  display: block;
+}
+
+.t2c-create-blank-button b {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.t2c-create-blank-button small {
+  margin-top: 2px;
+  color: var(--editor-muted);
+  font-size: 10px;
+}
+
+.t2c-create-blank-button:hover {
+  border-color: #93b8ff;
+  background: #f8fbff;
+}
+
 .t2c-library-section {
   margin: 0 0 22px;
 }
@@ -505,13 +551,19 @@
   font-weight: 600;
 }
 
-.t2c-shape-grid {
+.t2c-shape-grid,
+.t2c-decoration-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 5px;
 }
 
-.t2c-shape-grid button {
+.t2c-decoration-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.t2c-shape-grid button,
+.t2c-decoration-grid button {
   display: flex;
   min-width: 0;
   min-height: 76px;
@@ -526,12 +578,18 @@
   cursor: pointer;
 }
 
-.t2c-shape-grid button:hover {
+.t2c-decoration-grid button {
+  min-height: 68px;
+}
+
+.t2c-shape-grid button:hover,
+.t2c-decoration-grid button:hover {
   border-color: var(--editor-border);
   background: #f8fafc;
 }
 
-.t2c-shape-grid button span:last-child {
+.t2c-shape-grid button span:last-child,
+.t2c-decoration-grid button span:last-child {
   width: 100%;
   overflow: hidden;
   color: #576376;
@@ -875,6 +933,29 @@
 .t2c-segmented button.is-active {
   color: #ffffff;
   background: #111111;
+}
+
+.t2c-border-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.t2c-border-preset-grid button {
+  min-height: 32px;
+  border: 1px solid var(--editor-border);
+  border-radius: 4px;
+  background: #ffffff;
+  color: #354155;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.t2c-border-preset-grid button:hover {
+  border-color: #93b8ff;
+  background: #f6f9ff;
+  color: #10203d;
 }
 
 .t2c-control-field,
@@ -2470,12 +2551,14 @@
     overflow-x: auto;
   }
 
-  .t2c-shape-grid {
+  .t2c-shape-grid,
+  .t2c-decoration-grid {
     grid-template-columns: repeat(5, minmax(62px, 1fr));
     overflow-x: auto;
   }
 
-  .t2c-shape-grid button {
+  .t2c-shape-grid button,
+  .t2c-decoration-grid button {
     min-height: 64px;
   }
 
