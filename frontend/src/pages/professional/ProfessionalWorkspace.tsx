@@ -10,6 +10,7 @@ import Save from 'lucide-react/dist/esm/icons/save.mjs'
 import Search from 'lucide-react/dist/esm/icons/search.mjs'
 import Trash2 from 'lucide-react/dist/esm/icons/trash-2.mjs'
 import UserRound from 'lucide-react/dist/esm/icons/user-round.mjs'
+import Users from 'lucide-react/dist/esm/icons/users.mjs'
 import X from 'lucide-react/dist/esm/icons/x.mjs'
 import {
   Field,
@@ -617,6 +618,7 @@ export function ProfessionalProfileEditor() {
       nav={route.isOwner ? [
         { label: 'Profile editor', href: window.location.pathname, icon: UserRound, active: true },
         { label: 'Public profile', href: publicUrl || `/p/${route.slug}/`, icon: Eye },
+        { label: 'Connections', href: '/connections/', icon: Users },
       ] : professionalNav}
       title={ownerLabel}
       subtitle={completion ? `${completion.percent}% complete · ${completion.suggestion}` : 'Build a complete digital professional identity'}
@@ -629,6 +631,7 @@ export function ProfessionalProfileEditor() {
           Preview
         </a>
       ) : null}
+      notificationsHref={route.isOwner ? '/connections/' : undefined}
     >
       <form onSubmit={saveProfile}>
         {error ? <div className="manage-alert professional-message">{error}</div> : null}

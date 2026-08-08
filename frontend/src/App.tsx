@@ -9,6 +9,7 @@ import {
   ProfessionalProfileEditor,
   ProfessionalProfileList,
 } from './pages/professional/ProfessionalWorkspace'
+import { ProfessionalConnections } from './pages/professional/ProfessionalConnections'
 import {
   PublicStudentCard,
   StudentEditLogin,
@@ -124,6 +125,10 @@ function App() {
 
   if (/^\/p\/[^/]+\/?$/.test(path)) {
     return <PublicProfessionalProfile />
+  }
+
+  if (path === '/connections/' || path === '/connections') {
+    return <ProfessionalConnections />
   }
 
   if (path === '/dashboard/professional-cards/' || path === '/dashboard/professional-cards') {

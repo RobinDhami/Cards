@@ -25,6 +25,7 @@ from professional_cards.forms import (
     SERVICE_ICON_CHOICES,
 )
 from professional_cards.models import (
+    ProfessionalConnection,
     ProfessionalDocument,
     ProfessionalPortfolioItem,
     ProfessionalProfile,
@@ -591,6 +592,175 @@ def professional_profile_login_api(request, slug):
         return _json_error('This account does not have permission to edit this profile.')
     login(request, user)
     return JsonResponse({'ok': True, 'redirectPath': f'/p/{slug}/edit/'})
+
+
+def _connection_profile_payload(profile):
+    return {
+        'id': profile.id,
+        'slug': profile.slug,
+        'fullName': profile.full_name,
+        'profession': profile.designation or profile.profession,
+        'organization': profile.company_name or profile.work_organization,
+        'photoUrl': _file_url(profile.profile_photo),
+        'initials': (profile.full_name[:2] or 'P').upper(),
+        'publicUrl': profile.public_url_path,
+    }
+
+
+def _profiles_owned_by(user):
+    if not user.is_authenticated:
+        return ProfessionalProfile.objects.none()
+    return ProfessionalProfile.objects.filter(owner=user, is_active=True).order_by('id')
+
+
+@require_http_methods(['POST'])
+def professional_connection_request_api(request, slug):
+    recipient = get_object_or_404(
+        ProfessionalProfile.objects.select_related('owner'),
+        slug=slug,
+        is_active=True,
+    )
+    payload = _json_body(request)
+    username = str(payload.get('username') or '').strip()
+    password = str(payload.get('password') or '')
+    if not username or not password:
+        return _json_error('Enter your Connection ID and password.')
+
+    user = authenticate(request, username=username, password=password)
+    if user is None:
+        return _json_error('Invalid Connection ID or password.')
+    requester = _profiles_owned_by(user).first()
+    if requester is None:
+        return _json_error('This account does not have an active professional profile.', status=403)
+    if requester.pk == recipient.pk:
+        return _json_error('You cannot send a connection request to your own profile.')
+
+    with transaction.atomic():
+        existing = ProfessionalConnection.objects.select_for_update().filter(
+            Q(requester=requester, recipient=recipient)
+            | Q(requester=recipient, recipient=requester)
+        ).first()
+        if existing and existing.status == ProfessionalConnection.STATUS_ACCEPTED:
+            login(request, user)
+            return JsonResponse({
+                'ok': True,
+                'state': 'accepted',
+                'message': f'{recipient.full_name} is already in your connections.',
+                'connectionsUrl': '/connections/',
+            })
+        if existing and existing.status == ProfessionalConnection.STATUS_PENDING:
+            login(request, user)
+            if existing.recipient_id == requester.id:
+                message = f'{recipient.full_name} has already sent you a request. Open Connections to respond.'
+                state = 'received'
+            else:
+                message = f'Your request to {recipient.full_name} is still waiting for a response.'
+                state = 'pending'
+            return JsonResponse({
+                'ok': True,
+                'state': state,
+                'message': message,
+                'connectionsUrl': '/connections/',
+            })
+        if existing:
+            existing.requester = requester
+            existing.recipient = recipient
+            existing.status = ProfessionalConnection.STATUS_PENDING
+            existing.responded_at = None
+            existing.save(update_fields=['requester', 'recipient', 'status', 'responded_at', 'updated_at'])
+            connection = existing
+        else:
+            connection = ProfessionalConnection.objects.create(
+                requester=requester,
+                recipient=recipient,
+            )
+
+    login(request, user)
+    return JsonResponse({
+        'ok': True,
+        'state': connection.status,
+        'message': f'Connection request sent to {recipient.full_name}.',
+        'connectionsUrl': '/connections/',
+    }, status=201)
+
+
+def _serialize_connection(connection, owned_profile_ids):
+    is_incoming = connection.recipient_id in owned_profile_ids
+    other = connection.requester if is_incoming else connection.recipient
+    return {
+        'id': connection.id,
+        'status': connection.status,
+        'direction': 'incoming' if is_incoming else 'outgoing',
+        'createdAt': connection.created_at.isoformat(),
+        'updatedAt': connection.updated_at.isoformat(),
+        'person': _connection_profile_payload(other),
+        'notification': (
+            f'{other.full_name} added you as a connection. Want to connect?'
+            if is_incoming and connection.status == ProfessionalConnection.STATUS_PENDING
+            else ''
+        ),
+    }
+
+
+@require_http_methods(['GET'])
+def professional_connections_api(request):
+    login_error = _require_login(request)
+    if login_error:
+        return login_error
+    profiles = list(_profiles_owned_by(request.user))
+    if not profiles:
+        return _json_error('This account does not have an active professional profile.', status=403)
+    profile_ids = {profile.id for profile in profiles}
+    connections = ProfessionalConnection.objects.filter(
+        Q(requester_id__in=profile_ids) | Q(recipient_id__in=profile_ids)
+    ).select_related('requester', 'recipient')
+    serialized = [_serialize_connection(item, profile_ids) for item in connections]
+    received = [item for item in serialized if item['status'] == 'pending' and item['direction'] == 'incoming']
+    sent = [item for item in serialized if item['status'] == 'pending' and item['direction'] == 'outgoing']
+    accepted = [item for item in serialized if item['status'] == 'accepted']
+    return JsonResponse({
+        'ok': True,
+        'profile': _connection_profile_payload(profiles[0]),
+        'notifications': received,
+        'pendingSent': sent,
+        'connections': accepted,
+        'notificationCount': len(received),
+    })
+
+
+@require_http_methods(['POST'])
+def professional_connection_response_api(request, connection_id):
+    login_error = _require_login(request)
+    if login_error:
+        return login_error
+    profile_ids = set(_profiles_owned_by(request.user).values_list('id', flat=True))
+    if not profile_ids:
+        return _json_error('This account does not have an active professional profile.', status=403)
+    connection = get_object_or_404(
+        ProfessionalConnection.objects.select_related('requester', 'recipient'),
+        pk=connection_id,
+        recipient_id__in=profile_ids,
+        status=ProfessionalConnection.STATUS_PENDING,
+    )
+    action = str(_json_body(request).get('action') or '').strip().lower()
+    if action not in {'accept', 'reject'}:
+        return _json_error('Choose accept or reject.')
+    connection.status = (
+        ProfessionalConnection.STATUS_ACCEPTED
+        if action == 'accept'
+        else ProfessionalConnection.STATUS_REJECTED
+    )
+    connection.responded_at = timezone.now()
+    connection.save(update_fields=['status', 'responded_at', 'updated_at'])
+    return JsonResponse({
+        'ok': True,
+        'status': connection.status,
+        'message': (
+            f'You are now connected with {connection.requester.full_name}.'
+            if action == 'accept'
+            else f'You declined {connection.requester.full_name}\'s request.'
+        ),
+    })
 
 
 def _student_fields(student):

@@ -10,6 +10,7 @@ urlpatterns = [
     path('dashboard/professional-cards/add/', react_app, name='create'),
     path('dashboard/professional-cards/<int:pk>/edit/', react_app, name='edit'),
     path('dashboard/professional-cards/<int:pk>/delete/', react_app, name='delete'),
+    path('connections/', react_app, name='connections'),
     path('p/<slug:slug>/', react_app, name='public_profile'),
     path('p/<slug:slug>/edit-login/', react_app, name='edit_login'),
     path('p/<slug:slug>/edit/', react_app, name='owner_edit'),

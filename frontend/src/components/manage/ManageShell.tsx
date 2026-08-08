@@ -26,6 +26,7 @@ type ManageShellProps = {
   userName?: string
   userRole?: string
   actions?: ReactNode
+  notificationsHref?: string
   children: ReactNode
   accent?: string
   schoolOptions?: Array<{ id: number; name: string }>
@@ -43,6 +44,7 @@ export function ManageShell({
   userName = 'Account',
   userRole = 'Workspace',
   actions,
+  notificationsHref,
   children,
   accent = '#0b4bcb',
   schoolOptions,
@@ -155,9 +157,15 @@ export function ManageShell({
               </label>
             ) : null}
             {actions}
-            <button className="manage-icon-button" type="button" title="Notifications" aria-label="Notifications">
-              <Bell size={17} />
-            </button>
+            {notificationsHref ? (
+              <a className="manage-icon-button" href={notificationsHref} title="Notifications" aria-label="Notifications">
+                <Bell size={17} />
+              </a>
+            ) : (
+              <button className="manage-icon-button" type="button" title="Notifications" aria-label="Notifications">
+                <Bell size={17} />
+              </button>
+            )}
           </div>
         </header>
         <div className="manage-content">{children}</div>

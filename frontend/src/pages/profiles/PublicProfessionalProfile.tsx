@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { ComponentType, CSSProperties, SVGProps } from 'react'
+import type { ComponentType, CSSProperties, FormEvent, SVGProps } from 'react'
 import Badge from 'lucide-react/dist/esm/icons/badge.mjs'
 import BarChart2 from 'lucide-react/dist/esm/icons/bar-chart-2.mjs'
+import Bell from 'lucide-react/dist/esm/icons/bell.mjs'
 import BookOpen from 'lucide-react/dist/esm/icons/book-open.mjs'
 import BriefcaseBusiness from 'lucide-react/dist/esm/icons/briefcase-business.mjs'
 import Building2 from 'lucide-react/dist/esm/icons/building-2.mjs'
@@ -20,6 +21,7 @@ import HeartHandshake from 'lucide-react/dist/esm/icons/heart-handshake.mjs'
 import Home from 'lucide-react/dist/esm/icons/home.mjs'
 import Landmark from 'lucide-react/dist/esm/icons/landmark.mjs'
 import LinkIcon from 'lucide-react/dist/esm/icons/link.mjs'
+import LockKeyhole from 'lucide-react/dist/esm/icons/lock-keyhole.mjs'
 import Mail from 'lucide-react/dist/esm/icons/mail.mjs'
 import MapPin from 'lucide-react/dist/esm/icons/map-pin.mjs'
 import MapPinned from 'lucide-react/dist/esm/icons/map-pinned.mjs'
@@ -34,12 +36,13 @@ import QrCode from 'lucide-react/dist/esm/icons/qr-code.mjs'
 import Radar from 'lucide-react/dist/esm/icons/radar.mjs'
 import Share2 from 'lucide-react/dist/esm/icons/share-2.mjs'
 import ShieldCheck from 'lucide-react/dist/esm/icons/shield-check.mjs'
+import Send from 'lucide-react/dist/esm/icons/send.mjs'
 import Smartphone from 'lucide-react/dist/esm/icons/smartphone.mjs'
 import Sparkles from 'lucide-react/dist/esm/icons/sparkles.mjs'
 import UserPlus from 'lucide-react/dist/esm/icons/user-plus.mjs'
 import Users from 'lucide-react/dist/esm/icons/users.mjs'
 import X from 'lucide-react/dist/esm/icons/x.mjs'
-import { appHref, backendHref } from '../../lib/api'
+import { apiFetch, appHref, backendHref, displayError, jsonBody } from '../../lib/api'
 import './PublicProfessionalProfile.css'
 
 type LucideIcon = ComponentType<SVGProps<SVGSVGElement> & { size?: number }>
@@ -53,6 +56,7 @@ type PublicAction = {
 }
 
 type PublicProfile = {
+  id: number
   slug: string
   templateName: 'modern_identity' | 'organization_focus'
   fullName: string
@@ -610,8 +614,7 @@ function SocialLinks({ actions, variant = 'modern' }: { actions: PublicAction[];
           const Icon = socialIcons[action.icon] ?? actionIcons[action.icon] ?? LinkIcon
           return (
             <a className={`profile-social is-${tone}`} href={actionHref(action.href)} target="_blank" rel="noopener noreferrer" aria-label={action.label} title={action.label} key={action.label}>
-              <Icon size={18} aria-hidden="true" />
-              {variant === 'organization' ? <span className="profile-social-label">{action.label}</span> : null}
+              <Icon size={21} aria-hidden="true" />
             </a>
           )
         })}
@@ -730,27 +733,116 @@ function FeaturedCta({ action }: { action: PublicAction | null }) {
   )
 }
 
-function ConnectSoon({ onClick }: { onClick: () => void }) {
+type ConnectResponse = {
+  state: 'pending' | 'accepted' | 'received'
+  message: string
+  connectionsUrl: string
+}
+
+function ConnectFlow({ profile, showToast }: { profile: PublicProfile; showToast: (message: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+  const [result, setResult] = useState<ConnectResponse | null>(null)
+
+  function close() {
+    if (submitting) return
+    setOpen(false)
+    setError('')
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (submitting) return
+    setSubmitting(true)
+    setError('')
+    try {
+      const response = await apiFetch<ConnectResponse>(`/api/professional-profiles/${profile.slug}/connect/`, {
+        method: 'POST',
+        body: jsonBody({ username, password }),
+      })
+      setResult(response)
+      setPassword('')
+      showToast(response.message)
+    } catch (reason) {
+      setError(displayError(reason))
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   return (
-    <button className="profile-connect-soon" type="button" onClick={onClick} aria-describedby="profile-connect-status">
-      <span className="profile-connect-main">
-        <span className="profile-connect-art">
-          <Users size={25} aria-hidden="true" />
+    <>
+      <button className="profile-connect-soon" type="button" onClick={() => setOpen(true)} aria-describedby="profile-connect-status">
+        <span className="profile-connect-main">
+          <span className="profile-connect-art">
+            <Users size={25} aria-hidden="true" />
+          </span>
+          <span className="profile-connect-copy">
+            <strong>Let&apos;s Connect</strong>
+            <span>Add {profile.fullName} to your professional network with a verified request.</span>
+          </span>
         </span>
-        <span className="profile-connect-copy">
-          <strong>Let&apos;s Connect</strong>
-          <span>Grow your professional network and keep this profile close.</span>
+        <span className="profile-connect-steps" id="profile-connect-status">
+          <span><b>1</b> Open profile</span>
+          <span><b>2</b> Verify your ID</span>
+          <span><b>3</b> Send request</span>
         </span>
-      </span>
-      <span className="profile-connect-status" id="profile-connect-status">
-        <Clock3 size={15} aria-hidden="true" />
-        Connection requests are coming soon
-      </span>
-      <span className="profile-connect-action">
-        Preview connection
-        <ChevronRight size={17} aria-hidden="true" />
-      </span>
-    </button>
+        <span className="profile-connect-status">
+          <Bell size={15} aria-hidden="true" />
+          {profile.fullName} will be notified and can accept or reject your request.
+        </span>
+        <span className="profile-connect-action">
+          Connect now
+          <ChevronRight size={17} aria-hidden="true" />
+        </span>
+      </button>
+
+      {open ? (
+        <div className="profile-connect-modal" role="presentation" onMouseDown={(event) => {
+          if (event.currentTarget === event.target) close()
+        }}>
+          <section className="profile-connect-dialog" role="dialog" aria-modal="true" aria-labelledby="profile-connect-title">
+            <header>
+              <span className="profile-connect-dialog-icon"><UserPlus size={22} aria-hidden="true" /></span>
+              <div>
+                <h2 id="profile-connect-title">Connect with {profile.fullName}</h2>
+                <p>Confirm your Tap2Connect account to send this request.</p>
+              </div>
+              <button type="button" onClick={close} aria-label="Close connection dialog"><X size={18} /></button>
+            </header>
+
+            {result ? (
+              <div className="profile-connect-success" role="status">
+                <span><Check size={22} aria-hidden="true" /></span>
+                <strong>{result.state === 'accepted' ? 'Already connected' : 'Request ready'}</strong>
+                <p>{result.message}</p>
+                <a href={appHref(result.connectionsUrl)}>Open my connections <ChevronRight size={16} /></a>
+              </div>
+            ) : (
+              <form onSubmit={submit}>
+                <label>
+                  <span>Connection ID or username</span>
+                  <input autoFocus autoComplete="username" value={username} onChange={(event) => setUsername(event.target.value)} required />
+                </label>
+                <label>
+                  <span>Password</span>
+                  <input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required />
+                </label>
+                {error ? <div className="profile-connect-error" role="alert">{error}</div> : null}
+                <p className="profile-connect-security"><LockKeyhole size={14} aria-hidden="true" />Your password is used only to verify your account and is never shared with {profile.fullName}.</p>
+                <button className="profile-connect-submit" type="submit" disabled={submitting}>
+                  <Send size={17} aria-hidden="true" />
+                  {submitting ? 'Sending request...' : 'Send connection request'}
+                </button>
+              </form>
+            )}
+          </section>
+        </div>
+      ) : null}
+    </>
   )
 }
 
@@ -971,7 +1063,7 @@ function ModernTemplate({ data, showToast }: { data: PublicProfileData; showToas
       <SocialLinks actions={data.actions.extra} />
       <Documents documents={data.documents} />
       <DetailsTrigger onClick={() => setDetailsOpen(true)} />
-      <ConnectSoon onClick={() => showToast('This feature will be available soon, and you will be able to connect with friends.')} />
+      <ConnectFlow profile={profile} showToast={showToast} />
       <Footer profile={profile} />
       <DetailsDrawer data={data} open={detailsOpen} onClose={() => setDetailsOpen(false)} />
     </>
@@ -995,6 +1087,7 @@ function OrganizationTemplate({ data, showToast }: { data: PublicProfileData; sh
         description="Brand contact, useful links and business documents"
         onClick={() => setDetailsOpen(true)}
       />
+      <ConnectFlow profile={profile} showToast={showToast} />
       <Footer profile={profile} variant="organization" />
       <DetailsDrawer data={data} open={detailsOpen} onClose={() => setDetailsOpen(false)} />
     </>

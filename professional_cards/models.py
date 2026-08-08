@@ -246,6 +246,48 @@ class ProfessionalProfile(models.Model):
         return self.full_name
 
 
+class ProfessionalConnection(models.Model):
+    STATUS_PENDING = 'pending'
+    STATUS_ACCEPTED = 'accepted'
+    STATUS_REJECTED = 'rejected'
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'Pending'),
+        (STATUS_ACCEPTED, 'Accepted'),
+        (STATUS_REJECTED, 'Rejected'),
+    ]
+
+    requester = models.ForeignKey(
+        ProfessionalProfile,
+        on_delete=models.CASCADE,
+        related_name='sent_connection_requests',
+    )
+    recipient = models.ForeignKey(
+        ProfessionalProfile,
+        on_delete=models.CASCADE,
+        related_name='received_connection_requests',
+    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    responded_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['requester', 'recipient'],
+                name='unique_professional_connection_direction',
+            ),
+            models.CheckConstraint(
+                condition=~models.Q(requester=models.F('recipient')),
+                name='professional_connection_not_self',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.requester} -> {self.recipient} ({self.status})'
+
+
 class ProfessionalService(models.Model):
     profile = models.ForeignKey(ProfessionalProfile, on_delete=models.CASCADE, related_name='services')
     title = models.CharField(max_length=160)
