@@ -1,227 +1,152 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
-import Check from 'lucide-react/dist/esm/icons/check.mjs'
-import CreditCard from 'lucide-react/dist/esm/icons/credit-card.mjs'
-import Layers3 from 'lucide-react/dist/esm/icons/layers-3.mjs'
-import QrCode from 'lucide-react/dist/esm/icons/qr-code.mjs'
-import SlidersHorizontal from 'lucide-react/dist/esm/icons/sliders-horizontal.mjs'
-import TreePine from 'lucide-react/dist/esm/icons/tree-pine.mjs'
-import type {
-  CardDesignId,
-  CardFinishId,
-  CardSide,
-  CardTemplateRecord,
-} from '../../features/card-editor/types'
-import { loadEditorBootstrap } from '../../features/card-editor/api'
+import { lazy, Suspense, useState, type CSSProperties } from 'react'
+import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right.mjs'
+import Palette from 'lucide-react/dist/esm/icons/palette.mjs'
+import ScanLine from 'lucide-react/dist/esm/icons/scan-line.mjs'
+import ShieldCheck from 'lucide-react/dist/esm/icons/shield-check.mjs'
+import type { CardFinishId } from '../../features/card-editor/types'
 
 const loadAdvancedCardEditor = () => import('../../features/card-editor/CardEditor')
 const AdvancedCardEditor = lazy(() =>
   loadAdvancedCardEditor().then((module) => ({ default: module.AdvancedCardEditor })),
 )
 
-const designOptions: Array<{ id: CardDesignId; label: string }> = [
-  { id: 'midnight', label: 'Midnight' },
-  { id: 'signature', label: 'Signature Blue' },
-  { id: 'minimal', label: 'Minimal White' },
-]
+const materials = [
+  { id: 'plastic', label: 'Plastic' },
+  { id: 'metal', label: 'Metal' },
+  { id: 'wood', label: 'Wood' },
+  { id: 'custom', label: 'Custom' },
+] as const
 
-const finishOptions = [
-  { id: 'pvc' as const, label: 'PVC', icon: CreditCard },
-  { id: 'metal' as const, label: 'Metal', icon: Layers3 },
-  { id: 'wood' as const, label: 'Wood', icon: TreePine },
+const finishes = ['Matte', 'Brushed', 'Gloss'] as const
+const accents = ['#4D5BFF', '#61F2C2', '#FFB84D', '#A7ADB8'] as const
+
+type MaterialId = (typeof materials)[number]['id']
+type FinishStyle = (typeof finishes)[number]
+
+const editorFinish: Record<MaterialId, CardFinishId> = {
+  plastic: 'pvc',
+  metal: 'metal',
+  wood: 'wood',
+  custom: 'pvc',
+}
+
+const studioBenefits = [
+  { title: 'NFC enabled', text: 'One tap. Instant connect.', icon: ScanLine },
+  { title: 'Secure & reliable', text: 'Your data stays protected.', icon: ShieldCheck },
+  { title: 'Designed in Nepal', text: 'Crafted for you.', icon: Palette },
 ]
 
 export function CardDesignStudio() {
-  const [side, setSide] = useState<CardSide>('front')
-  const [frontDesign, setFrontDesign] = useState<CardDesignId>('midnight')
-  const [backDesign, setBackDesign] = useState<CardDesignId>('minimal')
-  const [finish, setFinish] = useState<CardFinishId>('pvc')
+  const [material, setMaterial] = useState<MaterialId>('plastic')
+  const [finish, setFinish] = useState<FinishStyle>('Matte')
+  const [accent, setAccent] = useState<(typeof accents)[number]>(accents[0])
+  const [name, setName] = useState('Tap2Connect Nepal')
   const [editorOpen, setEditorOpen] = useState(false)
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
-  const [publishedTemplates, setPublishedTemplates] = useState<CardTemplateRecord[]>([])
-
-  const activeDesign = side === 'front' ? frontDesign : backDesign
-  const frontLabel = designOptions.find((option) => option.id === frontDesign)?.label ?? 'Midnight'
-  const backLabel = designOptions.find((option) => option.id === backDesign)?.label ?? 'Minimal White'
-
-  const chooseDesign = (design: CardDesignId) => {
-    setSelectedTemplateId(null)
-    if (side === 'front') {
-      setFrontDesign(design)
-      return
-    }
-    setBackDesign(design)
-  }
-
-  useEffect(() => {
-    let active = true
-    loadEditorBootstrap()
-      .then((response) => {
-        if (active) setPublishedTemplates(response.templates.slice(0, 6))
-      })
-      .catch(() => {
-        if (active) setPublishedTemplates([])
-      })
-    return () => {
-      active = false
-    }
-  }, [])
 
   return (
     <>
       <section className="card-studio-section section-pad" id="card-studio">
         <div className="container card-studio-layout">
           <div className="card-studio-copy">
-            <h2>Design both sides. Make it yours.</h2>
-            <p>Choose a front, a back, and the finish. Then refine every detail in the advanced editor.</p>
+            <span className="studio-kicker">Design yours</span>
+            <h2>Make it yours.<br />Tap to stand out.</h2>
+            <p>Customize every detail and see it come to life in real time.</p>
 
             <div className="card-studio-controls">
-              <div className="studio-control-group">
-                <span className="studio-control-label">Side</span>
-                <div className="studio-side-switch" aria-label="Card side">
-                  {(['front', 'back'] as const).map((option) => (
+              <fieldset className="studio-control-group">
+                <legend className="studio-control-label">Material</legend>
+                <div className="studio-material-options">
+                  {materials.map((option) => (
                     <button
                       type="button"
-                      className={side === option ? 'is-selected' : ''}
-                      aria-pressed={side === option}
-                      onClick={() => setSide(option)}
-                      key={option}
+                      className={`studio-material studio-material--${option.id}${material === option.id ? ' is-selected' : ''}`}
+                      aria-pressed={material === option.id}
+                      onClick={() => setMaterial(option.id)}
+                      key={option.id}
                     >
-                      {option === 'front' ? 'Front' : 'Back'}
+                      <span aria-hidden="true" />
+                      <small>{option.label}</small>
                     </button>
                   ))}
                 </div>
-              </div>
-
-              <fieldset className="studio-control-group">
-                <legend className="studio-control-label">
-                  {side === 'front' ? 'Front design' : 'Back design'}
-                </legend>
-                <div className="studio-design-options">
-                  {designOptions.map((option) => {
-                    const isSelected = activeDesign === option.id
-                    return (
-                      <button
-                        type="button"
-                        className={`studio-design-option studio-design-option--${option.id}${isSelected ? ' is-selected' : ''}`}
-                        aria-pressed={isSelected}
-                        onClick={() => chooseDesign(option.id)}
-                        key={option.id}
-                      >
-                        <span className="studio-design-swatch" aria-hidden="true">
-                          <span>T2C</span>
-                          {isSelected ? <Check size={14} strokeWidth={2.4} /> : null}
-                        </span>
-                        <span>{option.label}</span>
-                      </button>
-                    )
-                  })}
-                </div>
               </fieldset>
-
-              {publishedTemplates.length ? (
-                <fieldset className="studio-control-group studio-template-group">
-                  <legend className="studio-control-label">Published templates</legend>
-                  <div className="studio-template-options">
-                    {publishedTemplates.map((template) => {
-                      const isSelected = selectedTemplateId === template.id
-                      return (
-                        <button
-                          type="button"
-                          className={isSelected ? 'is-selected' : ''}
-                          aria-pressed={isSelected}
-                          onClick={() => {
-                            setSelectedTemplateId(template.id)
-                            setEditorOpen(true)
-                          }}
-                          onMouseEnter={() => void loadAdvancedCardEditor()}
-                          onFocus={() => void loadAdvancedCardEditor()}
-                          key={template.id}
-                        >
-                          <span>{template.name}</span>
-                          <small>{template.category}</small>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </fieldset>
-              ) : null}
 
               <fieldset className="studio-control-group">
                 <legend className="studio-control-label">Finish</legend>
                 <div className="studio-finish-options">
-                  {finishOptions.map((option) => {
-                    const Icon = option.icon
-                    const isSelected = finish === option.id
-                    return (
-                      <button
-                        type="button"
-                        className={isSelected ? 'is-selected' : ''}
-                        aria-pressed={isSelected}
-                        onClick={() => setFinish(option.id)}
-                        key={option.id}
-                      >
-                        <Icon size={20} strokeWidth={1.8} />
-                        <span>{option.label}</span>
-                      </button>
-                    )
-                  })}
+                  {finishes.map((option) => (
+                    <button
+                      type="button"
+                      className={finish === option ? 'is-selected' : ''}
+                      aria-pressed={finish === option}
+                      onClick={() => setFinish(option)}
+                      key={option}
+                    >
+                      {option}
+                    </button>
+                  ))}
                 </div>
               </fieldset>
+
+              <fieldset className="studio-control-group">
+                <legend className="studio-control-label">Accent</legend>
+                <div className="studio-accent-options">
+                  {accents.map((color) => (
+                    <button
+                      type="button"
+                      aria-label={`Use ${color} accent`}
+                      aria-pressed={accent === color}
+                      className={accent === color ? 'is-selected' : ''}
+                      style={{ backgroundColor: color }}
+                      onClick={() => setAccent(color)}
+                      key={color}
+                    />
+                  ))}
+                </div>
+              </fieldset>
+
+              <label className="studio-name-field">
+                <span>Name on card</span>
+                <span>
+                  <input value={name} maxLength={20} onChange={(event) => setName(event.target.value)} />
+                  <small>{name.length} / 20</small>
+                </span>
+              </label>
             </div>
 
-            <div className="studio-order-row">
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => {
-                  setSelectedTemplateId(null)
-                  setEditorOpen(true)
-                }}
-                onMouseEnter={() => void loadAdvancedCardEditor()}
-                onFocus={() => void loadAdvancedCardEditor()}
-              >
-                Advanced editor
-                <SlidersHorizontal size={17} strokeWidth={2} />
-              </button>
-              <p aria-live="polite">
-                Front: {frontLabel} | Back: {backLabel} | {finish.toUpperCase()}
-              </p>
-            </div>
+            <button
+              type="button"
+              className="home-button home-button-primary studio-start-button"
+              onClick={() => setEditorOpen(true)}
+              onMouseEnter={() => void loadAdvancedCardEditor()}
+              onFocus={() => void loadAdvancedCardEditor()}
+            >
+              Start designing
+              <ArrowRight size={19} />
+            </button>
           </div>
 
           <div className="card-preview-stage">
-            <div className="card-preview-meta">
-              <span>{side === 'front' ? 'Front preview' : 'Back preview'}</span>
-              <span>{finish.toUpperCase()}</span>
-            </div>
-
             <div
-              className={`card-proof card-proof--${activeDesign} card-proof--${finish}`}
-              aria-label={`${side} card preview using the ${activeDesign} design and ${finish} finish`}
+              className={`card-proof card-proof--${material} card-proof--${finish.toLowerCase()}`}
+              style={{ '--studio-accent': accent } as CSSProperties}
+              aria-label={`${material} card preview with ${finish.toLowerCase()} finish`}
             >
               <span className="card-proof-texture" aria-hidden="true" />
-              {side === 'front' ? (
-                <div className="card-proof-front">
-                  <img src="/static/branding/tap2connect-logo.png" alt="Tap2Connect Nepal" />
-                  <div>
-                    <strong>Aarav Sharma</strong>
-                    <span>Founder | Tap2Connect Nepal</span>
-                  </div>
-                  <small>Tap. Share. Connect.</small>
-                </div>
-              ) : (
-                <div className="card-proof-back">
-                  <div className="card-proof-qr" aria-hidden="true">
-                    <QrCode size={82} strokeWidth={1.5} />
-                  </div>
-                  <strong>SCAN TO CONNECT</strong>
-                  <span>tap2connect.me/aarav</span>
-                </div>
-              )}
+              <ScanLine className="card-proof-nfc" size={48} strokeWidth={2.1} aria-hidden="true" />
+              <strong>{name || 'Your name'}</strong>
+              <small>Nepal</small>
             </div>
-
-            <p className="card-preview-note">Your final artwork is reviewed with you before printing.</p>
           </div>
+        </div>
+
+        <div className="container studio-benefits">
+          {studioBenefits.map(({ title, text, icon: Icon }) => (
+            <div key={title}>
+              <span><Icon size={20} strokeWidth={1.6} /></span>
+              <p><strong>{title}</strong><small>{text}</small></p>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -236,10 +161,10 @@ export function CardDesignStudio() {
         >
           <AdvancedCardEditor
             open
-            initialFrontDesign={frontDesign}
-            initialBackDesign={backDesign}
-            finish={finish}
-            initialTemplateId={selectedTemplateId}
+            initialFrontDesign="midnight"
+            initialBackDesign="minimal"
+            finish={editorFinish[material]}
+            initialTemplateId={null}
             onClose={() => setEditorOpen(false)}
           />
         </Suspense>
