@@ -524,7 +524,7 @@ export function createFallbackTemplates(): CardTemplateRecord[] {
     { id: 'minimal', label: 'Minimal White', category: 'minimal' },
     { id: 'linework', label: 'Linework', category: 'creative', premium: true },
   ]
-  const templates = definitions.map((item, index) => ({
+  const templates: CardTemplateRecord[] = definitions.map((item, index) => ({
     id: `built-in-${item.id}`,
     name: item.label,
     slug: item.id,
