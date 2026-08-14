@@ -1,5 +1,5 @@
 import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
-import Upload from 'lucide-react/dist/esm/icons/upload.mjs'
+import Upload from 'lucide-react/dist/esm/icons/upload.js'
 import './FormControls.css'
 
 export function Field({

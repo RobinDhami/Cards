@@ -4,7 +4,6 @@ from django.conf.urls.static import static
 from django.urls import include, path, re_path
 from django.views.static import serve as serve_media
 from django.contrib import admin
-from shops.views import business_suite
 from vcards.views import *
 from vcards.views import dashboard_qr_export, dashboard_qr_export_download
 from vcard_backend import react_api
@@ -14,7 +13,6 @@ urlpatterns = [
     path('', react_app, name='home'),
     path('robots.txt', robots_txt, name='robots_txt'),
     path('sitemap.xml', sitemap_xml, name='sitemap_xml'),
-    path('shop/', include('shops.urls')),
     path('', include('professional_cards.urls')),
     path('login/', react_app, name='dashboard_login'),
     path('card-editor/', react_app, name='card_editor'),
@@ -23,7 +21,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('dashboard/', react_app, name='admin_dashboard'),
     path('dashboard/templates/', react_app, name='dashboard_template_studio'),
-    path('dashboard/business-suite/', react_app, name='business_suite'),
     path('dashboard/schools/', react_app, name='dashboard_schools'),
     path('dashboard/students/', react_app, name='dashboard_students'),
     path('dashboard/teachers/', react_app, name='dashboard_teachers'),
@@ -85,23 +82,6 @@ urlpatterns = [
     path('api/dashboard/credentials/<int:student_id>/', react_api.dashboard_credentials_api, name='react_dashboard_credentials_api'),
     path('api/dashboard/bulk-upload/', react_api.dashboard_bulk_upload_api, name='react_dashboard_bulk_upload_api'),
     path('api/dashboard/print-controls/', react_api.dashboard_print_controls_api, name='react_dashboard_print_controls_api'),
-    path('api/shops/<slug:store_slug>/', react_api.shop_public_api, name='react_shop_public_api'),
-    path('api/shops/<slug:store_slug>/products/<slug:product_slug>/', react_api.shop_product_public_api, name='react_shop_product_public_api'),
-    path('api/shops/<slug:store_slug>/cart/', react_api.shop_cart_api, name='react_shop_cart_api'),
-    path('api/shops/<slug:store_slug>/checkout/', react_api.shop_checkout_api, name='react_shop_checkout_api'),
-    path('api/shops/<slug:store_slug>/orders/<str:order_number>/', react_api.shop_order_public_api, name='react_shop_order_public_api'),
-    path('api/shops/<slug:store_slug>/track-order/', react_api.shop_track_order_api, name='react_shop_track_order_api'),
-    path('api/shops/<slug:store_slug>/owner/', react_api.shop_owner_dashboard_api, name='react_shop_owner_dashboard_api'),
-    path('api/shops/<slug:store_slug>/owner/products/', react_api.shop_owner_products_api, name='react_shop_owner_products_api'),
-    path('api/shops/<slug:store_slug>/owner/products/<int:product_id>/', react_api.shop_owner_product_api, name='react_shop_owner_product_api'),
-    path('api/shops/<slug:store_slug>/owner/categories/', react_api.shop_owner_categories_api, name='react_shop_owner_categories_api'),
-    path('api/shops/<slug:store_slug>/owner/categories/<int:category_id>/', react_api.shop_owner_category_api, name='react_shop_owner_category_api'),
-    path('api/shops/<slug:store_slug>/owner/customers/', react_api.shop_owner_customers_api, name='react_shop_owner_customers_api'),
-    path('api/shops/<slug:store_slug>/owner/orders/', react_api.shop_owner_orders_api, name='react_shop_owner_orders_api'),
-    path('api/shops/<slug:store_slug>/owner/orders/<int:order_id>/', react_api.shop_owner_order_api, name='react_shop_owner_order_api'),
-    path('api/shops/<slug:store_slug>/owner/discounts/', react_api.shop_owner_discounts_api, name='react_shop_owner_discounts_api'),
-    path('api/shops/<slug:store_slug>/owner/discounts/<int:discount_id>/', react_api.shop_owner_discount_api, name='react_shop_owner_discount_api'),
-    path('api/shops/<slug:store_slug>/owner/website/', react_api.shop_owner_website_api, name='react_shop_owner_website_api'),
 ]
 
 if settings.DEBUG:

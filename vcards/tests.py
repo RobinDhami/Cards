@@ -5,7 +5,6 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from professional_cards.models import ProfessionalProfile
-from shops.models import Category, Discount, Order, Product, Store
 from vcards.models import College, ProfileActivity, Skill, StudentProfile
 
 
@@ -318,13 +317,6 @@ class ReactMigrationApiTests(TestCase):
             password='ReactAdminPass123!',
         )
         self.school = College.objects.create(name='React Test School')
-        self.store = Store.objects.create(
-            owner=self.admin,
-            name='React Test Store',
-            slug='react-test-store',
-            is_active=True,
-            is_published=True,
-        )
         self.client.force_login(self.admin)
 
     def test_vite_origin_can_complete_csrf_login(self):
@@ -416,77 +408,3 @@ class ReactMigrationApiTests(TestCase):
         self.assertEqual(member.email, '')
         self.assertIsNone(member.whatsapp)
         self.assertEqual(member.academic_level, 'grade_10')
-
-    def test_shop_management_cart_and_checkout_flow(self):
-        category_response = self.client.post(
-            reverse('react_shop_owner_categories_api', args=[self.store.slug]),
-            data=json.dumps({
-                'name': 'Accessories',
-                'slug': 'accessories',
-                'isActive': True,
-            }),
-            content_type='application/json',
-        )
-        self.assertEqual(category_response.status_code, 201)
-        category_id = category_response.json()['category']['id']
-
-        product_response = self.client.post(
-            reverse('react_shop_owner_products_api', args=[self.store.slug]),
-            data=json.dumps({
-                'name': 'Classic Watch',
-                'slug': 'classic-watch',
-                'regularPrice': '3999',
-                'discountedPrice': '3499',
-                'stockQuantity': 5,
-                'status': 'active',
-                'categoryId': category_id,
-            }),
-            content_type='application/json',
-        )
-        self.assertEqual(product_response.status_code, 201)
-        product_id = product_response.json()['product']['id']
-
-        discount_response = self.client.post(
-            reverse('react_shop_owner_discounts_api', args=[self.store.slug]),
-            data=json.dumps({
-                'name': 'Launch offer',
-                'code': 'LAUNCH10',
-                'discountType': 'percentage',
-                'value': '10',
-                'isActive': True,
-            }),
-            content_type='application/json',
-        )
-        self.assertEqual(discount_response.status_code, 201)
-
-        cart_response = self.client.post(
-            reverse('react_shop_cart_api', args=[self.store.slug]),
-            data=json.dumps({
-                'action': 'add',
-                'productId': product_id,
-                'quantity': 1,
-            }),
-            content_type='application/json',
-        )
-        self.assertEqual(cart_response.status_code, 200)
-        self.assertEqual(cart_response.json()['cart']['count'], 1)
-
-        checkout_response = self.client.post(
-            reverse('react_shop_checkout_api', args=[self.store.slug]),
-            data=json.dumps({
-                'fullName': 'React Customer',
-                'phone': '9811111111',
-                'email': 'customer@example.com',
-                'province': 'Bagmati',
-                'city': 'Kathmandu',
-                'area': 'Rabibhawan',
-                'detailedAddress': 'React Test Street',
-                'paymentMethod': 'cod',
-            }),
-            content_type='application/json',
-        )
-        self.assertEqual(checkout_response.status_code, 201)
-        self.assertEqual(Order.objects.count(), 1)
-        self.assertEqual(Product.objects.get(pk=product_id).stock_quantity, 4)
-        self.assertTrue(Category.objects.filter(pk=category_id).exists())
-        self.assertTrue(Discount.objects.filter(code='LAUNCH10').exists())

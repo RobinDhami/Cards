@@ -1,34 +1,34 @@
-import {
+﻿import {
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react'
-import AlertCircle from 'lucide-react/dist/esm/icons/alert-circle.mjs'
-import Check from 'lucide-react/dist/esm/icons/check.mjs'
-import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right.mjs'
-import Copy from 'lucide-react/dist/esm/icons/copy.mjs'
-import Expand from 'lucide-react/dist/esm/icons/expand.mjs'
-import Eye from 'lucide-react/dist/esm/icons/eye.mjs'
-import Grid3X3 from 'lucide-react/dist/esm/icons/grid-3-x-3.mjs'
-import History from 'lucide-react/dist/esm/icons/history.mjs'
-import Lock from 'lucide-react/dist/esm/icons/lock.mjs'
-import Maximize2 from 'lucide-react/dist/esm/icons/maximize-2.mjs'
-import Menu from 'lucide-react/dist/esm/icons/menu.mjs'
-import Minus from 'lucide-react/dist/esm/icons/minus.mjs'
-import PanelLeftClose from 'lucide-react/dist/esm/icons/panel-left-close.mjs'
-import PanelLeftOpen from 'lucide-react/dist/esm/icons/panel-left-open.mjs'
-import PanelRightClose from 'lucide-react/dist/esm/icons/panel-right-close.mjs'
-import PanelRightOpen from 'lucide-react/dist/esm/icons/panel-right-open.mjs'
-import Plus from 'lucide-react/dist/esm/icons/plus.mjs'
-import Redo2 from 'lucide-react/dist/esm/icons/redo-2.mjs'
-import Save from 'lucide-react/dist/esm/icons/save.mjs'
-import ScanLine from 'lucide-react/dist/esm/icons/scan-line.mjs'
-import Trash2 from 'lucide-react/dist/esm/icons/trash-2.mjs'
-import Undo2 from 'lucide-react/dist/esm/icons/undo-2.mjs'
-import Unlock from 'lucide-react/dist/esm/icons/unlock.mjs'
-import X from 'lucide-react/dist/esm/icons/x.mjs'
+import AlertCircle from 'lucide-react/dist/esm/icons/alert-circle.js'
+import Check from 'lucide-react/dist/esm/icons/check.js'
+import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right.js'
+import Copy from 'lucide-react/dist/esm/icons/copy.js'
+import Expand from 'lucide-react/dist/esm/icons/expand.js'
+import Eye from 'lucide-react/dist/esm/icons/eye.js'
+import Grid3X3 from 'lucide-react/dist/esm/icons/grid-3-x-3.js'
+import History from 'lucide-react/dist/esm/icons/history.js'
+import Lock from 'lucide-react/dist/esm/icons/lock.js'
+import Maximize2 from 'lucide-react/dist/esm/icons/maximize-2.js'
+import Menu from 'lucide-react/dist/esm/icons/menu.js'
+import Minus from 'lucide-react/dist/esm/icons/minus.js'
+import PanelLeftClose from 'lucide-react/dist/esm/icons/panel-left-close.js'
+import PanelLeftOpen from 'lucide-react/dist/esm/icons/panel-left-open.js'
+import PanelRightClose from 'lucide-react/dist/esm/icons/panel-right-close.js'
+import PanelRightOpen from 'lucide-react/dist/esm/icons/panel-right-open.js'
+import Plus from 'lucide-react/dist/esm/icons/plus.js'
+import Redo2 from 'lucide-react/dist/esm/icons/redo-2.js'
+import Save from 'lucide-react/dist/esm/icons/save.js'
+import ScanLine from 'lucide-react/dist/esm/icons/scan-line.js'
+import Trash2 from 'lucide-react/dist/esm/icons/trash-2.js'
+import Undo2 from 'lucide-react/dist/esm/icons/undo-2.js'
+import Unlock from 'lucide-react/dist/esm/icons/unlock.js'
+import X from 'lucide-react/dist/esm/icons/x.js'
 import { displayError } from '../../lib/api'
 import { CardCanvas, type CanvasElementPatch } from './CardCanvas'
 import {
@@ -135,7 +135,7 @@ function safeLocalDraft(): LocalDraft | null {
 }
 
 function saveStatusLabel(status: SaveStatus, authenticated: boolean) {
-  if (status === 'saving') return 'Saving…'
+  if (status === 'saving') return 'Savingâ€¦'
   if (status === 'error') return 'Save failed'
   if (status === 'offline') return authenticated ? 'Saved locally' : 'Local draft'
   if (status === 'saved') return 'All changes saved'
@@ -281,6 +281,35 @@ export function AdvancedCardEditor({
     [commitDocument, currentDocument],
   )
 
+  const changeOrientation = useCallback((orientation: 'landscape' | 'portrait') => {
+    const target = orientation === 'portrait' ? { width: 540, height: 860 } : { width: 860, height: 540 }
+    const transformDocument = (document: CardDocument): CardDocument => {
+      const scaleX = target.width / document.size.width
+      const scaleY = target.height / document.size.height
+      return {
+        ...document,
+        size: target,
+        guides: {
+          vertical: document.guides.vertical.map((value) => value * scaleX),
+          horizontal: document.guides.horizontal.map((value) => value * scaleY),
+        },
+        elements: document.elements.map((element) => ({
+          ...element,
+          x: element.x * scaleX,
+          y: element.y * scaleY,
+          width: element.width * scaleX,
+          height: element.height * scaleY,
+        })),
+      }
+    }
+    commitSnapshot(
+      { ...latestSnapshotRef.current, front: transformDocument(latestSnapshotRef.current.front), back: transformDocument(latestSnapshotRef.current.back) },
+      `Switch to ${orientation} CR80`,
+    )
+    setSelectedIds([])
+    setZoom(1)
+  }, [commitSnapshot])
+
   useEffect(() => {
     if (!open) return
     const previousOverflow = document.body.style.overflow
@@ -315,7 +344,11 @@ export function AdvancedCardEditor({
     loadEditorBootstrap()
       .then(async (response) => {
         setBootstrap(response)
-        setTemplates(response.templates.length ? response.templates : fallbackTemplates)
+        setTemplates(() => {
+          const remote = response.templates.length ? response.templates : []
+          const remoteKeys = new Set(remote.flatMap((template) => [template.id, template.slug]))
+          return [...remote, ...fallbackTemplates.filter((template) => !remoteKeys.has(template.id) && !remoteKeys.has(template.slug))]
+        })
         setAssets(response.assets)
         if (initialTemplateId) {
           const initialTemplate = response.templates.find((template) => template.id === initialTemplateId)
@@ -1217,7 +1250,7 @@ export function AdvancedCardEditor({
             >
               {leftCollapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
             </button>
-            <span>Drag guides from rulers · Double-click text to edit</span>
+            <span>Drag guides from rulers Â· Double-click text to edit</span>
             <button
               type="button"
               onClick={() => setRightCollapsed((value) => !value)}
@@ -1276,6 +1309,10 @@ export function AdvancedCardEditor({
           />
 
           <div className="t2c-canvas-controls">
+            <div className="t2c-orientation-control" aria-label="Card orientation">
+              <button type="button" className={currentDocument.size.width > currentDocument.size.height ? 'is-active' : ''} onClick={() => changeOrientation('landscape')}>Landscape</button>
+              <button type="button" className={currentDocument.size.height > currentDocument.size.width ? 'is-active' : ''} onClick={() => changeOrientation('portrait')}>Portrait</button>
+            </div>
             <div className="t2c-zoom-control">
               <button
                 type="button"
@@ -1384,10 +1421,10 @@ export function AdvancedCardEditor({
       </div>
 
       <footer className="t2c-editor-statusbar">
-        <span>Business card (horizontal)</span>
-        <span>90 × 50 mm</span>
+        <span>CR80 card ({currentDocument.size.width > currentDocument.size.height ? 'landscape' : 'portrait'})</span>
+        <span>{currentDocument.size.width > currentDocument.size.height ? '86 × 54 mm' : '54 × 86 mm'}</span>
         <span>Bleed: 2 mm</span>
-        <span>Safe area: 84 × 44 mm</span>
+        <span>Safe area: {currentDocument.size.width > currentDocument.size.height ? '80 × 48 mm' : '48 × 80 mm'}</span>
         <span className="t2c-status-action">{lastAction}</span>
         <button
           type="button"

@@ -53,9 +53,10 @@ function cookieValue(name: string) {
   return match ? decodeURIComponent(match.slice(prefix.length)) : ''
 }
 
-async function ensureCsrfToken() {
+async function ensureCsrfToken(forceRefresh = false) {
+  if (forceRefresh) csrfToken = ''
   const cookieToken = cookieValue('csrftoken')
-  if (cookieToken) {
+  if (cookieToken && !forceRefresh) {
     csrfToken = cookieToken
     return csrfToken
   }
@@ -92,11 +93,23 @@ export async function apiFetch<T>(
     headers.set('Content-Type', 'application/json')
   }
 
-  const response = await fetch(url, {
+  const request = () => fetch(url, {
     ...options,
     credentials: 'include',
     headers,
   })
+  let response = await request()
+
+  // A development server restart or switching between localhost and 127.0.0.1
+  // can leave the browser with a stale CSRF token. Refresh it once and retry
+  // unsafe requests before showing an authentication error.
+  const firstContentType = response.headers.get('content-type') ?? ''
+  const isCsrfRejection = response.status === 403 && !firstContentType.includes('application/json')
+  if (isCsrfRejection && !['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+    const token = await ensureCsrfToken(true)
+    if (token) headers.set('X-CSRFToken', token)
+    response = await request()
+  }
   const contentType = response.headers.get('content-type') ?? ''
   const payload = contentType.includes('application/json')
     ? ((await response.json()) as ApiErrorPayload & T)

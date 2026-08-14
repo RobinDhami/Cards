@@ -27,6 +27,13 @@ from .forms import (
 from .models import ProfessionalProfile
 
 
+def legacy_react_response(request, *args, **kwargs):
+    """Retired Django screens now resolve to the React application."""
+    from vcard_backend.react_views import react_app
+
+    return react_app(request)
+
+
 PROFESSION_SUGGESTIONS = [
     'Student',
     'College Student',
@@ -385,7 +392,7 @@ def professional_profile_list(request):
         'active_count': ProfessionalProfile.objects.filter(is_active=True).count(),
         'total_count': ProfessionalProfile.objects.count(),
     }
-    return render(request, 'professional_cards/profile_list.html', context)
+    return legacy_react_response(request, 'professional_cards/profile_list.html', context)
 
 
 @login_required
@@ -416,7 +423,7 @@ def professional_profile_create(request):
     else:
         form = ProfessionalProfileForm(instance=profile)
         formsets = _profile_formsets(profile)
-    return render(request, 'professional_cards/profile_form.html', {
+    return legacy_react_response(request, 'professional_cards/profile_form.html', {
         **_admin_context(),
         'form': form,
         'formsets': formsets,
@@ -449,7 +456,7 @@ def professional_profile_edit(request, pk):
     else:
         form = ProfessionalProfileForm(instance=profile)
         formsets = _profile_formsets(profile)
-    return render(request, 'professional_cards/profile_form.html', {
+    return legacy_react_response(request, 'professional_cards/profile_form.html', {
         **_admin_context(),
         'form': form,
         'formsets': formsets,
@@ -489,7 +496,7 @@ def professional_profile_owner_edit(request, slug):
         form = ProfessionalProfileOwnerForm(instance=profile)
         formsets = _profile_formsets(profile)
 
-    return render(request, 'professional_cards/profile_owner_form.html', {
+    return legacy_react_response(request, 'professional_cards/profile_owner_form.html', {
         **_admin_context(),
         'form': form,
         'formsets': formsets,
@@ -510,7 +517,7 @@ def professional_profile_delete(request, pk):
         profile.delete()
         messages.success(request, 'Professional profile deleted.')
         return redirect('professional_cards:list')
-    return render(request, 'professional_cards/profile_confirm_delete.html', {
+    return legacy_react_response(request, 'professional_cards/profile_confirm_delete.html', {
         **_admin_context(),
         'profile': profile,
     })
@@ -563,7 +570,7 @@ def public_professional_profile(request, slug):
         'modern_identity': 'professional_cards/modern_identity.html',
         'organization_focus': 'professional_cards/organization_focus.html',
     }.get(profile.template_name, 'professional_cards/modern_identity.html')
-    return render(request, template_path, context)
+    return legacy_react_response(request, template_path, context)
 
 
 def _public_profile_payload(request, profile):
@@ -747,7 +754,7 @@ def professional_profile_edit_login(request, slug):
                 return redirect('professional_cards:edit', pk=profile.pk)
             return redirect('professional_cards:owner_edit', slug=profile.slug)
 
-    return render(request, 'professional_cards/profile_edit_login.html', {'profile': profile})
+    return legacy_react_response(request, 'professional_cards/profile_edit_login.html', {'profile': profile})
 
 
 def profession_suggestions_api(request):

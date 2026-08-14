@@ -1,8 +1,8 @@
 import { lazy, Suspense, useState, type CSSProperties } from 'react'
-import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right.mjs'
-import Palette from 'lucide-react/dist/esm/icons/palette.mjs'
-import ScanLine from 'lucide-react/dist/esm/icons/scan-line.mjs'
-import ShieldCheck from 'lucide-react/dist/esm/icons/shield-check.mjs'
+import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right.js'
+import Palette from 'lucide-react/dist/esm/icons/palette.js'
+import ScanLine from 'lucide-react/dist/esm/icons/scan-line.js'
+import ShieldCheck from 'lucide-react/dist/esm/icons/shield-check.js'
 import type { CardFinishId } from '../../features/card-editor/types'
 
 const loadAdvancedCardEditor = () => import('../../features/card-editor/CardEditor')

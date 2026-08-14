@@ -1,49 +1,65 @@
 import { useRef, useState } from 'react'
-import AlignCenter from 'lucide-react/dist/esm/icons/align-center.mjs'
-import AlignHorizontalDistributeCenter from 'lucide-react/dist/esm/icons/align-horizontal-distribute-center.mjs'
-import AlignLeft from 'lucide-react/dist/esm/icons/align-left.mjs'
-import AlignRight from 'lucide-react/dist/esm/icons/align-right.mjs'
-import AlignVerticalDistributeCenter from 'lucide-react/dist/esm/icons/align-vertical-distribute-center.mjs'
-import ArrowDown from 'lucide-react/dist/esm/icons/arrow-down.mjs'
-import ArrowUp from 'lucide-react/dist/esm/icons/arrow-up.mjs'
-import Bold from 'lucide-react/dist/esm/icons/bold.mjs'
-import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left.mjs'
-import Circle from 'lucide-react/dist/esm/icons/circle.mjs'
-import ContactRound from 'lucide-react/dist/esm/icons/contact-round.mjs'
-import Copy from 'lucide-react/dist/esm/icons/copy.mjs'
-import Crop from 'lucide-react/dist/esm/icons/crop.mjs'
-import Eye from 'lucide-react/dist/esm/icons/eye.mjs'
-import EyeOff from 'lucide-react/dist/esm/icons/eye-off.mjs'
-import FlipHorizontal2 from 'lucide-react/dist/esm/icons/flip-horizontal-2.mjs'
-import FlipVertical2 from 'lucide-react/dist/esm/icons/flip-vertical-2.mjs'
-import GripVertical from 'lucide-react/dist/esm/icons/grip-vertical.mjs'
-import Group from 'lucide-react/dist/esm/icons/group.mjs'
-import Image from 'lucide-react/dist/esm/icons/image.mjs'
-import Italic from 'lucide-react/dist/esm/icons/italic.mjs'
-import Layers3 from 'lucide-react/dist/esm/icons/layers-3.mjs'
-import Lock from 'lucide-react/dist/esm/icons/lock.mjs'
-import Mail from 'lucide-react/dist/esm/icons/mail.mjs'
-import MapPin from 'lucide-react/dist/esm/icons/map-pin.mjs'
-import Minus from 'lucide-react/dist/esm/icons/minus.mjs'
-import MoveRight from 'lucide-react/dist/esm/icons/move-right.mjs'
-import Phone from 'lucide-react/dist/esm/icons/phone.mjs'
-import Plus from 'lucide-react/dist/esm/icons/plus.mjs'
-import QrCode from 'lucide-react/dist/esm/icons/qr-code.mjs'
-import RotateCcw from 'lucide-react/dist/esm/icons/rotate-ccw.mjs'
-import Search from 'lucide-react/dist/esm/icons/search.mjs'
-import Shapes from 'lucide-react/dist/esm/icons/shapes.mjs'
-import Square from 'lucide-react/dist/esm/icons/square.mjs'
-import Star from 'lucide-react/dist/esm/icons/star.mjs'
-import Globe2 from 'lucide-react/dist/esm/icons/globe-2.mjs'
-import Sparkles from 'lucide-react/dist/esm/icons/sparkles.mjs'
-import Trash2 from 'lucide-react/dist/esm/icons/trash-2.mjs'
-import Type from 'lucide-react/dist/esm/icons/type.mjs'
-import Underline from 'lucide-react/dist/esm/icons/underline.mjs'
-import Ungroup from 'lucide-react/dist/esm/icons/ungroup.mjs'
-import Unlock from 'lucide-react/dist/esm/icons/unlock.mjs'
-import UploadCloud from 'lucide-react/dist/esm/icons/upload-cloud.mjs'
-import Waves from 'lucide-react/dist/esm/icons/waves.mjs'
-import X from 'lucide-react/dist/esm/icons/x.mjs'
+import AlignCenter from 'lucide-react/dist/esm/icons/align-center.js'
+import AlignHorizontalDistributeCenter from 'lucide-react/dist/esm/icons/align-horizontal-distribute-center.js'
+import AlignLeft from 'lucide-react/dist/esm/icons/align-left.js'
+import AlignRight from 'lucide-react/dist/esm/icons/align-right.js'
+import AlignVerticalDistributeCenter from 'lucide-react/dist/esm/icons/align-vertical-distribute-center.js'
+import ArrowDown from 'lucide-react/dist/esm/icons/arrow-down.js'
+import ArrowUp from 'lucide-react/dist/esm/icons/arrow-up.js'
+import Bold from 'lucide-react/dist/esm/icons/bold.js'
+import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left.js'
+import Circle from 'lucide-react/dist/esm/icons/circle.js'
+import ContactRound from 'lucide-react/dist/esm/icons/contact-round.js'
+import Copy from 'lucide-react/dist/esm/icons/copy.js'
+import Crop from 'lucide-react/dist/esm/icons/crop.js'
+import Eye from 'lucide-react/dist/esm/icons/eye.js'
+import EyeOff from 'lucide-react/dist/esm/icons/eye-off.js'
+import FlipHorizontal2 from 'lucide-react/dist/esm/icons/flip-horizontal-2.js'
+import FlipVertical2 from 'lucide-react/dist/esm/icons/flip-vertical-2.js'
+import GripVertical from 'lucide-react/dist/esm/icons/grip-vertical.js'
+import Group from 'lucide-react/dist/esm/icons/group.js'
+import Image from 'lucide-react/dist/esm/icons/image.js'
+import Italic from 'lucide-react/dist/esm/icons/italic.js'
+import Layers3 from 'lucide-react/dist/esm/icons/layers-3.js'
+import Lock from 'lucide-react/dist/esm/icons/lock.js'
+import Mail from 'lucide-react/dist/esm/icons/mail.js'
+import MapPin from 'lucide-react/dist/esm/icons/map-pin.js'
+import Minus from 'lucide-react/dist/esm/icons/minus.js'
+import MoveRight from 'lucide-react/dist/esm/icons/move-right.js'
+import Phone from 'lucide-react/dist/esm/icons/phone.js'
+import Plus from 'lucide-react/dist/esm/icons/plus.js'
+import QrCode from 'lucide-react/dist/esm/icons/qr-code.js'
+import RotateCcw from 'lucide-react/dist/esm/icons/rotate-ccw.js'
+import Search from 'lucide-react/dist/esm/icons/search.js'
+import Shapes from 'lucide-react/dist/esm/icons/shapes.js'
+import Square from 'lucide-react/dist/esm/icons/square.js'
+import Star from 'lucide-react/dist/esm/icons/star.js'
+import Globe2 from 'lucide-react/dist/esm/icons/globe-2.js'
+import Sparkles from 'lucide-react/dist/esm/icons/sparkles.js'
+import Trash2 from 'lucide-react/dist/esm/icons/trash-2.js'
+import Type from 'lucide-react/dist/esm/icons/type.js'
+import Underline from 'lucide-react/dist/esm/icons/underline.js'
+import Ungroup from 'lucide-react/dist/esm/icons/ungroup.js'
+import Unlock from 'lucide-react/dist/esm/icons/unlock.js'
+import UploadCloud from 'lucide-react/dist/esm/icons/upload-cloud.js'
+import Waves from 'lucide-react/dist/esm/icons/waves.js'
+import X from 'lucide-react/dist/esm/icons/x.js'
+import Smartphone from 'lucide-react/dist/esm/icons/smartphone.js'
+import MessageCircle from 'lucide-react/dist/esm/icons/message-circle.js'
+import Building2 from 'lucide-react/dist/esm/icons/building-2.js'
+import GraduationCap from 'lucide-react/dist/esm/icons/graduation-cap.js'
+import Briefcase from 'lucide-react/dist/esm/icons/briefcase.js'
+import Calendar from 'lucide-react/dist/esm/icons/calendar.js'
+import Clock from 'lucide-react/dist/esm/icons/clock.js'
+import Instagram from 'lucide-react/dist/esm/icons/instagram.js'
+import Facebook from 'lucide-react/dist/esm/icons/facebook.js'
+import Linkedin from 'lucide-react/dist/esm/icons/linkedin.js'
+import Youtube from 'lucide-react/dist/esm/icons/youtube.js'
+import Wifi from 'lucide-react/dist/esm/icons/wifi.js'
+import Share2 from 'lucide-react/dist/esm/icons/share-2.js'
+import Download from 'lucide-react/dist/esm/icons/download.js'
+import Camera from 'lucide-react/dist/esm/icons/camera.js'
+import Heart from 'lucide-react/dist/esm/icons/heart.js'
 import {
   BRAND_COLORS,
   FONT_FAMILIES,
@@ -160,6 +176,26 @@ function EditorIconGlyph({ icon }: { icon: IconType }) {
     website: Globe2,
     mail: Mail,
     telephone: Phone,
+    mobile: Smartphone,
+    whatsapp: MessageCircle,
+    message: MessageCircle,
+    company: Building2,
+    education: GraduationCap,
+    briefcase: Briefcase,
+    calendar: Calendar,
+    clock: Clock,
+    social: ContactRound,
+    instagram: Instagram,
+    facebook: Facebook,
+    linkedin: Linkedin,
+    youtube: Youtube,
+    nfc: Wifi,
+    wifi: Wifi,
+    share: Share2,
+    download: Download,
+    camera: Camera,
+    heart: Heart,
+    star: Star,
   }
   const Icon = icons[icon]
   return <Icon size={28} />
@@ -253,6 +289,7 @@ export function EditorLibraryPanel({
 }: LibraryPanelProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [assetType, setAssetType] = useState('decoration')
+  const [elementSearch, setElementSearch] = useState('')
   const [globalUpload, setGlobalUpload] = useState(false)
   const [search, setSearch] = useState('')
   const [dragLayerIndex, setDragLayerIndex] = useState<number | null>(null)
@@ -334,6 +371,16 @@ export function EditorLibraryPanel({
 
         {tool === 'elements' ? (
           <>
+            <label className="t2c-element-search">
+              <Search size={16} aria-hidden="true" />
+              <input
+                type="search"
+                value={elementSearch}
+                onChange={(event) => setElementSearch(event.target.value)}
+                placeholder="Search icons and elements"
+                aria-label="Search icons and elements"
+              />
+            </label>
             <section className="t2c-library-section">
               <h3>Basic shapes</h3>
               <div className="t2c-shape-grid">
@@ -348,7 +395,9 @@ export function EditorLibraryPanel({
             <section className="t2c-library-section">
               <h3>Contact icons</h3>
               <div className="t2c-shape-grid">
-                {iconChoices.map((icon) => (
+                {iconChoices
+                  .filter((icon) => icon.label.toLowerCase().includes(elementSearch.trim().toLowerCase()))
+                  .map((icon) => (
                   <button type="button" onClick={() => onAddIcon(icon.id)} key={icon.id}>
                     <EditorIconGlyph icon={icon.id} />
                     <span>{icon.label}</span>

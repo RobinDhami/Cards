@@ -31,6 +31,21 @@ class ProfessionalConnectionApiTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertFalse(ProfessionalConnection.objects.exists())
 
+    def test_valid_account_without_professional_profile_gets_card_and_connects(self):
+        account = User.objects.create_user(username='admin-only', password='AdminPass123!')
+
+        response = self.client.post(
+            '/api/professional-profiles/blair-singh/connect/',
+            {'username': account.username, 'password': 'AdminPass123!'},
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 201)
+        profile = ProfessionalProfile.objects.get(owner=account)
+        self.assertEqual(profile.full_name, account.username)
+        self.assertTrue(profile.is_active)
+        self.assertTrue(ProfessionalConnection.objects.filter(requester=profile, recipient=self.blair).exists())
+
     def test_request_creates_recipient_notification_and_accepts(self):
         response = self.client.post(
             '/api/professional-profiles/blair-singh/connect/',

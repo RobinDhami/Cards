@@ -24,7 +24,12 @@ export type ShapeType =
   | 'polygon'
   | 'star'
   | 'corner'
-export type IconType = 'contact' | 'address' | 'website' | 'mail' | 'telephone'
+export type IconType =
+  | 'contact' | 'address' | 'website' | 'mail' | 'telephone'
+  | 'mobile' | 'whatsapp' | 'message' | 'company' | 'education'
+  | 'briefcase' | 'calendar' | 'clock' | 'social' | 'instagram'
+  | 'facebook' | 'linkedin' | 'youtube' | 'nfc' | 'wifi'
+  | 'share' | 'download' | 'camera' | 'heart' | 'star'
 export type DecorationType =
   | 'abstract-waves'
   | 'geometric-pattern'

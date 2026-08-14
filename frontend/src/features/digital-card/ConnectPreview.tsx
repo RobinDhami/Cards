@@ -1,5 +1,5 @@
-import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right.mjs'
-import Users from 'lucide-react/dist/esm/icons/users.mjs'
+import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right.js'
+import Users from 'lucide-react/dist/esm/icons/users.js'
 
 export function ConnectPreview({ onPreview }: { onPreview: () => void }) {
   return (

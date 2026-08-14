@@ -419,6 +419,26 @@ const iconPaths: Record<NonNullable<EditorElement['icon']>, string[]> = {
   telephone: [
     'M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.5-1.1a2 2 0 0 1 2.1-.5c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2Z',
   ],
+  mobile: ['M7 2h10v20H7Z', 'M10 5h4', 'M11 19h2'],
+  whatsapp: ['M20 11.5a8 8 0 0 1-11.8 7L3 20l1.6-5A8 8 0 1 1 20 11.5Z', 'M8 8c1 4 4 7 8 8'],
+  message: ['M4 4h16v13H9l-5 4Z', 'M8 9h8', 'M8 13h5'],
+  company: ['M4 22V6l8-4v20', 'M12 9h8v13', 'M7 8h2M7 12h2M7 16h2M15 13h2M15 17h2'],
+  education: ['M2 9l10-5 10 5-10 5Z', 'M6 12v5c3 2 9 2 12 0v-5', 'M22 9v7'],
+  briefcase: ['M4 7h16v13H4Z', 'M9 7V4h6v3', 'M4 12h16', 'M10 12v2h4v-2'],
+  calendar: ['M4 5h16v16H4Z', 'M8 3v4M16 3v4M4 10h16'],
+  clock: ['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z', 'M12 6v6l4 2'],
+  social: ['M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z', 'M4 22v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2', 'M18 8h4M20 6v4'],
+  instagram: ['M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z', 'M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z', 'M17.5 6.5h.01'],
+  facebook: ['M14 22v-8h3l1-4h-4V8c0-1 1-2 2-2h2V2h-3c-4 0-6 2-6 6v2H6v4h3v8'],
+  linkedin: ['M5 9v12M5 4.5v.01M10 21V9M10 14c1-3 7-4 8 1v6'],
+  youtube: ['M3 7c0-2 1-3 3-3h12c2 0 3 1 3 3v10c0 2-1 3-3 3H6c-2 0-3-1-3-3Z', 'M10 9l6 3-6 3Z'],
+  nfc: ['M7 7c3 3 3 7 0 10', 'M11 4c5 5 5 11 0 16', 'M15 2c7 7 7 13 0 20'],
+  wifi: ['M3 9c5-5 13-5 18 0', 'M6 13c3-3 9-3 12 0', 'M9.5 16.5c1.5-1.5 3.5-1.5 5 0', 'M12 20h.01'],
+  share: ['M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z', 'M8.5 10.5l7-4M8.5 13.5l7 4'],
+  download: ['M12 3v12', 'M7 10l5 5 5-5', 'M4 19h16'],
+  camera: ['M4 7h4l2-3h4l2 3h4v13H4Z', 'M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z'],
+  heart: ['M20.8 5.6c-2-2-5-2-7 0L12 7.4l-1.8-1.8c-2-2-5-2-7 0s-2 5 0 7L12 21l8.8-8.4c2-2 2-5 0-7Z'],
+  star: ['M12 2l3 6 7 .9-5 4.8 1.2 6.8L12 17l-6.2 3.5L7 13.7 2 8.9 9 8Z'],
 }
 
 function IconNode({ element }: { element: EditorElement }) {
@@ -697,14 +717,14 @@ const ElementNode = memo(function ElementNode({
   )
 })
 
-function BackgroundImage({ background }: { background: BackgroundSettings }) {
+function BackgroundImage({ background, width, height }: { background: BackgroundSettings; width: number; height: number }) {
   const [image] = useImage(background.imageUrl || '', 'anonymous')
   if (!image || background.type !== 'image') return null
   return (
     <KonvaImage
       image={image}
-      width={CARD_WIDTH}
-      height={CARD_HEIGHT}
+      width={width}
+      height={height}
       opacity={background.opacity}
     />
   )
@@ -713,24 +733,28 @@ function BackgroundImage({ background }: { background: BackgroundSettings }) {
 function BackgroundLayer({
   background,
   showGrid,
+  width,
+  height,
 }: {
   background: BackgroundSettings
   showGrid: boolean
+  width: number
+  height: number
 }) {
   const angle = (background.gradient.angle * Math.PI) / 180
   const gradientStart = {
-    x: CARD_WIDTH / 2 - Math.cos(angle) * CARD_WIDTH / 2,
-    y: CARD_HEIGHT / 2 - Math.sin(angle) * CARD_HEIGHT / 2,
+    x: width / 2 - Math.cos(angle) * width / 2,
+    y: height / 2 - Math.sin(angle) * height / 2,
   }
   const gradientEnd = {
-    x: CARD_WIDTH / 2 + Math.cos(angle) * CARD_WIDTH / 2,
-    y: CARD_HEIGHT / 2 + Math.sin(angle) * CARD_HEIGHT / 2,
+    x: width / 2 + Math.cos(angle) * width / 2,
+    y: height / 2 + Math.sin(angle) * height / 2,
   }
   return (
     <Layer listening={false}>
       <Rect
-        width={CARD_WIDTH}
-        height={CARD_HEIGHT}
+        width={width}
+        height={height}
         fill={
           background.type === 'transparent'
             ? '#ffffff'
@@ -751,7 +775,7 @@ function BackgroundLayer({
         shadowOpacity={0.16}
         shadowOffsetY={12}
       />
-      <BackgroundImage background={background} />
+      <BackgroundImage background={background} width={width} height={height} />
       {background.type === 'transparent' ? (
         Array.from({ length: 18 }).flatMap((_, column) =>
           Array.from({ length: 10 }).map((__, row) => (
@@ -848,6 +872,8 @@ export const CardCanvas = forwardRef<CardCanvasHandle, CardCanvasProps>(function
     horizontal: [],
     vertical: [],
   })
+  const cardWidth = document.size.width || CARD_WIDTH
+  const cardHeight = document.size.height || CARD_HEIGHT
 
   useImperativeHandle(
     forwardedRef,
@@ -881,13 +907,13 @@ export const CardCanvas = forwardRef<CardCanvasHandle, CardCanvasProps>(function
   }, [document.elements, selectedIds])
 
   const baseScale = useMemo(() => {
-    const widthScale = Math.max(0.28, (containerSize.width - 150) / CARD_WIDTH)
-    const heightScale = Math.max(0.28, (containerSize.height - 170) / CARD_HEIGHT)
+    const widthScale = Math.max(0.28, (containerSize.width - 150) / cardWidth)
+    const heightScale = Math.max(0.28, (containerSize.height - 170) / cardHeight)
     return Math.min(widthScale, heightScale, 1.05)
-  }, [containerSize.height, containerSize.width])
+  }, [cardHeight, cardWidth, containerSize.height, containerSize.width])
   const displayScale = baseScale * zoom
-  const stageWidth = CARD_WIDTH * displayScale
-  const stageHeight = CARD_HEIGHT * displayScale
+  const stageWidth = cardWidth * displayScale
+  const stageHeight = cardHeight * displayScale
 
   const visibleElements = document.elements.filter((element) => element.visible)
 
@@ -910,8 +936,8 @@ export const CardCanvas = forwardRef<CardCanvasHandle, CardCanvasProps>(function
       nextY = Math.round(nextY / 10) * 10
     }
     if (snapToElements) {
-      const verticalCandidates = [0, CARD_WIDTH / 2, CARD_WIDTH]
-      const horizontalCandidates = [0, CARD_HEIGHT / 2, CARD_HEIGHT]
+      const verticalCandidates = [0, cardWidth / 2, cardWidth]
+      const horizontalCandidates = [0, cardHeight / 2, cardHeight]
       document.elements.forEach((candidate) => {
         if (candidate.id === id || !candidate.visible) return
         verticalCandidates.push(
@@ -953,8 +979,8 @@ export const CardCanvas = forwardRef<CardCanvasHandle, CardCanvasProps>(function
       }
     }
     node.position({
-      x: clamp(nextX, -element.width + 12, CARD_WIDTH - 12),
-      y: clamp(nextY, -element.height + 12, CARD_HEIGHT - 12),
+      x: clamp(nextX, -element.width + 12, cardWidth - 12),
+      y: clamp(nextY, -element.height + 12, cardHeight - 12),
     })
     setAlignmentGuides({
       vertical: verticalGuides,
@@ -972,7 +998,7 @@ export const CardCanvas = forwardRef<CardCanvasHandle, CardCanvasProps>(function
           const rect = event.currentTarget.getBoundingClientRect()
           onAddGuide?.(
             'vertical',
-            clamp(((event.clientX - rect.left) / rect.width) * CARD_WIDTH, 0, CARD_WIDTH),
+            clamp(((event.clientX - rect.left) / rect.width) * cardWidth, 0, cardWidth),
           )
         }}
       >
@@ -990,7 +1016,7 @@ export const CardCanvas = forwardRef<CardCanvasHandle, CardCanvasProps>(function
           const rect = event.currentTarget.getBoundingClientRect()
           onAddGuide?.(
             'horizontal',
-            clamp(((event.clientY - rect.top) / rect.height) * CARD_HEIGHT, 0, CARD_HEIGHT),
+            clamp(((event.clientY - rect.top) / rect.height) * cardHeight, 0, cardHeight),
           )
         }}
       >
@@ -1025,7 +1051,7 @@ export const CardCanvas = forwardRef<CardCanvasHandle, CardCanvasProps>(function
             })
           }}
         >
-          <BackgroundLayer background={document.background} showGrid={showGrid} />
+          <BackgroundLayer background={document.background} showGrid={showGrid} width={cardWidth} height={cardHeight} />
           <Layer>
             {visibleElements.map((element) => (
               <ElementNode
@@ -1110,8 +1136,8 @@ export const CardCanvas = forwardRef<CardCanvasHandle, CardCanvasProps>(function
               <Rect
                 x={SAFE_MARGIN}
                 y={SAFE_MARGIN}
-                width={CARD_WIDTH - SAFE_MARGIN * 2}
-                height={CARD_HEIGHT - SAFE_MARGIN * 2}
+                width={cardWidth - SAFE_MARGIN * 2}
+                height={cardHeight - SAFE_MARGIN * 2}
                 stroke="#2563eb"
                 strokeWidth={1.5}
                 dash={[7, 6]}
@@ -1123,8 +1149,8 @@ export const CardCanvas = forwardRef<CardCanvasHandle, CardCanvasProps>(function
               <Rect
                 x={2}
                 y={2}
-                width={CARD_WIDTH - 4}
-                height={CARD_HEIGHT - 4}
+                width={cardWidth - 4}
+                height={cardHeight - 4}
                 stroke="#ef4444"
                 strokeWidth={1.5}
                 dash={[8, 6]}
@@ -1136,13 +1162,13 @@ export const CardCanvas = forwardRef<CardCanvasHandle, CardCanvasProps>(function
               <Line
                 key={`manual-v-${index}`}
                 x={guide}
-                points={[0, 0, 0, CARD_HEIGHT]}
+                points={[0, 0, 0, cardHeight]}
                 stroke="#06b6d4"
                 strokeWidth={3}
                 hitStrokeWidth={14}
                 draggable
                 dragBoundFunc={(position) => ({
-                  x: clamp(position.x, 0, CARD_WIDTH),
+                  x: clamp(position.x, 0, cardWidth),
                   y: 0,
                 })}
                 onDragEnd={(event) =>
@@ -1154,14 +1180,14 @@ export const CardCanvas = forwardRef<CardCanvasHandle, CardCanvasProps>(function
               <Line
                 key={`manual-h-${index}`}
                 y={guide}
-                points={[0, 0, CARD_WIDTH, 0]}
+                points={[0, 0, cardWidth, 0]}
                 stroke="#06b6d4"
                 strokeWidth={3}
                 hitStrokeWidth={14}
                 draggable
                 dragBoundFunc={(position) => ({
                   x: 0,
-                  y: clamp(position.y, 0, CARD_HEIGHT),
+                  y: clamp(position.y, 0, cardHeight),
                 })}
                 onDragEnd={(event) =>
                   onMoveGuide?.('horizontal', index, event.target.y())
@@ -1171,7 +1197,7 @@ export const CardCanvas = forwardRef<CardCanvasHandle, CardCanvasProps>(function
             {alignmentGuides.vertical.map((guide, index) => (
               <Line
                 key={`snap-v-${index}`}
-                points={[guide, 0, guide, CARD_HEIGHT]}
+                points={[guide, 0, guide, cardHeight]}
                 stroke="#06b6d4"
                 strokeWidth={2}
                 listening={false}
@@ -1180,7 +1206,7 @@ export const CardCanvas = forwardRef<CardCanvasHandle, CardCanvasProps>(function
             {alignmentGuides.horizontal.map((guide, index) => (
               <Line
                 key={`snap-h-${index}`}
-                points={[0, guide, CARD_WIDTH, guide]}
+                points={[0, guide, cardWidth, guide]}
                 stroke="#06b6d4"
                 strokeWidth={2}
                 listening={false}

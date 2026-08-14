@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import Minus from 'lucide-react/dist/esm/icons/minus.mjs'
-import Plus from 'lucide-react/dist/esm/icons/plus.mjs'
+import Minus from 'lucide-react/dist/esm/icons/minus.js'
+import Plus from 'lucide-react/dist/esm/icons/plus.js'
 
 const faqItems = [
   {

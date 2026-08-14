@@ -9,11 +9,11 @@ importers:
   .:
     dependencies:
       konva:
-        specifier: 10.0.12
-        version: 10.0.12
+        specifier: 9.3.22
+        version: 9.3.22
       lucide-react:
-        specifier: ^1.27.0
-        version: 1.27.0(react@19.2.8)
+        specifier: ^0.468.0
+        version: 0.468.0(react@19.2.8)
       qrcode:
         specifier: 1.5.4
         version: 1.5.4
@@ -25,7 +25,7 @@ importers:
         version: 19.2.8(react@19.2.8)
       react-konva:
         specifier: 19.2.5
-        version: 19.2.5(@types/react@19.2.17)(konva@10.0.12)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 19.2.5(@types/react@19.2.17)(konva@9.3.22)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       use-image:
         specifier: 1.1.4
         version: 1.1.4(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -405,8 +405,8 @@ packages:
     peerDependencies:
       react: ^19.0.0
 
-  konva@10.0.12:
-    resolution: {integrity: sha512-DHmkeG5FbW6tLCkbMQTi1ihWycfzljrn0V7umUUuewxx7aoINcI71ksgBX9fTPNXhlsK4/JoMgKwI/iCde+BRw==}
+  konva@9.3.22:
+    resolution: {integrity: sha512-yQI5d1bmELlD/fowuyfOp9ff+oamg26WOCkyqUyc+nczD/lhRa3EvD2MZOoc4c1293TAubW9n34fSQLgSeEgSw==}
 
   lightningcss-android-arm64@1.33.0:
     resolution: {integrity: sha512-gEpRTalKdosp4Bb8qWtc2iOgE5SeIHlpS1up9bFq2wAyYhl1UdTObYiHe98zEM9SQvSoqQZ1IQD0JNpg3Ml5pg==}
@@ -486,10 +486,10 @@ packages:
     resolution: {integrity: sha512-t7hw9pI+WvuwNJXwk5zVHpyhIqzg2qTlklJOf0mVxGSbe3Fp2VieZcduNYjaLDoy6p9uGpQEGWG87WpMKlNq8g==}
     engines: {node: '>=8'}
 
-  lucide-react@1.27.0:
-    resolution: {integrity: sha512-rJicGl/3Fly/E0rOH1YmPZ6e49JCnKknh1ox1vpHnkfjujAkKA6sqUZvH3MTAaXXjgexyUwgNwTJzTtYuAFYJw==}
+  lucide-react@0.468.0:
+    resolution: {integrity: sha512-6koYRhnM2N0GGZIdXzSeiNwguv1gt/FAjZOiPl76roBi3xKEXa4WmfpxgQwTTL4KipXjefrnf3oV4IsYhi4JFA==}
     peerDependencies:
-      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0-rc
 
   nanoid@3.3.16:
     resolution: {integrity: sha512-bzlKTyNJ7+LdGIIwy8ijFpIqEQIvafahV7eYykJ8Cvh42EdJeODoJ6gUJXpQJvej1BddH8OqTXZNE/KfbWAu8Q==}
@@ -901,7 +901,7 @@ snapshots:
     transitivePeerDependencies:
       - '@types/react'
 
-  konva@10.0.12: {}
+  konva@9.3.22: {}
 
   lightningcss-android-arm64@1.33.0:
     optional: true
@@ -956,7 +956,7 @@ snapshots:
     dependencies:
       p-locate: 4.1.0
 
-  lucide-react@1.27.0(react@19.2.8):
+  lucide-react@0.468.0(react@19.2.8):
     dependencies:
       react: 19.2.8
 
@@ -1019,11 +1019,11 @@ snapshots:
       react: 19.2.8
       scheduler: 0.27.0
 
-  react-konva@19.2.5(@types/react@19.2.17)(konva@10.0.12)(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+  react-konva@19.2.5(@types/react@19.2.17)(konva@9.3.22)(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
       '@types/react-reconciler': 0.33.0(@types/react@19.2.17)
       its-fine: 2.0.0(@types/react@19.2.17)(react@19.2.8)
-      konva: 10.0.12
+      konva: 9.3.22
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
       react-reconciler: 0.33.0(react@19.2.8)

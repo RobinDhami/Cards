@@ -44,6 +44,8 @@ if DEBUG:
     CSRF_TRUSTED_ORIGINS.extend([
         "http://127.0.0.1:5173",
         "http://localhost:5173",
+        "http://127.0.0.1:5174",
+        "http://localhost:5174",
     ])
 # Application definition
 
@@ -59,7 +61,6 @@ INSTALLED_APPS = [
     'vcards',
     'professional_cards',
     'card_designer',
-    'shops',
     'rest_framework',
     'corsheaders',
     'tailwind',
@@ -95,10 +96,7 @@ ROOT_URLCONF = 'vcard_backend.urls'
 TEMPLATES = [
 {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            BASE_DIR / 'vcards' / 'Templates',
-            BASE_DIR / 'theme' / 'templates',
-        ],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

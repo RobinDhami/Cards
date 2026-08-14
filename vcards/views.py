@@ -45,6 +45,13 @@ from .models import (
     StudentCard,
 )
 
+
+def legacy_react_response(request, *args, **kwargs):
+    """Retired Django screens now resolve to the React application."""
+    from vcard_backend.react_views import react_app
+
+    return react_app(request)
+
 CONTACT_TEMPLATES = {
     'general': ['student_digital_card.html'],
     'vip': ['student_digital_card.html'],
@@ -1128,7 +1135,7 @@ def _build_pdf_response(cards, print_mode, filename):
 
 def home(request):
     site_url = _site_root_url(request)
-    return render(request, 'home.html', {
+    return legacy_react_response(request, 'home.html', {
         'seo_title': 'Tap2Connect Nepal | NFC Digital Business Cards & Smart ID Cards',
         'seo_description': (
             'Tap2Connect Nepal creates NFC business cards, QR digital profiles, smart school ID cards, '
@@ -1307,14 +1314,14 @@ def dashboard_login(request):
                     login(request, user)
                     return redirect('professional_cards:owner_edit', slug=professional_profile.slug)
                 messages.error(request, 'This account does not have dashboard access.')
-                return render(request, 'auth/login.html')
+                return legacy_react_response(request, 'auth/login.html')
             login(request, user)
             owned_profile = _get_owned_profile(user)
             if owned_profile and role in {'student', 'teacher'}:
                 request.session[_student_edit_session_key(owned_profile.id)] = True
                 return redirect('student_owner_dashboard', student_id=owned_profile.id)
             return redirect('admin_dashboard')
-    return render(request, 'auth/login.html')
+    return legacy_react_response(request, 'auth/login.html')
 
 
 @login_required
@@ -1675,7 +1682,7 @@ def print_card_preview(request, student_id):
         'nfc_url': _build_public_contact_url(request, student),
         'qr_code_url': reverse('print_qr_code', args=[student.id]),
     }
-    return render(request, 'print/preview.html', context)
+    return legacy_react_response(request, 'print/preview.html', context)
 
 
 @login_required
@@ -1699,7 +1706,7 @@ def admin_dashboard(request):
         **_school_dashboard_context(request, 'home', school, schools),
         'analytics': analytics,
     }
-    return render(request, 'dashboard/home.html', context)
+    return legacy_react_response(request, 'dashboard/home.html', context)
 
 
 def _dashboard_school_payload(school):
@@ -1798,7 +1805,6 @@ def dashboard_overview_api(request):
     if is_super_admin:
         nav_items.extend([
             {'key': 'professional_cards', 'label': 'Professional Cards', 'href': reverse('professional_cards:list'), 'icon': 'badge-check'},
-            {'key': 'business_suite', 'label': 'Business Suite', 'href': reverse('business_suite'), 'icon': 'briefcase-business'},
         ])
     nav_items.extend([
         {'key': 'reports', 'label': 'Reports', 'href': f"{reverse('dashboard_reports')}{nav_school_query}", 'icon': 'bar-chart-3'},
@@ -1856,7 +1862,7 @@ def dashboard_schools(request):
         ).count(),
         'admin_count': College.objects.exclude(admin_user=None).count(),
     }
-    return render(request, 'dashboard/schools.html', context)
+    return legacy_react_response(request, 'dashboard/schools.html', context)
 
 
 @login_required
@@ -1883,7 +1889,7 @@ def dashboard_students(request):
         'student_username_prefix': _school_username_prefix(school),
         'academic_level_choices': [{'value': value, 'label': label} for value, label in ACADEMIC_LEVEL_CHOICES],
     }
-    return render(request, 'dashboard/students.html', context)
+    return legacy_react_response(request, 'dashboard/students.html', context)
 
 
 @login_required
@@ -1927,7 +1933,7 @@ def dashboard_teachers(request):
         'admin_count': admin_count,
         'other_count': other_count,
     }
-    return render(request, 'dashboard/teachers.html', context)
+    return legacy_react_response(request, 'dashboard/teachers.html', context)
 
 
 @login_required
@@ -1971,7 +1977,7 @@ def dashboard_reports(request):
         'top_profiles': top_profiles,
         'recent_activities': recent_activities.select_related('student')[:8],
     }
-    return render(request, 'dashboard/reports.html', context)
+    return legacy_react_response(request, 'dashboard/reports.html', context)
 
 
 @login_required
@@ -2026,7 +2032,7 @@ def dashboard_settings(request):
         'admin_username': school.admin_user.username if school.admin_user else '',
         'effective_student_username_prefix': _school_username_prefix(school),
     }
-    return render(request, 'dashboard/settings.html', context)
+    return legacy_react_response(request, 'dashboard/settings.html', context)
 
 
 @login_required
@@ -2132,7 +2138,7 @@ def dashboard_bulk_upload(request):
         'college': school,
         'upload_summary': upload_summary,
     }
-    return render(request, 'dashboard/bulk_upload.html', context)
+    return legacy_react_response(request, 'dashboard/bulk_upload.html', context)
 
 
 @login_required
@@ -2190,7 +2196,7 @@ def dashboard_print(request):
         'preview_card': preview_card,
         'preview_label': preview_label,
     }
-    return render(request, 'dashboard/print.html', context)
+    return legacy_react_response(request, 'dashboard/print.html', context)
 
 
 @login_required
@@ -2217,7 +2223,7 @@ def dashboard_qr_export(request):
         'sections': _unique_sections_for_school(school),
         'academic_level_choices': [{'value': value, 'label': label} for value, label in ACADEMIC_LEVEL_CHOICES],
     }
-    return render(request, 'dashboard/qr_export.html', context)
+    return legacy_react_response(request, 'dashboard/qr_export.html', context)
 
 
 @login_required
@@ -2250,7 +2256,7 @@ def dashboard_print_preview(request):
         'print_options': options,
         'selected_ids': [member.id for member in members],
     }
-    return render(request, template_name, context)
+    return legacy_react_response(request, template_name, context)
 
 
 @login_required
@@ -2369,7 +2375,7 @@ def edit_student_auth(request, student_id):
             messages.success(request, 'Login successful. You can now manage this profile.')
             return redirect(next_url or reverse('student_owner_dashboard', args=[student.id]))
         messages.error(request, 'Invalid username or password.')
-    return render(request, 'edit_student_auth.html', {'student': student, 'next_url': next_url})
+    return legacy_react_response(request, 'edit_student_auth.html', {'student': student, 'next_url': next_url})
 
 
 def logout_student_edit(request, student_id):
@@ -2431,7 +2437,7 @@ def student_credentials(request, student_id):
             messages.success(request, f'Login credentials updated for {student.name}.')
             return redirect(f"{reverse('student_credentials', args=[student.id])}{_build_dashboard_query(student.college)}")
 
-    return render(request, 'dashboard/student_credentials.html', {
+    return legacy_react_response(request, 'dashboard/student_credentials.html', {
         **_school_dashboard_context(request, 'students', student.college, College.objects.order_by('name')),
         'student': student,
         'suggested_username': suggested_username,
@@ -2582,7 +2588,7 @@ def student_owner_dashboard(request, student_id):
         'contact_template_label': CONTACT_TEMPLATE_META['student_digital_card.html']['label'],
         'print_template_label': _get_print_template_label(student),
     }
-    return render(request, 'student_owner_dashboard.html', context)
+    return legacy_react_response(request, 'student_owner_dashboard.html', context)
 
 
 @login_required
@@ -2654,7 +2660,7 @@ def delete_college(request, college_id):
         college.delete()
         messages.success(request, "College deleted successfully!")
         return redirect('admin_dashboard')
-    return render(request, 'confirm_delete_college.html', {'college': college})
+    return legacy_react_response(request, 'confirm_delete_college.html', {'college': college})
 
 
 @login_required
@@ -2723,7 +2729,7 @@ def add_student_to_college(request, college_id):
         else:
             messages.success(request, f'{member_type.title()} added successfully. This profile is managed by the school admin.')
         return redirect('college_details', college_id=college.id)
-    return render(request, 'add_student_to_college.html', {
+    return legacy_react_response(request, 'add_student_to_college.html', {
         'college': college,
         'skills': skills,
         'school_role_choices': SCHOOL_ROLE_CHOICES,
@@ -2751,7 +2757,7 @@ def send_profile_message(request, id):
 def student_digital_contact_card(request, student_id):
     student = get_object_or_404(StudentProfile, pk=student_id)
     if not student.show_contact_card and not _can_manage_profile(request.user, student):
-        return render(
+        return legacy_react_response(
             request,
             'contact/student_digital_card.html',
             {'profile_unavailable': True},
@@ -2761,7 +2767,7 @@ def student_digital_contact_card(request, student_id):
     student.views += 1
     student.save(update_fields=['views'])
     _log_profile_activity(student, 'view', 'student-digital-card')
-    return render(request, 'contact/student_digital_card.html', _school_card_context(request, student))
+    return legacy_react_response(request, 'contact/student_digital_card.html', _school_card_context(request, student))
 
 
 def contact_card(request, student_id):
@@ -2955,7 +2961,7 @@ def edit_student_manual(request, student_id):
         messages.success(request, 'Profile settings updated successfully.')
         return redirect('contact_card', student_id=student.id)
 
-    return render(request, 'edit_student_manual.html', {
+    return legacy_react_response(request, 'edit_student_manual.html', {
         'student': student,
         'contact_templates': contact_templates,
         'portfolio_templates': portfolio_templates,

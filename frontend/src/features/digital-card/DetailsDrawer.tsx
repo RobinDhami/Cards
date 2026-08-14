@@ -1,5 +1,5 @@
-import Edit3 from 'lucide-react/dist/esm/icons/edit-3.mjs'
-import X from 'lucide-react/dist/esm/icons/x.mjs'
+import Edit3 from 'lucide-react/dist/esm/icons/edit-3.js'
+import X from 'lucide-react/dist/esm/icons/x.js'
 import { useEffect } from 'react'
 import { ButtonLink } from '../../design-system/Button'
 import { IconButton } from '../../design-system/IconButton'

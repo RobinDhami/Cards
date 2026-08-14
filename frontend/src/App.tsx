@@ -17,8 +17,6 @@ import {
   StudentOwnerDashboard,
 } from './pages/students/StudentWorkspace'
 import { SchoolDashboardRouter } from './pages/school/SchoolDashboard'
-import { ShopDashboardRouter } from './pages/shop/ShopDashboard'
-import { StorefrontApp } from './pages/storefront/StorefrontApp'
 import { MigrationNeededPage } from './pages/migration/MigrationNeededPage'
 
 const CardEditorPage = lazy(() =>
@@ -43,31 +41,8 @@ const schoolDashboardRoutes = [
   /^\/dashboard\/student\/\d+\/credentials\/?$/,
 ]
 
-const shopOwnerRoutes = [
-  /^\/shop\/[^/]+\/owner\/?$/,
-  /^\/shop\/[^/]+\/owner\/orders\/?$/,
-  /^\/shop\/[^/]+\/owner\/products\/?$/,
-  /^\/shop\/[^/]+\/owner\/products\/new\/?$/,
-  /^\/shop\/[^/]+\/owner\/categories\/?$/,
-  /^\/shop\/[^/]+\/owner\/customers\/?$/,
-  /^\/shop\/[^/]+\/owner\/discounts\/?$/,
-  /^\/shop\/[^/]+\/owner\/website\/?$/,
-]
-
-const storefrontRoutes = [
-  /^\/shop\/[^/]+\/?$/,
-  /^\/shop\/[^/]+\/products\/?$/,
-  /^\/shop\/[^/]+\/product\/[^/]+\/?$/,
-  /^\/shop\/[^/]+\/category\/[^/]+\/?$/,
-  /^\/shop\/[^/]+\/cart\/?$/,
-  /^\/shop\/[^/]+\/checkout\/?$/,
-  /^\/shop\/[^/]+\/order-success\/[^/]+\/?$/,
-  /^\/shop\/[^/]+\/track-order\/?$/,
-]
-
 const oldProjectRoutesNeedingMigration = [
   /^\/profile\/\d+\/?$/,
-  /^\/dashboard\/business-suite\/?$/,
   /^\/dashboard\/create\/?$/,
   /^\/dashboard\/college_details\/\d+\/?$/,
   /^\/dashboard\/edit_college\/\d+\/?$/,
@@ -79,16 +54,6 @@ const oldProjectRoutesNeedingMigration = [
   /^\/bulk-upload\/?$/,
   /^\/dashboard\/college\/\d+\/add_student\/?$/,
   /^\/ai-chat\/?$/,
-  /^\/shop\/[^/]+\/owner\/marketing\/?$/,
-  /^\/shop\/[^/]+\/owner\/reports\/?$/,
-  /^\/shop\/[^/]+\/owner\/staff\/?$/,
-  /^\/shop\/[^/]+\/owner\/billing\/?$/,
-  /^\/shop\/[^/]+\/owner\/settings\/?$/,
-  /^\/shop\/[^/]+\/owner\/support\/?$/,
-  /^\/shop\/[^/]+\/owner\/inventory\/?$/,
-  /^\/shop\/[^/]+\/owner\/payments\/verify\/?$/,
-  /^\/shop\/[^/]+\/owner\/notifications\/?$/,
-  /^\/shop\/[^/]+\/owner\/store-preview\/?$/,
 ]
 
 function App() {
@@ -167,21 +132,12 @@ function App() {
     return <SchoolDashboardRouter />
   }
 
-  if (routeMatches(path, shopOwnerRoutes)) {
-    return <ShopDashboardRouter />
-  }
-
-  if (routeMatches(path, storefrontRoutes)) {
-    return <StorefrontApp />
-  }
-
   if (routeMatches(path, oldProjectRoutesNeedingMigration)) {
     return <MigrationNeededPage />
   }
 
   if (
     path.startsWith('/dashboard/')
-    || path.startsWith('/shop/')
     || path.startsWith('/student/')
     || path.startsWith('/profile/')
     || path.startsWith('/p/')

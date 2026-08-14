@@ -1,17 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
-import BadgeCheck from 'lucide-react/dist/esm/icons/badge-check.mjs'
-import BriefcaseBusiness from 'lucide-react/dist/esm/icons/briefcase-business.mjs'
-import Eye from 'lucide-react/dist/esm/icons/eye.mjs'
-import LayoutDashboard from 'lucide-react/dist/esm/icons/layout-dashboard.mjs'
-import Pencil from 'lucide-react/dist/esm/icons/pencil.mjs'
-import Plus from 'lucide-react/dist/esm/icons/plus.mjs'
-import Save from 'lucide-react/dist/esm/icons/save.mjs'
-import Search from 'lucide-react/dist/esm/icons/search.mjs'
-import Trash2 from 'lucide-react/dist/esm/icons/trash-2.mjs'
-import UserRound from 'lucide-react/dist/esm/icons/user-round.mjs'
-import Users from 'lucide-react/dist/esm/icons/users.mjs'
-import X from 'lucide-react/dist/esm/icons/x.mjs'
+import BadgeCheck from 'lucide-react/dist/esm/icons/badge-check.js'
+import BriefcaseBusiness from 'lucide-react/dist/esm/icons/briefcase-business.js'
+import Eye from 'lucide-react/dist/esm/icons/eye.js'
+import LayoutDashboard from 'lucide-react/dist/esm/icons/layout-dashboard.js'
+import Pencil from 'lucide-react/dist/esm/icons/pencil.js'
+import Plus from 'lucide-react/dist/esm/icons/plus.js'
+import Save from 'lucide-react/dist/esm/icons/save.js'
+import Search from 'lucide-react/dist/esm/icons/search.js'
+import Trash2 from 'lucide-react/dist/esm/icons/trash-2.js'
+import UserRound from 'lucide-react/dist/esm/icons/user-round.js'
+import Users from 'lucide-react/dist/esm/icons/users.js'
+import X from 'lucide-react/dist/esm/icons/x.js'
 import {
   Field,
   FileInput,
@@ -22,6 +22,7 @@ import {
   Toggle,
 } from '../../components/manage/FormControls'
 import { ManageShell } from '../../components/manage/ManageShell'
+import { schoolWorkspaceNav } from '../school/schoolWorkspaceNav'
 import {
   ApiError,
   apiFetch,
@@ -230,6 +231,35 @@ const professionalNav = [
   { label: 'Professional cards', href: '/dashboard/professional-cards/', icon: BriefcaseBusiness, active: true },
 ]
 
+function useWorkspaceIdentity() {
+  const [identity, setIdentity] = useState({
+    isSuperuser: false,
+    role: 'Professional account',
+    displayName: 'Account',
+  })
+
+  useEffect(() => {
+    let current = true
+    apiFetch<{ user: { isSuperuser: boolean; displayName: string; username: string } }>('/api/session/')
+      .then(({ user }) => {
+        if (current) setIdentity({
+          isSuperuser: user.isSuperuser,
+          role: user.isSuperuser ? 'Super Admin' : 'Professional account',
+          displayName: user.displayName || user.username || 'Account',
+        })
+      })
+      .catch(() => undefined)
+    return () => {
+      current = false
+    }
+  }, [])
+
+  return {
+    ...identity,
+    nav: identity.isSuperuser ? schoolWorkspaceNav(undefined, true) : professionalNav,
+  }
+}
+
 function fieldString(value: string | number | boolean | File | null | undefined) {
   if (value instanceof File) return value.name
   return value === null || value === undefined ? '' : String(value)
@@ -299,6 +329,7 @@ function RepeatRow({
 }
 
 export function ProfessionalProfileList() {
+  const workspace = useWorkspaceIdentity()
   const [profiles, setProfiles] = useState<ProfessionalListItem[]>([])
   const [counts, setCounts] = useState({ total: 0, active: 0 })
   const [query, setQuery] = useState(new URLSearchParams(window.location.search).get('q') ?? '')
@@ -349,10 +380,11 @@ export function ProfessionalProfileList() {
       brand="Tap2Connect"
       brandDetail="Professional profiles"
       logo="/static/branding/tap2connect-logo.png"
-      nav={professionalNav}
+      nav={workspace.nav}
       title="Professional Cards"
       subtitle={`${counts.active} active of ${counts.total} profiles`}
-      userRole="Platform workspace"
+      userName={workspace.displayName}
+      userRole={workspace.role}
       accent="#0f766e"
       actions={(
         <a className="manage-button is-primary" href="/dashboard/professional-cards/add/">
@@ -450,6 +482,7 @@ function sanitizeCollection(rows: CollectionRow[]) {
 }
 
 export function ProfessionalProfileEditor() {
+  const workspace = useWorkspaceIdentity()
   const route = useProfessionalRoute()
   const [fields, setFields] = useState({ ...defaultFields })
   const [options, setOptions] = useState(defaultOptions)
@@ -619,11 +652,11 @@ export function ProfessionalProfileEditor() {
         { label: 'Profile editor', href: window.location.pathname, icon: UserRound, active: true },
         { label: 'Public profile', href: publicUrl || `/p/${route.slug}/`, icon: Eye },
         { label: 'Connections', href: '/connections/', icon: Users },
-      ] : professionalNav}
+      ] : workspace.nav}
       title={ownerLabel}
       subtitle={completion ? `${completion.percent}% complete · ${completion.suggestion}` : 'Build a complete digital professional identity'}
-      userName={fieldString(fields.full_name) || 'Profile editor'}
-      userRole={route.isOwner ? 'Profile owner' : 'Platform workspace'}
+      userName={route.isOwner ? fieldString(fields.full_name) || 'Profile editor' : workspace.displayName}
+      userRole={route.isOwner ? 'Profile owner' : workspace.role}
       accent={fieldString(fields.accent_color) || '#0f766e'}
       actions={publicUrl ? (
         <a className="manage-button" href={publicUrl} target="_blank" rel="noreferrer">
@@ -899,6 +932,7 @@ export function ProfessionalProfileEditor() {
 }
 
 export function ProfessionalProfileDelete() {
+  const workspace = useWorkspaceIdentity()
   const match = window.location.pathname.match(/professional-cards\/(\d+)\/delete/)
   const id = Number(match?.[1] ?? 0)
   const [profile, setProfile] = useState<ProfessionalDetail | null>(null)
@@ -926,9 +960,11 @@ export function ProfessionalProfileDelete() {
     <ManageShell
       brand="Tap2Connect"
       brandDetail="Professional profiles"
-      nav={professionalNav}
+      nav={workspace.nav}
       title="Delete Professional Card"
       subtitle="Review the profile before permanently removing it"
+      userName={workspace.displayName}
+      userRole={workspace.role}
       accent="#0f766e"
     >
       <section className="professional-delete-card manage-card">
