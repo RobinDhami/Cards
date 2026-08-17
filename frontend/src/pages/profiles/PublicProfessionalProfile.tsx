@@ -709,30 +709,6 @@ function DetailsTrigger({
   )
 }
 
-function FeaturedCta({ action }: { action: PublicAction | null }) {
-  if (!action) {
-    return null
-  }
-  const Icon = actionIcons[action.icon] ?? LinkIcon
-  return (
-    <a
-      className={`profile-featured-cta ${action.brand_class}`}
-      href={actionHref(action.href)}
-      target={action.external ? '_blank' : undefined}
-      rel={action.external ? 'noopener noreferrer' : undefined}
-    >
-      <span className="profile-featured-cta-icon">
-        <Icon size={20} aria-hidden="true" />
-      </span>
-      <span className="profile-featured-cta-copy">
-        <small>Primary action</small>
-        <strong>{action.label}</strong>
-      </span>
-      <ChevronRight size={18} aria-hidden="true" />
-    </a>
-  )
-}
-
 type ConnectResponse = {
   state: 'pending' | 'accepted' | 'received'
   message: string
@@ -1081,14 +1057,12 @@ function OrganizationTemplate({ data, showToast }: { data: PublicProfileData; sh
       <Intro>{profile.about || profile.shortTagline || profile.organizationTagline}</Intro>
       <Services services={data.services} title="What We Provide" />
       <SocialLinks actions={data.actions.extra} variant="organization" />
-      <FeaturedCta action={data.actions.featuredCta} />
       <DetailsTrigger
         label="View business details"
         description="Brand contact, useful links and business documents"
         onClick={() => setDetailsOpen(true)}
       />
       <ConnectFlow profile={profile} showToast={showToast} />
-      <Footer profile={profile} variant="organization" />
       <DetailsDrawer data={data} open={detailsOpen} onClose={() => setDetailsOpen(false)} />
     </>
   )

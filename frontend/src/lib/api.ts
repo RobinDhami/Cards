@@ -44,6 +44,23 @@ export function backendHref(href: string) {
 let csrfToken = ''
 let csrfRequest: Promise<string> | null = null
 
+function responseFallbackMessage(status: number) {
+  if ([502, 503, 504].includes(status)) {
+    return 'The backend server is unavailable. Start Django on port 8000 and try again.'
+  }
+  return `Request failed with status ${status}.`
+}
+
+async function readJsonPayload<T>(response: Response): Promise<T | null> {
+  const text = await response.text()
+  if (!text.trim()) return null
+  try {
+    return JSON.parse(text) as T
+  } catch {
+    throw new ApiError('The server returned an invalid response. Please try again.', response.status)
+  }
+}
+
 function cookieValue(name: string) {
   const prefix = `${name}=`
   const match = document.cookie
@@ -66,8 +83,14 @@ async function ensureCsrfToken(forceRefresh = false) {
       headers: { Accept: 'application/json' },
     })
       .then(async (response) => {
-        const payload = await response.json()
-        csrfToken = payload.csrfToken ?? cookieValue('csrftoken')
+        const contentType = response.headers.get('content-type') ?? ''
+        const payload = contentType.includes('application/json')
+          ? await readJsonPayload<{ csrfToken?: string; message?: string }>(response)
+          : null
+        if (!response.ok) {
+          throw new ApiError(payload?.message ?? responseFallbackMessage(response.status), response.status)
+        }
+        csrfToken = payload?.csrfToken ?? cookieValue('csrftoken')
         return csrfToken
       })
       .finally(() => {
@@ -112,12 +135,12 @@ export async function apiFetch<T>(
   }
   const contentType = response.headers.get('content-type') ?? ''
   const payload = contentType.includes('application/json')
-    ? ((await response.json()) as ApiErrorPayload & T)
+    ? await readJsonPayload<ApiErrorPayload & T>(response)
     : null
 
   if (!response.ok) {
     throw new ApiError(
-      payload?.message ?? `Request failed with status ${response.status}.`,
+      payload?.message ?? responseFallbackMessage(response.status),
       response.status,
       payload?.errors,
     )
