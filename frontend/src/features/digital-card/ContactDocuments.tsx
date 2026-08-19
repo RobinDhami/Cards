@@ -15,11 +15,11 @@ type ContactDocumentsProps = {
 
 export function ContactDocuments({ profile, onOpenDetails }: ContactDocumentsProps) {
   return (
-    <ProfileSection className="digital-card-documents" title="Documents">
+    <ProfileSection className="digital-card-documents" title="Contact & details">
       <div className="digital-card-rows">
         <a className="digital-card-row" href={backendHref(profile.actions.vcard)}>
           <span className="digital-card-row__icon"><FileText size={20} aria-hidden="true" /></span>
-          <strong>Save contact<small>Download vCard</small></strong>
+          <strong>Save contact<small>Add {profile.name.split(' ')[0]} to your contacts</small></strong>
           <Download size={19} aria-hidden="true" />
         </a>
         {profile.actions.birthCertificate ? (
@@ -31,7 +31,7 @@ export function ContactDocuments({ profile, onOpenDetails }: ContactDocumentsPro
         ) : null}
         <button className="digital-card-row" type="button" onClick={onOpenDetails}>
           <span className="digital-card-row__icon"><UserRound size={20} aria-hidden="true" /></span>
-          <strong>View complete details<small>School, identity, and contact information</small></strong>
+          <strong>View details<small>School, identity, and contact information</small></strong>
           <ChevronRight size={19} aria-hidden="true" />
         </button>
       </div>

@@ -32,7 +32,7 @@ export function SocialLinks({ socials }: { socials: PublicStudent['socials'] }) 
   if (socials.length === 0) return null
 
   return (
-    <ProfileSection className="digital-card-socials" title="Find me online">
+    <ProfileSection className="digital-card-socials" title="Social profiles">
       <div className="digital-card-socials__row">
         {socials.map((social) => {
           const Icon = socialIcons[social.key] ?? Globe2
