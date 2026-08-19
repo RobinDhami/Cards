@@ -31,6 +31,20 @@ class ProfessionalConnectionApiTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertFalse(ProfessionalConnection.objects.exists())
 
+    def test_signed_in_profile_sends_request_without_reentering_credentials(self):
+        self.client.force_login(self.alex_user)
+
+        response = self.client.post(
+            '/api/professional-profiles/blair-singh/connect/',
+            {},
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(
+            ProfessionalConnection.objects.filter(requester=self.alex, recipient=self.blair).exists()
+        )
+
     def test_valid_account_without_professional_profile_gets_card_and_connects(self):
         account = User.objects.create_user(username='admin-only', password='AdminPass123!')
 
@@ -82,6 +96,7 @@ class ProfessionalConnectionApiTests(TestCase):
         connections_response = self.client.get('/api/connections/')
         self.assertEqual(connections_response.status_code, 200)
         self.assertEqual(connections_response.json()['connections'][0]['person']['fullName'], 'Blair Singh')
+        self.assertIn('phone', connections_response.json()['connections'][0]['person'])
 
     def test_recipient_can_reject_request(self):
         connection = ProfessionalConnection.objects.create(requester=self.alex, recipient=self.blair)

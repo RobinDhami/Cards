@@ -583,6 +583,7 @@ def _connection_profile_payload(profile):
         'fullName': profile.full_name,
         'profession': profile.designation or profile.profession,
         'organization': profile.company_name or profile.work_organization,
+        'phone': profile.phone,
         'photoUrl': _file_url(profile.profile_photo),
         'initials': (profile.full_name[:2] or 'P').upper(),
         'publicUrl': profile.public_url_path,
@@ -627,12 +628,15 @@ def professional_connection_request_api(request, slug):
     payload = _json_body(request)
     username = str(payload.get('username') or '').strip()
     password = str(payload.get('password') or '')
-    if not username or not password:
-        return _json_error('Enter your Connection ID and password.')
-
-    user = authenticate(request, username=username, password=password)
-    if user is None:
-        return _json_error('Invalid Connection ID or password.')
+    used_cached_session = request.user.is_authenticated and not username and not password
+    if used_cached_session:
+        user = request.user
+    else:
+        if not username or not password:
+            return _json_error('Verify your Connection ID to continue.', status=401)
+        user = authenticate(request, username=username, password=password)
+        if user is None:
+            return _json_error('Invalid Connection ID or password.')
     requester = _connection_profile_for(user)
     if requester.pk == recipient.pk:
         return _json_error('You cannot send a connection request to your own profile.')
@@ -643,7 +647,8 @@ def professional_connection_request_api(request, slug):
             | Q(requester=recipient, recipient=requester)
         ).first()
         if existing and existing.status == ProfessionalConnection.STATUS_ACCEPTED:
-            login(request, user)
+            if not used_cached_session:
+                login(request, user)
             return JsonResponse({
                 'ok': True,
                 'state': 'accepted',
@@ -651,7 +656,8 @@ def professional_connection_request_api(request, slug):
                 'connectionsUrl': '/connections/',
             })
         if existing and existing.status == ProfessionalConnection.STATUS_PENDING:
-            login(request, user)
+            if not used_cached_session:
+                login(request, user)
             if existing.recipient_id == requester.id:
                 message = f'{recipient.full_name} has already sent you a request. Open Connections to respond.'
                 state = 'received'
@@ -677,7 +683,8 @@ def professional_connection_request_api(request, slug):
                 recipient=recipient,
             )
 
-    login(request, user)
+    if not used_cached_session:
+        login(request, user)
     return JsonResponse({
         'ok': True,
         'state': connection.status,

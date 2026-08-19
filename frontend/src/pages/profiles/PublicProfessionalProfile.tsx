@@ -42,7 +42,7 @@ import Sparkles from 'lucide-react/dist/esm/icons/sparkles.js'
 import UserPlus from 'lucide-react/dist/esm/icons/user-plus.js'
 import Users from 'lucide-react/dist/esm/icons/users.js'
 import X from 'lucide-react/dist/esm/icons/x.js'
-import { apiFetch, appHref, backendHref, displayError, jsonBody } from '../../lib/api'
+import { ApiError, apiFetch, appHref, backendHref, displayError, jsonBody } from '../../lib/api'
 import './PublicProfessionalProfile.css'
 
 type LucideIcon = ComponentType<SVGProps<SVGSVGElement> & { size?: number }>
@@ -717,64 +717,77 @@ type ConnectResponse = {
 
 function ConnectFlow({ profile, showToast }: { profile: PublicProfile; showToast: (message: string) => void }) {
   const [open, setOpen] = useState(false)
-  const [username, setUsername] = useState('')
+  const [username, setUsername] = useState(() => window.localStorage.getItem('t2c.connection-id.v1') ?? '')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState<ConnectResponse | null>(null)
+  const firstName = profile.fullName.split(' ')[0] || profile.fullName
 
   function close() {
     if (submitting) return
     setOpen(false)
     setError('')
+    setResult(null)
   }
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  async function sendRequest(credentials?: { username: string; password: string }) {
     if (submitting) return
     setSubmitting(true)
     setError('')
     try {
       const response = await apiFetch<ConnectResponse>(`/api/professional-profiles/${profile.slug}/connect/`, {
         method: 'POST',
-        body: jsonBody({ username, password }),
+        body: jsonBody(credentials ?? {}),
       })
       setResult(response)
       setPassword('')
+      if (credentials?.username) {
+        window.localStorage.setItem('t2c.connection-id.v1', credentials.username)
+      }
+      setOpen(true)
       showToast(response.message)
     } catch (reason) {
-      setError(displayError(reason))
+      if (!credentials && reason instanceof ApiError && reason.status === 401) {
+        setResult(null)
+        setOpen(true)
+      } else {
+        setError(displayError(reason))
+        setOpen(true)
+      }
     } finally {
       setSubmitting(false)
     }
   }
 
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    void sendRequest({ username, password })
+  }
+
   return (
     <>
-      <button className="profile-connect-soon" type="button" onClick={() => setOpen(true)} aria-describedby="profile-connect-status">
-        <span className="profile-connect-main">
-          <span className="profile-connect-art">
-            <Users size={25} aria-hidden="true" />
-          </span>
+      <section className="profile-connect-soon" aria-labelledby="profile-connect-heading">
+        <div className="profile-connect-main">
+          <span className="profile-connect-art"><Users size={25} aria-hidden="true" /></span>
           <span className="profile-connect-copy">
-            <strong>Let&apos;s Connect</strong>
-            <span>Add {profile.fullName} to your professional network with a verified request.</span>
+            <strong id="profile-connect-heading">Grow your network</strong>
+            <span>Connect with {firstName} through a verified Tap2Connect request.</span>
           </span>
-        </span>
-        <span className="profile-connect-steps" id="profile-connect-status">
-          <span><b>1</b> Open profile</span>
-          <span><b>2</b> Verify your ID</span>
-          <span><b>3</b> Send request</span>
-        </span>
-        <span className="profile-connect-status">
+        </div>
+        <button className="profile-connect-action" type="button" onClick={() => void sendRequest()} disabled={submitting}>
+          <ShieldCheck size={18} aria-hidden="true" />
+          {submitting ? 'Checking your ID...' : `Connect with ${firstName}`}
+        </button>
+        <p className="profile-connect-cache"><Sparkles size={15} aria-hidden="true" />Already signed in? Your request sends instantly.</p>
+        <p className="profile-connect-status" id="profile-connect-status">
           <Bell size={15} aria-hidden="true" />
-          {profile.fullName} will be notified and can accept or reject your request.
-        </span>
-        <span className="profile-connect-action">
-          Connect now
-          <ChevronRight size={17} aria-hidden="true" />
-        </span>
-      </button>
+          {firstName} will be notified and can add you back.
+        </p>
+        <a className="profile-connect-link" href={appHref('/connections/')}>
+          View my connections <ChevronRight size={16} aria-hidden="true" />
+        </a>
+      </section>
 
       {open ? (
         <div className="profile-connect-modal" role="presentation" onMouseDown={(event) => {
