@@ -171,6 +171,11 @@ const identityFields: FieldConfig[] = [
   { key: 'industry', label: 'Industry / field', placeholder: 'Education, Technology, Finance' },
 ]
 
+const organizationIdentityFields: FieldConfig[] = [
+  ...identityFields,
+  { key: 'organization_tagline', label: 'Organization tagline' },
+]
+
 const headerFields: FieldConfig[] = [
   { key: 'organization_tagline', label: 'Organization tagline' },
   { key: 'brand_name', label: 'Personal brand name' },
@@ -642,6 +647,7 @@ export function ProfessionalProfileEditor() {
   const ownerLabel = route.isOwner ? 'My Professional Card' : (profileId ? 'Edit Professional Card' : 'Create Professional Card')
   const lookingFor = new Set(fieldString(fields.looking_for).split(',').filter(Boolean))
   const isOrganizationTemplate = fieldString(fields.template_name) === 'organization_focus'
+  const mainIdentityFields = isOrganizationTemplate ? organizationIdentityFields : identityFields
 
   return (
     <ManageShell
@@ -685,7 +691,7 @@ export function ProfessionalProfileEditor() {
                 </SelectInput>
               </Field>
             ) : null}
-            {identityFields.map((config) => (
+            {mainIdentityFields.map((config) => (
               <ConfiguredField
                 key={config.key}
                 config={config}
@@ -706,26 +712,31 @@ export function ProfessionalProfileEditor() {
           <div className="professional-file-grid">
             <FileInput label="Profile photo" currentUrl={fieldString(fields.profile_photo)} accept="image/*" onChange={(file) => setFiles((current) => ({ ...current, profile_photo: file }))} />
             <FileInput label="Cover photo" currentUrl={fieldString(fields.cover_photo)} accept="image/*" onChange={(file) => setFiles((current) => ({ ...current, cover_photo: file }))} />
+            {isOrganizationTemplate ? (
+              <FileInput label="Organization logo" currentUrl={fieldString(fields.organization_logo)} accept="image/*" onChange={(file) => setFiles((current) => ({ ...current, organization_logo: file }))} />
+            ) : null}
           </div>
         </FormSection>
 
-        <FormSection
-          title="Header identity"
-          description={isOrganizationTemplate ? 'Use this area for the organization logo, name, and tagline.' : 'Choose which organization or brand identity appears above the profile.'}
-        >
-          <div className="form-grid">
-            <Field label="Header style">
-              <SelectInput value={fieldString(fields.header_identity)} onChange={(event) => updateField('header_identity', event.target.value)}>
-                {options.headerIdentities.map((choice) => <option value={choice.value} key={choice.value}>{choice.label}</option>)}
-              </SelectInput>
-            </Field>
-            {headerFields.map((config) => <ConfiguredField key={config.key} config={config} fields={fields} errors={fieldErrors} onChange={updateField} />)}
-          </div>
-          <div className="professional-file-grid">
-            <FileInput label="Organization logo" currentUrl={fieldString(fields.organization_logo)} accept="image/*" onChange={(file) => setFiles((current) => ({ ...current, organization_logo: file }))} />
-            <FileInput label="Personal logo" currentUrl={fieldString(fields.personal_logo)} accept="image/*" onChange={(file) => setFiles((current) => ({ ...current, personal_logo: file }))} />
-          </div>
-        </FormSection>
+        {!isOrganizationTemplate ? (
+          <FormSection
+            title="Header identity"
+            description="Choose which organization or brand identity appears above the profile."
+          >
+            <div className="form-grid">
+              <Field label="Header style">
+                <SelectInput value={fieldString(fields.header_identity)} onChange={(event) => updateField('header_identity', event.target.value)}>
+                  {options.headerIdentities.map((choice) => <option value={choice.value} key={choice.value}>{choice.label}</option>)}
+                </SelectInput>
+              </Field>
+              {headerFields.map((config) => <ConfiguredField key={config.key} config={config} fields={fields} errors={fieldErrors} onChange={updateField} />)}
+            </div>
+            <div className="professional-file-grid">
+              <FileInput label="Organization logo" currentUrl={fieldString(fields.organization_logo)} accept="image/*" onChange={(file) => setFiles((current) => ({ ...current, organization_logo: file }))} />
+              <FileInput label="Personal logo" currentUrl={fieldString(fields.personal_logo)} accept="image/*" onChange={(file) => setFiles((current) => ({ ...current, personal_logo: file }))} />
+            </div>
+          </FormSection>
+        ) : null}
 
         {!isOrganizationTemplate ? (
           <>
