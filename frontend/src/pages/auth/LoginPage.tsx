@@ -38,7 +38,7 @@ export function LoginPage() {
     <main className="auth-page">
       <header className="auth-topbar">
         <a href="/" className="auth-logo" aria-label="Tap2Connect home">
-          <span><img src="/static/branding/tap2connect-logo.png" alt="Tap2Connect" /></span>
+          <span><img src="/static/branding/tap2connect-logo-official.png" alt="Tap2Connect" /></span>
         </a>
         <a className="auth-top-action" href="/">Back to website</a>
       </header>

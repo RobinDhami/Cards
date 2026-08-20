@@ -250,10 +250,12 @@ class ProfessionalConnection(models.Model):
     STATUS_PENDING = 'pending'
     STATUS_ACCEPTED = 'accepted'
     STATUS_REJECTED = 'rejected'
+    STATUS_BLOCKED = 'blocked'
     STATUS_CHOICES = [
         (STATUS_PENDING, 'Pending'),
         (STATUS_ACCEPTED, 'Accepted'),
         (STATUS_REJECTED, 'Rejected'),
+        (STATUS_BLOCKED, 'Blocked'),
     ]
 
     requester = models.ForeignKey(
@@ -267,6 +269,13 @@ class ProfessionalConnection(models.Model):
         related_name='received_connection_requests',
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    blocked_by = models.ForeignKey(
+        ProfessionalProfile,
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        related_name='blocked_connections',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     responded_at = models.DateTimeField(blank=True, null=True)

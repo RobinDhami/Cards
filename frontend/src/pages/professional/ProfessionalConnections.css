@@ -73,7 +73,7 @@
 
 .connections-tabs {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   margin: 22px 24px 0;
   overflow: hidden;
   border: 1px solid #dbe4f0;
@@ -304,6 +304,44 @@
   box-shadow: 0 7px 17px rgba(14, 41, 104, 0.07);
 }
 
+.connection-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.connection-manage-action {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid #d7e1ef;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 0 10px;
+  color: #53627a;
+  font: inherit;
+  font-size: 9.5px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.connection-manage-action:hover {
+  border-color: #9fb1cb;
+  color: #1734dd;
+}
+
+.connection-manage-action.is-block {
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.connection-manage-action:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
 .connection-pending {
   display: inline-flex;
   align-items: center;
@@ -383,12 +421,24 @@
   .connection-response-actions button {
     flex: 1;
   }
+
+  .connection-person-row {
+    grid-template-columns: 1fr;
+  }
+
+  .connection-row-actions {
+    padding-left: 69px;
+  }
+
+  .connection-manage-action {
+    flex: 1;
+  }
 }
 
 @media (max-width: 390px) {
   .connections-tabs button {
     gap: 4px;
-    font-size: 10px;
+    font-size: 9px;
   }
 
   .connections-person-copy strong {

@@ -114,7 +114,7 @@ export function DigitalContactCard({ profile }: { profile: PublicStudent }) {
           </div>
           <div className="digital-card-footer__powered">
             <span>Powered by</span>
-            <img src="/static/branding/tap2connect-logo.png" alt="Tap2Connect" />
+            <img src="/static/branding/tap2connect-logo-official.png" alt="Tap2Connect" />
           </div>
         </footer>
       </article>

@@ -1051,7 +1051,7 @@ export function AdvancedCardEditor({
     >
       <header className="t2c-editor-topbar">
         <div className="t2c-editor-topbar-left">
-          <img src="/static/branding/tap2connect-logo.png" alt="Tap2Connect" />
+          <img src="/static/branding/tap2connect-logo-official.png" alt="Tap2Connect" />
           <div className="t2c-side-switch" aria-label="Card side">
             <button
               type="button"

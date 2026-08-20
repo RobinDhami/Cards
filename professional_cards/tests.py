@@ -121,3 +121,77 @@ class ProfessionalConnectionApiTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertFalse(ProfessionalConnection.objects.exists())
+
+    def test_either_person_can_remove_an_accepted_connection(self):
+        connection = ProfessionalConnection.objects.create(
+            requester=self.alex,
+            recipient=self.blair,
+            status=ProfessionalConnection.STATUS_ACCEPTED,
+        )
+        self.client.force_login(self.alex_user)
+
+        response = self.client.post(
+            f'/api/connections/{connection.id}/manage/',
+            {'action': 'remove'},
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(ProfessionalConnection.objects.exists())
+
+    def test_block_hides_connection_from_both_sides_and_prevents_reconnecting(self):
+        connection = ProfessionalConnection.objects.create(
+            requester=self.alex,
+            recipient=self.blair,
+            status=ProfessionalConnection.STATUS_ACCEPTED,
+        )
+        self.client.force_login(self.alex_user)
+
+        response = self.client.post(
+            f'/api/connections/{connection.id}/manage/',
+            {'action': 'block'},
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        connection.refresh_from_db()
+        self.assertEqual(connection.status, ProfessionalConnection.STATUS_BLOCKED)
+        self.assertEqual(connection.blocked_by, self.alex)
+        alex_connections = self.client.get('/api/connections/').json()
+        self.assertEqual(alex_connections['connections'], [])
+        self.assertEqual(len(alex_connections['blocked']), 1)
+
+        self.client.force_login(self.blair_user)
+        blair_connections = self.client.get('/api/connections/').json()
+        self.assertEqual(blair_connections['connections'], [])
+        self.assertEqual(blair_connections['blocked'], [])
+        reconnect_response = self.client.post(
+            '/api/professional-profiles/alex-carter/connect/',
+            {},
+            content_type='application/json',
+        )
+        self.assertEqual(reconnect_response.status_code, 403)
+
+    def test_blocking_person_can_unblock_and_connect_again_later(self):
+        connection = ProfessionalConnection.objects.create(
+            requester=self.alex,
+            recipient=self.blair,
+            status=ProfessionalConnection.STATUS_BLOCKED,
+            blocked_by=self.alex,
+        )
+        self.client.force_login(self.alex_user)
+
+        response = self.client.post(
+            f'/api/connections/{connection.id}/manage/',
+            {'action': 'unblock'},
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(ProfessionalConnection.objects.exists())
+        reconnect_response = self.client.post(
+            '/api/professional-profiles/blair-singh/connect/',
+            {},
+            content_type='application/json',
+        )
+        self.assertEqual(reconnect_response.status_code, 201)

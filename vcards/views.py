@@ -308,7 +308,7 @@ def _static_absolute_url(request, path):
 
 def _home_schema(request):
     site_url = _site_root_url(request)
-    logo_url = _static_absolute_url(request, 'branding/tap2connect-logo.png')
+    logo_url = _static_absolute_url(request, 'branding/tap2connect-logo-official.png')
     return {
         '@context': 'https://schema.org',
         '@graph': [
@@ -1146,7 +1146,7 @@ def home(request):
             'QR business card Nepal, smart ID card Nepal, school ID card Nepal, contactless card Nepal'
         ),
         'canonical_url': site_url,
-        'og_image_url': _static_absolute_url(request, 'branding/tap2connect-logo.png'),
+        'og_image_url': _static_absolute_url(request, 'branding/tap2connect-logo-official.png'),
         'home_schema_json': json.dumps(_home_schema(request), separators=(',', ':')),
     })
 

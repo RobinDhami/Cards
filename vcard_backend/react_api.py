@@ -646,6 +646,8 @@ def professional_connection_request_api(request, slug):
             Q(requester=requester, recipient=recipient)
             | Q(requester=recipient, recipient=requester)
         ).first()
+        if existing and existing.status == ProfessionalConnection.STATUS_BLOCKED:
+            return _json_error('This connection is unavailable.', status=403)
         if existing and existing.status == ProfessionalConnection.STATUS_ACCEPTED:
             if not used_cached_session:
                 login(request, user)
@@ -674,8 +676,9 @@ def professional_connection_request_api(request, slug):
             existing.requester = requester
             existing.recipient = recipient
             existing.status = ProfessionalConnection.STATUS_PENDING
+            existing.blocked_by = None
             existing.responded_at = None
-            existing.save(update_fields=['requester', 'recipient', 'status', 'responded_at', 'updated_at'])
+            existing.save(update_fields=['requester', 'recipient', 'status', 'blocked_by', 'responded_at', 'updated_at'])
             connection = existing
         else:
             connection = ProfessionalConnection.objects.create(
@@ -700,6 +703,7 @@ def _serialize_connection(connection, owned_profile_ids):
         'id': connection.id,
         'status': connection.status,
         'direction': 'incoming' if is_incoming else 'outgoing',
+        'blockedByCurrentUser': connection.blocked_by_id in owned_profile_ids,
         'createdAt': connection.created_at.isoformat(),
         'updatedAt': connection.updated_at.isoformat(),
         'person': _connection_profile_payload(other),
@@ -727,14 +731,21 @@ def professional_connections_api(request):
     received = [item for item in serialized if item['status'] == 'pending' and item['direction'] == 'incoming']
     sent = [item for item in serialized if item['status'] == 'pending' and item['direction'] == 'outgoing']
     accepted = [item for item in serialized if item['status'] == 'accepted']
+    blocked = [
+        item for item in serialized
+        if item['status'] == 'blocked' and item['blockedByCurrentUser']
+    ]
     return JsonResponse({
         'ok': True,
         'profile': _connection_profile_payload(profiles[0]),
         'notifications': received,
         'pendingSent': sent,
         'connections': accepted,
+        'blocked': blocked,
         'notificationCount': len(received),
     })
+
+
 @require_http_methods(['POST'])
 def professional_connection_response_api(request, connection_id):
     login_error = _require_login(request)
@@ -757,8 +768,9 @@ def professional_connection_response_api(request, connection_id):
         if action == 'accept'
         else ProfessionalConnection.STATUS_REJECTED
     )
+    connection.blocked_by = None
     connection.responded_at = timezone.now()
-    connection.save(update_fields=['status', 'responded_at', 'updated_at'])
+    connection.save(update_fields=['status', 'blocked_by', 'responded_at', 'updated_at'])
     return JsonResponse({
         'ok': True,
         'status': connection.status,
@@ -768,6 +780,63 @@ def professional_connection_response_api(request, connection_id):
             else f'You declined {connection.requester.full_name}\'s request.'
         ),
     })
+
+
+@require_http_methods(['POST'])
+def professional_connection_manage_api(request, connection_id):
+    login_error = _require_login(request)
+    if login_error:
+        return login_error
+    profile_ids = set(_profiles_owned_by(request.user).values_list('id', flat=True))
+    if not profile_ids:
+        return _json_error('This account does not have an active professional profile.', status=403)
+    connection = get_object_or_404(
+        ProfessionalConnection.objects.select_related('requester', 'recipient'),
+        Q(requester_id__in=profile_ids) | Q(recipient_id__in=profile_ids),
+        pk=connection_id,
+    )
+    action = str(_json_body(request).get('action') or '').strip().lower()
+    other = connection.recipient if connection.requester_id in profile_ids else connection.requester
+
+    if action == 'remove':
+        if connection.status != ProfessionalConnection.STATUS_ACCEPTED:
+            return _json_error('Only accepted connections can be removed.')
+        connection.delete()
+        return JsonResponse({
+            'ok': True,
+            'message': f'{other.full_name} was removed from your connections.',
+        })
+
+    if action == 'block':
+        if connection.status != ProfessionalConnection.STATUS_ACCEPTED:
+            return _json_error('Only accepted connections can be blocked.')
+        blocking_profile = (
+            connection.requester
+            if connection.requester_id in profile_ids
+            else connection.recipient
+        )
+        connection.status = ProfessionalConnection.STATUS_BLOCKED
+        connection.blocked_by = blocking_profile
+        connection.responded_at = timezone.now()
+        connection.save(update_fields=['status', 'blocked_by', 'responded_at', 'updated_at'])
+        return JsonResponse({
+            'ok': True,
+            'message': f'{other.full_name} was blocked and removed from both connection lists.',
+        })
+
+    if action == 'unblock':
+        if (
+            connection.status != ProfessionalConnection.STATUS_BLOCKED
+            or connection.blocked_by_id not in profile_ids
+        ):
+            return _json_error('You cannot unblock this connection.', status=403)
+        connection.delete()
+        return JsonResponse({
+            'ok': True,
+            'message': f'{other.full_name} was unblocked. You can connect again later.',
+        })
+
+    return _json_error('Choose remove, block, or unblock.')
 
 
 def _student_fields(student):

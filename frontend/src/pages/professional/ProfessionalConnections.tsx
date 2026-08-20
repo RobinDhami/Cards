@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left.js'
+import Ban from 'lucide-react/dist/esm/icons/ban.js'
 import Bell from 'lucide-react/dist/esm/icons/bell.js'
 import Check from 'lucide-react/dist/esm/icons/check.js'
 import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right.js'
 import Clock3 from 'lucide-react/dist/esm/icons/clock-3.js'
 import Phone from 'lucide-react/dist/esm/icons/phone.js'
+import ShieldOff from 'lucide-react/dist/esm/icons/shield-off.js'
+import Trash2 from 'lucide-react/dist/esm/icons/trash-2.js'
 import Users from 'lucide-react/dist/esm/icons/users.js'
 import X from 'lucide-react/dist/esm/icons/x.js'
 import { apiFetch, displayError, jsonBody } from '../../lib/api'
@@ -24,8 +27,9 @@ type ConnectionPerson = {
 
 type ConnectionItem = {
   id: number
-  status: 'pending' | 'accepted'
+  status: 'pending' | 'accepted' | 'blocked'
   direction: 'incoming' | 'outgoing'
+  blockedByCurrentUser: boolean
   createdAt: string
   updatedAt: string
   notification: string
@@ -37,12 +41,13 @@ type ConnectionsPayload = {
   notifications: ConnectionItem[]
   pendingSent: ConnectionItem[]
   connections: ConnectionItem[]
+  blocked: ConnectionItem[]
   notificationCount: number
 }
 
-type ConnectionTab = 'requests' | 'connections' | 'sent'
+type ConnectionTab = 'requests' | 'connections' | 'sent' | 'blocked'
 
-const tabKeys = new Set<ConnectionTab>(['requests', 'connections', 'sent'])
+const tabKeys = new Set<ConnectionTab>(['requests', 'connections', 'sent', 'blocked'])
 
 function initialTab(): ConnectionTab {
   const tab = new URLSearchParams(window.location.search).get('tab') as ConnectionTab | null
@@ -67,19 +72,44 @@ function PersonCopy({ person }: { person: ConnectionPerson }) {
   )
 }
 
-function ConnectionRow({ connection }: { connection: ConnectionItem }) {
+function ConnectionRow({
+  connection,
+  managing,
+  onManage,
+}: {
+  connection: ConnectionItem
+  managing: boolean
+  onManage: (connection: ConnectionItem, action: 'remove' | 'block' | 'unblock') => void
+}) {
   const { person } = connection
+  const isBlocked = connection.status === 'blocked'
   return (
     <article className="connection-person-row">
       <a className="connection-person-link" href={person.publicUrl}>
         <Avatar person={person} />
         <PersonCopy person={person} />
       </a>
-      {person.phone ? (
-        <a className="connection-call" href={`tel:${person.phone}`} aria-label={`Call ${person.fullName}`} title={`Call ${person.fullName}`}>
-          <Phone size={19} aria-hidden="true" />
-        </a>
-      ) : null}
+      <div className="connection-row-actions">
+        {!isBlocked && person.phone ? (
+          <a className="connection-call" href={`tel:${person.phone}`} aria-label={`Call ${person.fullName}`} title={`Call ${person.fullName}`}>
+            <Phone size={19} aria-hidden="true" />
+          </a>
+        ) : null}
+        {isBlocked ? (
+          <button className="connection-manage-action" type="button" disabled={managing} onClick={() => onManage(connection, 'unblock')}>
+            <ShieldOff size={15} />Unblock
+          </button>
+        ) : (
+          <>
+            <button className="connection-manage-action" type="button" disabled={managing} onClick={() => onManage(connection, 'remove')}>
+              <Trash2 size={15} />Remove
+            </button>
+            <button className="connection-manage-action is-block" type="button" disabled={managing} onClick={() => onManage(connection, 'block')}>
+              <Ban size={15} />Block
+            </button>
+          </>
+        )}
+      </div>
     </article>
   )
 }
@@ -91,6 +121,7 @@ export function ProfessionalConnections() {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [respondingId, setRespondingId] = useState<number | null>(null)
+  const [managingId, setManagingId] = useState<number | null>(null)
 
   const loadConnections = useCallback(async () => {
     setLoading(true)
@@ -135,6 +166,31 @@ export function ProfessionalConnections() {
     }
   }
 
+  async function manageConnection(connection: ConnectionItem, action: 'remove' | 'block' | 'unblock') {
+    if (managingId !== null) return
+    const confirmation = action === 'block'
+      ? `Block ${connection.person.fullName}? You will disappear from each other's connection lists and neither of you can reconnect until you unblock them.`
+      : action === 'remove'
+        ? `Remove ${connection.person.fullName} from both connection lists? You can reconnect later.`
+        : `Unblock ${connection.person.fullName}? Either of you will be able to send a new connection request.`
+    if (!window.confirm(confirmation)) return
+    setManagingId(connection.id)
+    setMessage('')
+    setError('')
+    try {
+      const response = await apiFetch<{ message: string }>(`/api/connections/${connection.id}/manage/`, {
+        method: 'POST',
+        body: jsonBody({ action }),
+      })
+      setMessage(response.message)
+      await loadConnections()
+    } catch (reason) {
+      setError(displayError(reason))
+    } finally {
+      setManagingId(null)
+    }
+  }
+
   if (loading && !data) return <div className="manage-state">Loading connections...</div>
 
   if (!data) {
@@ -153,6 +209,7 @@ export function ProfessionalConnections() {
     { key: 'requests', label: 'Requests', count: data.notificationCount },
     { key: 'connections', label: 'Connections', count: data.connections.length },
     { key: 'sent', label: 'Sent', count: data.pendingSent.length },
+    { key: 'blocked', label: 'Blocked', count: data.blocked.length },
   ]
 
   return (
@@ -205,7 +262,7 @@ export function ProfessionalConnections() {
               <section className="connections-view connections-preview" aria-labelledby="connections-preview-title">
                 <header><div><h2 id="connections-preview-title">Your connections</h2><p>Call directly or open a profile.</p></div><span>{data.connections.length}</span></header>
                 <div className="connections-list is-people">
-                  {data.connections.slice(0, 3).map((connection) => <ConnectionRow connection={connection} key={connection.id} />)}
+                  {data.connections.slice(0, 3).map((connection) => <ConnectionRow connection={connection} managing={managingId === connection.id} onManage={manageConnection} key={connection.id} />)}
                 </div>
                 <button className="connections-view-all" type="button" onClick={() => chooseTab('connections')}>View all connections <ChevronRight size={16} /></button>
               </section>
@@ -220,7 +277,7 @@ export function ProfessionalConnections() {
               <div className="connections-empty"><Users size={23} /><strong>No connections yet</strong><span>Connect from someone&apos;s public profile to get started.</span></div>
             ) : (
               <div className="connections-list is-people">
-                {data.connections.map((connection) => <ConnectionRow connection={connection} key={connection.id} />)}
+                {data.connections.map((connection) => <ConnectionRow connection={connection} managing={managingId === connection.id} onManage={manageConnection} key={connection.id} />)}
               </div>
             )}
           </section>
@@ -242,6 +299,19 @@ export function ProfessionalConnections() {
                     <span className="connection-pending"><Clock3 size={13} />Pending</span>
                   </article>
                 ))}
+              </div>
+            )}
+          </section>
+        ) : null}
+
+        {activeTab === 'blocked' ? (
+          <section className="connections-view" aria-labelledby="blocked-connections-title">
+            <header><div><h2 id="blocked-connections-title">Blocked people</h2><p>Blocked people cannot reconnect with you and do not see you in their connections.</p></div><span>{data.blocked.length}</span></header>
+            {data.blocked.length === 0 ? (
+              <div className="connections-empty"><Ban size={23} /><strong>No blocked people</strong><span>People you block will appear here for you only.</span></div>
+            ) : (
+              <div className="connections-list is-people">
+                {data.blocked.map((connection) => <ConnectionRow connection={connection} managing={managingId === connection.id} onManage={manageConnection} key={connection.id} />)}
               </div>
             )}
           </section>

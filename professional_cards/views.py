@@ -193,6 +193,32 @@ def _looking_for_labels(profile):
 
 
 def _profile_completion(profile):
+    service_count = profile.services.count()
+    if profile.template_name == 'organization_focus':
+        checks = [
+            bool(profile.organization_logo),
+            bool(profile.company_name),
+            bool(profile.organization_tagline),
+            bool(profile.industry),
+            bool(profile.about or profile.short_tagline),
+            service_count >= 3,
+            bool(profile.phone or profile.whatsapp_number or profile.email),
+            bool(profile.website or profile.linkedin_url or profile.facebook_url or profile.instagram_url),
+        ]
+        completed = sum(1 for item in checks if item)
+        percent = round((completed / len(checks)) * 100)
+        if not profile.organization_logo:
+            suggestion = 'Add the organization logo used by this template.'
+        elif not profile.company_name or not profile.organization_tagline:
+            suggestion = 'Complete the organization name and tagline.'
+        elif service_count < 3:
+            suggestion = 'Add at least three organization offerings.'
+        elif not profile.phone and not profile.whatsapp_number and not profile.email:
+            suggestion = 'Add one business contact method.'
+        else:
+            suggestion = 'Your organization profile has the key details visitors need.'
+        return {'percent': percent, 'suggestion': suggestion}
+
     checks = [
         bool(profile.profile_photo),
         bool(profile.full_name),
@@ -201,7 +227,7 @@ def _profile_completion(profile):
         bool(profile.company_name or profile.academic_institution),
         bool(profile.location),
         bool(profile.current_status),
-        profile.services.count() >= 3,
+        service_count >= 3,
         bool(profile.about),
         profile.portfolio_items.exists(),
         bool(profile.phone or profile.whatsapp_number or profile.email),
@@ -210,7 +236,7 @@ def _profile_completion(profile):
     percent = round((completed / len(checks)) * 100)
     if not profile.current_status:
         suggestion = 'Add your opportunity status to help visitors understand how to connect.'
-    elif profile.services.count() < 3:
+    elif service_count < 3:
         suggestion = 'Add at least three strong skills to improve your profile.'
     elif not profile.portfolio_items.exists():
         suggestion = 'Add one highlight to strengthen your profile.'

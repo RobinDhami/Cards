@@ -209,6 +209,8 @@ const aboutFields: FieldConfig[] = [
   { key: 'networking_statement', label: 'Networking statement', type: 'textarea', wide: true },
 ]
 
+const organizationAboutFields = aboutFields.slice(0, 2)
+
 const contactFields: FieldConfig[] = [
   { key: 'phone', label: 'Phone' },
   { key: 'whatsapp_number', label: 'WhatsApp number' },
@@ -384,7 +386,7 @@ export function ProfessionalProfileList() {
     <ManageShell
       brand="Tap2Connect"
       brandDetail="Professional profiles"
-      logo="/static/branding/tap2connect-logo.png"
+      logo="/static/branding/tap2connect-logo-official.png"
       nav={workspace.nav}
       title="Professional Cards"
       subtitle={`${counts.active} active of ${counts.total} profiles`}
@@ -648,12 +650,13 @@ export function ProfessionalProfileEditor() {
   const lookingFor = new Set(fieldString(fields.looking_for).split(',').filter(Boolean))
   const isOrganizationTemplate = fieldString(fields.template_name) === 'organization_focus'
   const mainIdentityFields = isOrganizationTemplate ? organizationIdentityFields : identityFields
+  const storyFields = isOrganizationTemplate ? organizationAboutFields : aboutFields
 
   return (
     <ManageShell
       brand="Tap2Connect"
       brandDetail={route.isOwner ? 'Profile owner workspace' : 'Professional profiles'}
-      logo="/static/branding/tap2connect-logo.png"
+      logo="/static/branding/tap2connect-logo-official.png"
       nav={route.isOwner ? [
         { label: 'Profile editor', href: window.location.pathname, icon: UserRound, active: true },
         { label: 'Public profile', href: publicUrl || `/p/${route.slug}/`, icon: Eye },
@@ -681,7 +684,7 @@ export function ProfessionalProfileEditor() {
           description={isOrganizationTemplate ? 'The person appears as the brand representative for this organization card.' : 'The headline information at the top of the public card.'}
         >
           <div className="form-grid">
-            {!route.isOwner ? (
+            {!route.isOwner && !isOrganizationTemplate ? (
               <Field label="Profile type" error={fieldErrors.profile_type?.[0]}>
                 <SelectInput
                   value={fieldString(fields.profile_type)}
@@ -752,16 +755,11 @@ export function ProfessionalProfileEditor() {
               </div>
             </FormSection>
           </>
-        ) : (
-          <div className="professional-template-note manage-card">
-            <strong>Organization Focus is brand-first.</strong>
-            <span>Work identity, academic background, opportunity status, and public documents stay out of the main profile view.</span>
-          </div>
-        )}
+        ) : null}
 
-        <FormSection title={isOrganizationTemplate ? 'Brand story and focus' : 'About and current focus'}>
+        <FormSection title={isOrganizationTemplate ? 'Brand story' : 'About and current focus'}>
           <div className="form-grid">
-            {aboutFields.map((config) => <ConfiguredField key={config.key} config={config} fields={fields} errors={fieldErrors} onChange={updateField} />)}
+            {storyFields.map((config) => <ConfiguredField key={config.key} config={config} fields={fields} errors={fieldErrors} onChange={updateField} />)}
           </div>
         </FormSection>
 
@@ -805,12 +803,14 @@ export function ProfessionalProfileEditor() {
         <FormSection title="Contact and social links">
           <div className="form-grid">
             {contactFields.map((config) => <ConfiguredField key={config.key} config={config} fields={fields} errors={fieldErrors} onChange={updateField} />)}
-            <Toggle label="Show map on public profile" checked={Boolean(fields.show_map_on_profile)} onChange={(checked) => updateField('show_map_on_profile', checked)} />
+            {!isOrganizationTemplate ? (
+              <Toggle label="Show map on public profile" checked={Boolean(fields.show_map_on_profile)} onChange={(checked) => updateField('show_map_on_profile', checked)} />
+            ) : null}
           </div>
         </FormSection>
 
-        {isOrganizationTemplate ? (
-          <FormSection title="Primary CTA" description="Choose one useful action visitors should take after scanning the organization card.">
+        {!isOrganizationTemplate ? (
+          <FormSection title="Primary CTA" description="Choose one useful action visitors should take from the Modern profile.">
             <div className="form-grid is-three">
               <Field label="CTA type">
                 <SelectInput value={fieldString(fields.primary_cta_type)} onChange={(event) => updateField('primary_cta_type', event.target.value)}>
@@ -818,14 +818,14 @@ export function ProfessionalProfileEditor() {
                 </SelectInput>
               </Field>
               {ctaFields.map((config) => <ConfiguredField key={config.key} config={config} fields={fields} errors={fieldErrors} onChange={updateField} />)}
-              <Toggle label="Show CTA on organization card" checked={Boolean(fields.show_primary_cta)} onChange={(checked) => updateField('show_primary_cta', checked)} />
+              <Toggle label="Show CTA on Modern profile" checked={Boolean(fields.show_primary_cta)} onChange={(checked) => updateField('show_primary_cta', checked)} />
             </div>
           </FormSection>
         ) : null}
 
         <FormSection
-          title="Services / organization offerings"
-          description="These are services the person or organization provides, not skills."
+          title={isOrganizationTemplate ? 'Organization offerings' : 'Skills and services'}
+          description={isOrganizationTemplate ? 'Services the organization provides to visitors.' : 'Skills and professional services shown on the Modern profile.'}
           actions={<button className="manage-button" type="button" onClick={() => setServices((current) => [...current, { title: '', description: '', icon: 'briefcase', display_order: current.length }])}><Plus size={13} /> Add service</button>}
         >
           {services.length === 0 ? <EmptyRow>Add the services visitors can request from this profile.</EmptyRow> : (
@@ -843,51 +843,55 @@ export function ProfessionalProfileEditor() {
           )}
         </FormSection>
 
-        <FormSection
-          title="Highlights"
-          description="Each highlight has its own organization, project link, photo, and description. No logo field is used."
-          actions={<button className="manage-button" type="button" onClick={() => setPortfolio((current) => [...current, { title: '', highlight_type: 'project', organization: '', period: '', description: '', link: '', display_order: current.length }])}><Plus size={13} /> Add highlight</button>}
-        >
-          {portfolio.length === 0 ? <EmptyRow>Add projects, achievements, or work highlights.</EmptyRow> : (
-            <div className="professional-repeat-list">
-              {portfolio.map((row, index) => (
-                <RepeatRow key={fieldString(row.id) || `portfolio-${index}`} onRemove={() => removeRow(setPortfolio, index)}>
-                  <div className="form-grid is-three">
-                    <Field label="Title"><TextInput value={fieldString(row.title)} onChange={(event) => updateRow(setPortfolio, index, 'title', event.target.value)} /></Field>
-                    <Field label="Type"><SelectInput value={fieldString(row.highlight_type)} onChange={(event) => updateRow(setPortfolio, index, 'highlight_type', event.target.value)}>{options.highlightTypes.map((choice) => <option value={choice.value} key={choice.value}>{choice.label}</option>)}</SelectInput></Field>
-                    <Field label="Organization name"><TextInput value={fieldString(row.organization)} onChange={(event) => updateRow(setPortfolio, index, 'organization', event.target.value)} /></Field>
-                    <Field label="Period"><TextInput value={fieldString(row.period)} onChange={(event) => updateRow(setPortfolio, index, 'period', event.target.value)} /></Field>
-                    <Field label="Project link"><TextInput type="url" value={fieldString(row.link)} onChange={(event) => updateRow(setPortfolio, index, 'link', event.target.value)} /></Field>
-                    <FileInput label="Photo" currentUrl={fieldString(row.image)} accept="image/*" onChange={(file) => updateRow(setPortfolio, index, '_file', file)} />
-                    <Field label="Description" wide><TextArea value={fieldString(row.description)} onChange={(event) => updateRow(setPortfolio, index, 'description', event.target.value)} /></Field>
-                  </div>
-                </RepeatRow>
-              ))}
-            </div>
-          )}
-        </FormSection>
+        {!isOrganizationTemplate ? (
+          <>
+            <FormSection
+              title="Highlights"
+              description="Each highlight has its own organization, project link, photo, and description. No logo field is used."
+              actions={<button className="manage-button" type="button" onClick={() => setPortfolio((current) => [...current, { title: '', highlight_type: 'project', organization: '', period: '', description: '', link: '', display_order: current.length }])}><Plus size={13} /> Add highlight</button>}
+            >
+              {portfolio.length === 0 ? <EmptyRow>Add projects, achievements, or work highlights.</EmptyRow> : (
+                <div className="professional-repeat-list">
+                  {portfolio.map((row, index) => (
+                    <RepeatRow key={fieldString(row.id) || `portfolio-${index}`} onRemove={() => removeRow(setPortfolio, index)}>
+                      <div className="form-grid is-three">
+                        <Field label="Title"><TextInput value={fieldString(row.title)} onChange={(event) => updateRow(setPortfolio, index, 'title', event.target.value)} /></Field>
+                        <Field label="Type"><SelectInput value={fieldString(row.highlight_type)} onChange={(event) => updateRow(setPortfolio, index, 'highlight_type', event.target.value)}>{options.highlightTypes.map((choice) => <option value={choice.value} key={choice.value}>{choice.label}</option>)}</SelectInput></Field>
+                        <Field label="Organization name"><TextInput value={fieldString(row.organization)} onChange={(event) => updateRow(setPortfolio, index, 'organization', event.target.value)} /></Field>
+                        <Field label="Period"><TextInput value={fieldString(row.period)} onChange={(event) => updateRow(setPortfolio, index, 'period', event.target.value)} /></Field>
+                        <Field label="Project link"><TextInput type="url" value={fieldString(row.link)} onChange={(event) => updateRow(setPortfolio, index, 'link', event.target.value)} /></Field>
+                        <FileInput label="Photo" currentUrl={fieldString(row.image)} accept="image/*" onChange={(file) => updateRow(setPortfolio, index, '_file', file)} />
+                        <Field label="Description" wide><TextArea value={fieldString(row.description)} onChange={(event) => updateRow(setPortfolio, index, 'description', event.target.value)} /></Field>
+                      </div>
+                    </RepeatRow>
+                  ))}
+                </div>
+              )}
+            </FormSection>
 
-        <FormSection
-          title="Testimonials"
-          actions={<button className="manage-button" type="button" onClick={() => setTestimonials((current) => [...current, { client_name: '', client_role: '', organization: '', review_text: '', rating: 5, display_order: current.length }])}><Plus size={13} /> Add testimonial</button>}
-        >
-          {testimonials.length === 0 ? <EmptyRow>Add recommendations when they are available.</EmptyRow> : (
-            <div className="professional-repeat-list">
-              {testimonials.map((row, index) => (
-                <RepeatRow key={fieldString(row.id) || `testimonial-${index}`} onRemove={() => removeRow(setTestimonials, index)}>
-                  <div className="form-grid is-three">
-                    <Field label="Client name"><TextInput value={fieldString(row.client_name)} onChange={(event) => updateRow(setTestimonials, index, 'client_name', event.target.value)} /></Field>
-                    <Field label="Role"><TextInput value={fieldString(row.client_role)} onChange={(event) => updateRow(setTestimonials, index, 'client_role', event.target.value)} /></Field>
-                    <Field label="Organization"><TextInput value={fieldString(row.organization)} onChange={(event) => updateRow(setTestimonials, index, 'organization', event.target.value)} /></Field>
-                    <Field label="Rating"><TextInput type="number" min="1" max="5" value={fieldString(row.rating)} onChange={(event) => updateRow(setTestimonials, index, 'rating', event.target.value)} /></Field>
-                    <FileInput label="Client photo" currentUrl={fieldString(row.profile_photo)} accept="image/*" onChange={(file) => updateRow(setTestimonials, index, '_file', file)} />
-                    <Field label="Review" wide><TextArea value={fieldString(row.review_text)} onChange={(event) => updateRow(setTestimonials, index, 'review_text', event.target.value)} /></Field>
-                  </div>
-                </RepeatRow>
-              ))}
-            </div>
-          )}
-        </FormSection>
+            <FormSection
+              title="Testimonials"
+              actions={<button className="manage-button" type="button" onClick={() => setTestimonials((current) => [...current, { client_name: '', client_role: '', organization: '', review_text: '', rating: 5, display_order: current.length }])}><Plus size={13} /> Add testimonial</button>}
+            >
+              {testimonials.length === 0 ? <EmptyRow>Add recommendations when they are available.</EmptyRow> : (
+                <div className="professional-repeat-list">
+                  {testimonials.map((row, index) => (
+                    <RepeatRow key={fieldString(row.id) || `testimonial-${index}`} onRemove={() => removeRow(setTestimonials, index)}>
+                      <div className="form-grid is-three">
+                        <Field label="Client name"><TextInput value={fieldString(row.client_name)} onChange={(event) => updateRow(setTestimonials, index, 'client_name', event.target.value)} /></Field>
+                        <Field label="Role"><TextInput value={fieldString(row.client_role)} onChange={(event) => updateRow(setTestimonials, index, 'client_role', event.target.value)} /></Field>
+                        <Field label="Organization"><TextInput value={fieldString(row.organization)} onChange={(event) => updateRow(setTestimonials, index, 'organization', event.target.value)} /></Field>
+                        <Field label="Rating"><TextInput type="number" min="1" max="5" value={fieldString(row.rating)} onChange={(event) => updateRow(setTestimonials, index, 'rating', event.target.value)} /></Field>
+                        <FileInput label="Client photo" currentUrl={fieldString(row.profile_photo)} accept="image/*" onChange={(file) => updateRow(setTestimonials, index, '_file', file)} />
+                        <Field label="Review" wide><TextArea value={fieldString(row.review_text)} onChange={(event) => updateRow(setTestimonials, index, 'review_text', event.target.value)} /></Field>
+                      </div>
+                    </RepeatRow>
+                  ))}
+                </div>
+              )}
+            </FormSection>
+          </>
+        ) : null}
 
         <FormSection
           title="Documents"
@@ -1042,7 +1046,7 @@ export function ProfessionalEditLogin() {
     <main className="profile-login-page">
       <form className="profile-login-card" onSubmit={submit}>
         <a href="/" className="profile-login-logo" aria-label="Tap2Connect home">
-          <img src="/static/branding/tap2connect-logo.png" alt="Tap2Connect" />
+          <img src="/static/branding/tap2connect-logo-official.png" alt="Tap2Connect" />
         </a>
         <h1>Edit profile</h1>
         <p>Log in with the account that manages {profileName} to update this networking card.</p>

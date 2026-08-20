@@ -598,7 +598,7 @@ export function PreviewDialog({
             <div className="t2c-mobile-profile-preview">
               <div className="t2c-mobile-device">
                 <div className="t2c-mobile-device-header">
-                  <img src="/static/branding/tap2connect-logo.png" alt="Tap2Connect" />
+                  <img src="/static/branding/tap2connect-logo-official.png" alt="Tap2Connect" />
                 </div>
                 <div className="t2c-mobile-cover" />
                 <div className="t2c-mobile-avatar">

@@ -70,6 +70,7 @@ urlpatterns = [
     path('api/professional-profiles/<slug:slug>/connect/', react_api.professional_connection_request_api, name='react_professional_connection_request_api'),
     path('api/connections/', react_api.professional_connections_api, name='react_professional_connections_api'),
     path('api/connections/<int:connection_id>/respond/', react_api.professional_connection_response_api, name='react_professional_connection_response_api'),
+    path('api/connections/<int:connection_id>/manage/', react_api.professional_connection_manage_api, name='react_professional_connection_manage_api'),
     path('api/students/<int:student_id>/', react_api.student_public_api, name='react_student_public_api'),
     path('api/students/<int:student_id>/edit-login/', react_api.student_login_api, name='react_student_login_api'),
     path('api/manage/students/<int:student_id>/', react_api.student_manage_api, name='react_student_manage_api'),

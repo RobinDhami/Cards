@@ -13,7 +13,7 @@ export function MigrationNeededPage({
     <main className="migration-page">
       <section className="migration-card">
         <a href="/" className="migration-logo" aria-label="Tap2Connect home">
-          <img src="/static/branding/tap2connect-logo.png" alt="Tap2Connect" />
+          <img src="/static/branding/tap2connect-logo-official.png" alt="Tap2Connect" />
         </a>
         <span className="migration-eyebrow">Route not migrated yet</span>
         <h1>{title}</h1>

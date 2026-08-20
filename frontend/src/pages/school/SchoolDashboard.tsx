@@ -122,7 +122,7 @@ function SchoolShell({
     <ManageShell
       brand={school?.name || 'Tap2Connect'}
       brandDetail={school ? 'School administration' : 'Platform administration'}
-      logo={school?.logo || '/static/branding/tap2connect-logo.png'}
+      logo={school?.logo || '/static/branding/tap2connect-logo-official.png'}
       nav={schoolWorkspaceNav(school?.id, shell.isSuperAdmin)}
       title={title}
       subtitle={subtitle}
