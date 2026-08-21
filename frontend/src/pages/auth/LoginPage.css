@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@600;700&display=swap');
+
 .auth-page {
   min-height: 100dvh;
   color: #050505;
@@ -17,27 +19,43 @@
 .auth-logo {
   display: inline-flex;
   align-items: center;
+  gap: 10px;
+  color: #10213a;
+  text-decoration: none;
 }
 
-.auth-logo span {
-  position: relative;
-  display: inline-block;
-  width: 82px;
-  height: 29px;
-  overflow: hidden;
-  background: #ffffff;
-  vertical-align: middle;
-}
-
-.auth-logo img {
-  position: absolute;
-  top: 50%;
-  left: 0;
+.auth-logo__symbol {
   display: block;
-  width: 100%;
-  max-width: none;
-  height: auto;
-  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  object-fit: contain;
+}
+
+.auth-logo__wordmark {
+  display: grid;
+  gap: 3px;
+}
+
+.auth-logo__wordmark strong {
+  font-family: Orbitron, Inter, sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: .035em;
+  line-height: 1;
+}
+
+.auth-logo__two {
+  color: #087cff;
+}
+
+.auth-logo__wordmark small {
+  color: #087f78;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .22em;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .auth-top-action {
@@ -175,9 +193,18 @@
     padding: 22px 18px 34px;
   }
 
-  .auth-logo span {
-    width: 74px;
-    height: 26px;
+  .auth-logo {
+    gap: 8px;
+  }
+
+  .auth-logo__symbol {
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+  }
+
+  .auth-logo__wordmark strong {
+    font-size: 16px;
   }
 
   .auth-top-action {

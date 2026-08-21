@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { apiFetch, displayError, jsonBody } from '../../lib/api'
+import logoAsset from '../../../../theme/static/branding/tap2connect-symbol.png'
 import './LoginPage.css'
 
 export function LoginPage() {
@@ -38,7 +39,11 @@ export function LoginPage() {
     <main className="auth-page">
       <header className="auth-topbar">
         <a href="/" className="auth-logo" aria-label="Tap2Connect home">
-          <span><img src="/static/branding/tap2connect-logo-official.png" alt="Tap2Connect" /></span>
+          <img className="auth-logo__symbol" src={logoAsset} alt="" />
+          <span className="auth-logo__wordmark">
+            <strong><span>TAP</span><span className="auth-logo__two">2</span><span>CONNECT</span></strong>
+            <small>Nepal</small>
+          </span>
         </a>
         <a className="auth-top-action" href="/">Back to website</a>
       </header>
