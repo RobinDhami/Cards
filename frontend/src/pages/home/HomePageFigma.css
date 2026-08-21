@@ -12,7 +12,7 @@
 .fig-header { position: relative; z-index: 10; padding: 10px 0; background: #07090e; }
 .fig-header__inner { display: flex; align-items: center; justify-content: space-between; width: min(calc(100% - 56px), 1384px); min-height: 72px; margin-inline: auto; padding: 0 30px; border: 1px solid rgba(117, 137, 174, .24); border-radius: 14px; background: linear-gradient(135deg, rgba(24, 31, 45, .97), rgba(9, 12, 19, .97)); box-shadow: 0 12px 30px rgba(0, 0, 0, .28); color: #f7f9ff; }
 .fig-brand { display: inline-flex; align-items: center; gap: 10px; }
-.fig-brand img { width: 42px; height: 42px; object-fit: contain; }
+.fig-brand img { width: 42px; height: 42px; object-fit: contain; filter: brightness(0) invert(1) drop-shadow(0 0 10px rgba(63, 87, 255, .2)); }
 .fig-brand__wordmark { display: grid; gap: 2px; }
 .fig-brand__wordmark strong { color: #f7f9ff; font-family: Orbitron, Inter, sans-serif; font-size: 17px; font-weight: 700; letter-spacing: .035em; line-height: 1; }
 .fig-brand__two { color: #087cff; }
