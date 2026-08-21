@@ -107,7 +107,6 @@ function Header() {
 function Hero() {
   return (
     <section className="fig-hero" id="home" style={{ backgroundImage: `url(${heroAsset})` }}>
-      <Header />
       <div className="fig-shell fig-hero__layout">
         <div className="fig-hero__copy">
           <h1><span>Tap</span><span>Share</span><span>Connect.</span></h1>
@@ -319,5 +318,5 @@ export function HomePage() {
     document.documentElement.style.scrollBehavior = 'smooth'
     return () => { document.documentElement.style.scrollBehavior = '' }
   }, [])
-  return <div className="fig-home"><main><Hero /><HowItWorks /><Audience /><Trust /><Products /><Studio /><Contact /><section className="fig-faq-placeholder" id="faq" aria-label="Frequently asked questions" /></main><Footer /></div>
+  return <div className="fig-home"><Header /><main><Hero /><HowItWorks /><Audience /><Trust /><Products /><Studio /><Contact /><section className="fig-faq-placeholder" id="faq" aria-label="Frequently asked questions" /></main><Footer /></div>
 }
