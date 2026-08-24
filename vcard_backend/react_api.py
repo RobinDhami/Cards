@@ -238,6 +238,7 @@ def _professional_value(profile, field_name):
 def _professional_options():
     return {
         'profileTypes': _choice_list(ProfessionalProfile.PROFILE_TYPE_CHOICES),
+        'profileFocuses': _choice_list(ProfessionalProfile.PROFILE_FOCUS_CHOICES),
         'headerIdentities': _choice_list(ProfessionalProfile.HEADER_IDENTITY_CHOICES),
         'statuses': _choice_list(ProfessionalProfile.CURRENT_STATUS_CHOICES),
         'workModes': _choice_list(ProfessionalProfile.WORK_MODE_CHOICES),
@@ -263,6 +264,8 @@ def _professional_payload(profile, detailed=True):
         'isVerified': profile.is_verified,
         'views': profile.views,
         'downloads': profile.downloads,
+        'ctaClicks': profile.cta_clicks,
+        'offeringClicks': profile.offering_clicks,
         'updatedAt': profile.updated_at.isoformat(),
         'publicUrl': reverse('professional_cards:public_profile', args=[profile.slug]),
         'editUrl': reverse('professional_cards:owner_edit', args=[profile.slug]),
@@ -287,6 +290,7 @@ def _professional_payload(profile, detailed=True):
                 'title': item.title,
                 'description': item.description,
                 'icon': item.icon,
+                'link': item.link,
                 'display_order': item.display_order,
             }
             for item in profile.services.all()
@@ -347,13 +351,20 @@ def _professional_form_data(request):
             query['login_username'] = str(payload.get('loginUsername') or '')
         if payload.get('loginPassword') is not None:
             query['login_password'] = str(payload.get('loginPassword') or '')
+        if query.get('template_name') == 'organization_focus':
+            query['template_name'] = 'modern_identity'
+            query['profile_focus'] = 'organization'
         return query, {}, payload.get('collections', {})
     collections = {}
     try:
         collections = json.loads(request.POST.get('collections') or '{}')
     except json.JSONDecodeError:
         pass
-    return request.POST, request.FILES, collections
+    query = request.POST.copy()
+    if query.get('template_name') == 'organization_focus':
+        query['template_name'] = 'modern_identity'
+        query['profile_focus'] = 'organization'
+    return query, request.FILES, collections
 
 
 def _sync_professional_collections(profile, collections, files):
@@ -386,6 +397,7 @@ def _sync_professional_collections(profile, collections, files):
             item.title = str(row.get('title') or '').strip()
             item.description = str(row.get('description') or '').strip()
             item.icon = str(row.get('icon') or '').strip()
+            item.link = str(row.get('link') or '').strip()
             item.display_order = _int(row.get('display_order'), index)
             item.full_clean()
             item.save()

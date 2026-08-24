@@ -18,10 +18,23 @@ SERVICE_ICON_CHOICES = [
     ('code', 'Code / Development'),
     ('palette', 'Design / Creative'),
     ('bar-chart-2', 'Analytics / Growth'),
+    ('chart-no-axes-combined', 'Financial Growth'),
     ('megaphone', 'Marketing / Promotion'),
     ('users', 'Team / Community'),
     ('graduation-cap', 'Education / Student'),
     ('book-open', 'Learning / Training'),
+    ('languages', 'Languages / Translation'),
+    ('bus-front', 'School Transport'),
+    ('baby', 'Early Learning / Childcare'),
+    ('shirt', 'Clothing / Fashion'),
+    ('shopping-bag', 'Shopping / Retail'),
+    ('scissors', 'Tailoring / Salon'),
+    ('ruler', 'Custom Fit / Measurement'),
+    ('trophy', 'Achievement / Competition'),
+    ('dumbbell', 'Fitness / Training'),
+    ('goal', 'Football / Sports'),
+    ('timer', 'Performance / Timing'),
+    ('activity', 'Active Program'),
     ('camera', 'Photography / Media'),
     ('pen-tool', 'Writing / Content'),
     ('globe', 'Web / Global'),
@@ -29,11 +42,33 @@ SERVICE_ICON_CHOICES = [
     ('monitor', 'IT / Computer'),
     ('database', 'Data / Database'),
     ('shield-check', 'Security / Trust'),
+    ('shield-check-finance', 'Insurance / Protection'),
+    ('rocket', 'Launch / Growth'),
+    ('headphones', 'Technical Support'),
+    ('heart-pulse', 'Health / Wellness'),
+    ('stethoscope', 'Medical Care'),
+    ('hospital', 'Hospital / Clinic'),
+    ('hand-heart', 'Personal Care'),
     ('heart-handshake', 'Support / Care'),
     ('building-2', 'Organization / Institution'),
     ('landmark', 'Finance / Banking'),
     ('home', 'Real Estate / Property'),
     ('calendar-check', 'Booking / Scheduling'),
+    ('hotel', 'Hotel / Resort'),
+    ('bed-double', 'Accommodation'),
+    ('utensils', 'Food / Dining'),
+    ('coffee', 'Cafe / Beverage'),
+    ('cake-slice', 'Bakery / Events'),
+    ('plane', 'Travel / Tourism'),
+    ('car', 'Automotive / Rental'),
+    ('truck', 'Delivery / Logistics'),
+    ('wrench', 'Repair / Maintenance'),
+    ('hammer', 'Construction / Craft'),
+    ('hard-hat', 'Engineering / Contractor'),
+    ('leaf', 'Sustainability / Agriculture'),
+    ('flower-2', 'Beauty / Wellness'),
+    ('paw-print', 'Pet Care / Veterinary'),
+    ('sparkles', 'Other / Premium Service'),
 ]
 
 LOOKING_FOR_CHOICES = [
@@ -70,6 +105,7 @@ class ProfessionalProfileForm(forms.ModelForm):
         model = ProfessionalProfile
         fields = [
             'profile_type',
+            'profile_focus',
             'full_name',
             'slug',
             'profile_photo',
@@ -112,6 +148,7 @@ class ProfessionalProfileForm(forms.ModelForm):
             'linkedin_url',
             'facebook_url',
             'instagram_url',
+            'tiktok_url',
             'youtube_url',
             'github_url',
             'booking_url',
@@ -294,7 +331,7 @@ class ProfessionalProfileOwnerForm(ProfessionalProfileForm):
 class ProfessionalServiceForm(forms.ModelForm):
     class Meta:
         model = ProfessionalService
-        fields = ['title', 'description', 'icon', 'display_order']
+        fields = ['title', 'description', 'icon', 'link', 'display_order']
         widgets = {
             'description': forms.Textarea(attrs={'rows': 2}),
             'icon': forms.Select(choices=SERVICE_ICON_CHOICES),
@@ -303,6 +340,7 @@ class ProfessionalServiceForm(forms.ModelForm):
             'title': 'Service / Offering',
             'description': 'Service Description',
             'icon': 'Icon',
+            'link': 'Offering Link',
         }
 
     def __init__(self, *args, **kwargs):

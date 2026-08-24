@@ -3,7 +3,9 @@ import type { FormEvent, ReactNode } from 'react'
 import BadgeCheck from 'lucide-react/dist/esm/icons/badge-check.js'
 import BriefcaseBusiness from 'lucide-react/dist/esm/icons/briefcase-business.js'
 import Eye from 'lucide-react/dist/esm/icons/eye.js'
+import Contact from 'lucide-react/dist/esm/icons/contact.js'
 import LayoutDashboard from 'lucide-react/dist/esm/icons/layout-dashboard.js'
+import MousePointerClick from 'lucide-react/dist/esm/icons/mouse-pointer-click.js'
 import Pencil from 'lucide-react/dist/esm/icons/pencil.js'
 import Plus from 'lucide-react/dist/esm/icons/plus.js'
 import Save from 'lucide-react/dist/esm/icons/save.js'
@@ -22,6 +24,8 @@ import {
   Toggle,
 } from '../../components/manage/FormControls'
 import { ManageShell } from '../../components/manage/ManageShell'
+import { ImageAdjustInput } from '../../components/manage/ImageAdjustInput'
+import { ServiceIconPicker } from '../../components/manage/ServiceIconPicker'
 import { schoolWorkspaceNav } from '../school/schoolWorkspaceNav'
 import {
   ApiError,
@@ -36,6 +40,7 @@ type Choice = { value: string; label: string }
 
 type ProfessionalOptions = {
   profileTypes: Choice[]
+  profileFocuses: Choice[]
   headerIdentities: Choice[]
   statuses: Choice[]
   workModes: Choice[]
@@ -55,6 +60,10 @@ type ProfessionalDetail = {
   fullName: string
   slug: string
   publicUrl: string
+  views: number
+  downloads: number
+  ctaClicks: number
+  offeringClicks: number
   fields: Record<string, string | number | boolean | null>
   loginUsername: string
   completion: { percent: number; suggestion: string }
@@ -91,6 +100,7 @@ type FieldConfig = {
 
 const defaultOptions: ProfessionalOptions = {
   profileTypes: [],
+  profileFocuses: [],
   headerIdentities: [],
   statuses: [],
   workModes: [],
@@ -105,6 +115,7 @@ const defaultOptions: ProfessionalOptions = {
 
 const defaultFields: Record<string, string | number | boolean | null> = {
   profile_type: 'professional',
+  profile_focus: 'organization',
   full_name: '',
   slug: '',
   profession: '',
@@ -143,6 +154,7 @@ const defaultFields: Record<string, string | number | boolean | null> = {
   linkedin_url: '',
   facebook_url: '',
   instagram_url: '',
+  tiktok_url: '',
   youtube_url: '',
   github_url: '',
   booking_url: '',
@@ -219,6 +231,7 @@ const contactFields: FieldConfig[] = [
   { key: 'linkedin_url', label: 'LinkedIn', type: 'url' },
   { key: 'facebook_url', label: 'Facebook', type: 'url' },
   { key: 'instagram_url', label: 'Instagram', type: 'url' },
+  { key: 'tiktok_url', label: 'TikTok', type: 'url' },
   { key: 'youtube_url', label: 'YouTube', type: 'url' },
   { key: 'github_url', label: 'GitHub', type: 'url' },
   { key: 'booking_url', label: 'Booking link', type: 'url' },
@@ -229,8 +242,8 @@ const contactFields: FieldConfig[] = [
 ]
 
 const ctaFields: FieldConfig[] = [
-  { key: 'primary_cta_label', label: 'CTA label', placeholder: 'Contact us, Visit website, Book a meeting' },
-  { key: 'primary_cta_url', label: 'Custom link', type: 'url', placeholder: 'Only used when Custom Link is selected', wide: true },
+  { key: 'primary_cta_label', label: 'CTA label', placeholder: 'Apply Now, Shop Collection, Join Training, Request Demo' },
+  { key: 'primary_cta_url', label: 'CTA destination', type: 'url', placeholder: 'Application, shop, training, demo, or custom page URL', wide: true },
 ]
 
 const professionalNav = [
@@ -503,6 +516,7 @@ export function ProfessionalProfileEditor() {
   const [documents, setDocuments] = useState<CollectionRow[]>([])
   const [files, setFiles] = useState<Record<string, File | null>>({})
   const [completion, setCompletion] = useState<{ percent: number; suggestion: string } | null>(null)
+  const [analytics, setAnalytics] = useState({ views: 0, downloads: 0, ctaClicks: 0, offeringClicks: 0 })
   const [loading, setLoading] = useState(!route.isCreate)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -541,6 +555,12 @@ export function ProfessionalProfileEditor() {
         setTestimonials(profile.testimonials)
         setDocuments(profile.documents)
         setCompletion(profile.completion)
+        setAnalytics({
+          views: profile.views,
+          downloads: profile.downloads,
+          ctaClicks: profile.ctaClicks,
+          offeringClicks: profile.offeringClicks,
+        })
         setPublicUrl(profile.publicUrl)
         document.title = `Edit ${profile.fullName} | Tap2Connect`
       })
@@ -626,6 +646,12 @@ export function ProfessionalProfileEditor() {
       setFields({ ...defaultFields, ...response.profile.fields })
       setPublicUrl(response.profile.publicUrl)
       setCompletion(response.profile.completion)
+      setAnalytics({
+        views: response.profile.views,
+        downloads: response.profile.downloads,
+        ctaClicks: response.profile.ctaClicks,
+        offeringClicks: response.profile.offeringClicks,
+      })
       setServices(response.profile.services)
       setPortfolio(response.profile.portfolio)
       setTestimonials(response.profile.testimonials)
@@ -648,9 +674,9 @@ export function ProfessionalProfileEditor() {
 
   const ownerLabel = route.isOwner ? 'My Professional Card' : (profileId ? 'Edit Professional Card' : 'Create Professional Card')
   const lookingFor = new Set(fieldString(fields.looking_for).split(',').filter(Boolean))
-  const isOrganizationTemplate = fieldString(fields.template_name) === 'organization_focus'
-  const mainIdentityFields = isOrganizationTemplate ? organizationIdentityFields : identityFields
-  const storyFields = isOrganizationTemplate ? organizationAboutFields : aboutFields
+  const isOrganizationProfile = fieldString(fields.profile_focus) === 'organization'
+  const mainIdentityFields = isOrganizationProfile ? organizationIdentityFields : identityFields
+  const storyFields = isOrganizationProfile ? organizationAboutFields : aboutFields
 
   return (
     <ManageShell
@@ -679,12 +705,43 @@ export function ProfessionalProfileEditor() {
         {error ? <div className="manage-alert professional-message">{error}</div> : null}
         {success ? <div className="manage-alert is-success professional-message">{success}</div> : null}
 
+        {route.isOwner && profileId ? (
+          <section className="professional-owner-analytics" aria-labelledby="owner-analytics-title">
+            <header>
+              <div>
+                <h2 id="owner-analytics-title">Profile analytics</h2>
+                <p>Private activity visible only inside the signed-in owner workspace.</p>
+              </div>
+              <span>All time</span>
+            </header>
+            <div className="professional-analytics-grid">
+              {[
+                { label: 'Profile views', value: analytics.views, icon: Eye },
+                { label: 'Contacts saved', value: analytics.downloads, icon: Contact },
+                { label: 'CTA clicks', value: analytics.ctaClicks, icon: MousePointerClick },
+                { label: 'Offering clicks', value: analytics.offeringClicks, icon: BriefcaseBusiness },
+              ].map(({ label, value, icon: Icon }) => (
+                <article key={label}>
+                  <span><Icon size={17} aria-hidden="true" /></span>
+                  <strong>{value.toLocaleString()}</strong>
+                  <p>{label}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        <div className="professional-template-note">
+          <strong>Modern template is locked</strong>
+          <span>Organization focus is the default for new profiles. Switch the profile focus only when creating a personal card.</span>
+        </div>
+
         <FormSection
           title="Main identity"
-          description={isOrganizationTemplate ? 'The person appears as the brand representative for this organization card.' : 'The headline information at the top of the public card.'}
+          description={isOrganizationProfile ? 'The person appears as the brand representative for this organization card.' : 'The headline information at the top of the public card.'}
         >
           <div className="form-grid">
-            {!route.isOwner && !isOrganizationTemplate ? (
+            {!route.isOwner && !isOrganizationProfile ? (
               <Field label="Profile type" error={fieldErrors.profile_type?.[0]}>
                 <SelectInput
                   value={fieldString(fields.profile_type)}
@@ -703,9 +760,9 @@ export function ProfessionalProfileEditor() {
                 onChange={updateField}
               />
             ))}
-            <Field label="Template">
-              <SelectInput value={fieldString(fields.template_name)} onChange={(event) => updateField('template_name', event.target.value)}>
-                {options.templates.map((choice) => <option value={choice.value} key={choice.value}>{choice.label}</option>)}
+            <Field label="Profile focus">
+              <SelectInput value={fieldString(fields.profile_focus)} onChange={(event) => updateField('profile_focus', event.target.value)}>
+                {options.profileFocuses.map((choice) => <option value={choice.value} key={choice.value}>{choice.label}</option>)}
               </SelectInput>
             </Field>
             <Field label="Accent color">
@@ -713,15 +770,15 @@ export function ProfessionalProfileEditor() {
             </Field>
           </div>
           <div className="professional-file-grid">
-            <FileInput label="Profile photo" currentUrl={fieldString(fields.profile_photo)} accept="image/*" onChange={(file) => setFiles((current) => ({ ...current, profile_photo: file }))} />
-            <FileInput label="Cover photo" currentUrl={fieldString(fields.cover_photo)} accept="image/*" onChange={(file) => setFiles((current) => ({ ...current, cover_photo: file }))} />
-            {isOrganizationTemplate ? (
-              <FileInput label="Organization logo" currentUrl={fieldString(fields.organization_logo)} accept="image/*" onChange={(file) => setFiles((current) => ({ ...current, organization_logo: file }))} />
+            <ImageAdjustInput label="Profile photo" mode="profile" currentUrl={fieldString(fields.profile_photo)} onChange={(file) => setFiles((current) => ({ ...current, profile_photo: file }))} />
+            <ImageAdjustInput label="Cover photo" mode="cover" currentUrl={fieldString(fields.cover_photo)} onChange={(file) => setFiles((current) => ({ ...current, cover_photo: file }))} />
+            {isOrganizationProfile ? (
+              <ImageAdjustInput label="Organization logo" mode="logo" currentUrl={fieldString(fields.organization_logo)} onChange={(file) => setFiles((current) => ({ ...current, organization_logo: file }))} />
             ) : null}
           </div>
         </FormSection>
 
-        {!isOrganizationTemplate ? (
+        {!isOrganizationProfile ? (
           <FormSection
             title="Header identity"
             description="Choose which organization or brand identity appears above the profile."
@@ -735,13 +792,13 @@ export function ProfessionalProfileEditor() {
               {headerFields.map((config) => <ConfiguredField key={config.key} config={config} fields={fields} errors={fieldErrors} onChange={updateField} />)}
             </div>
             <div className="professional-file-grid">
-              <FileInput label="Organization logo" currentUrl={fieldString(fields.organization_logo)} accept="image/*" onChange={(file) => setFiles((current) => ({ ...current, organization_logo: file }))} />
-              <FileInput label="Personal logo" currentUrl={fieldString(fields.personal_logo)} accept="image/*" onChange={(file) => setFiles((current) => ({ ...current, personal_logo: file }))} />
+              <ImageAdjustInput label="Organization logo" mode="logo" currentUrl={fieldString(fields.organization_logo)} onChange={(file) => setFiles((current) => ({ ...current, organization_logo: file }))} />
+              <ImageAdjustInput label="Personal logo" mode="logo" currentUrl={fieldString(fields.personal_logo)} onChange={(file) => setFiles((current) => ({ ...current, personal_logo: file }))} />
             </div>
           </FormSection>
         ) : null}
 
-        {!isOrganizationTemplate ? (
+        {!isOrganizationProfile ? (
           <>
             <FormSection title="Work identity" description="This section uses its own role, organization, experience, and address.">
               <div className="form-grid">
@@ -757,13 +814,13 @@ export function ProfessionalProfileEditor() {
           </>
         ) : null}
 
-        <FormSection title={isOrganizationTemplate ? 'Brand story' : 'About and current focus'}>
+        <FormSection title={isOrganizationProfile ? 'Brand story' : 'About and current focus'}>
           <div className="form-grid">
             {storyFields.map((config) => <ConfiguredField key={config.key} config={config} fields={fields} errors={fieldErrors} onChange={updateField} />)}
           </div>
         </FormSection>
 
-        {!isOrganizationTemplate ? (
+        {!isOrganizationProfile ? (
           <FormSection title="Opportunity status">
             <div className="form-grid is-three">
               <Field label="Current status">
@@ -803,14 +860,11 @@ export function ProfessionalProfileEditor() {
         <FormSection title="Contact and social links">
           <div className="form-grid">
             {contactFields.map((config) => <ConfiguredField key={config.key} config={config} fields={fields} errors={fieldErrors} onChange={updateField} />)}
-            {!isOrganizationTemplate ? (
-              <Toggle label="Show map on public profile" checked={Boolean(fields.show_map_on_profile)} onChange={(checked) => updateField('show_map_on_profile', checked)} />
-            ) : null}
+            <Toggle label="Show map on public profile" checked={Boolean(fields.show_map_on_profile)} onChange={(checked) => updateField('show_map_on_profile', checked)} />
           </div>
         </FormSection>
 
-        {!isOrganizationTemplate ? (
-          <FormSection title="Primary CTA" description="Choose one useful action visitors should take from the Modern profile.">
+        <FormSection title="Primary CTA" description={isOrganizationProfile ? 'Choose the main action shown beside Save Contact.' : 'Choose one useful action visitors should take from the Modern profile.'}>
             <div className="form-grid is-three">
               <Field label="CTA type">
                 <SelectInput value={fieldString(fields.primary_cta_type)} onChange={(event) => updateField('primary_cta_type', event.target.value)}>
@@ -818,15 +872,14 @@ export function ProfessionalProfileEditor() {
                 </SelectInput>
               </Field>
               {ctaFields.map((config) => <ConfiguredField key={config.key} config={config} fields={fields} errors={fieldErrors} onChange={updateField} />)}
-              <Toggle label="Show CTA on Modern profile" checked={Boolean(fields.show_primary_cta)} onChange={(checked) => updateField('show_primary_cta', checked)} />
+              <Toggle label="Show primary CTA" checked={Boolean(fields.show_primary_cta)} onChange={(checked) => updateField('show_primary_cta', checked)} />
             </div>
-          </FormSection>
-        ) : null}
+        </FormSection>
 
         <FormSection
-          title={isOrganizationTemplate ? 'Organization offerings' : 'Skills and services'}
-          description={isOrganizationTemplate ? 'Services the organization provides to visitors.' : 'Skills and professional services shown on the Modern profile.'}
-          actions={<button className="manage-button" type="button" onClick={() => setServices((current) => [...current, { title: '', description: '', icon: 'briefcase', display_order: current.length }])}><Plus size={13} /> Add service</button>}
+          title={isOrganizationProfile ? 'What We Offer' : 'Skills and services'}
+          description={isOrganizationProfile ? 'Add the organization’s most important programs, products, services, or solutions.' : 'Skills and professional services shown on the Modern profile.'}
+          actions={<button className="manage-button" type="button" onClick={() => setServices((current) => [...current, { title: '', description: '', icon: 'briefcase', link: '', display_order: current.length }])}><Plus size={13} /> Add offering</button>}
         >
           {services.length === 0 ? <EmptyRow>Add the services visitors can request from this profile.</EmptyRow> : (
             <div className="professional-repeat-list">
@@ -834,7 +887,14 @@ export function ProfessionalProfileEditor() {
                 <RepeatRow key={fieldString(row.id) || `service-${index}`} onRemove={() => removeRow(setServices, index)}>
                   <div className="form-grid is-three">
                     <Field label="Service / offering"><TextInput value={fieldString(row.title)} onChange={(event) => updateRow(setServices, index, 'title', event.target.value)} /></Field>
-                    <Field label="Icon"><SelectInput value={fieldString(row.icon)} onChange={(event) => updateRow(setServices, index, 'icon', event.target.value)}>{options.serviceIcons.map((choice) => <option key={choice.value} value={choice.value}>{choice.label}</option>)}</SelectInput></Field>
+                    <Field label="Icon">
+                      <ServiceIconPicker
+                        value={fieldString(row.icon)}
+                        offeringTitle={fieldString(row.title)}
+                        onChange={(value) => updateRow(setServices, index, 'icon', value)}
+                      />
+                    </Field>
+                    <Field label="Offering link"><TextInput type="url" value={fieldString(row.link)} onChange={(event) => updateRow(setServices, index, 'link', event.target.value)} /></Field>
                     <Field label="Description" wide><TextArea rows={2} value={fieldString(row.description)} onChange={(event) => updateRow(setServices, index, 'description', event.target.value)} /></Field>
                   </div>
                 </RepeatRow>
@@ -843,11 +903,10 @@ export function ProfessionalProfileEditor() {
           )}
         </FormSection>
 
-        {!isOrganizationTemplate ? (
-          <>
+        <>
             <FormSection
-              title="Highlights"
-              description="Each highlight has its own organization, project link, photo, and description. No logo field is used."
+              title={isOrganizationProfile ? 'Featured Work (optional)' : 'Highlights'}
+              description={isOrganizationProfile ? 'Optional proof such as a collection, program, campaign, facility, or completed project.' : 'Each highlight has its own organization, project link, photo, and description. No logo field is used.'}
               actions={<button className="manage-button" type="button" onClick={() => setPortfolio((current) => [...current, { title: '', highlight_type: 'project', organization: '', period: '', description: '', link: '', display_order: current.length }])}><Plus size={13} /> Add highlight</button>}
             >
               {portfolio.length === 0 ? <EmptyRow>Add projects, achievements, or work highlights.</EmptyRow> : (
@@ -860,7 +919,7 @@ export function ProfessionalProfileEditor() {
                         <Field label="Organization name"><TextInput value={fieldString(row.organization)} onChange={(event) => updateRow(setPortfolio, index, 'organization', event.target.value)} /></Field>
                         <Field label="Period"><TextInput value={fieldString(row.period)} onChange={(event) => updateRow(setPortfolio, index, 'period', event.target.value)} /></Field>
                         <Field label="Project link"><TextInput type="url" value={fieldString(row.link)} onChange={(event) => updateRow(setPortfolio, index, 'link', event.target.value)} /></Field>
-                        <FileInput label="Photo" currentUrl={fieldString(row.image)} accept="image/*" onChange={(file) => updateRow(setPortfolio, index, '_file', file)} />
+                        <ImageAdjustInput label="Featured work photo" mode="featured" currentUrl={fieldString(row.image)} onChange={(file) => updateRow(setPortfolio, index, '_file', file)} />
                         <Field label="Description" wide><TextArea value={fieldString(row.description)} onChange={(event) => updateRow(setPortfolio, index, 'description', event.target.value)} /></Field>
                       </div>
                     </RepeatRow>
@@ -890,8 +949,7 @@ export function ProfessionalProfileEditor() {
                 </div>
               )}
             </FormSection>
-          </>
-        ) : null}
+        </>
 
         <FormSection
           title="Documents"

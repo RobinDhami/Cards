@@ -1,7 +1,81 @@
 from django.contrib.auth.models import User
 from django.test import TestCase
 
-from .models import ProfessionalConnection, ProfessionalProfile
+from .models import ProfessionalConnection, ProfessionalProfile, ProfessionalService
+
+
+class OrganizationProfileTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username='organization-owner', password='OwnerPass123!')
+        self.profile = ProfessionalProfile.objects.create(
+            owner=self.owner,
+            full_name='Mina Rai',
+            slug='digital-nepal',
+            company_name='Digital Nepal',
+            designation='Sales Manager',
+            phone='+9779800000000',
+            whatsapp_number='+9779811111111',
+            email='hello@example.com',
+            website='https://example.com',
+            office_address='Kathmandu, Nepal',
+            tiktok_url='https://www.tiktok.com/@digitalnepal',
+            booking_url='https://example.com/demo',
+            primary_cta_type='demo',
+            business_hours='Mon - Fri, 9:00 AM - 6:00 PM',
+        )
+        self.offering = ProfessionalService.objects.create(
+            profile=self.profile,
+            title='Digital Identity',
+            description='Digital identity solutions for organizations.',
+            icon='shield-check',
+            link='https://example.com/digital-identity',
+        )
+
+    def test_new_profiles_use_locked_modern_template_with_organization_focus(self):
+        self.assertEqual(self.profile.template_name, 'modern_identity')
+        self.assertEqual(self.profile.profile_focus, 'organization')
+        self.assertEqual(ProfessionalProfile.TEMPLATE_CHOICES, [('modern_identity', 'Modern')])
+
+    def test_public_payload_has_tracked_cta_and_offering_without_private_analytics(self):
+        response = self.client.get('/api/professional-profiles/digital-nepal/')
+        payload = response.json()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(payload['profile']['profileFocus'], 'organization')
+        self.assertEqual(payload['actions']['featuredCta']['label'], 'Request Demo')
+        self.assertEqual(payload['actions']['featuredCta']['href'], '/p/digital-nepal/action/')
+        self.assertEqual(
+            [item['label'] for item in payload['actions']['organizationLinks']],
+            ['WhatsApp', 'Email', 'Website', 'Map'],
+        )
+        self.assertIn('TikTok', [item['label'] for item in payload['actions']['extra']])
+        self.assertEqual(payload['services'][0]['href'], f'/p/digital-nepal/offering/{self.offering.id}/')
+        self.assertEqual(payload['actions']['analyticsUrl'], '')
+        self.assertNotIn('views', payload)
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.views, 1)
+
+    def test_owner_preview_does_not_inflate_views_and_actions_are_counted(self):
+        self.client.force_login(self.owner)
+        owner_response = self.client.get('/api/professional-profiles/digital-nepal/')
+        self.assertEqual(
+            owner_response.json()['actions']['analyticsUrl'],
+            '/p/digital-nepal/edit/#owner-analytics-title',
+        )
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.views, 0)
+
+        cta_response = self.client.get('/p/digital-nepal/action/')
+        offering_response = self.client.get(f'/p/digital-nepal/offering/{self.offering.id}/')
+        save_response = self.client.get('/p/digital-nepal/vcard/')
+        self.profile.refresh_from_db()
+
+        self.assertEqual(cta_response.status_code, 302)
+        self.assertEqual(offering_response.status_code, 302)
+        self.assertEqual(save_response.status_code, 200)
+        self.assertEqual(self.profile.cta_clicks, 1)
+        self.assertEqual(self.profile.offering_clicks, 1)
+        self.assertEqual(self.profile.downloads, 1)
 
 
 class ProfessionalConnectionApiTests(TestCase):

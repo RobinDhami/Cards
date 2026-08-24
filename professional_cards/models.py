@@ -6,8 +6,11 @@ from django.utils.text import slugify
 
 class ProfessionalProfile(models.Model):
     TEMPLATE_CHOICES = [
-        ('modern_identity', 'Modern Identity'),
-        ('organization_focus', 'Organization Focus'),
+        ('modern_identity', 'Modern'),
+    ]
+    PROFILE_FOCUS_CHOICES = [
+        ('organization', 'Organization'),
+        ('personal', 'Personal'),
     ]
     PROFILE_TYPE_CHOICES = [
         ('student', 'Student'),
@@ -39,6 +42,11 @@ class ProfessionalProfile(models.Model):
     ]
     CTA_TYPE_CHOICES = [
         ('contact', 'Contact'),
+        ('apply', 'Apply Now'),
+        ('shop', 'Shop Collection'),
+        ('training', 'Join Training'),
+        ('demo', 'Request Demo'),
+        ('call', 'Make Call'),
         ('website', 'Visit Website'),
         ('booking', 'Book a Meeting'),
         ('save_contact', 'Save Contact'),
@@ -53,6 +61,7 @@ class ProfessionalProfile(models.Model):
         null=True,
     )
     profile_type = models.CharField(max_length=30, choices=PROFILE_TYPE_CHOICES, default='professional')
+    profile_focus = models.CharField(max_length=30, choices=PROFILE_FOCUS_CHOICES, default='organization')
     full_name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=180, unique=True, help_text='Used for the public profile URL.')
     profile_photo = models.ImageField(upload_to='professional_profiles/photos/', blank=True, null=True)
@@ -195,6 +204,7 @@ class ProfessionalProfile(models.Model):
     linkedin_url = models.URLField(blank=True, default='')
     facebook_url = models.URLField(blank=True, default='')
     instagram_url = models.URLField(blank=True, default='')
+    tiktok_url = models.URLField(blank=True, default='')
     youtube_url = models.URLField(blank=True, default='')
     github_url = models.URLField(blank=True, default='')
     booking_url = models.URLField(blank=True, default='')
@@ -218,6 +228,8 @@ class ProfessionalProfile(models.Model):
     accent_color = models.CharField(max_length=20, default='#0f766e')
     views = models.PositiveIntegerField(default=0)
     downloads = models.PositiveIntegerField(default=0)
+    cta_clicks = models.PositiveIntegerField(default=0)
+    offering_clicks = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -302,6 +314,7 @@ class ProfessionalService(models.Model):
     title = models.CharField(max_length=160)
     description = models.TextField(blank=True, default='')
     icon = models.CharField(max_length=80, blank=True, default='')
+    link = models.URLField(blank=True, default='')
     display_order = models.PositiveIntegerField(default=0)
 
     class Meta:

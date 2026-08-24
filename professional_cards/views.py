@@ -9,6 +9,7 @@ from django.contrib.auth import authenticate, login, update_session_auth_hash
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.db import transaction
+from django.db.models import F
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -24,7 +25,7 @@ from .forms import (
     ProfessionalTestimonialFormSet,
     _style_formset,
 )
-from .models import ProfessionalProfile
+from .models import ProfessionalProfile, ProfessionalService
 
 
 def legacy_react_response(request, *args, **kwargs):
@@ -194,7 +195,7 @@ def _looking_for_labels(profile):
 
 def _profile_completion(profile):
     service_count = profile.services.count()
-    if profile.template_name == 'organization_focus':
+    if profile.profile_focus == 'organization':
         checks = [
             bool(profile.organization_logo),
             bool(profile.company_name),
@@ -307,6 +308,14 @@ def _build_public_actions(profile, whatsapp_digits):
             'external': True,
         },
         {
+            'enabled': bool(profile.tiktok_url),
+            'href': profile.tiktok_url,
+            'label': 'TikTok',
+            'icon': 'tiktok',
+            'brand_class': 'brand-tiktok',
+            'external': True,
+        },
+        {
             'enabled': bool(profile.youtube_url),
             'href': profile.youtube_url,
             'label': 'YouTube',
@@ -336,6 +345,44 @@ def _build_public_actions(profile, whatsapp_digits):
     return primary_actions, extra_actions
 
 
+def _build_organization_links(profile, whatsapp_digits):
+    map_url = _public_map_url(profile)
+    links = [
+        {
+            'enabled': bool(whatsapp_digits),
+            'href': f'https://wa.me/{whatsapp_digits}',
+            'label': 'WhatsApp',
+            'icon': 'message-circle',
+            'brand_class': 'brand-whatsapp',
+            'external': True,
+        },
+        {
+            'enabled': bool(profile.email),
+            'href': f'mailto:{profile.email}',
+            'label': 'Email',
+            'icon': 'mail',
+            'brand_class': 'brand-email',
+        },
+        {
+            'enabled': bool(profile.website),
+            'href': profile.website,
+            'label': 'Website',
+            'icon': 'globe',
+            'brand_class': 'brand-website',
+            'external': True,
+        },
+        {
+            'enabled': bool(map_url),
+            'href': map_url,
+            'label': 'Map',
+            'icon': 'map-pin',
+            'brand_class': 'brand-map',
+            'external': True,
+        },
+    ]
+    return [item for item in links if item['enabled']]
+
+
 def _build_primary_cta(profile, whatsapp_digits):
     if not profile.show_primary_cta:
         return None
@@ -354,6 +401,16 @@ def _build_primary_cta(profile, whatsapp_digits):
     cta_type = profile.primary_cta_type or 'contact'
     if cta_type == 'website':
         selected = action(profile.website, 'Visit Website', 'globe', 'brand-website', True)
+    elif cta_type == 'apply':
+        selected = action(profile.primary_cta_url or profile.website, 'Apply Now', 'external-link', 'brand-apply', True)
+    elif cta_type == 'shop':
+        selected = action(profile.primary_cta_url or profile.website, 'Shop Collection', 'external-link', 'brand-shop', True)
+    elif cta_type == 'training':
+        selected = action(profile.primary_cta_url or profile.booking_url or profile.website, 'Join Training', 'calendar-check', 'brand-training', True)
+    elif cta_type == 'demo':
+        selected = action(profile.primary_cta_url or profile.booking_url or profile.website, 'Request Demo', 'calendar-check', 'brand-demo', True)
+    elif cta_type == 'call':
+        selected = action(f'tel:{profile.phone}' if profile.phone else '', 'Make Call', 'phone', 'brand-call')
     elif cta_type == 'booking':
         selected = action(profile.booking_url, 'Book a Meeting', 'calendar-check', 'brand-booking', True)
     elif cta_type == 'save_contact':
@@ -602,7 +659,15 @@ def public_professional_profile(request, slug):
 def _public_profile_payload(request, profile):
     whatsapp_digits = _normalize_phone(profile.whatsapp_number or profile.phone)
     primary_actions, extra_actions = _build_public_actions(profile, whatsapp_digits)
+    organization_links = _build_organization_links(profile, whatsapp_digits)
     featured_cta = _build_primary_cta(profile, whatsapp_digits)
+    if featured_cta:
+        if profile.profile_focus == 'organization':
+            extra_actions = [item for item in extra_actions if item['href'] != featured_cta['href']]
+        featured_cta = {
+            **featured_cta,
+            'href': reverse('professional_cards:primary_cta', args=[profile.slug]),
+        }
     public_url = _absolute_public_url(request, profile)
     seo_description = (
         profile.short_tagline
@@ -638,6 +703,7 @@ def _public_profile_payload(request, profile):
             'id': profile.id,
             'slug': profile.slug,
             'templateName': profile.template_name,
+            'profileFocus': profile.profile_focus,
             'profileType': profile.profile_type,
             'fullName': profile.full_name,
             'initials': (profile.full_name[:2] or 'P').upper(),
@@ -693,11 +759,17 @@ def _public_profile_payload(request, profile):
         },
         'actions': {
             'primary': primary_actions[:4],
+            'organizationLinks': organization_links,
             'extra': extra_actions,
             'featuredCta': featured_cta,
             'qrCodeUrl': reverse('professional_cards:qr_code', args=[profile.slug]),
             'vcardUrl': reverse('professional_cards:vcard', args=[profile.slug]),
             'editLoginUrl': reverse('professional_cards:edit_login', args=[profile.slug]),
+            'analyticsUrl': (
+                f"{reverse('professional_cards:owner_edit', args=[profile.slug])}#owner-analytics-title"
+                if is_profile_owner_view
+                else ''
+            ),
             'isProfileOwnerView': is_profile_owner_view,
             'canEditProfile': can_edit_profile,
         },
@@ -707,6 +779,7 @@ def _public_profile_payload(request, profile):
                 'title': service.title,
                 'description': service.description,
                 'icon': service.icon,
+                'href': reverse('professional_cards:offering', args=[profile.slug, service.id]) if service.link else '',
                 'displayOrder': service.display_order,
             }
             for service in profile.services.all()
@@ -755,8 +828,28 @@ def _public_profile_payload(request, profile):
 
 def public_professional_profile_api(request, slug):
     profile = get_object_or_404(ProfessionalProfile, slug=slug, is_active=True)
-    ProfessionalProfile.objects.filter(pk=profile.pk).update(views=profile.views + 1)
+    if not can_manage_professional_profile(request.user, profile):
+        ProfessionalProfile.objects.filter(pk=profile.pk).update(views=F('views') + 1)
     return JsonResponse(_public_profile_payload(request, profile))
+
+
+def professional_primary_cta(request, slug):
+    profile = get_object_or_404(ProfessionalProfile, slug=slug, is_active=True)
+    whatsapp_digits = _normalize_phone(profile.whatsapp_number or profile.phone)
+    action = _build_primary_cta(profile, whatsapp_digits)
+    if not action:
+        return redirect('professional_cards:public_profile', slug=profile.slug)
+    ProfessionalProfile.objects.filter(pk=profile.pk).update(cta_clicks=F('cta_clicks') + 1)
+    return redirect(action['href'])
+
+
+def professional_offering_action(request, slug, service_id):
+    profile = get_object_or_404(ProfessionalProfile, slug=slug, is_active=True)
+    service = get_object_or_404(ProfessionalService, pk=service_id, profile=profile)
+    if not service.link:
+        return redirect('professional_cards:public_profile', slug=profile.slug)
+    ProfessionalProfile.objects.filter(pk=profile.pk).update(offering_clicks=F('offering_clicks') + 1)
+    return redirect(service.link)
 
 
 def professional_profile_edit_login(request, slug):
@@ -793,7 +886,7 @@ def profession_suggestions_api(request):
 
 def professional_vcard(request, slug):
     profile = get_object_or_404(ProfessionalProfile, slug=slug, is_active=True)
-    ProfessionalProfile.objects.filter(pk=profile.pk).update(downloads=profile.downloads + 1)
+    ProfessionalProfile.objects.filter(pk=profile.pk).update(downloads=F('downloads') + 1)
     public_url = _absolute_public_url(request, profile)
     organization = (
         profile.company_name

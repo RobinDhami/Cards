@@ -2,34 +2,23 @@ import { useEffect, useMemo, useState } from 'react'
 import type { ComponentType, CSSProperties, FormEvent, SVGProps } from 'react'
 import Badge from 'lucide-react/dist/esm/icons/badge.js'
 import BarChart2 from 'lucide-react/dist/esm/icons/bar-chart-2.js'
-import Bell from 'lucide-react/dist/esm/icons/bell.js'
 import BookOpen from 'lucide-react/dist/esm/icons/book-open.js'
 import BriefcaseBusiness from 'lucide-react/dist/esm/icons/briefcase-business.js'
 import Building2 from 'lucide-react/dist/esm/icons/building-2.js'
 import CalendarCheck from 'lucide-react/dist/esm/icons/calendar-check.js'
-import Camera from 'lucide-react/dist/esm/icons/camera.js'
 import Check from 'lucide-react/dist/esm/icons/check.js'
 import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right.js'
 import Clock3 from 'lucide-react/dist/esm/icons/clock-3.js'
-import Code from 'lucide-react/dist/esm/icons/code.js'
-import Database from 'lucide-react/dist/esm/icons/database.js'
 import ExternalLink from 'lucide-react/dist/esm/icons/external-link.js'
 import FileText from 'lucide-react/dist/esm/icons/file-text.js'
 import Globe2 from 'lucide-react/dist/esm/icons/globe-2.js'
 import GraduationCap from 'lucide-react/dist/esm/icons/graduation-cap.js'
-import HeartHandshake from 'lucide-react/dist/esm/icons/heart-handshake.js'
-import Home from 'lucide-react/dist/esm/icons/home.js'
-import Landmark from 'lucide-react/dist/esm/icons/landmark.js'
 import LinkIcon from 'lucide-react/dist/esm/icons/link.js'
 import LockKeyhole from 'lucide-react/dist/esm/icons/lock-keyhole.js'
 import Mail from 'lucide-react/dist/esm/icons/mail.js'
 import MapPin from 'lucide-react/dist/esm/icons/map-pin.js'
 import MapPinned from 'lucide-react/dist/esm/icons/map-pinned.js'
-import Megaphone from 'lucide-react/dist/esm/icons/megaphone.js'
 import MessageCircle from 'lucide-react/dist/esm/icons/message-circle.js'
-import Monitor from 'lucide-react/dist/esm/icons/monitor.js'
-import Palette from 'lucide-react/dist/esm/icons/palette.js'
-import PenTool from 'lucide-react/dist/esm/icons/pen-tool.js'
 import Phone from 'lucide-react/dist/esm/icons/phone.js'
 import Pencil from 'lucide-react/dist/esm/icons/pencil.js'
 import QrCode from 'lucide-react/dist/esm/icons/qr-code.js'
@@ -37,12 +26,12 @@ import Radar from 'lucide-react/dist/esm/icons/radar.js'
 import Share2 from 'lucide-react/dist/esm/icons/share-2.js'
 import ShieldCheck from 'lucide-react/dist/esm/icons/shield-check.js'
 import Send from 'lucide-react/dist/esm/icons/send.js'
-import Smartphone from 'lucide-react/dist/esm/icons/smartphone.js'
 import Sparkles from 'lucide-react/dist/esm/icons/sparkles.js'
 import UserPlus from 'lucide-react/dist/esm/icons/user-plus.js'
 import Users from 'lucide-react/dist/esm/icons/users.js'
 import X from 'lucide-react/dist/esm/icons/x.js'
 import { ApiError, apiFetch, appHref, backendHref, displayError, jsonBody } from '../../lib/api'
+import { serviceIconMap } from '../../lib/serviceIcons'
 import './PublicProfessionalProfile.css'
 
 type LucideIcon = ComponentType<SVGProps<SVGSVGElement> & { size?: number }>
@@ -58,7 +47,8 @@ type PublicAction = {
 type PublicProfile = {
   id: number
   slug: string
-  templateName: 'modern_identity' | 'organization_focus'
+  templateName: 'modern_identity'
+  profileFocus: 'organization' | 'personal'
   fullName: string
   initials: string
   profilePhotoUrl: string
@@ -114,6 +104,7 @@ type ServiceItem = {
   title: string
   description: string
   icon: string
+  href: string
 }
 
 type HighlightItem = {
@@ -152,11 +143,13 @@ type PublicProfileData = {
   profile: PublicProfile
   actions: {
     primary: PublicAction[]
+    organizationLinks: PublicAction[]
     extra: PublicAction[]
     featuredCta: PublicAction | null
     qrCodeUrl: string
     vcardUrl: string
     editLoginUrl: string
+    analyticsUrl: string
     isProfileOwnerView: boolean
     canEditProfile?: boolean
   }
@@ -175,31 +168,6 @@ const actionIcons: Record<string, LucideIcon> = {
   'message-circle': MessageCircle,
   phone: Phone,
   'user-plus': UserPlus,
-}
-
-const serviceIcons: Record<string, LucideIcon> = {
-  'bar-chart-2': BarChart2,
-  'book-open': BookOpen,
-  'building-2': Building2,
-  briefcase: BriefcaseBusiness,
-  camera: Camera,
-  code: Code,
-  database: Database,
-  'graduation-cap': GraduationCap,
-  globe: Globe2,
-  'heart-handshake': HeartHandshake,
-  home: Home,
-  landmark: Landmark,
-  link: LinkIcon,
-  megaphone: Megaphone,
-  monitor: Monitor,
-  palette: Palette,
-  'pen-tool': PenTool,
-  school: GraduationCap,
-  'shield-check': ShieldCheck,
-  smartphone: Smartphone,
-  sparkles: Sparkles,
-  users: Users,
 }
 
 function FacebookIcon(props: SVGProps<SVGSVGElement>) {
@@ -242,11 +210,20 @@ function YouTubeIcon(props: SVGProps<SVGSVGElement>) {
   )
 }
 
+function TikTokIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
+      <path fill="currentColor" d="M14.2 2h3.1c.3 2.2 1.6 3.8 3.7 4.4v3.2c-1.4 0-2.7-.4-3.8-1.1v6.4a7 7 0 1 1-6-6.9v3.3a3.8 3.8 0 1 0 2.9 3.7V2Z" />
+    </svg>
+  )
+}
+
 const socialIcons: Record<string, LucideIcon> = {
   facebook: FacebookIcon,
   github: GitHubIcon,
   instagram: InstagramIcon,
   linkedin: LinkedInIcon,
+  tiktok: TikTokIcon,
   youtube: YouTubeIcon,
 }
 
@@ -366,6 +343,61 @@ function PrimaryActions({ actions }: { actions: PublicAction[] }) {
   )
 }
 
+function OrganizationActionPair({ data }: { data: PublicProfileData }) {
+  const { featuredCta, primary, vcardUrl } = data.actions
+  const cta = featuredCta?.label.toLowerCase() === 'save contact'
+    ? primary[0] ?? null
+    : featuredCta
+  const CtaIcon = cta ? actionIcons[cta.icon] ?? LinkIcon : LinkIcon
+  return (
+    <nav className="profile-organization-actions" aria-label="Organization actions">
+      {cta ? (
+        <a
+          className="profile-organization-action is-primary"
+          href={actionHref(cta.href)}
+          target={cta.external ? '_blank' : undefined}
+          rel={cta.external ? 'noopener noreferrer' : undefined}
+        >
+          <CtaIcon size={17} aria-hidden="true" />
+          <span>{cta.label}</span>
+        </a>
+      ) : (
+        <span className="profile-organization-action is-primary is-disabled">Add a primary action</span>
+      )}
+      <a className="profile-organization-action is-secondary" href={backendHref(vcardUrl)}>
+        <UserPlus size={17} aria-hidden="true" />
+        <span>Save Contact</span>
+      </a>
+    </nav>
+  )
+}
+
+function OrganizationContactLinks({ actions }: { actions: PublicAction[] }) {
+  if (actions.length === 0) return null
+  return (
+    <section className="profile-section profile-organization-links" aria-labelledby="organization-links-title">
+      <h2 className="profile-section-title" id="organization-links-title">Contact &amp; Links</h2>
+      <nav aria-label="Organization contact links">
+        {actions.map((action) => {
+          const Icon = actionIcons[action.icon] ?? LinkIcon
+          return (
+            <a
+              className={`profile-organization-link ${action.brand_class}`}
+              href={actionHref(action.href)}
+              target={action.external ? '_blank' : undefined}
+              rel={action.external ? 'noopener noreferrer' : undefined}
+              key={action.label}
+            >
+              <span><Icon size={18} aria-hidden="true" /></span>
+              <strong>{action.label}</strong>
+            </a>
+          )
+        })}
+      </nav>
+    </section>
+  )
+}
+
 function Intro({ children }: { children: string }) {
   if (!children) {
     return null
@@ -431,26 +463,33 @@ function FocusSection({ profile }: { profile: PublicProfile }) {
   )
 }
 
-function Services({ services, title }: { services: ServiceItem[]; title: string }) {
+function Services({ services, title, variant = 'personal' }: { services: ServiceItem[]; title: string; variant?: 'personal' | 'organization' }) {
   if (services.length === 0) {
     return null
   }
   return (
-    <section className="profile-section">
+    <section className={`profile-section profile-offerings-section is-${variant}`}>
       <h2 className="profile-section-title">{title}</h2>
       <div className="profile-services">
-        {services.slice(0, 8).map((service) => {
-          const Icon = serviceIcons[service.icon] ?? BriefcaseBusiness
-          return (
-            <article className="profile-service" key={service.id}>
+        {services.slice(0, 8).map((service, index) => {
+          const Icon = serviceIconMap[service.icon] ?? BriefcaseBusiness
+          const content = (
+            <>
               <span className="profile-service-icon">
-                <Icon size={16} aria-hidden="true" />
+                <Icon size={variant === 'organization' ? 20 : 16} aria-hidden="true" />
               </span>
               <div>
                 <strong>{service.title}</strong>
                 {service.description ? <p>{service.description}</p> : null}
               </div>
-            </article>
+              {service.href ? <ChevronRight className="profile-service-arrow" size={19} aria-hidden="true" /> : null}
+            </>
+          )
+          const className = `profile-service${variant === 'organization' && index === 0 ? ' is-lead' : ''}${service.href ? ' is-linked' : ''}`
+          return service.href ? (
+            <a className={className} href={backendHref(service.href)} target="_blank" rel="noopener noreferrer" key={service.id}>{content}</a>
+          ) : (
+            <article className={className} key={service.id}>{content}</article>
           )
         })}
       </div>
@@ -566,13 +605,13 @@ function Fact({ icon: Icon, label, value }: IdentityFact) {
   )
 }
 
-function Highlights({ highlights }: { highlights: HighlightItem[] }) {
+function Highlights({ highlights, title = 'Highlights', variant = 'personal' }: { highlights: HighlightItem[]; title?: string; variant?: 'personal' | 'organization' }) {
   if (highlights.length === 0) {
     return null
   }
   return (
-    <section className="profile-section">
-      <h2 className="profile-section-title">Highlights</h2>
+    <section className={`profile-section profile-highlights-section is-${variant}`}>
+      <h2 className="profile-section-title">{title}</h2>
       <div className="profile-highlights">
         {highlights.map((highlight) => (
           <article className="profile-highlight" key={highlight.id}>
@@ -596,6 +635,19 @@ function Highlights({ highlights }: { highlights: HighlightItem[] }) {
             </div>
           </article>
         ))}
+      </div>
+    </section>
+  )
+}
+
+function BusinessHours({ profile }: { profile: PublicProfile }) {
+  if (!profile.businessHours) return null
+  return (
+    <section className="profile-section profile-business-hours">
+      <span className="profile-business-hours-icon"><Clock3 size={19} aria-hidden="true" /></span>
+      <div>
+        <h2>Business Hours</h2>
+        <p>{profile.businessHours}</p>
       </div>
     </section>
   )
@@ -772,21 +824,17 @@ function ConnectFlow({ profile, showToast }: { profile: PublicProfile; showToast
           <span className="profile-connect-art"><Users size={25} aria-hidden="true" /></span>
           <span className="profile-connect-copy">
             <strong id="profile-connect-heading">Grow your network</strong>
-            <span>Connect with {firstName} through a verified Tap2Connect request.</span>
           </span>
         </div>
         <button className="profile-connect-action" type="button" onClick={() => void sendRequest()} disabled={submitting}>
           <ShieldCheck size={18} aria-hidden="true" />
           {submitting ? 'Checking your ID...' : `Connect with ${firstName}`}
         </button>
-        <p className="profile-connect-cache"><Sparkles size={15} aria-hidden="true" />Already signed in? Your request sends instantly.</p>
-        <p className="profile-connect-status" id="profile-connect-status">
-          <Bell size={15} aria-hidden="true" />
-          {firstName} will be notified and can add you back.
-        </p>
-        <a className="profile-connect-link" href={appHref('/connections/')}>
-          View my connections <ChevronRight size={16} aria-hidden="true" />
-        </a>
+        <nav className="profile-connect-links" aria-label="Network shortcuts">
+          <a className="profile-connect-link" href={appHref('/connections/')}>
+            View my connections <ChevronRight size={16} aria-hidden="true" />
+          </a>
+        </nav>
       </section>
 
       {open ? (
@@ -870,7 +918,7 @@ function Footer({ profile, variant = 'modern' }: { profile: PublicProfile; varia
 
 function DetailsDrawer({ data, open, onClose }: { data: PublicProfileData; open: boolean; onClose: () => void }) {
   const { profile } = data
-  const isOrganization = profile.templateName === 'organization_focus'
+  const isOrganization = profile.profileFocus === 'organization'
   const groups = (isOrganization ? [
     {
       icon: Building2,
@@ -1060,23 +1108,20 @@ function ModernTemplate({ data, showToast }: { data: PublicProfileData; showToas
 }
 
 function OrganizationTemplate({ data, showToast }: { data: PublicProfileData; showToast: (message: string) => void }) {
-  const [detailsOpen, setDetailsOpen] = useState(false)
   const { profile } = data
   return (
     <>
       <TopBar data={data} onShare={() => shareProfile(data, showToast)} />
       <Hero profile={profile} />
-      <PrimaryActions actions={data.actions.primary} />
+      <OrganizationActionPair data={data} />
       <Intro>{profile.about || profile.shortTagline || profile.organizationTagline}</Intro>
-      <Services services={data.services} title="What We Provide" />
+      <OrganizationContactLinks actions={data.actions.organizationLinks} />
+      <Services services={data.services} title="What We Offer" variant="organization" />
+      <Highlights highlights={data.highlights} title="Featured Work" variant="organization" />
+      <BusinessHours profile={profile} />
       <SocialLinks actions={data.actions.extra} variant="organization" />
-      <DetailsTrigger
-        label="View business details"
-        description="Brand contact, useful links and business documents"
-        onClick={() => setDetailsOpen(true)}
-      />
       <ConnectFlow profile={profile} showToast={showToast} />
-      <DetailsDrawer data={data} open={detailsOpen} onClose={() => setDetailsOpen(false)} />
+      <Footer profile={profile} variant="organization" />
     </>
   )
 }
@@ -1168,14 +1213,19 @@ export function PublicProfessionalProfile() {
   }
 
   const profileStyle = { '--profile-accent': data.profile.accentColor } as CSSProperties
-  const isOrganization = data.profile.templateName === 'organization_focus'
+  const isOrganization = data.profile.profileFocus === 'organization'
 
   return (
     <main className="public-profile-page" style={profileStyle}>
       {data.actions.isProfileOwnerView ? (
         <nav className="profile-owner-bar" aria-label="Profile owner navigation">
           <span>Owner preview · This is how visitors see your profile.</span>
-          <a href={appHref(data.actions.editLoginUrl)}>Edit profile</a>
+          <div className="profile-owner-actions">
+            <a className="is-analytics" href={appHref(data.actions.analyticsUrl)}>
+              <BarChart2 size={14} aria-hidden="true" /> Analytics
+            </a>
+            <a href={appHref(data.actions.editLoginUrl)}>Edit profile</a>
+          </div>
         </nav>
       ) : null}
       <article className={`public-profile-card is-${isOrganization ? 'organization' : 'modern'}-template`}>
