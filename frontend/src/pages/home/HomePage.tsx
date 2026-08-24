@@ -16,7 +16,7 @@ import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left.js'
 import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right.js'
 import X from 'lucide-react/dist/esm/icons/x.js'
 import { apiFetch, displayError } from '../../lib/api'
-import logoAsset from '../../../../theme/static/branding/tap2connect-symbol-on-dark.png'
+import homeWordmarkAsset from '../../../../theme/static/branding/tap2connect-wordmark-original.png'
 import heroAsset from '../../../../theme/static/home/figma-assets/hero-background-with-card-profile.png'
 import workflowAsset from '../../../../theme/static/home/figma-assets/workflow-phone-card-transparent.png'
 import audienceStudent from '../../../../theme/static/home/figma-assets/audience-student-mobile.png'
@@ -69,11 +69,7 @@ const studioCards = {
 function BrandLogo() {
   return (
     <span className="fig-brand">
-      <img src={logoAsset} alt="" />
-      <span className="fig-brand__wordmark">
-        <strong><span>TAP</span><span className="fig-brand__two">2</span><span>CONNECT</span></strong>
-        <small>Nepal</small>
-      </span>
+      <img className="fig-brand__image" src={homeWordmarkAsset} alt="" />
     </span>
   )
 }
