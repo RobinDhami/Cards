@@ -70,6 +70,7 @@ function BrandLogo() {
   return (
     <span className="fig-brand">
       <img className="fig-brand__image" src={homeWordmarkAsset} alt="" />
+      <span className="fig-brand__country">Nepal</span>
     </span>
   )
 }
