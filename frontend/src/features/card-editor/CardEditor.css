@@ -65,6 +65,7 @@
 .t2c-editor-topbar-left > img {
   width: 78px;
   height: 36px;
+  background: #ffffff;
   object-fit: contain;
 }
 
@@ -1851,6 +1852,7 @@
 .t2c-mobile-device-header img {
   width: 68px;
   height: 30px;
+  background: #ffffff;
   object-fit: contain;
 }
 

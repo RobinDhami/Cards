@@ -45,6 +45,7 @@
 .digital-card-organization__logo img {
   width: 100%;
   height: 100%;
+  background: #ffffff;
   object-fit: contain;
 }
 
@@ -594,6 +595,7 @@
   display: block;
   width: 74px;
   height: auto;
+  background: #ffffff;
 }
 
 .digital-card-toast {

@@ -20,6 +20,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  background: #ffffff;
   color: #10213a;
   text-decoration: none;
 }
@@ -29,6 +30,7 @@
   width: 48px;
   height: 48px;
   flex: 0 0 48px;
+  background: #ffffff;
   object-fit: contain;
 }
 
