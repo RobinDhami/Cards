@@ -77,6 +77,24 @@ class OrganizationProfileTests(TestCase):
         self.assertEqual(self.profile.offering_clicks, 1)
         self.assertEqual(self.profile.downloads, 1)
 
+    def test_public_payload_uses_organization_mode_and_one_logo_for_legacy_personal_profiles(self):
+        personal_profile = ProfessionalProfile.objects.create(
+            full_name='Nisha Karki',
+            slug='nisha-karki',
+            profile_focus='personal',
+            header_identity='hidden',
+            personal_logo='professional_profiles/personal_logos/nisha.png',
+        )
+
+        response = self.client.get('/api/professional-profiles/nisha-karki/')
+        profile_payload = response.json()['profile']
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(profile_payload['profileFocus'], 'organization')
+        self.assertEqual(profile_payload['headerIdentity'], 'organization')
+        self.assertEqual(profile_payload['organizationLogoUrl'], profile_payload['personalLogoUrl'])
+        self.assertTrue(profile_payload['organizationLogoUrl'].endswith('/professional_profiles/personal_logos/nisha.png'))
+
 
 class ProfessionalConnectionApiTests(TestCase):
     def setUp(self):

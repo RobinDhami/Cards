@@ -177,7 +177,6 @@ const defaultFields: Record<string, string | number | boolean | null> = {
 const identityFields: FieldConfig[] = [
   { key: 'full_name', label: 'Full name', placeholder: 'Full professional name' },
   { key: 'slug', label: 'Public URL slug', placeholder: 'name-or-brand' },
-  { key: 'profession', label: 'Professional headline', placeholder: 'Web Developer | Open to Work' },
   { key: 'designation', label: 'Current role', placeholder: 'CEO, Student, Designer' },
   { key: 'company_name', label: 'Current organization', placeholder: 'Company or institution' },
   { key: 'industry', label: 'Industry / field', placeholder: 'Education, Technology, Finance' },
@@ -732,8 +731,8 @@ export function ProfessionalProfileEditor() {
         ) : null}
 
         <div className="professional-template-note">
-          <strong>Modern template is locked</strong>
-          <span>Organization focus is the default for new profiles. Switch the profile focus only when creating a personal card.</span>
+          <strong>Modern organization template is active</strong>
+          <span>Personal, work, and academic layouts remain preserved for a later phase.</span>
         </div>
 
         <FormSection
@@ -760,11 +759,6 @@ export function ProfessionalProfileEditor() {
                 onChange={updateField}
               />
             ))}
-            <Field label="Profile focus">
-              <SelectInput value={fieldString(fields.profile_focus)} onChange={(event) => updateField('profile_focus', event.target.value)}>
-                {options.profileFocuses.map((choice) => <option value={choice.value} key={choice.value}>{choice.label}</option>)}
-              </SelectInput>
-            </Field>
             <Field label="Accent color">
               <TextInput type="color" value={fieldString(fields.accent_color)} onChange={(event) => updateField('accent_color', event.target.value)} />
             </Field>
@@ -772,28 +766,22 @@ export function ProfessionalProfileEditor() {
           <div className="professional-file-grid">
             <ImageAdjustInput label="Profile photo" mode="profile" currentUrl={fieldString(fields.profile_photo)} onChange={(file) => setFiles((current) => ({ ...current, profile_photo: file }))} />
             <ImageAdjustInput label="Cover photo" mode="cover" currentUrl={fieldString(fields.cover_photo)} onChange={(file) => setFiles((current) => ({ ...current, cover_photo: file }))} />
-            {isOrganizationProfile ? (
-              <ImageAdjustInput label="Organization logo" mode="logo" currentUrl={fieldString(fields.organization_logo)} onChange={(file) => setFiles((current) => ({ ...current, organization_logo: file }))} />
-            ) : null}
+            <ImageAdjustInput
+              label="Logo"
+              mode="logo"
+              currentUrl={fieldString(fields.organization_logo) || fieldString(fields.personal_logo)}
+              onChange={(file) => setFiles((current) => ({ ...current, organization_logo: file }))}
+            />
           </div>
         </FormSection>
 
         {!isOrganizationProfile ? (
           <FormSection
-            title="Header identity"
-            description="Choose which organization or brand identity appears above the profile."
+            title="Brand details"
+            description="Optional brand name and tagline shown with your profile."
           >
             <div className="form-grid">
-              <Field label="Header style">
-                <SelectInput value={fieldString(fields.header_identity)} onChange={(event) => updateField('header_identity', event.target.value)}>
-                  {options.headerIdentities.map((choice) => <option value={choice.value} key={choice.value}>{choice.label}</option>)}
-                </SelectInput>
-              </Field>
               {headerFields.map((config) => <ConfiguredField key={config.key} config={config} fields={fields} errors={fieldErrors} onChange={updateField} />)}
-            </div>
-            <div className="professional-file-grid">
-              <ImageAdjustInput label="Organization logo" mode="logo" currentUrl={fieldString(fields.organization_logo)} onChange={(file) => setFiles((current) => ({ ...current, organization_logo: file }))} />
-              <ImageAdjustInput label="Personal logo" mode="logo" currentUrl={fieldString(fields.personal_logo)} onChange={(file) => setFiles((current) => ({ ...current, personal_logo: file }))} />
             </div>
           </FormSection>
         ) : null}
@@ -813,12 +801,6 @@ export function ProfessionalProfileEditor() {
             </FormSection>
           </>
         ) : null}
-
-        <FormSection title={isOrganizationProfile ? 'Brand story' : 'About and current focus'}>
-          <div className="form-grid">
-            {storyFields.map((config) => <ConfiguredField key={config.key} config={config} fields={fields} errors={fieldErrors} onChange={updateField} />)}
-          </div>
-        </FormSection>
 
         {!isOrganizationProfile ? (
           <FormSection title="Opportunity status">
@@ -903,6 +885,12 @@ export function ProfessionalProfileEditor() {
           )}
         </FormSection>
 
+        <FormSection title={isOrganizationProfile ? 'Brand story' : 'About and current focus'}>
+          <div className="form-grid">
+            {storyFields.map((config) => <ConfiguredField key={config.key} config={config} fields={fields} errors={fieldErrors} onChange={updateField} />)}
+          </div>
+        </FormSection>
+
         <>
             <FormSection
               title={isOrganizationProfile ? 'Featured Work (optional)' : 'Highlights'}
@@ -913,14 +901,24 @@ export function ProfessionalProfileEditor() {
                 <div className="professional-repeat-list">
                   {portfolio.map((row, index) => (
                     <RepeatRow key={fieldString(row.id) || `portfolio-${index}`} onRemove={() => removeRow(setPortfolio, index)}>
-                      <div className="form-grid is-three">
-                        <Field label="Title"><TextInput value={fieldString(row.title)} onChange={(event) => updateRow(setPortfolio, index, 'title', event.target.value)} /></Field>
-                        <Field label="Type"><SelectInput value={fieldString(row.highlight_type)} onChange={(event) => updateRow(setPortfolio, index, 'highlight_type', event.target.value)}>{options.highlightTypes.map((choice) => <option value={choice.value} key={choice.value}>{choice.label}</option>)}</SelectInput></Field>
-                        <Field label="Organization name"><TextInput value={fieldString(row.organization)} onChange={(event) => updateRow(setPortfolio, index, 'organization', event.target.value)} /></Field>
-                        <Field label="Period"><TextInput value={fieldString(row.period)} onChange={(event) => updateRow(setPortfolio, index, 'period', event.target.value)} /></Field>
-                        <Field label="Project link"><TextInput type="url" value={fieldString(row.link)} onChange={(event) => updateRow(setPortfolio, index, 'link', event.target.value)} /></Field>
-                        <ImageAdjustInput label="Featured work photo" mode="featured" currentUrl={fieldString(row.image)} onChange={(file) => updateRow(setPortfolio, index, '_file', file)} />
-                        <Field label="Description" wide><TextArea value={fieldString(row.description)} onChange={(event) => updateRow(setPortfolio, index, 'description', event.target.value)} /></Field>
+                      <div className={`form-grid${isOrganizationProfile ? '' : ' is-three'}`}>
+                        {isOrganizationProfile ? (
+                          <>
+                            <Field label="Title"><TextInput value={fieldString(row.title)} onChange={(event) => updateRow(setPortfolio, index, 'title', event.target.value)} /></Field>
+                            <Field label="Description" wide><TextArea value={fieldString(row.description)} onChange={(event) => updateRow(setPortfolio, index, 'description', event.target.value)} /></Field>
+                            <Field label="Link" wide><TextInput type="url" value={fieldString(row.link)} onChange={(event) => updateRow(setPortfolio, index, 'link', event.target.value)} /></Field>
+                          </>
+                        ) : (
+                          <>
+                            <Field label="Title"><TextInput value={fieldString(row.title)} onChange={(event) => updateRow(setPortfolio, index, 'title', event.target.value)} /></Field>
+                            <Field label="Type"><SelectInput value={fieldString(row.highlight_type)} onChange={(event) => updateRow(setPortfolio, index, 'highlight_type', event.target.value)}>{options.highlightTypes.map((choice) => <option value={choice.value} key={choice.value}>{choice.label}</option>)}</SelectInput></Field>
+                            <Field label="Organization name"><TextInput value={fieldString(row.organization)} onChange={(event) => updateRow(setPortfolio, index, 'organization', event.target.value)} /></Field>
+                            <Field label="Period"><TextInput value={fieldString(row.period)} onChange={(event) => updateRow(setPortfolio, index, 'period', event.target.value)} /></Field>
+                            <Field label="Project link"><TextInput type="url" value={fieldString(row.link)} onChange={(event) => updateRow(setPortfolio, index, 'link', event.target.value)} /></Field>
+                            <ImageAdjustInput label="Featured work photo" mode="featured" currentUrl={fieldString(row.image)} onChange={(file) => updateRow(setPortfolio, index, '_file', file)} />
+                            <Field label="Description" wide><TextArea value={fieldString(row.description)} onChange={(event) => updateRow(setPortfolio, index, 'description', event.target.value)} /></Field>
+                          </>
+                        )}
                       </div>
                     </RepeatRow>
                   ))}
@@ -928,49 +926,53 @@ export function ProfessionalProfileEditor() {
               )}
             </FormSection>
 
-            <FormSection
-              title="Testimonials"
-              actions={<button className="manage-button" type="button" onClick={() => setTestimonials((current) => [...current, { client_name: '', client_role: '', organization: '', review_text: '', rating: 5, display_order: current.length }])}><Plus size={13} /> Add testimonial</button>}
-            >
-              {testimonials.length === 0 ? <EmptyRow>Add recommendations when they are available.</EmptyRow> : (
-                <div className="professional-repeat-list">
-                  {testimonials.map((row, index) => (
-                    <RepeatRow key={fieldString(row.id) || `testimonial-${index}`} onRemove={() => removeRow(setTestimonials, index)}>
-                      <div className="form-grid is-three">
-                        <Field label="Client name"><TextInput value={fieldString(row.client_name)} onChange={(event) => updateRow(setTestimonials, index, 'client_name', event.target.value)} /></Field>
-                        <Field label="Role"><TextInput value={fieldString(row.client_role)} onChange={(event) => updateRow(setTestimonials, index, 'client_role', event.target.value)} /></Field>
-                        <Field label="Organization"><TextInput value={fieldString(row.organization)} onChange={(event) => updateRow(setTestimonials, index, 'organization', event.target.value)} /></Field>
-                        <Field label="Rating"><TextInput type="number" min="1" max="5" value={fieldString(row.rating)} onChange={(event) => updateRow(setTestimonials, index, 'rating', event.target.value)} /></Field>
-                        <FileInput label="Client photo" currentUrl={fieldString(row.profile_photo)} accept="image/*" onChange={(file) => updateRow(setTestimonials, index, '_file', file)} />
-                        <Field label="Review" wide><TextArea value={fieldString(row.review_text)} onChange={(event) => updateRow(setTestimonials, index, 'review_text', event.target.value)} /></Field>
-                      </div>
-                    </RepeatRow>
-                  ))}
-                </div>
-              )}
-            </FormSection>
+            {!isOrganizationProfile ? (
+              <FormSection
+                title="Testimonials"
+                actions={<button className="manage-button" type="button" onClick={() => setTestimonials((current) => [...current, { client_name: '', client_role: '', organization: '', review_text: '', rating: 5, display_order: current.length }])}><Plus size={13} /> Add testimonial</button>}
+              >
+                {testimonials.length === 0 ? <EmptyRow>Add recommendations when they are available.</EmptyRow> : (
+                  <div className="professional-repeat-list">
+                    {testimonials.map((row, index) => (
+                      <RepeatRow key={fieldString(row.id) || `testimonial-${index}`} onRemove={() => removeRow(setTestimonials, index)}>
+                        <div className="form-grid is-three">
+                          <Field label="Client name"><TextInput value={fieldString(row.client_name)} onChange={(event) => updateRow(setTestimonials, index, 'client_name', event.target.value)} /></Field>
+                          <Field label="Role"><TextInput value={fieldString(row.client_role)} onChange={(event) => updateRow(setTestimonials, index, 'client_role', event.target.value)} /></Field>
+                          <Field label="Organization"><TextInput value={fieldString(row.organization)} onChange={(event) => updateRow(setTestimonials, index, 'organization', event.target.value)} /></Field>
+                          <Field label="Rating"><TextInput type="number" min="1" max="5" value={fieldString(row.rating)} onChange={(event) => updateRow(setTestimonials, index, 'rating', event.target.value)} /></Field>
+                          <FileInput label="Client photo" currentUrl={fieldString(row.profile_photo)} accept="image/*" onChange={(file) => updateRow(setTestimonials, index, '_file', file)} />
+                          <Field label="Review" wide><TextArea value={fieldString(row.review_text)} onChange={(event) => updateRow(setTestimonials, index, 'review_text', event.target.value)} /></Field>
+                        </div>
+                      </RepeatRow>
+                    ))}
+                  </div>
+                )}
+              </FormSection>
+            ) : null}
         </>
 
-        <FormSection
-          title="Documents"
-          description="Keep no more than two documents public."
-          actions={<button className="manage-button" type="button" onClick={() => setDocuments((current) => [...current, { title: '', document_type: 'other', is_public: true, display_order: current.length }])}><Plus size={13} /> Add document</button>}
-        >
-          {documents.length === 0 ? <EmptyRow>Add a CV, brochure, certificate, or portfolio document.</EmptyRow> : (
-            <div className="professional-repeat-list">
-              {documents.map((row, index) => (
-                <RepeatRow key={fieldString(row.id) || `document-${index}`} onRemove={() => removeRow(setDocuments, index)}>
-                  <div className="form-grid is-three">
-                    <Field label="Title"><TextInput value={fieldString(row.title)} onChange={(event) => updateRow(setDocuments, index, 'title', event.target.value)} /></Field>
-                    <Field label="Document type"><SelectInput value={fieldString(row.document_type)} onChange={(event) => updateRow(setDocuments, index, 'document_type', event.target.value)}>{options.documentTypes.map((choice) => <option value={choice.value} key={choice.value}>{choice.label}</option>)}</SelectInput></Field>
-                    <Toggle label="Public document" checked={Boolean(row.is_public)} onChange={(checked) => updateRow(setDocuments, index, 'is_public', checked)} />
-                    <FileInput label="File" currentUrl={fieldString(row.file)} onChange={(file) => updateRow(setDocuments, index, '_file', file)} />
-                  </div>
-                </RepeatRow>
-              ))}
-            </div>
-          )}
-        </FormSection>
+        {!isOrganizationProfile ? (
+          <FormSection
+            title="Documents"
+            description="Keep no more than two documents public."
+            actions={<button className="manage-button" type="button" onClick={() => setDocuments((current) => [...current, { title: '', document_type: 'other', is_public: true, display_order: current.length }])}><Plus size={13} /> Add document</button>}
+          >
+            {documents.length === 0 ? <EmptyRow>Add a CV, brochure, certificate, or portfolio document.</EmptyRow> : (
+              <div className="professional-repeat-list">
+                {documents.map((row, index) => (
+                  <RepeatRow key={fieldString(row.id) || `document-${index}`} onRemove={() => removeRow(setDocuments, index)}>
+                    <div className="form-grid is-three">
+                      <Field label="Title"><TextInput value={fieldString(row.title)} onChange={(event) => updateRow(setDocuments, index, 'title', event.target.value)} /></Field>
+                      <Field label="Document type"><SelectInput value={fieldString(row.document_type)} onChange={(event) => updateRow(setDocuments, index, 'document_type', event.target.value)}>{options.documentTypes.map((choice) => <option value={choice.value} key={choice.value}>{choice.label}</option>)}</SelectInput></Field>
+                      <Toggle label="Public document" checked={Boolean(row.is_public)} onChange={(checked) => updateRow(setDocuments, index, 'is_public', checked)} />
+                      <FileInput label="File" currentUrl={fieldString(row.file)} onChange={(file) => updateRow(setDocuments, index, '_file', file)} />
+                    </div>
+                  </RepeatRow>
+                ))}
+              </div>
+            )}
+          </FormSection>
+        ) : null}
 
         <FormSection title="Profile login" description="The owner can use these credentials to manage their own card.">
           <div className="form-grid">

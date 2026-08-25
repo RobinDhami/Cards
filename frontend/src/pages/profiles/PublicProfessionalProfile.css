@@ -1625,23 +1625,6 @@
   box-shadow: none;
 }
 
-.profile-offerings-section.is-organization .profile-service.is-lead {
-  overflow: hidden;
-  margin-bottom: 5px;
-  border: 1px solid #d9e1ed;
-  border-radius: 14px;
-  padding: 17px 14px;
-  box-shadow: 0 10px 24px rgba(16, 37, 79, 0.06);
-}
-
-.profile-offerings-section.is-organization .profile-service.is-lead::before {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 4px;
-  background: var(--profile-accent);
-  content: "";
-}
-
 .profile-offerings-section.is-organization .profile-service-icon {
   width: 42px;
   height: 42px;
@@ -1649,12 +1632,6 @@
   border-radius: 11px;
   background: transparent;
   color: #10254f;
-}
-
-.profile-offerings-section.is-organization .is-lead .profile-service-icon {
-  border: 1px solid color-mix(in srgb, var(--profile-accent) 28%, #d9e1ed);
-  background: color-mix(in srgb, var(--profile-accent) 7%, #ffffff);
-  color: var(--profile-accent);
 }
 
 .profile-offerings-section.is-organization .profile-service strong {
@@ -1671,15 +1648,67 @@
   color: var(--profile-accent);
 }
 
-.profile-highlights-section.is-organization .profile-highlight {
-  grid-template-columns: 108px minmax(0, 1fr);
-  border-radius: 14px;
-  padding: 8px;
+.profile-highlights-section.is-organization .profile-highlights {
+  gap: 10px;
 }
 
-.profile-highlights-section.is-organization .profile-highlight-image {
-  min-height: 86px;
+.profile-highlights-section.is-organization .profile-highlight.is-achievement {
+  grid-template-columns: 38px minmax(0, 1fr) 18px;
+  gap: 12px;
+  align-items: start;
+  border: 1px solid #eadfca;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fffaf0 0%, #ffffff 72%);
+  padding: 15px 13px;
+  color: inherit;
+  box-shadow: none;
+}
+
+.profile-highlight-achievement-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid #efd9ac;
   border-radius: 10px;
+  background: #fff3d7;
+  color: #a86408;
+}
+
+.profile-highlight-achievement-copy {
+  min-width: 0;
+}
+
+.profile-highlight-achievement-copy small,
+.profile-highlight-achievement-copy strong {
+  display: block;
+}
+
+.profile-highlight-achievement-copy small {
+  margin-bottom: 4px;
+  color: #a86408;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.profile-highlight-achievement-copy strong {
+  color: #0b1f45;
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.profile-highlight-achievement-copy p {
+  margin: 6px 0 0;
+  color: var(--profile-muted);
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+
+.profile-highlight-achievement-arrow {
+  align-self: center;
+  color: #b7791f;
 }
 
 .profile-business-hours {
@@ -2072,14 +2101,6 @@
     min-height: 49px;
     padding: 0 8px;
     font-size: 10px;
-  }
-
-  .profile-highlights-section.is-organization .profile-highlight {
-    grid-template-columns: 1fr;
-  }
-
-  .profile-highlights-section.is-organization .profile-highlight-image {
-    min-height: 140px;
   }
 
   .profile-highlight {

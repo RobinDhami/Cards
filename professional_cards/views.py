@@ -196,8 +196,9 @@ def _looking_for_labels(profile):
 def _profile_completion(profile):
     service_count = profile.services.count()
     if profile.profile_focus == 'organization':
+        has_logo = bool(profile.organization_logo or profile.personal_logo)
         checks = [
-            bool(profile.organization_logo),
+            has_logo,
             bool(profile.company_name),
             bool(profile.organization_tagline),
             bool(profile.industry),
@@ -208,8 +209,8 @@ def _profile_completion(profile):
         ]
         completed = sum(1 for item in checks if item)
         percent = round((completed / len(checks)) * 100)
-        if not profile.organization_logo:
-            suggestion = 'Add the organization logo used by this template.'
+        if not has_logo:
+            suggestion = 'Add the logo used by this template.'
         elif not profile.company_name or not profile.organization_tagline:
             suggestion = 'Complete the organization name and tagline.'
         elif service_count < 3:
@@ -681,6 +682,7 @@ def _public_profile_payload(request, profile):
         and profile.owner_id == request.user.id
     )
     can_edit_profile = can_manage_professional_profile(request.user, profile)
+    unified_logo_url = _file_url(profile.organization_logo or profile.personal_logo)
 
     return {
         'seo': {
@@ -703,7 +705,7 @@ def _public_profile_payload(request, profile):
             'id': profile.id,
             'slug': profile.slug,
             'templateName': profile.template_name,
-            'profileFocus': profile.profile_focus,
+            'profileFocus': 'organization',
             'profileType': profile.profile_type,
             'fullName': profile.full_name,
             'initials': (profile.full_name[:2] or 'P').upper(),
@@ -712,10 +714,10 @@ def _public_profile_payload(request, profile):
             'profession': profile.profession,
             'designation': profile.designation,
             'companyName': profile.company_name,
-            'headerIdentity': profile.header_identity,
-            'organizationLogoUrl': _file_url(profile.organization_logo),
+            'headerIdentity': 'organization',
+            'organizationLogoUrl': unified_logo_url,
             'organizationTagline': profile.organization_tagline,
-            'personalLogoUrl': _file_url(profile.personal_logo),
+            'personalLogoUrl': unified_logo_url,
             'brandName': profile.brand_name,
             'brandTagline': profile.brand_tagline,
             'profileIdentifierLabel': profile.profile_identifier_label,

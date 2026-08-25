@@ -471,7 +471,7 @@ function Services({ services, title, variant = 'personal' }: { services: Service
     <section className={`profile-section profile-offerings-section is-${variant}`}>
       <h2 className="profile-section-title">{title}</h2>
       <div className="profile-services">
-        {services.slice(0, 8).map((service, index) => {
+        {services.slice(0, 8).map((service) => {
           const Icon = serviceIconMap[service.icon] ?? BriefcaseBusiness
           const content = (
             <>
@@ -485,7 +485,7 @@ function Services({ services, title, variant = 'personal' }: { services: Service
               {service.href ? <ChevronRight className="profile-service-arrow" size={19} aria-hidden="true" /> : null}
             </>
           )
-          const className = `profile-service${variant === 'organization' && index === 0 ? ' is-lead' : ''}${service.href ? ' is-linked' : ''}`
+          const className = `profile-service${service.href ? ' is-linked' : ''}`
           return service.href ? (
             <a className={className} href={backendHref(service.href)} target="_blank" rel="noopener noreferrer" key={service.id}>{content}</a>
           ) : (
@@ -608,6 +608,33 @@ function Fact({ icon: Icon, label, value }: IdentityFact) {
 function Highlights({ highlights, title = 'Highlights', variant = 'personal' }: { highlights: HighlightItem[]; title?: string; variant?: 'personal' | 'organization' }) {
   if (highlights.length === 0) {
     return null
+  }
+  if (variant === 'organization') {
+    return (
+      <section className="profile-section profile-highlights-section is-organization">
+        <h2 className="profile-section-title">{title}</h2>
+        <div className="profile-highlights">
+          {highlights.map((highlight, index) => {
+            const content = (
+              <>
+                <span className="profile-highlight-achievement-icon"><Sparkles size={17} aria-hidden="true" /></span>
+                <span className="profile-highlight-achievement-copy">
+                  <small>{index === 0 ? 'Featured work' : 'Recent achievement'}</small>
+                  <strong>{highlight.title}</strong>
+                  {highlight.description ? <p>{highlight.description}</p> : null}
+                </span>
+                {highlight.link ? <ChevronRight className="profile-highlight-achievement-arrow" size={18} aria-hidden="true" /> : null}
+              </>
+            )
+            return highlight.link ? (
+              <a className="profile-highlight is-achievement" href={highlight.link} target="_blank" rel="noopener noreferrer" key={highlight.id}>{content}</a>
+            ) : (
+              <article className="profile-highlight is-achievement" key={highlight.id}>{content}</article>
+            )
+          })}
+        </div>
+      </section>
+    )
   }
   return (
     <section className={`profile-section profile-highlights-section is-${variant}`}>

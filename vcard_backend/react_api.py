@@ -273,11 +273,16 @@ def _professional_payload(profile, detailed=True):
     if not detailed:
         return data
 
+    profile_fields = {
+        field_name: _professional_value(profile, field_name)
+        for field_name in PROFESSIONAL_FIELDS
+    }
+    profile_fields.update({
+        'profile_focus': 'organization',
+        'header_identity': 'organization',
+    })
     data.update({
-        'fields': {
-            field_name: _professional_value(profile, field_name)
-            for field_name in PROFESSIONAL_FIELDS
-        },
+        'fields': profile_fields,
         'loginUsername': (
             profile.owner.username
             if profile.owner_id and not profile.owner.is_staff and not profile.owner.is_superuser
@@ -353,7 +358,8 @@ def _professional_form_data(request):
             query['login_password'] = str(payload.get('loginPassword') or '')
         if query.get('template_name') == 'organization_focus':
             query['template_name'] = 'modern_identity'
-            query['profile_focus'] = 'organization'
+        query['profile_focus'] = 'organization'
+        query['header_identity'] = 'organization'
         return query, {}, payload.get('collections', {})
     collections = {}
     try:
@@ -363,7 +369,8 @@ def _professional_form_data(request):
     query = request.POST.copy()
     if query.get('template_name') == 'organization_focus':
         query['template_name'] = 'modern_identity'
-        query['profile_focus'] = 'organization'
+    query['profile_focus'] = 'organization'
+    query['header_identity'] = 'organization'
     return query, request.FILES, collections
 
 
