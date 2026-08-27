@@ -16,18 +16,18 @@ import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left.js'
 import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right.js'
 import X from 'lucide-react/dist/esm/icons/x.js'
 import { apiFetch, displayError } from '../../lib/api'
-import homeWordmarkAsset from '../../../../theme/static/branding/tap2connect-wordmark-original.png'
-import heroAsset from '../../../../theme/static/home/figma-assets/hero-background-with-card-profile.png'
-import workflowAsset from '../../../../theme/static/home/figma-assets/workflow-phone-card-transparent.png'
-import audienceStudent from '../../../../theme/static/home/figma-assets/audience-student-mobile.png'
-import audienceProfessional from '../../../../theme/static/home/figma-assets/audience-professional-mobile.png'
-import audienceCollege from '../../../../theme/static/home/figma-assets/audience-college-mobile.png'
-import audienceOrganization from '../../../../theme/static/home/figma-assets/audience-business-mobile.png'
-import previewPlastic from '../../../../theme/static/home/figma-assets/cr80-plastic-transparent.png'
-import previewMetal from '../../../../theme/static/home/figma-assets/cr80-metal-transparent.png'
-import previewWood from '../../../../theme/static/home/figma-assets/cr80-wood-transparent.png'
-import previewCustom from '../../../../theme/static/home/figma-assets/cr80-custom-transparent.png'
-import contactArtwork from '../../../../theme/static/home/figma-assets/contact-premium-cards-ivory.png'
+import homeWordmarkAsset from '../../../../theme/static/branding/tap2connect-wordmark-optimized.webp'
+import heroAsset from '../../../../theme/static/home/figma-assets/hero-background-with-card-profile.webp'
+import workflowAsset from '../../../../theme/static/home/figma-assets/workflow-phone-card-transparent.webp'
+import audienceStudent from '../../../../theme/static/home/figma-assets/audience-student-mobile.webp'
+import audienceProfessional from '../../../../theme/static/home/figma-assets/audience-professional-mobile.webp'
+import audienceCollege from '../../../../theme/static/home/figma-assets/audience-college-mobile.webp'
+import audienceOrganization from '../../../../theme/static/home/figma-assets/audience-business-mobile.webp'
+import previewPlastic from '../../../../theme/static/home/figma-assets/cr80-plastic-transparent.webp'
+import previewMetal from '../../../../theme/static/home/figma-assets/cr80-metal-transparent.webp'
+import previewWood from '../../../../theme/static/home/figma-assets/cr80-wood-transparent.webp'
+import previewCustom from '../../../../theme/static/home/figma-assets/cr80-custom-transparent.webp'
+import contactArtwork from '../../../../theme/static/home/figma-assets/contact-premium-cards-ivory.webp'
 import './HomePageFigma.css'
 
 const navigation = [
@@ -69,7 +69,7 @@ const studioCards = {
 function BrandLogo() {
   return (
     <span className="fig-brand">
-      <img className="fig-brand__image" src={homeWordmarkAsset} alt="" />
+      <img className="fig-brand__image" src={homeWordmarkAsset} alt="" decoding="async" />
       <span className="fig-brand__country">Nepal</span>
     </span>
   )
@@ -133,7 +133,7 @@ function HowItWorks() {
             <h2 id="how-title">One tap.<br />All of you<span>.</span></h2>
             <p className="fig-how__lead">Tap2Connect Nepal makes sharing who you are simple, secure and always up to date.<br />Four steps. Endless connections.</p>
           </div>
-          <img src={workflowAsset} alt="A Tap2Connect card beside a digital profile" loading="lazy" />
+          <img src={workflowAsset} alt="A Tap2Connect card beside a digital profile" loading="lazy" decoding="async" />
         </div>
         <div className="fig-steps">
           {steps.map(([title, description], index) => (
@@ -165,7 +165,7 @@ function Audience() {
         <div className="fig-audience__cards">
           {audiences.map(([label, src]) => (
             <a href="#contact" className="fig-audience-card" key={label}>
-              <img src={src} alt={`${label} using a Tap2Connect card`} loading="lazy" />
+              <img src={src} alt={`${label} using a Tap2Connect card`} loading="lazy" decoding="async" />
               <span>{label} <ArrowRight /></span>
             </a>
           ))}
@@ -215,7 +215,7 @@ function Products() {
         <div className="fig-card-carousel" aria-roledescription="carousel" aria-label="Choose your Tap2Connect card">
           <button className="fig-carousel-arrow fig-carousel-arrow--previous" type="button" onClick={() => changeProduct(-1)} aria-label="Show previous card"><ChevronLeft /></button>
           <div className="fig-card-carousel__stage">
-            <img key={src} src={src} alt={`${name} Tap2Connect card`} />
+            <img key={src} src={src} alt={`${name} Tap2Connect card`} loading="lazy" decoding="async" />
           </div>
           <div className="fig-card-carousel__copy">
             <h3>{name}</h3>
@@ -248,7 +248,7 @@ function Studio() {
           <a className="fig-button fig-button--primary fig-studio__button" href="/card-editor/">Continue to Advanced Editor <ArrowRight /></a>
         </div>
         <div className={`fig-studio__preview fig-studio__preview--${finish.toLowerCase()}`} style={{ '--card-accent': accent } as CSSProperties}>
-          <img src={studioCards[material]} alt={`${material} ${finish.toLowerCase()} card preview`} />
+          <img src={studioCards[material]} alt={`${material} ${finish.toLowerCase()} card preview`} loading="lazy" decoding="async" />
         </div>
       </div>
     </section>
@@ -285,7 +285,7 @@ function Contact() {
             {message ? <p className={`fig-contact__message is-${state}`} role="status">{state === 'success' && <CheckCircle2 />} {message}</p> : null}
           </form>
         </div>
-        <div className="fig-contact__art" aria-hidden="true"><img className="fig-contact__artwork" src={contactArtwork} alt="" loading="lazy" /></div>
+        <div className="fig-contact__art" aria-hidden="true"><img className="fig-contact__artwork" src={contactArtwork} alt="" loading="lazy" decoding="async" /></div>
       </div>
     </section>
   )

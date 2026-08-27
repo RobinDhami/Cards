@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { apiFetch, displayError, jsonBody } from '../../lib/api'
-import logoAsset from '../../../../theme/static/branding/tap2connect-symbol.png'
+import logoAsset from '../../../../theme/static/branding/tap2connect-logo-optimized.webp'
 import './LoginPage.css'
 
 export function LoginPage() {

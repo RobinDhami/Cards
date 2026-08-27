@@ -154,7 +154,7 @@ export function CardDesignStudio() {
         <Suspense
           fallback={
             <div className="editor-loading-screen" role="status" aria-live="polite">
-              <img src="/static/branding/tap2connect-logo-official.png" alt="" />
+              <img src="/static/branding/tap2connect-logo-optimized.webp" alt="" />
               <span>Opening card editor…</span>
             </div>
           }

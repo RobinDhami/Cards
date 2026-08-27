@@ -1,23 +1,20 @@
 import { lazy, Suspense } from 'react'
-import { HomePage } from './pages/home/HomePage'
-import { DashboardHome } from './pages/dashboard/DashboardHome'
-import { PublicProfessionalProfile } from './pages/profiles/PublicProfessionalProfile'
-import { LoginPage } from './pages/auth/LoginPage'
-import {
-  ProfessionalEditLogin,
-  ProfessionalProfileDelete,
-  ProfessionalProfileEditor,
-  ProfessionalProfileList,
-} from './pages/professional/ProfessionalWorkspace'
-import { ProfessionalConnections } from './pages/professional/ProfessionalConnections'
-import {
-  PublicStudentCard,
-  StudentEditLogin,
-  StudentEditor,
-  StudentOwnerDashboard,
-} from './pages/students/StudentWorkspace'
-import { SchoolDashboardRouter } from './pages/school/SchoolDashboard'
-import { MigrationNeededPage } from './pages/migration/MigrationNeededPage'
+
+const HomePage = lazy(() => import('./pages/home/HomePage').then((module) => ({ default: module.HomePage })))
+const DashboardHome = lazy(() => import('./pages/dashboard/DashboardHome').then((module) => ({ default: module.DashboardHome })))
+const PublicProfessionalProfile = lazy(() => import('./pages/profiles/PublicProfessionalProfile').then((module) => ({ default: module.PublicProfessionalProfile })))
+const LoginPage = lazy(() => import('./pages/auth/LoginPage').then((module) => ({ default: module.LoginPage })))
+const ProfessionalEditLogin = lazy(() => import('./pages/professional/ProfessionalWorkspace').then((module) => ({ default: module.ProfessionalEditLogin })))
+const ProfessionalProfileDelete = lazy(() => import('./pages/professional/ProfessionalWorkspace').then((module) => ({ default: module.ProfessionalProfileDelete })))
+const ProfessionalProfileEditor = lazy(() => import('./pages/professional/ProfessionalWorkspace').then((module) => ({ default: module.ProfessionalProfileEditor })))
+const ProfessionalProfileList = lazy(() => import('./pages/professional/ProfessionalWorkspace').then((module) => ({ default: module.ProfessionalProfileList })))
+const ProfessionalConnections = lazy(() => import('./pages/professional/ProfessionalConnections').then((module) => ({ default: module.ProfessionalConnections })))
+const PublicStudentCard = lazy(() => import('./pages/students/StudentWorkspace').then((module) => ({ default: module.PublicStudentCard })))
+const StudentEditLogin = lazy(() => import('./pages/students/StudentWorkspace').then((module) => ({ default: module.StudentEditLogin })))
+const StudentEditor = lazy(() => import('./pages/students/StudentWorkspace').then((module) => ({ default: module.StudentEditor })))
+const StudentOwnerDashboard = lazy(() => import('./pages/students/StudentWorkspace').then((module) => ({ default: module.StudentOwnerDashboard })))
+const SchoolDashboardRouter = lazy(() => import('./pages/school/SchoolDashboard').then((module) => ({ default: module.SchoolDashboardRouter })))
+const MigrationNeededPage = lazy(() => import('./pages/migration/MigrationNeededPage').then((module) => ({ default: module.MigrationNeededPage })))
 
 const CardEditorPage = lazy(() =>
   import('./features/card-editor/CardEditorPage').then((module) => ({
@@ -56,7 +53,7 @@ const oldProjectRoutesNeedingMigration = [
   /^\/ai-chat\/?$/,
 ]
 
-function App() {
+function AppRoutes() {
   const path = window.location.pathname
 
   if (path === '/' || path === '') {
@@ -73,11 +70,7 @@ function App() {
     || path === '/dashboard/templates/'
     || path === '/dashboard/templates'
   ) {
-    return (
-      <Suspense fallback={<div className="route-loading-screen">Opening card editor…</div>}>
-        <CardEditorPage />
-      </Suspense>
-    )
+    return <CardEditorPage />
   }
 
   if (/^\/p\/[^/]+\/edit-login\/?$/.test(path)) {
@@ -146,6 +139,14 @@ function App() {
   }
 
   return <MigrationNeededPage title="Route not found in React" />
+}
+
+function App() {
+  return (
+    <Suspense fallback={<div className="route-loading-screen">Loading…</div>}>
+      <AppRoutes />
+    </Suspense>
+  )
 }
 
 export default App

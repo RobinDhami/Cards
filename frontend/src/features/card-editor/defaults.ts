@@ -29,7 +29,7 @@ export const SAMPLE_PROFILE_FIELDS: ProfileFields = {
   connection_id: 'T2C-00001',
   social_username: '@tap2connect',
   profile_photo: '',
-  company_logo: '/static/branding/tap2connect-logo-official.png',
+  company_logo: '/static/branding/tap2connect-logo-optimized.webp',
   qr_code: 'https://tap2connectnepal.com',
 }
 
@@ -393,7 +393,7 @@ function templateDocument(
       style: { ...baseStyle(accent), stroke: accent },
     },
     {
-      ...createImageElement('/static/branding/tap2connect-logo-official.png', 'T2C Logo'),
+      ...createImageElement('/static/branding/tap2connect-logo-optimized.webp', 'T2C Logo'),
       id: `${design}-logo`,
       x: 78,
       y: 60,
