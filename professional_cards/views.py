@@ -68,7 +68,7 @@ LOOKING_FOR_LABELS = dict(LOOKING_FOR_CHOICES)
 
 
 def platform_admin_required(user):
-    return user.is_authenticated and (user.is_staff or user.is_superuser)
+    return user.is_authenticated and user.is_superuser
 
 
 def can_manage_professional_profile(user, profile):

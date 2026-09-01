@@ -61,6 +61,7 @@ from vcards.views import (
     _log_profile_activity,
     _media_url,
     _profile_supports_self_service,
+    _resolve_user_workspace,
     _school_analytics,
     _school_card_context,
     _school_member_queryset,
@@ -168,15 +169,8 @@ def _require_platform_admin(request):
 
 def _session_payload(request):
     user = request.user
-    role = _get_user_role(user) if user.is_authenticated else 'public'
-    redirect_path = '/dashboard/'
-    if user.is_authenticated:
-        professional = ProfessionalProfile.objects.filter(owner=user, is_active=True).first()
-        student = StudentProfile.objects.filter(auth_user=user).first()
-        if professional and role == 'public':
-            redirect_path = f'/p/{professional.slug}/edit/'
-        elif student and role in {'student', 'teacher'}:
-            redirect_path = f'/student/{student.id}/manage/'
+    workspace = _resolve_user_workspace(user)
+    role = workspace['role']
     return {
         'ok': True,
         'csrfToken': get_token(request),
@@ -192,7 +186,8 @@ def _session_payload(request):
             'isSuperuser': bool(user.is_authenticated and user.is_superuser),
             'role': role,
         },
-        'redirectPath': redirect_path,
+        'redirectPath': workspace['destination'],
+        'workspaceError': workspace['message'],
     }
 
 
@@ -209,6 +204,26 @@ def session_login_api(request):
     user = authenticate(request, username=username, password=password)
     if user is None:
         return _json_error('Invalid username or password.', status=400)
+    workspace = _resolve_user_workspace(user, surface='normal')
+    if not workspace['destination']:
+        logout(request)
+        return _json_error(workspace['message'], status=403)
+    login(request, user)
+    return JsonResponse(_session_payload(request))
+
+
+@require_http_methods(['POST'])
+def platform_session_login_api(request):
+    payload = _json_body(request)
+    username = str(payload.get('username') or '').strip()
+    password = str(payload.get('password') or '')
+    user = authenticate(request, username=username, password=password)
+    if user is None:
+        return _json_error('Invalid username or password.', status=400)
+    workspace = _resolve_user_workspace(user, surface='platform')
+    if not workspace['destination']:
+        logout(request)
+        return _json_error(workspace['message'], status=403)
     login(request, user)
     return JsonResponse(_session_payload(request))
 
@@ -1185,6 +1200,9 @@ def _dashboard_school(request, required=True):
         school = College.objects.filter(pk=school_id).first() if school_id else College.objects.order_by('name').first()
     else:
         school = College.objects.filter(admin_user=request.user).first()
+        requested_school_id = _int(request.GET.get('school') or request.POST.get('school'))
+        if requested_school_id and (not school or requested_school_id != school.id):
+            return None, 'forbidden'
     return school, role
 
 

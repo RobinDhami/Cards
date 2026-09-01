@@ -19,10 +19,10 @@ export function withSchool(path: string, schoolId?: number | null) {
 export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = false) {
   const path = window.location.pathname
 
-  if (isSuperAdmin && schoolId) {
+  if (schoolId && path.startsWith('/dashboard/organizations/')) {
     const workspaceRoot = `/dashboard/organizations/${schoolId}`
     return [
-      { label: 'All Organizations', href: '/dashboard/schools/', icon: Building2, active: false },
+      ...(isSuperAdmin ? [{ label: 'All Organizations', href: '/dashboard/schools/', icon: Building2, active: false }] : []),
       { label: 'Organization Overview', href: `${workspaceRoot}/`, icon: LayoutDashboard, active: path === workspaceRoot || path === `${workspaceRoot}/` },
       { label: 'Members', href: `${workspaceRoot}/members/`, icon: LayoutList, active: path.includes('/members') || path.includes('/credentials') },
       { label: 'Bulk Upload', href: `${workspaceRoot}/bulk-upload/`, icon: Upload, active: path.includes('/bulk-upload') },

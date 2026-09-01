@@ -6,7 +6,9 @@ import { apiFetch, displayError, jsonBody } from '../../lib/api'
 import logoAsset from '../../../../theme/static/branding/tap2connect-logo-optimized.webp'
 import './LoginPage.css'
 
-export function LoginPage() {
+type LoginSurface = 'normal' | 'platform'
+
+function LoginForm({ surface }: { surface: LoginSurface }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [passwordVisible, setPasswordVisible] = useState(false)
@@ -14,20 +16,29 @@ export function LoginPage() {
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    document.title = 'Login | Tap2Connect'
-    apiFetch<{ authenticated: boolean; redirectPath: string }>('/api/session/')
+    const isPlatform = surface === 'platform'
+    document.title = `${isPlatform ? 'Platform Admin Login' : 'Login'} | Tap2Connect`
+    apiFetch<{ authenticated: boolean; redirectPath: string; user: { role: string } }>('/api/session/')
       .then((session) => {
-        if (session.authenticated) window.location.replace(session.redirectPath)
+        const matchesSurface = isPlatform
+          ? session.user.role === 'super_admin'
+          : session.user.role !== 'super_admin'
+        if (session.authenticated && matchesSurface && session.redirectPath) {
+          window.location.replace(session.redirectPath)
+        }
       })
       .catch(() => undefined)
-  }, [])
+  }, [surface])
 
   async function submit(event: FormEvent) {
     event.preventDefault()
     setSubmitting(true)
     setError('')
     try {
-      const session = await apiFetch<{ redirectPath: string }>('/api/session/login/', {
+      const endpoint = surface === 'platform'
+        ? '/api/platform/session/login/'
+        : '/api/session/login/'
+      const session = await apiFetch<{ redirectPath: string }>(endpoint, {
         method: 'POST',
         body: jsonBody({ username, password }),
       })
@@ -48,12 +59,18 @@ export function LoginPage() {
             <small>Nepal</small>
           </span>
         </a>
-        <a className="auth-top-action" href="/">Back to website</a>
+        <a className="auth-top-action" href={surface === 'platform' ? '/login/' : '/'}>
+          {surface === 'platform' ? 'User login' : 'Back to website'}
+        </a>
       </header>
 
       <section className="auth-card" aria-labelledby="login-title">
-        <h1 id="login-title">Welcome back!</h1>
-        <p className="auth-copy">Login to manage your Tap2Connect profiles, cards, and workspace.</p>
+        <h1 id="login-title">{surface === 'platform' ? 'Platform administration' : 'Welcome back!'}</h1>
+        <p className="auth-copy">
+          {surface === 'platform'
+            ? 'Sign in with a platform Super Admin account.'
+            : 'Login to manage your Tap2Connect profiles, cards, and workspace.'}
+        </p>
 
         {error ? <div className="manage-alert">{error}</div> : null}
 
@@ -97,12 +114,24 @@ export function LoginPage() {
             </div>
           </div>
           <button className="auth-submit" type="submit" disabled={submitting}>
-            {submitting ? 'Logging in...' : 'Login to your account'}
+            {submitting ? 'Logging in...' : (surface === 'platform' ? 'Login as Super Admin' : 'Login to your account')}
           </button>
         </form>
 
-        <p className="auth-support">Need access? Contact your school or Tap2Connect admin.</p>
+        <p className="auth-support">
+          {surface === 'platform'
+            ? 'This login is restricted to platform Super Administrators.'
+            : 'Need access? Contact your school or Tap2Connect admin.'}
+        </p>
       </section>
     </main>
   )
+}
+
+export function LoginPage() {
+  return <LoginForm surface="normal" />
+}
+
+export function PlatformLoginPage() {
+  return <LoginForm surface="platform" />
 }

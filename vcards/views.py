@@ -251,7 +251,7 @@ def _is_student_edit_authorized(request, student_id):
 
 
 def _is_super_admin(user):
-    return user.is_authenticated and (user.is_superuser or user.is_staff)
+    return user.is_authenticated and user.is_superuser
 
 
 def _get_managed_school(user):
@@ -274,6 +274,84 @@ def _get_owned_professional_profile(user):
     except ImportError:
         return None
     return ProfessionalProfile.objects.filter(owner=user).first()
+
+
+def _resolve_user_workspace(user, surface='session'):
+    """Resolve one authoritative workspace without silently choosing conflicts."""
+    if not user.is_authenticated:
+        return {'role': 'public', 'destination': '', 'message': ''}
+
+    if surface == 'platform':
+        if user.is_superuser:
+            return {'role': 'super_admin', 'destination': reverse('admin_dashboard'), 'message': ''}
+        return {
+            'role': 'public',
+            'destination': '',
+            'message': 'This account does not have platform administrator access.',
+        }
+
+    if user.is_superuser:
+        if surface == 'normal':
+            return {
+                'role': 'super_admin',
+                'destination': '',
+                'message': 'Platform administrators must sign in at /platform/login/.',
+            }
+        return {'role': 'super_admin', 'destination': reverse('admin_dashboard'), 'message': ''}
+
+    organizations = list(College.objects.filter(admin_user=user).order_by('id')[:2])
+    owned_profile = StudentProfile.objects.filter(auth_user=user).first()
+    try:
+        from professional_cards.models import ProfessionalProfile
+    except ImportError:
+        professional_profiles = []
+    else:
+        professional_profiles = list(
+            ProfessionalProfile.objects.filter(owner=user, is_active=True).order_by('id')[:2]
+        )
+
+    if len(organizations) > 1:
+        return {
+            'role': 'invalid',
+            'destination': '',
+            'message': 'This account is assigned to multiple organizations. Contact a platform administrator.',
+        }
+    if len(professional_profiles) > 1:
+        return {
+            'role': 'invalid',
+            'destination': '',
+            'message': 'This account owns multiple active professional workspaces. Contact a platform administrator.',
+        }
+
+    assignments = []
+    if organizations:
+        assignments.append(('school_admin', organizations[0]))
+    if owned_profile and _profile_supports_self_service(owned_profile):
+        assignments.append((owned_profile.member_type or 'student', owned_profile))
+    if professional_profiles:
+        assignments.append(('professional', professional_profiles[0]))
+
+    if len(assignments) > 1:
+        return {
+            'role': 'invalid',
+            'destination': '',
+            'message': 'This account has conflicting workspace assignments. Contact a platform administrator.',
+        }
+    if not assignments:
+        return {
+            'role': 'public',
+            'destination': '',
+            'message': 'This account is not assigned to an active workspace.',
+        }
+
+    role, assignment = assignments[0]
+    if role == 'school_admin':
+        destination = reverse('dashboard_organization_workspace', args=[assignment.id])
+    elif role in {'student', 'teacher'}:
+        destination = reverse('student_owner_dashboard', args=[assignment.id])
+    else:
+        destination = reverse('professional_cards:owner_edit', args=[assignment.slug])
+    return {'role': role, 'destination': destination, 'message': ''}
 
 
 def _get_user_role(user):
@@ -1703,18 +1781,12 @@ def print_card_preview(request, student_id):
 
 @login_required
 def admin_dashboard(request):
-    role = _get_user_role(request.user)
-    professional_profile = _get_owned_professional_profile(request.user)
-    if professional_profile and role == 'public':
-        return redirect('professional_cards:owner_edit', slug=professional_profile.slug)
-    if role in {'student', 'teacher'}:
-        owned_profile = _get_owned_profile(request.user)
-        if owned_profile:
-            request.session[_student_edit_session_key(owned_profile.id)] = True
-            return redirect('student_owner_dashboard', student_id=owned_profile.id)
-    if role not in {'super_admin', 'school_admin'}:
-        messages.error(request, 'You do not have access to the admin dashboard.')
+    workspace = _resolve_user_workspace(request.user)
+    if not workspace['destination']:
+        messages.error(request, workspace['message'])
         return redirect('dashboard_login')
+    if workspace['role'] != 'super_admin':
+        return redirect(workspace['destination'])
 
     school, schools = _resolve_dashboard_school(request, required=True)
     analytics = _school_analytics(school) if school else None
@@ -1798,20 +1870,11 @@ def _dashboard_analytics_payload(school, analytics, is_platform=False):
 
 @login_required
 def dashboard_overview_api(request):
-    role = _get_user_role(request.user)
-    professional_profile = _get_owned_professional_profile(request.user)
-    if professional_profile and role == 'public':
-        return JsonResponse({
-            'redirectTo': reverse('professional_cards:owner_edit', args=[professional_profile.slug]),
-        }, status=403)
-    if role in {'student', 'teacher'}:
-        owned_profile = _get_owned_profile(request.user)
-        if owned_profile:
-            return JsonResponse({
-                'redirectTo': reverse('student_owner_dashboard', args=[owned_profile.id]),
-            }, status=403)
-    if role not in {'super_admin', 'school_admin'}:
-        return JsonResponse({'error': 'You do not have access to the admin dashboard.'}, status=403)
+    workspace = _resolve_user_workspace(request.user)
+    if not workspace['destination']:
+        return JsonResponse({'error': workspace['message']}, status=403)
+    if workspace['role'] != 'super_admin':
+        return JsonResponse({'redirectTo': workspace['destination']}, status=403)
 
     is_super_admin = _is_super_admin(request.user)
     resolved_school, schools = _resolve_dashboard_school(request, required=not is_super_admin)

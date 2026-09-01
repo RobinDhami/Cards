@@ -8,7 +8,7 @@ from professional_cards.models import ProfessionalProfile
 from vcards.models import College, ProfileActivity, Skill, StudentProfile
 
 
-class StudentDigitalCardTests(TestCase):
+class StudentDigitalCardTestMixin:
     def setUp(self):
         self.school = College.objects.create(
             name='Tap2Connect Academy',
@@ -109,6 +109,164 @@ class StudentDigitalCardTests(TestCase):
             response.json()['redirectPath'],
             reverse('student_owner_dashboard', args=[self.student.id]),
         )
+
+
+class WorkspaceLoginTests(TestCase):
+    password = 'WorkspacePass123!'
+
+    def _user(self, username, **extra):
+        return User.objects.create_user(username=username, password=self.password, **extra)
+
+    def _login(self, username, endpoint='react_session_login_api'):
+        return self.client.post(
+            reverse(endpoint),
+            data=json.dumps({'username': username, 'password': self.password}),
+            content_type='application/json',
+        )
+
+    def test_normal_organization_admin_login_opens_assigned_workspace(self):
+        admin_user = self._user('organization.admin')
+        organization = College.objects.create(name='Assigned Organization', admin_user=admin_user)
+
+        response = self._login(admin_user.username)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json()['redirectPath'],
+            reverse('dashboard_organization_workspace', args=[organization.id]),
+        )
+
+    def test_organization_admin_cannot_access_another_organization(self):
+        admin_user = self._user('scoped.admin')
+        assigned = College.objects.create(name='Scoped Organization', admin_user=admin_user)
+        other = College.objects.create(name='Other Organization')
+        self.client.force_login(admin_user)
+
+        response = self.client.get(reverse('react_dashboard_reports_api'), {'school': other.id})
+
+        self.assertEqual(response.status_code, 403)
+        self.assertNotEqual(assigned.id, other.id)
+
+    def test_normal_student_login_remains_functional(self):
+        owner = self._user('member.owner')
+        profile = StudentProfile.objects.create(
+            auth_user=owner,
+            name='Member Owner',
+            username=owner.username,
+            password=self.password,
+            phone='9800000101',
+            member_type='student',
+        )
+
+        response = self._login(owner.username)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['redirectPath'], reverse('student_owner_dashboard', args=[profile.id]))
+
+    def test_normal_teacher_login_remains_functional(self):
+        owner = self._user('teacher.owner')
+        profile = StudentProfile.objects.create(
+            auth_user=owner,
+            name='Teacher Owner',
+            username=owner.username,
+            password=self.password,
+            phone='9800000102',
+            member_type='teacher',
+        )
+
+        response = self._login(owner.username)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['redirectPath'], reverse('student_owner_dashboard', args=[profile.id]))
+
+    def test_normal_professional_login_remains_functional(self):
+        owner = self._user('professional.owner')
+        profile = ProfessionalProfile.objects.create(
+            owner=owner,
+            full_name='Professional Owner',
+            slug='professional-owner',
+            is_active=True,
+        )
+
+        response = self._login(owner.username)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['redirectPath'], reverse('professional_cards:owner_edit', args=[profile.slug]))
+
+    def test_super_admin_is_rejected_from_normal_login(self):
+        super_admin = User.objects.create_superuser('platform.owner', password=self.password)
+
+        response = self._login(super_admin.username)
+
+        self.assertEqual(response.status_code, 403)
+        self.assertIn('/platform/login/', response.json()['message'])
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_platform_login_accepts_superuser(self):
+        super_admin = User.objects.create_superuser('platform.admin', password=self.password)
+
+        response = self._login(super_admin.username, 'react_platform_session_login_api')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['redirectPath'], reverse('admin_dashboard'))
+        self.assertEqual(int(self.client.session['_auth_user_id']), super_admin.id)
+
+    def test_platform_login_rejects_non_superuser_and_clears_session(self):
+        staff_user = self._user('django.staff', is_staff=True)
+        self.client.force_login(staff_user)
+
+        response = self._login(staff_user.username, 'react_platform_session_login_api')
+
+        self.assertEqual(response.status_code, 403)
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_unassigned_account_is_rejected_without_session(self):
+        user = self._user('unassigned.user')
+
+        response = self._login(user.username)
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json()['message'], 'This account is not assigned to an active workspace.')
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_multiple_organization_assignments_are_rejected(self):
+        admin_user = self._user('ambiguous.admin')
+        College.objects.create(name='Organization One', admin_user=admin_user)
+        College.objects.create(name='Organization Two', admin_user=admin_user)
+
+        response = self._login(admin_user.username)
+
+        self.assertEqual(response.status_code, 403)
+        self.assertIn('multiple organizations', response.json()['message'])
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_conflicting_workspace_assignments_are_rejected(self):
+        owner = self._user('conflicting.owner')
+        College.objects.create(name='Conflicting Organization', admin_user=owner)
+        ProfessionalProfile.objects.create(
+            owner=owner,
+            full_name='Conflicting Owner',
+            slug='conflicting-owner',
+            is_active=True,
+        )
+
+        response = self._login(owner.username)
+
+        self.assertEqual(response.status_code, 403)
+        self.assertIn('conflicting workspace assignments', response.json()['message'])
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_existing_super_admin_dashboard_route_remains_functional(self):
+        super_admin = User.objects.create_superuser('dashboard.admin', password=self.password)
+        self.client.force_login(super_admin)
+
+        response = self.client.get(reverse('dashboard_overview_api'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['isSuperAdmin'])
+
+
+class StudentDigitalCardTests(StudentDigitalCardTestMixin, TestCase):
 
     def test_owner_can_edit_about_fields(self):
         self.client.force_login(self.owner)
@@ -222,10 +380,11 @@ class SchoolDashboardScopeTests(TestCase):
             {'school': self.school_b.id},
         )
 
-        self.assertEqual(response.status_code, 200)
-        payload = response.json()
-        self.assertEqual(payload['currentSchool']['id'], self.school_a.id)
-        self.assertEqual(payload['analytics']['studentCount'], 1)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.json()['redirectTo'],
+            reverse('dashboard_organization_workspace', args=[self.school_a.id]),
+        )
 
     def test_school_admin_cannot_open_platform_school_directory(self):
         self.client.force_login(self.school_admin_a)
@@ -242,10 +401,7 @@ class SchoolDashboardScopeTests(TestCase):
             {'school': self.school_b.id},
         )
 
-        self.assertEqual(response.status_code, 200)
-        payload = response.json()
-        self.assertEqual(payload['shell']['currentSchool']['id'], self.school_a.id)
-        self.assertEqual(payload['report']['studentCount'], 1)
+        self.assertEqual(response.status_code, 403)
 
     def test_super_admin_overview_ignores_selected_school_and_stays_platform_wide(self):
         self.client.force_login(self.super_admin)
@@ -348,13 +504,13 @@ class ReactMigrationApiTests(TestCase):
         self.school = College.objects.create(name='React Test School')
         self.client.force_login(self.admin)
 
-    def test_vite_origin_can_complete_csrf_login(self):
+    def test_vite_origin_can_complete_csrf_platform_login(self):
         csrf_client = Client(enforce_csrf_checks=True, HTTP_HOST='127.0.0.1:8000')
         session_response = csrf_client.get(reverse('react_session_api'))
         token = session_response.json()['csrfToken']
 
         response = csrf_client.post(
-            reverse('react_session_login_api'),
+            reverse('react_platform_session_login_api'),
             data=json.dumps({
                 'username': self.admin.username,
                 'password': 'ReactAdminPass123!',

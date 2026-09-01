@@ -4,6 +4,7 @@ const HomePage = lazy(() => import('./pages/home/HomePage').then((module) => ({ 
 const DashboardHome = lazy(() => import('./pages/dashboard/DashboardHome').then((module) => ({ default: module.DashboardHome })))
 const PublicProfessionalProfile = lazy(() => import('./pages/profiles/PublicProfessionalProfile').then((module) => ({ default: module.PublicProfessionalProfile })))
 const LoginPage = lazy(() => import('./pages/auth/LoginPage').then((module) => ({ default: module.LoginPage })))
+const PlatformLoginPage = lazy(() => import('./pages/auth/LoginPage').then((module) => ({ default: module.PlatformLoginPage })))
 const ProfessionalEditLogin = lazy(() => import('./pages/professional/ProfessionalWorkspace').then((module) => ({ default: module.ProfessionalEditLogin })))
 const ProfessionalProfileDelete = lazy(() => import('./pages/professional/ProfessionalWorkspace').then((module) => ({ default: module.ProfessionalProfileDelete })))
 const ProfessionalProfileEditor = lazy(() => import('./pages/professional/ProfessionalWorkspace').then((module) => ({ default: module.ProfessionalProfileEditor })))
@@ -64,6 +65,10 @@ function AppRoutes() {
 
   if (path === '/login/' || path === '/login') {
     return <LoginPage />
+  }
+
+  if (path === '/platform/login/' || path === '/platform/login') {
+    return <PlatformLoginPage />
   }
 
   if (

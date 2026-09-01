@@ -123,7 +123,7 @@ function SchoolShell({
   return (
     <ManageShell
       brand={school?.name || 'Tap2Connect'}
-      brandDetail={school ? (shell.isSuperAdmin ? 'Super Admin · Organization workspace' : 'School administration') : 'Platform administration'}
+      brandDetail={school ? (shell.isSuperAdmin ? 'Super Admin · Organization workspace' : 'Organization administration') : 'Platform administration'}
       logo={school?.logo || '/static/branding/tap2connect-logo-optimized.webp'}
       nav={schoolWorkspaceNav(school?.id, shell.isSuperAdmin)}
       title={title}
@@ -299,7 +299,7 @@ export function OrganizationWorkspaceOverview() {
     <SchoolShell
       shell={shell}
       title="Organization Overview"
-      subtitle={`Super Admin workspace for ${organization?.name}`}
+      subtitle={`${shell.isSuperAdmin ? 'Super Admin workspace' : 'Organization administration'} for ${organization?.name}`}
     >
       {error ? <div className="manage-alert school-message">{error}</div> : null}
       <section className="manage-card school-organization-context">
@@ -308,7 +308,7 @@ export function OrganizationWorkspaceOverview() {
           <h2>{organization?.name}</h2>
           <p>{organization?.address || 'No address has been added.'}</p>
         </div>
-        <a className="manage-button" href="/dashboard/schools/">Back to Organizations</a>
+        {shell.isSuperAdmin ? <a className="manage-button" href="/dashboard/schools/">Back to Organizations</a> : null}
       </section>
 
       <section className="school-report-metrics">
@@ -319,7 +319,7 @@ export function OrganizationWorkspaceOverview() {
       </section>
 
       <section className="manage-card school-workspace-actions">
-        <div><h2>Manage this organization</h2><p>These actions stay scoped to {organization?.name} while you remain signed in as Super Admin.</p></div>
+        <div><h2>Manage this organization</h2><p>These actions stay scoped to {organization?.name} while you remain signed in.</p></div>
         <div>
           <a className="manage-button is-primary" href={`${workspaceRoot}/members/`}><UserRound size={14} />Members</a>
           <a className="manage-button" href={`${workspaceRoot}/bulk-upload/`}><Upload size={14} />Bulk Upload</a>
