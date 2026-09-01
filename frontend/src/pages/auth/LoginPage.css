@@ -127,6 +127,7 @@
 }
 
 .auth-form input {
+  box-sizing: border-box;
   appearance: none;
   -webkit-appearance: none;
   width: 100%;
