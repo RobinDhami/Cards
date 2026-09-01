@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
+import Eye from 'lucide-react/dist/esm/icons/eye.js'
+import EyeOff from 'lucide-react/dist/esm/icons/eye-off.js'
 import { apiFetch, displayError, jsonBody } from '../../lib/api'
 import logoAsset from '../../../../theme/static/branding/tap2connect-logo-optimized.webp'
 import './LoginPage.css'
@@ -7,6 +9,7 @@ import './LoginPage.css'
 export function LoginPage() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [passwordVisible, setPasswordVisible] = useState(false)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -55,9 +58,10 @@ export function LoginPage() {
         {error ? <div className="manage-alert">{error}</div> : null}
 
         <form className="auth-form" onSubmit={submit}>
-          <label>
-            <span>Username</span>
+          <div className="auth-field">
+            <label htmlFor="login-username">Username</label>
             <input
+              id="login-username"
               type="text"
               name="username"
               value={username}
@@ -66,18 +70,32 @@ export function LoginPage() {
               required
               autoFocus
             />
-          </label>
-          <label>
-            <span>Password</span>
-            <input
-              type="password"
-              name="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              autoComplete="current-password"
-              required
-            />
-          </label>
+          </div>
+          <div className="auth-field">
+            <label htmlFor="login-password">Password</label>
+            <div className="auth-password-field">
+              <input
+                id="login-password"
+                type={passwordVisible ? 'text' : 'password'}
+                name="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="current-password"
+                required
+              />
+              <button
+                className="auth-password-toggle"
+                type="button"
+                aria-label={passwordVisible ? 'Hide password' : 'Show password'}
+                aria-pressed={passwordVisible}
+                onClick={() => setPasswordVisible((visible) => !visible)}
+              >
+                {passwordVisible
+                  ? <EyeOff size={18} aria-hidden="true" />
+                  : <Eye size={18} aria-hidden="true" />}
+              </button>
+            </div>
+          </div>
           <button className="auth-submit" type="submit" disabled={submitting}>
             {submitting ? 'Logging in...' : 'Login to your account'}
           </button>
