@@ -30,7 +30,8 @@ function routeMatches(path: string, patterns: RegExp[]) {
 const schoolDashboardRoutes = [
   /^\/dashboard\/schools\/?$/,
   /^\/dashboard\/organizations\/\d+\/?$/,
-  /^\/dashboard\/organizations\/\d+\/(?:members|bulk-upload|settings)\/?$/,
+  /^\/dashboard\/organizations\/\d+\/(?:members|bulk-upload|print|exports|reports|settings)\/?$/,
+  /^\/dashboard\/organizations\/\d+\/members\/\d+\/credentials\/?$/,
   /^\/dashboard\/students\/?$/,
   /^\/dashboard\/teachers\/?$/,
   /^\/dashboard\/reports\/?$/,

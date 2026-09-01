@@ -106,6 +106,14 @@ function selectedSchoolId() {
   return Number(new URLSearchParams(window.location.search).get('school') ?? 0)
 }
 
+function organizationWorkspaceHref(schoolId: number) {
+  const moduleMatch = window.location.pathname.match(
+    /^\/dashboard\/organizations\/\d+\/(members|bulk-upload|print|exports|reports|settings)(?:\/|$)/,
+  )
+  const moduleName = moduleMatch?.[1]
+  return `/dashboard/organizations/${schoolId}/${moduleName ? `${moduleName}/` : ''}`
+}
+
 function SchoolShell({
   shell,
   title,
@@ -129,16 +137,17 @@ function SchoolShell({
       title={title}
       subtitle={subtitle}
       userName={shell.user.displayName}
-      userRole={shell.isSuperAdmin ? 'Platform administrator' : 'School administrator'}
+      userRole={shell.isSuperAdmin ? 'Platform administrator' : 'Organization administrator'}
       accent={school?.themePrimary || '#0b4bcb'}
-      schoolOptions={shell.isSuperAdmin ? undefined : shell.schools}
+      schoolOptions={shell.isSuperAdmin && school ? shell.schools : undefined}
       selectedSchool={school?.id ?? null}
       onSchoolChange={(schoolId) => {
-        window.location.href = withSchool(window.location.pathname, schoolId)
+        window.location.href = organizationWorkspaceHref(schoolId)
       }}
       actions={(
         <>
           {shell.isSuperAdmin && school ? <span className="school-super-admin-context">Viewing as Super Admin</span> : null}
+          {!shell.isSuperAdmin && school ? <span className="school-workspace-label">{school.name}</span> : null}
           {actions}
         </>
       )}
@@ -298,7 +307,7 @@ export function OrganizationWorkspaceOverview() {
   return (
     <SchoolShell
       shell={shell}
-      title="Organization Overview"
+      title="Overview"
       subtitle={`${shell.isSuperAdmin ? 'Super Admin workspace' : 'Organization administration'} for ${organization?.name}`}
     >
       {error ? <div className="manage-alert school-message">{error}</div> : null}
@@ -449,6 +458,7 @@ export function MembersPage({ memberType }: { memberType: 'student' | 'teacher' 
 
   if (!shell) return <LoadingSchool />
   const title = isAllMembers ? 'Members' : (memberType === 'teacher' ? 'Teachers & Staff' : 'Students')
+  const workspaceRoot = isAllMembers ? `/dashboard/organizations/${schoolId}` : ''
   const createActions = isAllMembers ? (
     <>
       <button className="manage-button" type="button" onClick={() => setCreateType('teacher')}><Plus size={14} />Add staff</button>
@@ -493,7 +503,7 @@ export function MembersPage({ memberType }: { memberType: 'student' | 'teacher' 
                   <td>{member.username}</td>
                   <td><span className={`school-status${member.isVisible ? ' is-live' : ''}`}>{member.isVisible ? 'Live' : 'Hidden'}</span></td>
                   <td>{member.views + member.contacts + member.downloads}</td>
-                  <td><div className="school-row-actions"><a href={member.publicUrl} target="_blank" rel="noreferrer" title="View card"><Eye size={14} /></a><a href={`/student/edit/${member.id}`} title="Edit profile"><Edit3 size={14} /></a><a href={withSchool(`/dashboard/student/${member.id}/credentials/`, schoolId)} title="Credentials"><KeyRound size={14} /></a><button type="button" onClick={() => remove(member)} title="Delete"><Trash2 size={14} /></button></div></td>
+                  <td><div className="school-row-actions"><a href={member.publicUrl} target="_blank" rel="noreferrer" title="View card"><Eye size={14} /></a><a href={`/student/edit/${member.id}`} title="Edit profile"><Edit3 size={14} /></a><a href={isAllMembers ? `${workspaceRoot}/members/${member.id}/credentials/` : withSchool(`/dashboard/student/${member.id}/credentials/`, schoolId)} title="Credentials"><KeyRound size={14} /></a><button type="button" onClick={() => remove(member)} title="Delete"><Trash2 size={14} /></button></div></td>
                 </tr>
               ))}
             </tbody>
@@ -727,7 +737,8 @@ export function BulkUploadPage() {
 
 export function StudentCredentialsPage() {
   const schoolId = selectedSchoolId()
-  const studentId = Number(window.location.pathname.match(/student\/(\d+)\/credentials/)?.[1] ?? 0)
+  const organizationWorkspace = window.location.pathname.startsWith(`/dashboard/organizations/${schoolId}/`)
+  const studentId = Number(window.location.pathname.match(/(?:student|members)\/(\d+)\/credentials/)?.[1] ?? 0)
   const [shell, setShell] = useState<DashboardShellData | null>(null)
   const [credentials, setCredentials] = useState<{ studentId: number; name: string; username: string; suggestedUsername: string; usernamePrefix: string } | null>(null)
   const [username, setUsername] = useState('')
@@ -770,7 +781,7 @@ export function StudentCredentialsPage() {
         {success ? <div className="manage-alert is-success">{success}</div> : null}
         <Field label="Username"><TextInput value={username} onChange={(event) => setUsername(event.target.value)} required /></Field>
         <Field label="New password" hint="Leave blank to keep the current password. Minimum eight characters."><TextInput type="password" value={password} onChange={(event) => setPassword(event.target.value)} /></Field>
-        <div><a className="manage-button" href={withSchool('/dashboard/students/', schoolId)}>Cancel</a><button className="manage-button is-primary" type="submit"><Save size={14} />Save credentials</button></div>
+        <div><a className="manage-button" href={organizationWorkspace ? `/dashboard/organizations/${schoolId}/members/` : withSchool('/dashboard/students/', schoolId)}>Cancel</a><button className="manage-button is-primary" type="submit"><Save size={14} />Save credentials</button></div>
       </form>
     </SchoolShell>
   )
@@ -865,7 +876,11 @@ export function SchoolDashboardRouter() {
   const path = window.location.pathname
   if (/^\/dashboard\/organizations\/\d+\/?$/.test(path)) return <OrganizationWorkspaceOverview />
   if (/^\/dashboard\/organizations\/\d+\/members\/?$/.test(path)) return <MembersPage memberType="all" />
+  if (/^\/dashboard\/organizations\/\d+\/members\/\d+\/credentials\/?$/.test(path)) return <StudentCredentialsPage />
   if (/^\/dashboard\/organizations\/\d+\/bulk-upload\/?$/.test(path)) return <BulkUploadPage />
+  if (/^\/dashboard\/organizations\/\d+\/print\/?$/.test(path)) return <PrintControlsPage mode="print" />
+  if (/^\/dashboard\/organizations\/\d+\/exports\/?$/.test(path)) return <PrintControlsPage mode="qr" />
+  if (/^\/dashboard\/organizations\/\d+\/reports\/?$/.test(path)) return <SchoolReportsPage />
   if (/^\/dashboard\/organizations\/\d+\/settings\/?$/.test(path)) return <SchoolSettingsPage />
   if (path.includes('/schools')) return <SchoolsPage />
   if (path.includes('/teachers')) return <MembersPage memberType="teacher" />

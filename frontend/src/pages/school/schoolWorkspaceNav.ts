@@ -23,10 +23,13 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
     const workspaceRoot = `/dashboard/organizations/${schoolId}`
     return [
       ...(isSuperAdmin ? [{ label: 'All Organizations', href: '/dashboard/schools/', icon: Building2, active: false }] : []),
-      { label: 'Organization Overview', href: `${workspaceRoot}/`, icon: LayoutDashboard, active: path === workspaceRoot || path === `${workspaceRoot}/` },
+      { label: 'Overview', href: `${workspaceRoot}/`, icon: LayoutDashboard, active: path === workspaceRoot || path === `${workspaceRoot}/` },
       { label: 'Members', href: `${workspaceRoot}/members/`, icon: LayoutList, active: path.includes('/members') || path.includes('/credentials') },
       { label: 'Bulk Upload', href: `${workspaceRoot}/bulk-upload/`, icon: Upload, active: path.includes('/bulk-upload') },
-      { label: 'Organization Settings', href: `${workspaceRoot}/settings/`, icon: Settings, active: path.includes('/settings') },
+      { label: 'Print Studio', href: `${workspaceRoot}/print/`, icon: Printer, active: path.includes('/print') },
+      { label: 'QR & Export', href: `${workspaceRoot}/exports/`, icon: QrCode, active: path.includes('/exports') },
+      { label: 'Reports', href: `${workspaceRoot}/reports/`, icon: BarChart3, active: path.includes('/reports') },
+      { label: 'Settings', href: `${workspaceRoot}/settings/`, icon: Settings, active: path.includes('/settings') },
     ]
   }
 

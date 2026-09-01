@@ -403,6 +403,50 @@ class SchoolDashboardScopeTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
+    def test_school_admin_shell_only_lists_assigned_school(self):
+        self.client.force_login(self.school_admin_a)
+
+        response = self.client.get(
+            reverse('react_dashboard_members_api'),
+            {'school': self.school_a.id, 'type': 'all'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json()['shell']['schools'],
+            [{'id': self.school_a.id, 'name': self.school_a.name}],
+        )
+
+    def test_super_admin_shell_lists_organizations_for_switching(self):
+        self.client.force_login(self.super_admin)
+
+        response = self.client.get(
+            reverse('react_dashboard_members_api'),
+            {'school': self.school_a.id, 'type': 'all'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            {item['id'] for item in response.json()['shell']['schools']},
+            {self.school_a.id, self.school_b.id},
+        )
+
+    def test_print_controls_are_available_only_for_assigned_school(self):
+        self.client.force_login(self.school_admin_a)
+
+        assigned_response = self.client.get(
+            reverse('react_dashboard_print_controls_api'),
+            {'school': self.school_a.id},
+        )
+        other_response = self.client.get(
+            reverse('react_dashboard_print_controls_api'),
+            {'school': self.school_b.id},
+        )
+
+        self.assertEqual(assigned_response.status_code, 200)
+        self.assertEqual(assigned_response.json()['shell']['currentSchool']['id'], self.school_a.id)
+        self.assertEqual(other_response.status_code, 403)
+
     def test_super_admin_overview_ignores_selected_school_and_stays_platform_wide(self):
         self.client.force_login(self.super_admin)
 

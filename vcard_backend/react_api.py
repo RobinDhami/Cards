@@ -1238,8 +1238,13 @@ def _school_payload(school, with_stats=False):
 
 
 def _dashboard_shell(request, active, school=None):
-    schools = College.objects.order_by('name')
     role = _get_user_role(request.user)
+    if role == 'super_admin':
+        schools = College.objects.order_by('name')
+    elif role == 'school_admin' and school:
+        schools = College.objects.filter(pk=school.pk)
+    else:
+        schools = College.objects.none()
     return {
         'active': active,
         'role': role,

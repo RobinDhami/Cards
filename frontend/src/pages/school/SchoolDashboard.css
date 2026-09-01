@@ -627,7 +627,8 @@
   font-style: normal;
 }
 
-.school-super-admin-context {
+.school-super-admin-context,
+.school-workspace-label {
   display: inline-flex;
   min-height: 30px;
   align-items: center;
@@ -639,6 +640,12 @@
   font-weight: 750;
   padding: 0 11px;
   white-space: nowrap;
+}
+
+.school-workspace-label {
+  border-color: #dbe3ee;
+  background: #f8fafc;
+  color: #334155;
 }
 
 .school-organization-context {
