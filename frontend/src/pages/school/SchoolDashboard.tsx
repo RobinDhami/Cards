@@ -101,6 +101,8 @@ type ReportPayload = {
 }
 
 function selectedSchoolId() {
+  const organizationMatch = window.location.pathname.match(/^\/dashboard\/organizations\/(\d+)/)
+  if (organizationMatch) return Number(organizationMatch[1])
   return Number(new URLSearchParams(window.location.search).get('school') ?? 0)
 }
 
@@ -121,7 +123,7 @@ function SchoolShell({
   return (
     <ManageShell
       brand={school?.name || 'Tap2Connect'}
-      brandDetail={school ? 'School administration' : 'Platform administration'}
+      brandDetail={school ? (shell.isSuperAdmin ? 'Super Admin · Organization workspace' : 'School administration') : 'Platform administration'}
       logo={school?.logo || '/static/branding/tap2connect-logo-optimized.webp'}
       nav={schoolWorkspaceNav(school?.id, shell.isSuperAdmin)}
       title={title}
@@ -134,7 +136,12 @@ function SchoolShell({
       onSchoolChange={(schoolId) => {
         window.location.href = withSchool(window.location.pathname, schoolId)
       }}
-      actions={actions}
+      actions={(
+        <>
+          {shell.isSuperAdmin && school ? <span className="school-super-admin-context">Viewing as Super Admin</span> : null}
+          {actions}
+        </>
+      )}
     >
       {children}
     </ManageShell>
@@ -258,11 +265,66 @@ export function SchoolsPage() {
             </div>
             <footer>
               <span>{school.adminUsername ? `Admin: ${school.adminUsername}` : 'No admin assigned'}</span>
-              <a className="manage-button" href={withSchool('/dashboard/students/', school.id)}>Open workspace</a>
-              <a className="manage-button" href={withSchool('/dashboard/settings/', school.id)}><Settings size={13} />Settings</a>
+              <a className="manage-button" href={`/dashboard/organizations/${school.id}/`}>Open workspace</a>
+              <a className="manage-button" href={`/dashboard/organizations/${school.id}/settings/`}><Settings size={13} />Settings</a>
             </footer>
           </article>
         ))}
+      </section>
+    </SchoolShell>
+  )
+}
+
+export function OrganizationWorkspaceOverview() {
+  const schoolId = selectedSchoolId()
+  const [shell, setShell] = useState<DashboardShellData | null>(null)
+  const [report, setReport] = useState<ReportPayload | null>(null)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    apiFetch<{ shell: DashboardShellData; report: ReportPayload }>(`/api/dashboard/reports/${queryString({ school: schoolId })}`)
+      .then((payload) => {
+        setShell(payload.shell)
+        setReport(payload.report)
+        document.title = `${payload.shell.currentSchool?.name || 'Organization'} Workspace | Tap2Connect`
+      })
+      .catch((reason) => setError(displayError(reason)))
+  }, [schoolId])
+
+  if (!shell || !report) return error ? <div className="manage-state">{error}</div> : <LoadingSchool />
+  const organization = shell.currentSchool
+  const workspaceRoot = `/dashboard/organizations/${schoolId}`
+
+  return (
+    <SchoolShell
+      shell={shell}
+      title="Organization Overview"
+      subtitle={`Super Admin workspace for ${organization?.name}`}
+    >
+      {error ? <div className="manage-alert school-message">{error}</div> : null}
+      <section className="manage-card school-organization-context">
+        <span><Building2 size={24} aria-hidden="true" /></span>
+        <div>
+          <h2>{organization?.name}</h2>
+          <p>{organization?.address || 'No address has been added.'}</p>
+        </div>
+        <a className="manage-button" href="/dashboard/schools/">Back to Organizations</a>
+      </section>
+
+      <section className="school-report-metrics">
+        <SchoolMetric label="Members" value={report.memberCount} icon={<UserRound size={17} />} />
+        <SchoolMetric label="Live profiles" value={report.liveProfileCount} icon={<BadgeCheck size={17} />} />
+        <SchoolMetric label="Active cards" value={report.activeCardCount} icon={<IdCard size={17} />} />
+        <SchoolMetric label="Interactions" value={report.interactionCount} icon={<Activity size={17} />} />
+      </section>
+
+      <section className="manage-card school-workspace-actions">
+        <div><h2>Manage this organization</h2><p>These actions stay scoped to {organization?.name} while you remain signed in as Super Admin.</p></div>
+        <div>
+          <a className="manage-button is-primary" href={`${workspaceRoot}/members/`}><UserRound size={14} />Members</a>
+          <a className="manage-button" href={`${workspaceRoot}/bulk-upload/`}><Upload size={14} />Bulk Upload</a>
+          <a className="manage-button" href={`${workspaceRoot}/settings/`}><Settings size={14} />Organization Settings</a>
+        </div>
       </section>
     </SchoolShell>
   )
@@ -333,8 +395,9 @@ function MemberCreatePanel({
   )
 }
 
-export function MembersPage({ memberType }: { memberType: 'student' | 'teacher' }) {
+export function MembersPage({ memberType }: { memberType: 'student' | 'teacher' | 'all' }) {
   const schoolId = selectedSchoolId()
+  const isAllMembers = memberType === 'all'
   const [shell, setShell] = useState<DashboardShellData | null>(null)
   const [members, setMembers] = useState<Member[]>([])
   const [filters, setFilters] = useState<{ sections: string[]; academicLevels: Choice[]; roles: string[] }>({ sections: [], academicLevels: [], roles: [] })
@@ -342,7 +405,11 @@ export function MembersPage({ memberType }: { memberType: 'student' | 'teacher' 
   const [section, setSection] = useState('')
   const [academicLevel, setAcademicLevel] = useState('')
   const [role, setRole] = useState('')
-  const [createOpen, setCreateOpen] = useState(new URLSearchParams(window.location.search).get('create') === '1')
+  const [createType, setCreateType] = useState<'student' | 'teacher' | null>(() => (
+    new URLSearchParams(window.location.search).get('create') === '1'
+      ? (memberType === 'teacher' ? 'teacher' : 'student')
+      : null
+  ))
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
@@ -367,8 +434,8 @@ export function MembersPage({ memberType }: { memberType: 'student' | 'teacher' 
 
   useEffect(() => {
     load()
-    document.title = `${memberType === 'teacher' ? 'Teachers & Staff' : 'Students'} | Tap2Connect`
-  }, [load, memberType])
+    document.title = `${isAllMembers ? 'Members' : (memberType === 'teacher' ? 'Teachers & Staff' : 'Students')} | Tap2Connect`
+  }, [isAllMembers, load, memberType])
 
   async function remove(member: Member) {
     if (!window.confirm(`Delete ${member.name}?`)) return
@@ -381,18 +448,26 @@ export function MembersPage({ memberType }: { memberType: 'student' | 'teacher' 
   }
 
   if (!shell) return <LoadingSchool />
-  const title = memberType === 'teacher' ? 'Teachers & Staff' : 'Students'
+  const title = isAllMembers ? 'Members' : (memberType === 'teacher' ? 'Teachers & Staff' : 'Students')
+  const createActions = isAllMembers ? (
+    <>
+      <button className="manage-button" type="button" onClick={() => setCreateType('teacher')}><Plus size={14} />Add staff</button>
+      <button className="manage-button is-primary" type="button" onClick={() => setCreateType('student')}><Plus size={14} />Add student</button>
+    </>
+  ) : (
+    <button className="manage-button is-primary" type="button" onClick={() => setCreateType(memberType)}><Plus size={14} />Add {memberType}</button>
+  )
 
   return (
     <SchoolShell
       shell={shell}
       title={title}
       subtitle={`${members.length} matching records in ${shell.currentSchool?.name}`}
-      actions={<button className="manage-button is-primary" type="button" onClick={() => setCreateOpen((current) => !current)}><Plus size={14} />Add {memberType}</button>}
+      actions={createActions}
     >
       {error ? <div className="manage-alert school-message">{error}</div> : null}
       {message ? <div className="manage-alert is-success school-message">{message}</div> : null}
-      {createOpen ? <MemberCreatePanel memberType={memberType} academicLevels={filters.academicLevels} onCancel={() => setCreateOpen(false)} onCreated={(password) => { setCreateOpen(false); setMessage(`Profile created. Starter password: ${password}`); load() }} /> : null}
+      {createType ? <MemberCreatePanel memberType={createType} academicLevels={filters.academicLevels} onCancel={() => setCreateType(null)} onCreated={(password) => { setCreateType(null); setMessage(`Profile created. Starter password: ${password}`); load() }} /> : null}
 
       <section className="school-filter-bar manage-card">
         <label><Search size={14} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Search ${title.toLowerCase()}`} /></label>
@@ -401,20 +476,20 @@ export function MembersPage({ memberType }: { memberType: 'student' | 'teacher' 
             <select value={academicLevel} onChange={(event) => setAcademicLevel(event.target.value)}><option value="">All classes</option>{filters.academicLevels.map((choice) => <option key={choice.value} value={choice.value}>{choice.label}</option>)}</select>
             <select value={section} onChange={(event) => setSection(event.target.value)}><option value="">All sections</option>{filters.sections.map((value) => <option value={value} key={value}>{value}</option>)}</select>
           </>
-        ) : (
+        ) : memberType === 'teacher' ? (
           <select value={role} onChange={(event) => setRole(event.target.value)}><option value="">All roles</option>{filters.roles.map((value) => <option value={value} key={value}>{value}</option>)}</select>
-        )}
+        ) : null}
       </section>
 
       <section className="school-table-wrap manage-card">
         {members.length === 0 ? <div className="school-empty">No matching records.</div> : (
           <table className="school-table">
-            <thead><tr><th>Member</th><th>{memberType === 'student' ? 'Class' : 'Role'}</th><th>Username</th><th>Card</th><th>Engagement</th><th aria-label="Actions" /></tr></thead>
+            <thead><tr><th>Member</th><th>{isAllMembers ? 'Type / Role' : (memberType === 'student' ? 'Class' : 'Role')}</th><th>Username</th><th>Card</th><th>Engagement</th><th aria-label="Actions" /></tr></thead>
             <tbody>
               {members.map((member) => (
                 <tr key={member.id}>
                   <td><div className="school-member"><span>{member.photo ? <img src={member.photo} alt="" /> : <UserRound size={15} />}</span><strong>{member.name}<small>{member.phone || member.email}</small></strong></div></td>
-                  <td>{memberType === 'student' ? [member.academicLabel, member.section].filter(Boolean).join(' · ') || 'Not set' : member.role}</td>
+                  <td>{isAllMembers ? (member.memberType === 'student' ? [member.academicLabel, member.section].filter(Boolean).join(' · ') || 'Student' : member.role) : (memberType === 'student' ? [member.academicLabel, member.section].filter(Boolean).join(' · ') || 'Not set' : member.role)}</td>
                   <td>{member.username}</td>
                   <td><span className={`school-status${member.isVisible ? ' is-live' : ''}`}>{member.isVisible ? 'Live' : 'Hidden'}</span></td>
                   <td>{member.views + member.contacts + member.downloads}</td>
@@ -530,7 +605,7 @@ export function SchoolSettingsPage() {
     try {
       const response = await apiFetch<{ school: SchoolSummary }>(`/api/dashboard/settings/${queryString({ school: school.id })}`, { method: 'POST', body })
       setSchool(response.school)
-      setSuccess('School settings saved.')
+      setSuccess(`${shell?.isSuperAdmin ? 'Organization' : 'School'} settings saved.`)
       setValues((current) => ({ ...current, adminPassword: '' }))
     } catch (reason) {
       setError(displayError(reason))
@@ -543,24 +618,24 @@ export function SchoolSettingsPage() {
 
   const update = (key: string, value: string) => setValues((current) => ({ ...current, [key]: value }))
   return (
-    <SchoolShell shell={shell} title="School Settings" subtitle={`Branding and identity defaults for ${school.name}`}>
+    <SchoolShell shell={shell} title={shell.isSuperAdmin ? 'Organization Settings' : 'School Settings'} subtitle={`Branding and identity defaults for ${school.name}`}>
       <form onSubmit={save}>
         {error ? <div className="manage-alert school-message">{error}</div> : null}
         {success ? <div className="manage-alert is-success school-message">{success}</div> : null}
-        <FormSection title="School identity">
+        <FormSection title={shell.isSuperAdmin ? 'Organization identity' : 'School identity'}>
           <div className="form-grid">
-            <Field label="School name"><TextInput value={values.name ?? ''} onChange={(event) => update('name', event.target.value)} required /></Field>
+            <Field label={shell.isSuperAdmin ? 'Organization name' : 'School name'}><TextInput value={values.name ?? ''} onChange={(event) => update('name', event.target.value)} required /></Field>
             <Field label="Slogan"><TextInput value={values.slogan ?? ''} onChange={(event) => update('slogan', event.target.value)} /></Field>
             <Field label="Address" wide><TextArea value={values.address ?? ''} onChange={(event) => update('address', event.target.value)} /></Field>
-            <Field label="Principal name"><TextInput value={values.principalName ?? ''} onChange={(event) => update('principalName', event.target.value)} /></Field>
+            <Field label={shell.isSuperAdmin ? 'Primary contact name' : 'Principal name'}><TextInput value={values.principalName ?? ''} onChange={(event) => update('principalName', event.target.value)} /></Field>
             <Field label="Website"><TextInput type="url" value={values.website ?? ''} onChange={(event) => update('website', event.target.value)} /></Field>
             <Field label="Email"><TextInput type="email" value={values.email ?? ''} onChange={(event) => update('email', event.target.value)} /></Field>
             <Field label="Phone"><TextInput value={values.phone ?? ''} onChange={(event) => update('phone', event.target.value)} /></Field>
             <Field label="Description" wide><TextArea value={values.description ?? ''} onChange={(event) => update('description', event.target.value)} /></Field>
           </div>
           <div className="professional-file-grid">
-            <FileInput label="School logo" currentUrl={school.logo} accept="image/*" onChange={setLogo} />
-            <FileInput label="Principal signature" currentUrl={school.principalSignature} accept="image/*" onChange={setSignature} />
+            <FileInput label={shell.isSuperAdmin ? 'Organization logo' : 'School logo'} currentUrl={school.logo} accept="image/*" onChange={setLogo} />
+            <FileInput label={shell.isSuperAdmin ? 'Authorized signature' : 'Principal signature'} currentUrl={school.principalSignature} accept="image/*" onChange={setSignature} />
           </div>
         </FormSection>
         <FormSection title="Card theme">
@@ -571,7 +646,7 @@ export function SchoolSettingsPage() {
               ['themeSecondary', 'Secondary'],
               ['themeTernary', 'Accent'],
             ].map(([key, label]) => <Field label={label} key={key}><TextInput type="color" value={values[key] ?? '#000000'} onChange={(event) => update(key, event.target.value)} /></Field>)}
-            <Field label="Student username prefix"><TextInput value={values.usernamePrefix ?? ''} onChange={(event) => update('usernamePrefix', event.target.value)} placeholder={school.effectiveUsernamePrefix} /></Field>
+            <Field label={shell.isSuperAdmin ? 'Member username prefix' : 'Student username prefix'}><TextInput value={values.usernamePrefix ?? ''} onChange={(event) => update('usernamePrefix', event.target.value)} placeholder={school.effectiveUsernamePrefix} /></Field>
           </div>
         </FormSection>
         <FormSection title="Administrator login">
@@ -622,14 +697,14 @@ export function BulkUploadPage() {
 
   if (!shell) return <LoadingSchool />
   return (
-    <SchoolShell shell={shell} title="Bulk Upload" subtitle="Create student or staff profiles from CSV and Excel">
+    <SchoolShell shell={shell} title="Bulk Upload" subtitle={shell.isSuperAdmin ? `Import member data into ${shell.currentSchool?.name}` : 'Create student or staff profiles from CSV and Excel'}>
       {error ? <div className="manage-alert school-message">{error}</div> : null}
       <section className="school-upload-grid">
         <form className="manage-card school-upload-panel" onSubmit={upload}>
           <span><FileSpreadsheet size={25} /></span>
           <h2>Upload member data</h2>
           <p>Required columns: <code>name</code> and <code>phone</code>. Optional columns include email, username, role, roll_number, academic_level, section, address, emergency contact, blood group, and gender.</p>
-          <Field label="Profile type"><SelectInput value={memberType} onChange={(event) => setMemberType(event.target.value)}><option value="student">Students</option><option value="teacher">Teachers & staff</option></SelectInput></Field>
+          <Field label="Profile type"><SelectInput value={memberType} onChange={(event) => setMemberType(event.target.value)}><option value="student">Students</option><option value="teacher">Teachers & staff</option><option value="other">Other members</option></SelectInput></Field>
           <FileInput label="CSV or Excel file" accept=".csv,.xlsx,.xls" onChange={setFile} />
           <button className="manage-button is-primary" type="submit" disabled={!file || uploading}><Upload size={14} />{uploading ? 'Uploading…' : 'Run upload'}</button>
         </form>
@@ -788,6 +863,10 @@ export function PrintControlsPage({ mode }: { mode: 'print' | 'qr' }) {
 
 export function SchoolDashboardRouter() {
   const path = window.location.pathname
+  if (/^\/dashboard\/organizations\/\d+\/?$/.test(path)) return <OrganizationWorkspaceOverview />
+  if (/^\/dashboard\/organizations\/\d+\/members\/?$/.test(path)) return <MembersPage memberType="all" />
+  if (/^\/dashboard\/organizations\/\d+\/bulk-upload\/?$/.test(path)) return <BulkUploadPage />
+  if (/^\/dashboard\/organizations\/\d+\/settings\/?$/.test(path)) return <SchoolSettingsPage />
   if (path.includes('/schools')) return <SchoolsPage />
   if (path.includes('/teachers')) return <MembersPage memberType="teacher" />
   if (path.includes('/students')) return <MembersPage memberType="student" />

@@ -274,6 +274,29 @@ class SchoolDashboardScopeTests(TestCase):
         self.assertEqual(payload['analytics']['memberCount'], 2)
         self.assertEqual(payload['analytics']['studentCount'], 2)
 
+    def test_super_admin_can_view_all_member_types_in_one_organization_workspace(self):
+        teacher = StudentProfile.objects.create(
+            college=self.school_a,
+            name='Teacher A',
+            username='teacher.a',
+            password='TeacherPass123!',
+            phone='9800000003',
+            email='teacher.a@example.com',
+            profile_category='school',
+            member_type='teacher',
+        )
+        self.client.force_login(self.super_admin)
+
+        response = self.client.get(
+            reverse('react_dashboard_members_api'),
+            {'school': self.school_a.id, 'type': 'all'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload['shell']['currentSchool']['id'], self.school_a.id)
+        self.assertEqual({member['id'] for member in payload['members']}, {self.student_a.id, teacher.id})
+
     def test_school_username_format_only_updates_assigned_school(self):
         self.client.force_login(self.school_admin_a)
         original_school_b_username = self.student_b.username

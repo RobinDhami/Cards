@@ -627,6 +627,75 @@
   font-style: normal;
 }
 
+.school-super-admin-context {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 9px;
+  font-weight: 750;
+  padding: 0 11px;
+  white-space: nowrap;
+}
+
+.school-organization-context {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+.school-organization-context > span {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  place-items: center;
+  border-radius: 10px;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.school-organization-context > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.school-organization-context h2,
+.school-workspace-actions h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.school-organization-context p,
+.school-workspace-actions p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 10px;
+}
+
+.school-workspace-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 16px;
+}
+
+.school-workspace-actions > div:first-child {
+  min-width: 0;
+  flex: 1;
+}
+
+.school-workspace-actions > div:last-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 @media (max-width: 950px) {
   .school-card-grid,
   .school-report-grid,
@@ -660,5 +729,19 @@
 
   .school-activity-summary > div {
     grid-template-columns: 1fr;
+  }
+
+  .school-organization-context,
+  .school-workspace-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .school-workspace-actions > div:last-child .manage-button {
+    width: 100%;
+  }
+
+  .school-super-admin-context {
+    display: none;
   }
 }

@@ -1369,7 +1369,7 @@ def dashboard_members_api(request):
 
     if request.method == 'GET':
         member_type = str(request.GET.get('type') or 'student')
-        query = _school_member_queryset(school, member_type)
+        query = _school_member_queryset(school, None if member_type == 'all' else member_type)
         search = str(request.GET.get('q') or '').strip()
         academic_level = str(request.GET.get('academic_level') or '').strip()
         section = str(request.GET.get('section') or '').strip()
@@ -1389,7 +1389,7 @@ def dashboard_members_api(request):
             query = query.filter(role=role_filter)
         return JsonResponse({
             'ok': True,
-            'shell': _dashboard_shell(request, 'teachers' if member_type == 'teacher' else 'students', school),
+            'shell': _dashboard_shell(request, 'members' if member_type == 'all' else ('teachers' if member_type == 'teacher' else 'students'), school),
             'members': [_member_row(member) for member in query],
             'filters': {
                 'sections': _unique_sections_for_school(school),
@@ -1582,6 +1582,9 @@ def dashboard_bulk_upload_api(request):
     if missing:
         return _json_error(f"Missing required columns: {', '.join(missing)}")
     member_type = str(request.POST.get('role_type') or 'student')
+    if member_type not in {'student', 'teacher', 'other'}:
+        return _json_error('Choose a valid profile type.')
+    default_role = {'student': 'Student', 'teacher': 'Teacher', 'other': 'Member'}[member_type]
     created = 0
     skipped = []
     credentials = []
@@ -1603,7 +1606,7 @@ def dashboard_bulk_upload_api(request):
                 college=school,
                 profile_category='school',
                 member_type=member_type,
-                role=str(row.get('role') or ('Teacher' if member_type == 'teacher' else 'Student')).strip(),
+                role=str(row.get('role') or default_role).strip(),
                 address=str(row.get('address') or '').strip(),
                 emergency_contact_name=str(row.get('emergency_contact_name') or '').strip(),
                 emergency_contact_phone=str(row.get('emergency_contact_phone') or '').strip(),
