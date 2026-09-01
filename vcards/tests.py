@@ -247,7 +247,7 @@ class SchoolDashboardScopeTests(TestCase):
         self.assertEqual(payload['shell']['currentSchool']['id'], self.school_a.id)
         self.assertEqual(payload['report']['studentCount'], 1)
 
-    def test_super_admin_can_switch_school_workspaces(self):
+    def test_super_admin_overview_ignores_selected_school_and_stays_platform_wide(self):
         self.client.force_login(self.super_admin)
 
         response = self.client.get(
@@ -256,17 +256,23 @@ class SchoolDashboardScopeTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['currentSchool']['id'], self.school_b.id)
+        payload = response.json()
+        self.assertIsNone(payload['currentSchool'])
+        self.assertEqual(payload['organizationCount'], 2)
+        self.assertEqual(payload['analytics']['memberCount'], 2)
+        self.assertEqual(payload['analytics']['studentCount'], 2)
 
-    def test_super_admin_overview_defaults_to_first_school(self):
+    def test_super_admin_overview_aggregates_all_organizations(self):
         self.client.force_login(self.super_admin)
 
         response = self.client.get(reverse('dashboard_overview_api'))
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertEqual(payload['currentSchool']['id'], self.school_a.id)
-        self.assertEqual(payload['analytics']['studentCount'], 1)
+        self.assertIsNone(payload['currentSchool'])
+        self.assertEqual(payload['organizationCount'], 2)
+        self.assertEqual(payload['analytics']['memberCount'], 2)
+        self.assertEqual(payload['analytics']['studentCount'], 2)
 
     def test_school_username_format_only_updates_assigned_school(self):
         self.client.force_login(self.school_admin_a)

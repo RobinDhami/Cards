@@ -1241,7 +1241,7 @@ def dashboard_schools_api(request):
     if permission_error:
         return permission_error
     if not _is_super_admin(request.user):
-        return _json_error('Only platform administrators can manage schools.', status=403)
+        return _json_error('Only platform administrators can manage organizations.', status=403)
     if request.method == 'GET':
         schools = College.objects.select_related('admin_user').order_by('name')
         return JsonResponse({
@@ -1256,7 +1256,7 @@ def dashboard_schools_api(request):
     username = str(source.get('adminUsername') or source.get('admin_username') or '').strip()
     password = str(source.get('adminPassword') or source.get('admin_password') or '').strip()
     if not name or not username or not password:
-        return _json_error('School name, admin username, and password are required.')
+        return _json_error('Organization name, admin username, and password are required.')
     try:
         with transaction.atomic():
             school = College(name=name)

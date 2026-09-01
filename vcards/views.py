@@ -538,12 +538,27 @@ def _school_member_queryset(school, member_type=None):
     return queryset
 
 
-def _school_analytics(school):
-    members = _school_member_queryset(school)
+def _school_analytics(school=None):
+    if school:
+        members = _school_member_queryset(school)
+        activities = ProfileActivity.objects.filter(student__college=school)
+        active_cards = StudentCard.objects.filter(student__college=school)
+    else:
+        members = StudentProfile.objects.select_related('college').filter(
+            profile_category='school',
+            college__isnull=False,
+        ).order_by('name')
+        activities = ProfileActivity.objects.filter(
+            student__profile_category='school',
+            student__college__isnull=False,
+        )
+        active_cards = StudentCard.objects.filter(
+            student__profile_category='school',
+            student__college__isnull=False,
+        )
+
     students = members.filter(member_type='student')
-    activities = ProfileActivity.objects.filter(student__college=school)
-    active_cards = StudentCard.objects.filter(
-        student__college=school,
+    active_cards = active_cards.filter(
         is_active=True,
         lost_or_blocked=False,
     )
@@ -613,6 +628,7 @@ def _school_analytics(school):
     return {
         'members': members,
         'students': students,
+        'member_count': members.count(),
         'student_count': student_count,
         'teacher_count': members.filter(member_type='teacher').count(),
         'live_count': live_count,
@@ -1722,8 +1738,8 @@ def _dashboard_school_payload(school):
     }
 
 
-def _dashboard_analytics_payload(school, analytics):
-    if not school or not analytics:
+def _dashboard_analytics_payload(school, analytics, is_platform=False):
+    if not analytics:
         return None
 
     top_profiles = []
@@ -1731,6 +1747,8 @@ def _dashboard_analytics_payload(school, analytics):
         class_label = profile.get_academic_level_display() if profile.academic_level else 'Class not set'
         if profile.section:
             class_label = f'{class_label} - Section {profile.section}'
+        if is_platform and profile.college:
+            class_label = f'{profile.college.name} · {class_label}'
         top_profiles.append({
             'id': profile.id,
             'name': profile.name,
@@ -1740,7 +1758,24 @@ def _dashboard_analytics_payload(school, analytics):
             'url': reverse('student_contact_card', args=[profile.id]),
         })
 
+    if school:
+        links = {
+            'manageStudents': f"{reverse('dashboard_students')}{_build_dashboard_query(school)}",
+            'addStudent': f"{reverse('dashboard_students')}?school={school.id}&create=1",
+            'reports': f"{reverse('dashboard_reports')}{_build_dashboard_query(school)}",
+            'printStudio': f"{reverse('dashboard_print')}{_build_dashboard_query(school)}",
+        }
+    else:
+        organizations_url = reverse('dashboard_schools')
+        links = {
+            'manageStudents': organizations_url,
+            'addStudent': organizations_url,
+            'reports': organizations_url,
+            'printStudio': organizations_url,
+        }
+
     return {
+        'memberCount': analytics['member_count'],
         'studentCount': analytics['student_count'],
         'teacherCount': analytics['teacher_count'],
         'liveCount': analytics['live_count'],
@@ -1757,12 +1792,7 @@ def _dashboard_analytics_payload(school, analytics):
         'dailyEngagement': analytics['daily_engagement'],
         'engagementPoints': analytics['engagement_points'],
         'topProfiles': top_profiles,
-        'links': {
-            'manageStudents': f"{reverse('dashboard_students')}{_build_dashboard_query(school)}",
-            'addStudent': f"{reverse('dashboard_students')}?school={school.id}&create=1",
-            'reports': f"{reverse('dashboard_reports')}{_build_dashboard_query(school)}",
-            'printStudio': f"{reverse('dashboard_print')}{_build_dashboard_query(school)}",
-        },
+        'links': links,
     }
 
 
@@ -1783,10 +1813,11 @@ def dashboard_overview_api(request):
     if role not in {'super_admin', 'school_admin'}:
         return JsonResponse({'error': 'You do not have access to the admin dashboard.'}, status=403)
 
-    school, schools = _resolve_dashboard_school(request, required=True)
-    analytics = _school_analytics(school) if school else None
-    nav_school_query = _build_dashboard_query(school)
     is_super_admin = _is_super_admin(request.user)
+    resolved_school, schools = _resolve_dashboard_school(request, required=not is_super_admin)
+    school = None if is_super_admin else resolved_school
+    analytics = _school_analytics(school)
+    nav_school_query = _build_dashboard_query(school)
     display_name = request.user.first_name or request.user.username
     initials = (display_name[:2] or 'U').upper()
     school_options = [
@@ -1822,11 +1853,12 @@ def dashboard_overview_api(request):
         },
         'currentSchool': _dashboard_school_payload(school),
         'schoolOptions': school_options,
+        'organizationCount': schools.count() if is_super_admin else 1,
         'navSchoolQuery': nav_school_query,
         'navItems': nav_items,
         'logoutUrl': reverse('dashboard_logout'),
         'schoolsUrl': reverse('dashboard_schools'),
-        'analytics': _dashboard_analytics_payload(school, analytics),
+        'analytics': _dashboard_analytics_payload(school, analytics, is_platform=is_super_admin),
     })
 
 

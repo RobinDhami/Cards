@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import Activity from 'lucide-react/dist/esm/icons/activity.js'
 import BadgeCheck from 'lucide-react/dist/esm/icons/badge-check.js'
+import Building2 from 'lucide-react/dist/esm/icons/building-2.js'
 import Download from 'lucide-react/dist/esm/icons/download.js'
 import Edit3 from 'lucide-react/dist/esm/icons/edit-3.js'
 import Eye from 'lucide-react/dist/esm/icons/eye.js'
@@ -13,7 +14,6 @@ import Plus from 'lucide-react/dist/esm/icons/plus.js'
 import Phone from 'lucide-react/dist/esm/icons/phone.js'
 import Printer from 'lucide-react/dist/esm/icons/printer.js'
 import Save from 'lucide-react/dist/esm/icons/save.js'
-import School from 'lucide-react/dist/esm/icons/school.js'
 import Search from 'lucide-react/dist/esm/icons/search.js'
 import Settings from 'lucide-react/dist/esm/icons/settings.js'
 import Trash2 from 'lucide-react/dist/esm/icons/trash-2.js'
@@ -129,7 +129,7 @@ function SchoolShell({
       userName={shell.user.displayName}
       userRole={shell.isSuperAdmin ? 'Platform administrator' : 'School administrator'}
       accent={school?.themePrimary || '#0b4bcb'}
-      schoolOptions={shell.schools}
+      schoolOptions={shell.isSuperAdmin ? undefined : shell.schools}
       selectedSchool={school?.id ?? null}
       onSchoolChange={(schoolId) => {
         window.location.href = withSchool(window.location.pathname, schoolId)
@@ -186,7 +186,7 @@ export function SchoolsPage() {
 
   useEffect(() => {
     load()
-    document.title = 'Schools | Tap2Connect'
+    document.title = 'Organizations | Tap2Connect'
   }, [])
 
   async function createSchool(event: FormEvent) {
@@ -223,23 +223,23 @@ export function SchoolsPage() {
   return (
     <SchoolShell
       shell={shell}
-      title="Schools"
+      title="Organizations"
       subtitle={`${schools.length} organizations on the platform`}
-      actions={<button className="manage-button is-primary" type="button" onClick={() => setCreateOpen((current) => !current)}><Plus size={14} />Add school</button>}
+      actions={<button className="manage-button is-primary" type="button" onClick={() => setCreateOpen((current) => !current)}><Plus size={14} />Add organization</button>}
     >
       {error ? <div className="manage-alert school-message">{error}</div> : null}
       {createOpen ? (
         <form className="school-create-panel manage-card" onSubmit={createSchool}>
-          <div><h2>Create school workspace</h2><p>Set the institution and its first administrator account.</p></div>
+          <div><h2>Create organization workspace</h2><p>Set the organization and its first administrator account.</p></div>
           <div className="form-grid is-three">
-            <Field label="School name"><TextInput value={newSchool.name} onChange={(event) => setNewSchool((current) => ({ ...current, name: event.target.value }))} required /></Field>
+            <Field label="Organization name"><TextInput value={newSchool.name} onChange={(event) => setNewSchool((current) => ({ ...current, name: event.target.value }))} required /></Field>
             <Field label="Address"><TextInput value={newSchool.address} onChange={(event) => setNewSchool((current) => ({ ...current, address: event.target.value }))} /></Field>
             <Field label="Phone"><TextInput value={newSchool.phone} onChange={(event) => setNewSchool((current) => ({ ...current, phone: event.target.value }))} /></Field>
             <Field label="Email"><TextInput type="email" value={newSchool.email} onChange={(event) => setNewSchool((current) => ({ ...current, email: event.target.value }))} /></Field>
             <Field label="Admin username"><TextInput value={newSchool.adminUsername} onChange={(event) => setNewSchool((current) => ({ ...current, adminUsername: event.target.value }))} required /></Field>
             <Field label="Admin password"><TextInput type="password" value={newSchool.adminPassword} onChange={(event) => setNewSchool((current) => ({ ...current, adminPassword: event.target.value }))} required /></Field>
           </div>
-          <div><button className="manage-button" type="button" onClick={() => setCreateOpen(false)}>Cancel</button><button className="manage-button is-primary" type="submit" disabled={creating}>{creating ? 'Creating…' : 'Create school'}</button></div>
+          <div><button className="manage-button" type="button" onClick={() => setCreateOpen(false)}>Cancel</button><button className="manage-button is-primary" type="submit" disabled={creating}>{creating ? 'Creating…' : 'Create organization'}</button></div>
         </form>
       ) : null}
 
@@ -247,9 +247,9 @@ export function SchoolsPage() {
         {schools.map((school) => (
           <article className="school-summary-card manage-card" key={school.id}>
             <header>
-              <span>{school.logo ? <img src={school.logo} alt="" /> : <School size={21} />}</span>
+              <span>{school.logo ? <img src={school.logo} alt="" /> : <Building2 size={21} />}</span>
               <div><h2>{school.name}</h2><p>{school.address || 'Address not added'}</p></div>
-              <button type="button" onClick={() => deleteSchool(school)} title="Delete school" aria-label="Delete school"><Trash2 size={14} /></button>
+              <button type="button" onClick={() => deleteSchool(school)} title="Delete organization" aria-label="Delete organization"><Trash2 size={14} /></button>
             </header>
             <div className="school-summary-stats">
               <span><strong>{school.stats?.students ?? 0}</strong>Students</span>

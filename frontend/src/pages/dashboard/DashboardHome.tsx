@@ -3,6 +3,7 @@ import type { ComponentType, SVGProps } from 'react'
 import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right.js'
 import BadgeCheck from 'lucide-react/dist/esm/icons/badge-check.js'
 import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3.js'
+import Building2 from 'lucide-react/dist/esm/icons/building-2.js'
 import Check from 'lucide-react/dist/esm/icons/check.js'
 import CreditCard from 'lucide-react/dist/esm/icons/credit-card.js'
 import Eye from 'lucide-react/dist/esm/icons/eye.js'
@@ -70,6 +71,7 @@ type TopProfile = {
 }
 
 type Analytics = {
+  memberCount: number
   studentCount: number
   teacherCount: number
   liveCount: number
@@ -99,6 +101,7 @@ type DashboardData = {
   user: UserSummary
   currentSchool: CurrentSchool | null
   schoolOptions: SchoolOption[]
+  organizationCount: number
   schoolsUrl: string
   analytics: Analytics | null
 }
@@ -177,6 +180,33 @@ function SchoolSummary({ school, analytics }: { school: CurrentSchool; analytics
   )
 }
 
+function PlatformSummary({ data }: { data: DashboardData }) {
+  const analytics = data.analytics
+  if (!analytics) return null
+
+  return (
+    <section className="dashboard-panel dashboard-school-summary">
+      <div className="dashboard-school-mark">
+        <Building2 size={24} aria-hidden="true" />
+      </div>
+      <div className="dashboard-school-summary-copy">
+        <h2>Organization network</h2>
+        <div className="dashboard-school-facts">
+          <span><Building2 size={14} aria-hidden="true" />{formatNumber(data.organizationCount)} enrolled organizations</span>
+          <span><Users size={14} aria-hidden="true" />{formatNumber(analytics.memberCount)} member profiles</span>
+          <span><UserCheck size={14} aria-hidden="true" />{formatNumber(analytics.teacherCount)} staff records</span>
+        </div>
+      </div>
+      <div className="dashboard-school-actions">
+        <a className="dashboard-button is-primary" href={data.schoolsUrl}>
+          Manage organizations
+          <ArrowRight size={16} aria-hidden="true" />
+        </a>
+      </div>
+    </section>
+  )
+}
+
 function ClassChart({ rows }: { rows: ClassRow[] }) {
   if (rows.length === 0) {
     return <div className="dashboard-empty-chart">Assign classes to students to populate this chart.</div>
@@ -221,12 +251,12 @@ function EngagementDonut({ analytics }: { analytics: Analytics }) {
   )
 }
 
-function TopProfiles({ analytics }: { analytics: Analytics }) {
+function TopProfiles({ analytics, isPlatform }: { analytics: Analytics; isPlatform: boolean }) {
   return (
     <article className="dashboard-panel dashboard-list-panel">
       <div className="dashboard-list-header">
         <h2 className="dashboard-panel-title">Top Card Users</h2>
-        <p>Highest all-time engagement</p>
+        <p>{isPlatform ? 'Highest engagement across all organizations' : 'Highest all-time engagement'}</p>
       </div>
       <div className="dashboard-profile-list">
         {analytics.topProfiles.length > 0 ? (
@@ -290,21 +320,21 @@ function EngagementLineChart({ analytics }: { analytics: Analytics }) {
   )
 }
 
-function WorkflowCard({ analytics }: { analytics: Analytics }) {
+function WorkflowCard({ analytics, isPlatform }: { analytics: Analytics; isPlatform: boolean }) {
   const liveDone = analytics.liveCoverage === 100
   const cardsDone = analytics.cardCoverage === 100
   return (
     <article className="dashboard-panel dashboard-card">
-      <h2>Student ID Workflow</h2>
-      <p>Current rollout progress</p>
+      <h2>{isPlatform ? 'Digital Identity Rollout' : 'Student ID Workflow'}</h2>
+      <p>{isPlatform ? 'Progress across all organizations' : 'Current rollout progress'}</p>
       <div className="dashboard-workflow">
         <div className="dashboard-workflow-step">
           <span className="dashboard-workflow-index is-done">
             <Check size={16} aria-hidden="true" />
           </span>
           <div className="dashboard-workflow-copy">
-            <strong>Student records</strong>
-            <span>{formatNumber(analytics.studentCount)} profiles added</span>
+            <strong>{isPlatform ? 'Member profiles' : 'Student records'}</strong>
+            <span>{formatNumber(isPlatform ? analytics.memberCount : analytics.studentCount)} profiles added</span>
           </div>
         </div>
         <div className="dashboard-workflow-step">
@@ -331,7 +361,7 @@ function WorkflowCard({ analytics }: { analytics: Analytics }) {
         </div>
       </div>
       <a className="dashboard-card-link" href={analytics.links.manageStudents}>
-        Review students
+        {isPlatform ? 'Review organizations' : 'Review students'}
         <ArrowRight size={14} aria-hidden="true" />
       </a>
     </article>
@@ -340,36 +370,30 @@ function WorkflowCard({ analytics }: { analytics: Analytics }) {
 
 function AnalyticsContent({ data }: { data: DashboardData }) {
   const { analytics, currentSchool } = data
-  if (!analytics || !currentSchool) {
+  if (!analytics || (!data.isSuperAdmin && !currentSchool)) {
     return (
       <section className="dashboard-panel dashboard-empty-state">
         <div className="dashboard-empty-icon">
           <School size={26} aria-hidden="true" />
         </div>
-        <h2>{data.isSuperAdmin ? 'Select a school workspace' : 'No school workspace assigned'}</h2>
-        <p>
-          {data.isSuperAdmin
-            ? 'Choose a school above or open Schools to create and manage an institution.'
-            : 'Ask the platform administrator to assign your account to a school.'}
-        </p>
-        {data.isSuperAdmin ? (
-          <a className="dashboard-button is-primary" href={data.schoolsUrl}>
-            Open Schools
-            <ArrowRight size={16} aria-hidden="true" />
-          </a>
-        ) : null}
+        <h2>No organization workspace assigned</h2>
+        <p>Ask the platform administrator to assign your account to an organization.</p>
       </section>
     )
   }
 
+  const isPlatform = data.isSuperAdmin
+
   return (
     <>
-      <SchoolSummary school={currentSchool} analytics={analytics} />
+      {isPlatform
+        ? <PlatformSummary data={data} />
+        : <SchoolSummary school={currentSchool as CurrentSchool} analytics={analytics} />}
 
       <section className="dashboard-metric-grid">
-        <MetricCard icon={Users} tone="blue" label="Total Students" value={analytics.studentCount} note="Current school records" />
+        <MetricCard icon={Users} tone="blue" label={isPlatform ? 'Total Member Profiles' : 'Total Students'} value={isPlatform ? analytics.memberCount : analytics.studentCount} note={isPlatform ? 'Across all organizations' : 'Current school records'} />
         <MetricCard icon={BadgeCheck} tone="green" label="Digital IDs Live" value={analytics.liveCount} note={`${analytics.liveCoverage}% profile coverage`} noteTone="green" />
-        <MetricCard icon={Wifi} tone="violet" label="Active NFC Cards" value={analytics.activeCardCount} note={`${analytics.cardCoverage}% of students assigned`} />
+        <MetricCard icon={Wifi} tone="violet" label="Active NFC Cards" value={analytics.activeCardCount} note={`${analytics.cardCoverage}% of ${isPlatform ? 'eligible profiles' : 'students'} assigned`} />
         <MetricCard icon={Eye} tone="amber" label="Profile Views" value={analytics.profileViews} note={`${formatNumber(analytics.totalEngagement)} total interactions`} />
       </section>
 
@@ -377,8 +401,8 @@ function AnalyticsContent({ data }: { data: DashboardData }) {
         <article className="dashboard-panel dashboard-card">
           <div className="dashboard-card-header">
             <div>
-              <h2>Students by Class</h2>
-              <p>Academic distribution in this school</p>
+              <h2>{isPlatform ? 'Profiles by Level' : 'Students by Class'}</h2>
+              <p>{isPlatform ? 'Academic distribution across all organizations' : 'Academic distribution in this school'}</p>
             </div>
             <BarChart3 size={20} aria-hidden="true" />
           </div>
@@ -387,15 +411,15 @@ function AnalyticsContent({ data }: { data: DashboardData }) {
 
         <article className="dashboard-panel dashboard-card">
           <h2>Card Engagement</h2>
-          <p>How people use student digital cards</p>
+          <p>{isPlatform ? 'How people use digital cards across organizations' : 'How people use student digital cards'}</p>
           <EngagementDonut analytics={analytics} />
         </article>
       </section>
 
       <section className="dashboard-lower-grid">
-        <TopProfiles analytics={analytics} />
+        <TopProfiles analytics={analytics} isPlatform={isPlatform} />
         <EngagementLineChart analytics={analytics} />
-        <WorkflowCard analytics={analytics} />
+        <WorkflowCard analytics={analytics} isPlatform={isPlatform} />
       </section>
 
       <section className="dashboard-panel dashboard-cta">
@@ -403,12 +427,12 @@ function AnalyticsContent({ data }: { data: DashboardData }) {
           <CreditCard size={22} aria-hidden="true" />
         </div>
         <div className="dashboard-cta-copy">
-          <h2>Everything you need for secure student identity</h2>
-          <p>Create digital IDs, issue NFC cards, choose card designs, and export print-ready files.</p>
+          <h2>{isPlatform ? 'Manage every organization from one place' : 'Everything you need for secure student identity'}</h2>
+          <p>{isPlatform ? 'Open an organization workspace to manage its members, digital IDs, cards, reports, and settings.' : 'Create digital IDs, issue NFC cards, choose card designs, and export print-ready files.'}</p>
         </div>
         <div className="dashboard-cta-actions">
           <a className="dashboard-button is-primary" href={analytics.links.printStudio}>
-            Go to ID Card Studio
+            {isPlatform ? 'Open Organizations' : 'Go to ID Card Studio'}
             <ArrowRight size={16} aria-hidden="true" />
           </a>
         </div>
@@ -477,7 +501,7 @@ export function DashboardHome() {
       <div className="dashboard-state-screen">
         <div className="dashboard-state-card">
           <strong>Loading dashboard</strong>
-          Preparing your school workspace...
+          Preparing your dashboard...
         </div>
       </div>
     )
@@ -491,15 +515,10 @@ export function DashboardHome() {
       logo={school?.logoUrl || '/static/branding/tap2connect-logo-optimized.webp'}
       nav={schoolWorkspaceNav(school?.id, data.isSuperAdmin)}
       title="Overview"
-      subtitle={school ? `School identity and engagement for ${school.name}` : 'Choose a school workspace to view analytics'}
+      subtitle={data.isSuperAdmin ? 'Organization enrollment, identity, and engagement across the platform' : `School identity and engagement for ${school?.name}`}
       userName={data.user.displayName}
       userRole={data.user.roleLabel}
       accent={school?.themePrimary || '#0b4bcb'}
-      schoolOptions={data.isSuperAdmin ? data.schoolOptions : undefined}
-      selectedSchool={school?.id ?? null}
-      onSchoolChange={(schoolId) => {
-        window.location.href = `/dashboard/?school=${schoolId}`
-      }}
     >
       <div className="dashboard-page dashboard-overview-page">
         <div className="dashboard-stack">

@@ -1,11 +1,11 @@
 import BadgeCheck from 'lucide-react/dist/esm/icons/badge-check.js'
 import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3.js'
+import Building2 from 'lucide-react/dist/esm/icons/building-2.js'
 import GraduationCap from 'lucide-react/dist/esm/icons/graduation-cap.js'
 import LayoutDashboard from 'lucide-react/dist/esm/icons/layout-dashboard.js'
 import LayoutTemplate from 'lucide-react/dist/esm/icons/layout-template.js'
 import Printer from 'lucide-react/dist/esm/icons/printer.js'
 import QrCode from 'lucide-react/dist/esm/icons/qr-code.js'
-import School from 'lucide-react/dist/esm/icons/school.js'
 import Settings from 'lucide-react/dist/esm/icons/settings.js'
 import Upload from 'lucide-react/dist/esm/icons/upload.js'
 import Users from 'lucide-react/dist/esm/icons/users.js'
@@ -19,7 +19,7 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
   const path = window.location.pathname
   return [
     { label: 'Overview', href: withSchool('/dashboard/', schoolId), icon: LayoutDashboard, active: path === '/dashboard/' || path === '/dashboard' },
-    ...(isSuperAdmin ? [{ label: 'Schools', href: '/dashboard/schools/', icon: School, active: path.includes('/schools') }] : []),
+    ...(isSuperAdmin ? [{ label: 'Organizations', href: '/dashboard/schools/', icon: Building2, active: path.includes('/schools') }] : []),
     { label: 'Students', href: withSchool('/dashboard/students/', schoolId), icon: GraduationCap, active: path.includes('/students') || path.includes('/credentials') },
     { label: 'Teachers & Staff', href: withSchool('/dashboard/teachers/', schoolId), icon: Users, active: path.includes('/teachers') },
     { label: 'Reports', href: withSchool('/dashboard/reports/', schoolId), icon: BarChart3, active: path.includes('/reports') },
