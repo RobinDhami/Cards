@@ -1,11 +1,14 @@
 import json
+from datetime import datetime
 
 from django.contrib.auth.models import User
 from django.test import Client, TestCase
 from django.urls import reverse
+from django.utils import timezone
 
+from card_designer.models import CardTemplate, CardTemplateVersion
 from professional_cards.models import ProfessionalProfile
-from vcards.models import College, ProfileActivity, Skill, StudentProfile
+from vcards.models import College, ProfileActivity, Skill, StudentCard, StudentProfile
 
 
 class StudentDigitalCardTestMixin:
@@ -537,6 +540,156 @@ class SchoolDashboardScopeTests(TestCase):
         self.student_a.refresh_from_db()
         self.assertNotEqual(self.student_a.password, old_password)
         self.assertTrue(self.student_a.password.startswith('pbkdf2_'))
+
+
+class SuperAdminOverviewV1Tests(TestCase):
+    def setUp(self):
+        self.super_admin = User.objects.create_superuser(
+            username='overview.admin',
+            password='OverviewPass123!',
+        )
+        CardTemplate.objects.all().delete()
+        self.client.force_login(self.super_admin)
+
+    def _member(self, organization, suffix, member_type='student', profile_category='school'):
+        return StudentProfile.objects.create(
+            college=organization,
+            name=f'Member {suffix}',
+            username=f'overview.member.{suffix}',
+            password='MemberPass123!',
+            phone=f'98{suffix:08d}'[-10:],
+            profile_category=profile_category,
+            member_type=member_type,
+        )
+
+    def test_overview_requires_super_admin(self):
+        school_admin = User.objects.create_user(
+            username='overview.school.admin',
+            password='SchoolPass123!',
+        )
+        school = College.objects.create(name='Scoped School', admin_user=school_admin)
+        self.client.force_login(school_admin)
+
+        response = self.client.get(reverse('dashboard_overview_api'))
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.json()['redirectTo'],
+            reverse('dashboard_organization_workspace', args=[school.id]),
+        )
+
+    def test_kpis_use_approved_platform_semantics(self):
+        organization = College.objects.create(name='KPI School')
+        active_member = self._member(organization, 1)
+        inactive_card_member = self._member(organization, 2, member_type='teacher')
+        blocked_card_member = self._member(organization, 3, member_type='other')
+        self._member(organization, 4, profile_category='organization')
+        self._member(None, 5)
+        ProfessionalProfile.objects.create(full_name='Platform Professional', slug='platform-professional')
+        CardTemplate.objects.create(name='Published Template', status=CardTemplate.STATUS_PUBLISHED)
+        CardTemplate.objects.create(name='Draft Template', status=CardTemplate.STATUS_DRAFT)
+        StudentCard.objects.create(student=active_member, card_uid='active-card')
+        StudentCard.objects.create(student=inactive_card_member, card_uid='inactive-card', is_active=False)
+        StudentCard.objects.create(student=blocked_card_member, card_uid='blocked-card', lost_or_blocked=True)
+
+        payload = self.client.get(reverse('dashboard_overview_api')).json()
+
+        self.assertEqual(payload['kpis'], {
+            'organizations': 1,
+            'organizationMembers': 3,
+            'professionalProfiles': 1,
+            'publishedTemplates': 1,
+            'activeAssignedCards': 1,
+        })
+
+    def test_growth_returns_six_months_and_groups_additions(self):
+        current_month = timezone.localdate().replace(day=1)
+        first_month_index = current_month.year * 12 + current_month.month - 1 - 5
+        first_month = datetime(
+            first_month_index // 12,
+            (first_month_index % 12) + 1,
+            2,
+        )
+        first_month_timestamp = timezone.make_aware(first_month)
+        early_organization = College.objects.create(name='Early Organization')
+        early_member = self._member(early_organization, 10)
+        College.objects.filter(pk=early_organization.pk).update(created_at=first_month_timestamp)
+        StudentProfile.objects.filter(pk=early_member.pk).update(created_at=first_month_timestamp)
+        College.objects.create(name='Current Organization')
+
+        payload = self.client.get(reverse('dashboard_overview_api')).json()
+        months = payload['growth']['months']
+
+        self.assertEqual(len(months), 6)
+        self.assertEqual(months[0]['organizations'], 1)
+        self.assertEqual(months[0]['members'], 1)
+        self.assertEqual(months[-1]['organizations'], 1)
+        self.assertEqual(payload['growth']['defaultMetric'], 'members')
+
+    def test_top_organizations_are_limited_and_ordered_by_member_count(self):
+        for organization_index in range(11):
+            organization = College.objects.create(name=f'Organization {organization_index:02d}')
+            StudentProfile.objects.bulk_create([
+                StudentProfile(
+                    college=organization,
+                    name=f'Member {organization_index}-{member_index}',
+                    username=f'ranking.{organization_index}.{member_index}',
+                    password='already-hashed-for-counting',
+                    phone='9800000000',
+                    profile_category='school',
+                    member_type='student',
+                )
+                for member_index in range(11 - organization_index)
+            ])
+
+        rows = self.client.get(reverse('dashboard_overview_api')).json()['organizationsByMemberCount']
+
+        self.assertEqual(len(rows), 10)
+        self.assertEqual(rows[0]['name'], 'Organization 00')
+        self.assertEqual(rows[0]['memberCount'], 11)
+        self.assertEqual(rows[-1]['name'], 'Organization 09')
+        self.assertEqual(rows[-1]['memberCount'], 2)
+
+    def test_member_composition_uses_exact_model_categories(self):
+        organization = College.objects.create(name='Composition School')
+        self._member(organization, 20, member_type='student')
+        self._member(organization, 21, member_type='student')
+        self._member(organization, 22, member_type='teacher')
+        self._member(organization, 23, member_type='other')
+
+        composition = self.client.get(reverse('dashboard_overview_api')).json()['memberComposition']
+
+        self.assertEqual(
+            [(item['label'], item['value']) for item in composition],
+            [('Students', 2), ('Teacher & Staff', 1), ('Other Members', 1)],
+        )
+
+    def test_recent_activity_supports_partial_data(self):
+        profile = ProfessionalProfile.objects.create(full_name='Recent Professional', slug='recent-professional')
+        template = CardTemplate.objects.create(name='Recent Template', status=CardTemplate.STATUS_PUBLISHED)
+        CardTemplateVersion.objects.create(
+            template=template,
+            version=1,
+            name=template.name,
+            category=template.category,
+        )
+
+        recent = self.client.get(reverse('dashboard_overview_api')).json()['recentActivity']
+
+        self.assertSetEqual(
+            {item['type'] for item in recent},
+            {'professional_profile_created', 'template_published'},
+        )
+        self.assertTrue(any(item['detail'] == profile.full_name for item in recent))
+
+    def test_empty_platform_returns_renderable_sections(self):
+        payload = self.client.get(reverse('dashboard_overview_api')).json()
+
+        self.assertEqual(payload['kpis']['organizations'], 0)
+        self.assertEqual(payload['organizationsByMemberCount'], [])
+        self.assertEqual(payload['recentActivity'], [])
+        self.assertEqual(len(payload['growth']['months']), 6)
+        self.assertEqual(sum(item['value'] for item in payload['memberComposition']), 0)
 
 
 class ReactMigrationApiTests(TestCase):

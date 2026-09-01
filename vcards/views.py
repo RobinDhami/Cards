@@ -10,7 +10,7 @@ from django.contrib.auth.models import User
 from django.conf import settings
 from django.db import DatabaseError, transaction
 from django.db.models import Count, Q
-from django.db.models.functions import TruncDate
+from django.db.models.functions import TruncDate, TruncMonth
 from django.template import TemplateDoesNotExist
 from django.urls import reverse
 from django.utils import timezone
@@ -44,6 +44,8 @@ from .models import (
     StudentProfile, College, ProfileActivity, Skill,
     StudentCard,
 )
+from card_designer.models import CardTemplate, CardTemplateVersion
+from professional_cards.models import ProfessionalProfile
 
 
 def legacy_react_response(request, *args, **kwargs):
@@ -1868,6 +1870,182 @@ def _dashboard_analytics_payload(school, analytics, is_platform=False):
     }
 
 
+def _shift_month(month_start, offset):
+    month_index = (month_start.year * 12) + month_start.month - 1 + offset
+    return month_start.replace(
+        year=month_index // 12,
+        month=(month_index % 12) + 1,
+    )
+
+
+def _platform_overview_v1_payload():
+    members = StudentProfile.objects.filter(
+        profile_category='school',
+        college__isnull=False,
+    )
+    active_cards = StudentCard.objects.filter(
+        student__profile_category='school',
+        student__college__isnull=False,
+        is_active=True,
+        lost_or_blocked=False,
+    )
+
+    organizations_count = College.objects.count()
+    member_count = members.count()
+    professional_profile_count = ProfessionalProfile.objects.count()
+    published_template_count = CardTemplate.objects.filter(
+        status=CardTemplate.STATUS_PUBLISHED,
+    ).count()
+    active_card_count = active_cards.count()
+
+    current_month = timezone.localdate().replace(day=1)
+    first_month = _shift_month(current_month, -5)
+    organization_additions = {
+        row['month'].strftime('%Y-%m'): row['total']
+        for row in (
+            College.objects.filter(created_at__date__gte=first_month)
+            .annotate(month=TruncMonth('created_at'))
+            .values('month')
+            .annotate(total=Count('id'))
+            .order_by('month')
+        )
+    }
+    member_additions = {
+        row['month'].strftime('%Y-%m'): row['total']
+        for row in (
+            members.filter(created_at__date__gte=first_month)
+            .annotate(month=TruncMonth('created_at'))
+            .values('month')
+            .annotate(total=Count('id'))
+            .order_by('month')
+        )
+    }
+    growth_months = []
+    for offset in range(6):
+        month = _shift_month(first_month, offset)
+        key = month.strftime('%Y-%m')
+        growth_months.append({
+            'key': key,
+            'label': month.strftime('%b'),
+            'longLabel': month.strftime('%B %Y'),
+            'members': member_additions.get(key, 0),
+            'organizations': organization_additions.get(key, 0),
+        })
+
+    top_organizations = [
+        {
+            'id': organization.id,
+            'name': organization.name,
+            'memberCount': organization.member_count,
+            'url': reverse('dashboard_organization_workspace', args=[organization.id]),
+        }
+        for organization in (
+            College.objects.annotate(
+                member_count=Count(
+                    'students',
+                    filter=Q(students__profile_category='school'),
+                ),
+            )
+            .order_by('-member_count', 'name')[:10]
+        )
+    ]
+
+    composition_counts = {
+        row['member_type']: row['total']
+        for row in members.values('member_type').annotate(total=Count('id'))
+    }
+    member_composition = [
+        {
+            'key': 'student',
+            'label': 'Students',
+            'value': composition_counts.get('student', 0),
+            'color': '#0b4bcb',
+        },
+        {
+            'key': 'teacher',
+            'label': 'Teacher & Staff',
+            'value': composition_counts.get('teacher', 0),
+            'color': '#0f9f9a',
+        },
+        {
+            'key': 'other',
+            'label': 'Other Members',
+            'value': composition_counts.get('other', 0),
+            'color': '#7657d6',
+        },
+    ]
+
+    recent_activity = []
+    for organization in College.objects.only('id', 'name', 'created_at').order_by('-created_at')[:8]:
+        recent_activity.append({
+            'id': f'organization-{organization.id}',
+            'type': 'organization_created',
+            'title': 'Organization created',
+            'detail': organization.name,
+            'createdAt': organization.created_at,
+        })
+    for member in members.select_related('college').order_by('-created_at')[:8]:
+        recent_activity.append({
+            'id': f'member-{member.id}',
+            'type': 'member_added',
+            'title': 'Member added',
+            'detail': f'{member.name} · {member.college.name}',
+            'createdAt': member.created_at,
+        })
+    for card in active_cards.select_related('student__college').order_by('-created_at')[:8]:
+        organization_name = card.student.college.name if card.student.college else ''
+        recent_activity.append({
+            'id': f'card-{card.id}',
+            'type': 'card_assigned',
+            'title': 'Active card assigned',
+            'detail': f'{card.student.name} · {organization_name}',
+            'createdAt': card.created_at,
+        })
+    for profile in ProfessionalProfile.objects.only('id', 'full_name', 'created_at').order_by('-created_at')[:8]:
+        recent_activity.append({
+            'id': f'professional-{profile.id}',
+            'type': 'professional_profile_created',
+            'title': 'Professional profile created',
+            'detail': profile.full_name,
+            'createdAt': profile.created_at,
+        })
+    for version in CardTemplateVersion.objects.select_related('template').order_by('-created_at')[:8]:
+        recent_activity.append({
+            'id': f'template-version-{version.id}',
+            'type': 'template_published',
+            'title': 'Template published',
+            'detail': version.template.name,
+            'createdAt': version.created_at,
+        })
+    recent_activity.sort(key=lambda item: item['createdAt'], reverse=True)
+    serialized_activity = [
+        {**item, 'createdAt': item['createdAt'].isoformat()}
+        for item in recent_activity[:8]
+    ]
+
+    return {
+        'kpis': {
+            'organizations': organizations_count,
+            'organizationMembers': member_count,
+            'professionalProfiles': professional_profile_count,
+            'publishedTemplates': published_template_count,
+            'activeAssignedCards': active_card_count,
+        },
+        'growth': {
+            'months': growth_months,
+            'defaultMetric': 'members',
+        },
+        'organizationsByMemberCount': top_organizations,
+        'memberComposition': member_composition,
+        'recentActivity': serialized_activity,
+        'links': {
+            'organizations': reverse('dashboard_schools'),
+            'professionalProfiles': reverse('professional_cards:list'),
+            'publishedTemplates': reverse('dashboard_template_studio'),
+        },
+    }
+
+
 @login_required
 def dashboard_overview_api(request):
     workspace = _resolve_user_workspace(request.user)
@@ -1905,6 +2083,7 @@ def dashboard_overview_api(request):
         {'key': 'settings', 'label': 'Settings', 'href': f"{reverse('dashboard_settings')}{nav_school_query}", 'icon': 'settings'},
     ])
 
+    platform_overview = _platform_overview_v1_payload()
     return JsonResponse({
         'activeModule': 'home',
         'isSuperAdmin': is_super_admin,
@@ -1922,6 +2101,7 @@ def dashboard_overview_api(request):
         'logoutUrl': reverse('dashboard_logout'),
         'schoolsUrl': reverse('dashboard_schools'),
         'analytics': _dashboard_analytics_payload(school, analytics, is_platform=is_super_admin),
+        **platform_overview,
     })
 
 
