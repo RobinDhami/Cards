@@ -7,6 +7,7 @@ import Copy from 'lucide-react/dist/esm/icons/copy.js'
 import Eye from 'lucide-react/dist/esm/icons/eye.js'
 import History from 'lucide-react/dist/esm/icons/history.js'
 import MonitorSmartphone from 'lucide-react/dist/esm/icons/monitor-smartphone.js'
+import MoreHorizontal from 'lucide-react/dist/esm/icons/more-horizontal.js'
 import PackageCheck from 'lucide-react/dist/esm/icons/package-check.js'
 import RotateCcw from 'lucide-react/dist/esm/icons/rotate-ccw.js'
 import Save from 'lucide-react/dist/esm/icons/save.js'
@@ -15,6 +16,7 @@ import Trash2 from 'lucide-react/dist/esm/icons/trash-2.js'
 import X from 'lucide-react/dist/esm/icons/x.js'
 import { brandLogo } from '../../lib/assets'
 import { CardCanvas } from './CardCanvas'
+import { createBlankDocument } from './defaults'
 import {
   deleteTemplate,
   loadManagedTemplates,
@@ -42,6 +44,7 @@ type TemplateManagerProps = {
   onTemplateChange: (template: CardTemplateRecord) => void
   onSelectTemplate: (template: CardTemplateRecord) => void
   onApplyTemplate: (template: CardTemplateRecord) => void
+  onPreviewTemplate: (template: CardTemplateRecord) => void
 }
 
 type PendingTemplateAction = {
@@ -67,6 +70,7 @@ export function TemplateManager({
   onTemplateChange,
   onSelectTemplate,
   onApplyTemplate,
+  onPreviewTemplate,
 }: TemplateManagerProps) {
   const [templates, setTemplates] = useState<CardTemplateRecord[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -74,6 +78,8 @@ export function TemplateManager({
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [pendingAction, setPendingAction] = useState<PendingTemplateAction>(null)
+  const [startSource, setStartSource] = useState<'blank' | 'current'>('blank')
+  const [overflowOpen, setOverflowOpen] = useState(false)
   const selected = templates.find((template) => template.id === selectedId) ?? null
   const [draft, setDraft] = useState({
     name: 'New Tap2Connect template',
@@ -129,13 +135,15 @@ export function TemplateManager({
     try {
       const response = await saveTemplate({
         ...draft,
-        frontData: snapshot.front,
-        backData: snapshot.back,
+        frontData: startSource === 'blank' ? createBlankDocument() : snapshot.front,
+        backData: startSource === 'blank' ? createBlankDocument() : snapshot.back,
       })
       const next = [...templates, response.template]
       syncTemplates(next)
       setSelectedId(response.template.id)
       setMessage('Template draft created.')
+      onTemplateChange(response.template)
+      onApplyTemplate(response.template)
     } catch (error) {
       setMessage(displayError(error))
     } finally {
@@ -206,6 +214,7 @@ export function TemplateManager({
             template.id === response.template.id ? response.template : template,
           ),
         )
+        onTemplateChange(response.template)
         setMessage(
           pendingAction.action === 'publish'
             ? `Version ${response.template.version} published.`
@@ -254,6 +263,8 @@ export function TemplateManager({
                   eligibleAccountTypes: [],
                   sortOrder: templates.length,
                 })
+                setStartSource('blank')
+                setOverflowOpen(false)
               }}
             >
               <span className="t2c-template-status t2c-template-status--new">+</span>
@@ -267,6 +278,7 @@ export function TemplateManager({
                 onClick={() => {
                   setSelectedId(template.id)
                   onSelectTemplate(template)
+                  setOverflowOpen(false)
                 }}
                 key={template.id}
               >
@@ -288,118 +300,142 @@ export function TemplateManager({
                   onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
                 />
               </label>
-              <label>
-                <span>Description</span>
-                <textarea
-                  rows={3}
-                  value={draft.description}
-                  onChange={(event) =>
-                    setDraft((current) => ({ ...current, description: event.target.value }))
-                  }
-                />
-              </label>
-              <div className="t2c-template-form-grid">
-                <label>
-                  <span>Category</span>
-                  <select
-                    value={draft.category}
-                    onChange={(event) =>
-                      setDraft((current) => ({ ...current, category: event.target.value }))
-                    }
-                  >
-                    {categories.map((category) => (
-                      <option value={category.value} key={category.value}>
-                        {category.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  <span>Display order</span>
-                  <input
-                    type="number"
-                    min="0"
-                    value={draft.sortOrder}
-                    onChange={(event) =>
-                      setDraft((current) => ({
-                        ...current,
-                        sortOrder: Number(event.target.value),
-                      }))
-                    }
-                  />
-                </label>
-              </div>
-              <fieldset>
-                <legend>Availability</legend>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={draft.supportsBack}
-                    onChange={(event) =>
-                      setDraft((current) => ({
-                        ...current,
-                        supportsBack: event.target.checked,
-                      }))
-                    }
-                  />
-                  Supports front and back
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={draft.isFeatured}
-                    onChange={(event) =>
-                      setDraft((current) => ({
-                        ...current,
-                        isFeatured: event.target.checked,
-                      }))
-                    }
-                  />
-                  Featured template
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={draft.isPremium}
-                    onChange={(event) =>
-                      setDraft((current) => ({
-                        ...current,
-                        isPremium: event.target.checked,
-                      }))
-                    }
-                  />
-                  Premium template
-                </label>
-              </fieldset>
-              <fieldset>
-                <legend>Eligible account types</legend>
-                {templateAudienceOptions.map((option) => (
-                    <label key={option.value}>
+              {!selected ? (
+                <>
+                  <label>
+                    <span>Category <small>Optional</small></span>
+                    <select
+                      value={draft.category}
+                      onChange={(event) =>
+                        setDraft((current) => ({ ...current, category: event.target.value }))
+                      }
+                    >
+                      {categories.map((category) => (
+                        <option value={category.value} key={category.value}>{category.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <fieldset className="t2c-start-source">
+                    <legend>Start with</legend>
+                    <label>
                       <input
-                        type="checkbox"
-                        checked={draft.eligibleAccountTypes.includes(option.value)}
+                        type="radio"
+                        name="template-start-source"
+                        checked={startSource === 'blank'}
+                        onChange={() => setStartSource('blank')}
+                      />
+                      <span><b>Blank canvas</b><small>Start with clean front and back sides</small></span>
+                    </label>
+                    <label>
+                      <input
+                        type="radio"
+                        name="template-start-source"
+                        checked={startSource === 'current'}
+                        onChange={() => setStartSource('current')}
+                      />
+                      <span><b>Current canvas</b><small>Use the design already open in the editor</small></span>
+                    </label>
+                  </fieldset>
+                </>
+              ) : (
+                <details className="t2c-advanced-settings">
+                  <summary>Advanced / Publishing settings</summary>
+                  <div>
+                    <label>
+                      <span>Description</span>
+                      <textarea
+                        rows={3}
+                        value={draft.description}
                         onChange={(event) =>
-                          setDraft((current) => ({
-                            ...current,
-                            eligibleAccountTypes: event.target.checked
-                              ? [...current.eligibleAccountTypes, option.value]
-                              : current.eligibleAccountTypes.filter((value) => value !== option.value),
-                          }))
+                          setDraft((current) => ({ ...current, description: event.target.value }))
                         }
                       />
-                      {option.label}
                     </label>
-                ))}
-                <p>Leave all unchecked to allow every account type.</p>
-              </fieldset>
-              <div className="t2c-template-document-note">
-                <PackageCheck size={18} />
-                <span>
-                  Save the current front and back canvas with placeholders like
-                  <code>{'{{full_name}}'}</code>, <code>{'{{company}}'}</code>, and <code>{'{{qr_code}}'}</code>.
-                  Published templates appear for eligible users to fill with their own details.
-                </span>
-              </div>
+                    <div className="t2c-template-form-grid">
+                      <label>
+                        <span>Category</span>
+                        <select
+                          value={draft.category}
+                          onChange={(event) =>
+                            setDraft((current) => ({ ...current, category: event.target.value }))
+                          }
+                        >
+                          {categories.map((category) => (
+                            <option value={category.value} key={category.value}>{category.label}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        <span>Display order</span>
+                        <input
+                          type="number"
+                          min="0"
+                          value={draft.sortOrder}
+                          onChange={(event) => setDraft((current) => ({
+                            ...current,
+                            sortOrder: Number(event.target.value),
+                          }))}
+                        />
+                      </label>
+                    </div>
+                    <fieldset>
+                      <legend>Availability</legend>
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={draft.supportsBack}
+                          onChange={(event) => setDraft((current) => ({
+                            ...current,
+                            supportsBack: event.target.checked,
+                          }))}
+                        />
+                        Supports front and back
+                      </label>
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={draft.isFeatured}
+                          onChange={(event) => setDraft((current) => ({
+                            ...current,
+                            isFeatured: event.target.checked,
+                          }))}
+                        />
+                        Featured template
+                      </label>
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={draft.isPremium}
+                          onChange={(event) => setDraft((current) => ({
+                            ...current,
+                            isPremium: event.target.checked,
+                          }))}
+                        />
+                        Premium template
+                      </label>
+                    </fieldset>
+                    <fieldset>
+                      <legend>Audience</legend>
+                      {templateAudienceOptions.map((option) => (
+                        <label key={option.value}>
+                          <input
+                            type="checkbox"
+                            checked={draft.eligibleAccountTypes.includes(option.value)}
+                            onChange={(event) => setDraft((current) => ({
+                              ...current,
+                              eligibleAccountTypes: event.target.checked
+                                ? [...current.eligibleAccountTypes, option.value]
+                                : current.eligibleAccountTypes.filter((value) => value !== option.value),
+                            }))}
+                          />
+                          {option.label}
+                        </label>
+                      ))}
+                      <p>Leave all unchecked to allow every account type.</p>
+                    </fieldset>
+                  </div>
+                </details>
+              )}
             </div>
             <footer>
               <p aria-live="polite">{message}</p>
@@ -407,12 +443,12 @@ export function TemplateManager({
                 {selected ? (
                   <>
                     <button type="button" onClick={() => onApplyTemplate(selected)}>
-                      <Eye size={16} />
+                      <ChevronRight size={16} />
                       Open in editor
                     </button>
-                    <button type="button" onClick={duplicateSelected} disabled={saving}>
-                      <Copy size={16} />
-                      Duplicate
+                    <button type="button" onClick={() => onPreviewTemplate(selected)}>
+                      <Eye size={16} />
+                      Preview
                     </button>
                     {selected.status === 'published' ? (
                       <button
@@ -435,23 +471,6 @@ export function TemplateManager({
                     )}
                     <button
                       type="button"
-                      onClick={() => setPendingAction({ template: selected, action: 'archive' })}
-                      disabled={saving}
-                    >
-                      <Archive size={16} />
-                      Archive
-                    </button>
-                    <button
-                      type="button"
-                      className="is-danger"
-                      onClick={() => setPendingAction({ template: selected, action: 'delete' })}
-                      disabled={saving}
-                    >
-                      <Trash2 size={16} />
-                      Delete
-                    </button>
-                    <button
-                      type="button"
                       className="is-primary"
                       onClick={saveSelectedMetadata}
                       disabled={saving}
@@ -459,17 +478,51 @@ export function TemplateManager({
                       <Save size={16} />
                       Save draft
                     </button>
+                    <div className="t2c-template-overflow">
+                      <button
+                        type="button"
+                        onClick={() => setOverflowOpen((current) => !current)}
+                        aria-label="More template actions"
+                      >
+                        <MoreHorizontal size={17} />
+                      </button>
+                      {overflowOpen ? (
+                        <div role="menu">
+                          <button type="button" onClick={duplicateSelected} disabled={saving}>
+                            <Copy size={16} /> Duplicate
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPendingAction({ template: selected, action: 'archive' })}
+                            disabled={saving}
+                          >
+                            <Archive size={16} /> Archive
+                          </button>
+                          <button
+                            type="button"
+                            className="is-danger"
+                            onClick={() => setPendingAction({ template: selected, action: 'delete' })}
+                            disabled={saving}
+                          >
+                            <Trash2 size={16} /> Delete
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
                   </>
                 ) : (
-                  <button
-                    type="button"
-                    className="is-primary"
-                    onClick={saveCurrentAsTemplate}
-                    disabled={saving || !draft.name.trim()}
-                  >
-                    <Save size={16} />
-                    Create draft
-                  </button>
+                  <>
+                    <button type="button" onClick={onClose}>Cancel</button>
+                    <button
+                      type="button"
+                      className="is-primary"
+                      onClick={saveCurrentAsTemplate}
+                      disabled={saving || !draft.name.trim()}
+                    >
+                      <Save size={16} />
+                      Create draft
+                    </button>
+                  </>
                 )}
               </div>
             </footer>

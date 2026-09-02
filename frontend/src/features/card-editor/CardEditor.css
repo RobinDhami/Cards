@@ -2171,6 +2171,67 @@
   font-weight: 600;
 }
 
+.t2c-template-manager-form label > span small {
+  margin-left: 4px;
+  color: #98a2b3;
+  font-weight: 500;
+}
+
+.t2c-start-source {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px !important;
+}
+
+.t2c-start-source legend {
+  grid-column: 1 / -1;
+}
+
+.t2c-start-source label {
+  min-height: 76px;
+  align-items: flex-start !important;
+  padding: 13px;
+  border: 1px solid var(--editor-border-soft);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.t2c-start-source label:has(input:checked) {
+  border-color: #9db8f4;
+  background: #f7f9ff;
+}
+
+.t2c-start-source label > span {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.t2c-start-source label small {
+  color: var(--editor-muted);
+  font-weight: 400;
+  line-height: 1.4;
+  text-transform: none;
+}
+
+.t2c-advanced-settings {
+  border: 1px solid var(--editor-border);
+  border-radius: 6px;
+  background: #fafbfc;
+}
+
+.t2c-advanced-settings > summary {
+  padding: 13px 14px;
+  color: #344054;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.t2c-advanced-settings > div {
+  padding: 2px 14px 14px;
+}
+
 .t2c-template-form-grid {
   display: grid;
   grid-template-columns: 1fr 160px;
@@ -2249,6 +2310,29 @@
 .t2c-confirm-dialog button.is-danger {
   color: #c93232;
   border-color: #e9bcbc;
+}
+
+.t2c-template-overflow {
+  position: relative;
+}
+
+.t2c-template-overflow > div {
+  position: absolute;
+  z-index: 8;
+  right: 0;
+  bottom: calc(100% + 6px);
+  display: grid;
+  width: 150px;
+  padding: 5px;
+  border: 1px solid var(--editor-border);
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.14);
+}
+
+.t2c-template-overflow > div button {
+  justify-content: flex-start;
+  border: 0;
 }
 
 .t2c-confirm-dialog {

@@ -777,6 +777,11 @@ export function AdvancedCardEditor({
     setTemplateManagerOpen(false)
   }
 
+  const previewTemplate = (template: CardTemplateRecord) => {
+    openTemplateForEditing(template)
+    setPreviewOpen(true)
+  }
+
   const createBlankDesign = () => {
     const blank = createBlankSnapshot(finish)
     commitSnapshot(blank, 'Create blank design')
@@ -1583,6 +1588,7 @@ export function AdvancedCardEditor({
           }}
           onSelectTemplate={(template) => openTemplateForEditing(template, false)}
           onApplyTemplate={applyTemplate}
+          onPreviewTemplate={previewTemplate}
         />
       ) : null}
 
