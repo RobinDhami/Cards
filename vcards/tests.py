@@ -458,9 +458,11 @@ class PlatformStaffAccessTests(TestCase):
         ))
         self.client.force_login(activity_user)
 
+        activity_page_response = self.client.get(reverse('dashboard_activity'))
         activity_response = self.client.get(reverse('dashboard_platform_activity_api'))
         reports_response = self.client.get(reverse('dashboard_platform_reports_api'))
 
+        self.assertEqual(activity_page_response.status_code, 200)
         self.assertEqual(activity_response.status_code, 200)
         self.assertEqual(reports_response.status_code, 403)
         self.assertEqual(activity_response.json()['platformAccess']['allowedModules'], ['activity'])

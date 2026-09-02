@@ -109,12 +109,12 @@ export function PlatformActivity() {
         <section className="manage-card platform-activity-card">
           <header className="platform-section-heading">
             <div><h2>Recent platform activity</h2><p>Created, published, and assigned records ordered by timestamp</p></div>
-            <span>{visibleActivity.length} {visibleActivity.length === 1 ? 'event' : 'events'}</span>
+            <span aria-live="polite">{visibleActivity.length} {visibleActivity.length === 1 ? 'event' : 'events'}</span>
           </header>
           <div className="platform-activity-filters" role="group" aria-label="Filter platform activity">
-            <button className={filter === 'all' ? 'is-active' : ''} type="button" onClick={() => setFilter('all')}>All</button>
+            <button aria-pressed={filter === 'all'} className={filter === 'all' ? 'is-active' : ''} type="button" onClick={() => setFilter('all')}>All</button>
             {(Object.entries(activityMeta) as Array<[ActivityType, { icon: Icon; label: string }]>).map(([type, meta]) => (
-              <button className={filter === type ? 'is-active' : ''} type="button" onClick={() => setFilter(type)} key={type}>{meta.label}</button>
+              <button aria-pressed={filter === type} className={filter === type ? 'is-active' : ''} type="button" onClick={() => setFilter(type)} key={type}>{meta.label}</button>
             ))}
           </div>
           {visibleActivity.length > 0 ? (
