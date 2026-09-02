@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
+import { brandLogo } from '../../lib/assets'
 import Activity from 'lucide-react/dist/esm/icons/activity.js'
 import BadgeCheck from 'lucide-react/dist/esm/icons/badge-check.js'
 import Building2 from 'lucide-react/dist/esm/icons/building-2.js'
@@ -132,7 +133,7 @@ function SchoolShell({
     <ManageShell
       brand={school?.name || 'Tap2Connect'}
       brandDetail={school ? (shell.isSuperAdmin ? 'Super Admin · Organization workspace' : 'Organization administration') : 'Platform administration'}
-      logo={school?.logo || '/static/branding/tap2connect-logo-optimized.webp'}
+      logo={school?.logo || brandLogo}
       nav={schoolWorkspaceNav(school?.id, shell.isSuperAdmin)}
       title={title}
       subtitle={subtitle}

@@ -4,6 +4,7 @@ import Palette from 'lucide-react/dist/esm/icons/palette.js'
 import ScanLine from 'lucide-react/dist/esm/icons/scan-line.js'
 import ShieldCheck from 'lucide-react/dist/esm/icons/shield-check.js'
 import type { CardFinishId } from '../../features/card-editor/types'
+import { brandLogo } from '../../lib/assets'
 
 const loadAdvancedCardEditor = () => import('../../features/card-editor/CardEditor')
 const AdvancedCardEditor = lazy(() =>
@@ -154,7 +155,7 @@ export function CardDesignStudio() {
         <Suspense
           fallback={
             <div className="editor-loading-screen" role="status" aria-live="polite">
-              <img src="/static/branding/tap2connect-logo-optimized.webp" alt="" />
+              <img src={brandLogo} alt="" />
               <span>Opening card editor…</span>
             </div>
           }

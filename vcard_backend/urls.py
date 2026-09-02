@@ -1,15 +1,16 @@
 from django import views
 from django.conf import settings
 from django.conf.urls.static import static
-from django.urls import include, path, re_path
-from django.views.static import serve as serve_media
+from django.urls import include, path
 from django.contrib import admin
 from vcards.views import *
 from vcards.views import dashboard_qr_export, dashboard_qr_export_download
 from vcard_backend import react_api
+from vcard_backend.health import health_check
 from vcard_backend.react_views import react_app
 
 urlpatterns = [
+    path('health/', health_check, name='health_check'),
     path('', react_app, name='home'),
     path('robots.txt', robots_txt, name='robots_txt'),
     path('sitemap.xml', sitemap_xml, name='sitemap_xml'),
@@ -34,6 +35,8 @@ urlpatterns = [
     path('dashboard/students/', react_app, name='dashboard_students'),
     path('dashboard/teachers/', react_app, name='dashboard_teachers'),
     path('dashboard/reports/', react_app, name='dashboard_reports'),
+    path('dashboard/activity/', react_app, name='dashboard_activity'),
+    path('dashboard/settings/staff-access/', react_app, name='dashboard_platform_staff_access'),
     path('dashboard/settings/', react_app, name='dashboard_settings'),
     path('dashboard/print/', react_app, name='dashboard_print'),
     path('dashboard/qr-export/', react_app, name='dashboard_qr_export'),
@@ -72,6 +75,8 @@ urlpatterns = [
     path('api/session/login/', react_api.session_login_api, name='react_session_login_api'),
     path('api/platform/session/login/', react_api.platform_session_login_api, name='react_platform_session_login_api'),
     path('api/session/logout/', react_api.session_logout_api, name='react_session_logout_api'),
+    path('api/dashboard/platform-staff/', react_api.platform_staff_api, name='react_platform_staff_api'),
+    path('api/dashboard/platform-staff/<int:user_id>/', react_api.platform_staff_detail_api, name='react_platform_staff_detail_api'),
     path('api/card-designer/', include('card_designer.urls')),
     path('api/manage/professional-profiles/', react_api.professional_profiles_manage_api, name='react_professional_profiles_api'),
     path('api/manage/professional-profiles/<int:pk>/', react_api.professional_profile_manage_api, name='react_professional_profile_api'),
@@ -98,7 +103,3 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += [path("__reload__/", include("django_browser_reload.urls"))]
-elif settings.SERVE_MEDIA_FILES:
-    urlpatterns += [
-        re_path(r'^media/(?P<path>.*)$', serve_media, {'document_root': settings.MEDIA_ROOT}),
-    ]

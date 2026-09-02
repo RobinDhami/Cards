@@ -2,11 +2,11 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
-export default defineConfig(({ command }) => ({
-  base: command === 'build' ? '/static/react/' : '/',
+export default defineConfig({
+  base: '/',
   plugins: [react()],
   build: {
-    outDir: '../theme/static/react',
+    outDir: 'dist',
     emptyOutDir: true,
   },
   server: {
@@ -20,4 +20,4 @@ export default defineConfig(({ command }) => ({
       '/send-message': 'http://127.0.0.1:8000',
     },
   },
-}))
+})

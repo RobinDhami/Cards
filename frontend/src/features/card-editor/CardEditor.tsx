@@ -29,7 +29,8 @@ import Trash2 from 'lucide-react/dist/esm/icons/trash-2.js'
 import Undo2 from 'lucide-react/dist/esm/icons/undo-2.js'
 import Unlock from 'lucide-react/dist/esm/icons/unlock.js'
 import X from 'lucide-react/dist/esm/icons/x.js'
-import { displayError } from '../../lib/api'
+import { backendHref, displayError } from '../../lib/api'
+import { brandLogo } from '../../lib/assets'
 import { CardCanvas, type CanvasElementPatch } from './CardCanvas'
 import {
   InlineTextEditor,
@@ -56,7 +57,6 @@ import {
   SAMPLE_PROFILE_FIELDS,
   createBlankSnapshot,
   createDecorationElement,
-  createFallbackTemplates,
   createIconElement,
   createImageElement,
   createInitialSnapshot,
@@ -151,7 +151,6 @@ export function AdvancedCardEditor({
   initialTemplateId = null,
   onClose,
 }: CardDesignerProps) {
-  const fallbackTemplates = useMemo(createFallbackTemplates, [])
   const initialSnapshot = useMemo(
     () => createInitialSnapshot(initialFrontDesign, initialBackDesign, finish),
     [finish, initialBackDesign, initialFrontDesign],
@@ -163,7 +162,7 @@ export function AdvancedCardEditor({
   const [past, setPast] = useState<DesignSnapshot[]>([])
   const [future, setFuture] = useState<DesignSnapshot[]>([])
   const [bootstrap, setBootstrap] = useState<EditorBootstrap | null>(null)
-  const [templates, setTemplates] = useState<CardTemplateRecord[]>(fallbackTemplates)
+  const [templates, setTemplates] = useState<CardTemplateRecord[]>([])
   const [assets, setAssets] = useState<CardAssetRecord[]>([])
   const [currentTemplateId, setCurrentTemplateId] = useState<string | null>(
     `built-in-${initialFrontDesign}`,
@@ -201,9 +200,14 @@ export function AdvancedCardEditor({
   const latestDesignRef = useRef(design)
 
   const currentDocument = documentForSide(snapshot, side)
-  const profileFields = bootstrap?.profileFields ?? SAMPLE_PROFILE_FIELDS
+  const profileFields = useMemo(() => {
+    const fields = bootstrap?.profileFields ?? SAMPLE_PROFILE_FIELDS
+    return fields.company_logo.startsWith('/static/branding/tap2connect')
+      ? { ...fields, company_logo: brandLogo }
+      : fields
+  }, [bootstrap?.profileFields])
   const authenticated = bootstrap?.authenticated ?? false
-  const isSuperuser = bootstrap?.isSuperuser ?? false
+  const canManageTemplates = bootstrap?.canManageTemplates ?? false
   const selected = selectedElements(currentDocument, selectedIds)
   const inlineTextElement =
     currentDocument.elements.find((element) => element.id === inlineTextId) ?? null
@@ -344,11 +348,7 @@ export function AdvancedCardEditor({
     loadEditorBootstrap()
       .then(async (response) => {
         setBootstrap(response)
-        setTemplates(() => {
-          const remote = response.templates.length ? response.templates : []
-          const remoteKeys = new Set(remote.flatMap((template) => [template.id, template.slug]))
-          return [...remote, ...fallbackTemplates.filter((template) => !remoteKeys.has(template.id) && !remoteKeys.has(template.slug))]
-        })
+        setTemplates(response.templates)
         setAssets(response.assets)
         if (initialTemplateId) {
           const initialTemplate = response.templates.find((template) => template.id === initialTemplateId)
@@ -367,7 +367,7 @@ export function AdvancedCardEditor({
             setLastAction(`Open ${initialTemplate.name} template`)
           }
         }
-        if (mode === 'template-studio' && response.isSuperuser && !templateStudioOpenedRef.current) {
+        if (mode === 'template-studio' && response.canManageTemplates && !templateStudioOpenedRef.current) {
           templateStudioOpenedRef.current = true
           setTemplateManagerOpen(true)
           setActiveTool('text')
@@ -411,7 +411,7 @@ export function AdvancedCardEditor({
     return () => {
       document.body.style.overflow = previousOverflow
     }
-  }, [fallbackTemplates, finish, initialSnapshot, initialTemplateId, mode, open])
+  }, [finish, initialSnapshot, initialTemplateId, mode, open])
 
   useEffect(() => {
     if (!open) return
@@ -906,7 +906,7 @@ export function AdvancedCardEditor({
       if (authenticated) {
         const response = await uploadAsset(file, assetType, isGlobal)
         setAssets((items) => [response.asset, ...items])
-        addElement(createImageElement(response.asset.url, response.asset.name, response.asset.id), 'Add uploaded image')
+        addElement(createImageElement(backendHref(response.asset.url), response.asset.name, response.asset.id), 'Add uploaded image')
       } else {
         const dataUrl = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader()
@@ -1044,14 +1044,14 @@ export function AdvancedCardEditor({
 
   return (
     <div
-      className={`t2c-card-editor${leftCollapsed ? ' is-left-collapsed' : ''}${rightCollapsed ? ' is-right-collapsed' : ''}`}
+      className={`t2c-card-editor${mode === 'template-studio' ? ' is-template-studio' : ''}${leftCollapsed ? ' is-left-collapsed' : ''}${rightCollapsed ? ' is-right-collapsed' : ''}`}
       role="dialog"
       aria-modal="true"
       aria-label="Tap2Connect advanced card editor"
     >
       <header className="t2c-editor-topbar">
         <div className="t2c-editor-topbar-left">
-          <img src="/static/branding/tap2connect-logo-optimized.webp" alt="Tap2Connect" />
+          <img src={brandLogo} alt="Tap2Connect" />
           <div className="t2c-side-switch" aria-label="Card side">
             <button
               type="button"
@@ -1112,7 +1112,7 @@ export function AdvancedCardEditor({
             <Save size={16} />
             <span>Save draft</span>
           </button>
-          {isSuperuser ? (
+          {canManageTemplates ? (
             <button type="button" onClick={() => setTemplateManagerOpen(true)}>
               <ScanLine size={16} />
               <span>Publish</span>
@@ -1178,11 +1178,13 @@ export function AdvancedCardEditor({
             templates={templates}
             currentTemplateId={currentTemplateId}
             assets={assets}
-            brandAssets={bootstrap?.brandAssets ?? []}
+            brandAssets={(bootstrap?.brandAssets ?? []).map((asset) => (
+              asset.id === 't2c-primary-logo' ? { ...asset, url: brandLogo } : asset
+            ))}
             profileFields={profileFields}
             document={currentDocument}
             selectedIds={selectedIds}
-            isSuperuser={isSuperuser}
+            canManageTemplates={canManageTemplates}
             authenticated={authenticated}
             uploading={uploading}
             onCollapse={() => setLeftCollapsed(true)}
@@ -1200,7 +1202,7 @@ export function AdvancedCardEditor({
               addElement(element, `Add ${name ?? variant}`)
             }}
             onAddImage={(asset) =>
-              addElement(createImageElement(asset.url, asset.name, asset.id), `Add ${asset.name}`)
+              addElement(createImageElement(backendHref(asset.url), asset.name, asset.id), `Add ${asset.name}`)
             }
             onAddQr={(value, name) => addElement(createQrElement(value, name), `Add ${name}`)}
             onUpload={uploadFile}
@@ -1498,13 +1500,13 @@ export function AdvancedCardEditor({
         }}
       />
 
-      {isSuperuser ? (
+      {canManageTemplates ? (
         <TemplateManager
           open={templateManagerOpen}
           snapshot={snapshot}
           categories={bootstrap?.templateCategories ?? []}
           onClose={() => setTemplateManagerOpen(false)}
-          onTemplatesChange={(next) => setTemplates(next.length ? next : fallbackTemplates)}
+          onTemplatesChange={setTemplates}
           onApplyTemplate={applyTemplate}
         />
       ) : null}

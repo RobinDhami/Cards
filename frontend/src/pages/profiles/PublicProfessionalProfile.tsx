@@ -30,7 +30,7 @@ import Sparkles from 'lucide-react/dist/esm/icons/sparkles.js'
 import UserPlus from 'lucide-react/dist/esm/icons/user-plus.js'
 import Users from 'lucide-react/dist/esm/icons/users.js'
 import X from 'lucide-react/dist/esm/icons/x.js'
-import { ApiError, apiFetch, appHref, backendHref, displayError, jsonBody } from '../../lib/api'
+import { ApiError, apiFetch, apiHref, appHref, backendHref, displayError, jsonBody } from '../../lib/api'
 import { serviceIconMap } from '../../lib/serviceIcons'
 import './PublicProfessionalProfile.css'
 
@@ -1185,7 +1185,7 @@ export function PublicProfessionalProfile() {
     let isCurrent = true
     async function loadProfile() {
       try {
-        const response = await fetch(`/api/professional-profiles/${slug}/`, {
+        const response = await fetch(apiHref(`/api/professional-profiles/${slug}/`), {
           credentials: 'include',
           headers: { Accept: 'application/json' },
         })

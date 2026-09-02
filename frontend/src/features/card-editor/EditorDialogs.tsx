@@ -13,6 +13,7 @@ import Save from 'lucide-react/dist/esm/icons/save.js'
 import Send from 'lucide-react/dist/esm/icons/send.js'
 import Trash2 from 'lucide-react/dist/esm/icons/trash-2.js'
 import X from 'lucide-react/dist/esm/icons/x.js'
+import { brandLogo } from '../../lib/assets'
 import { CardCanvas } from './CardCanvas'
 import {
   deleteTemplate,
@@ -598,7 +599,7 @@ export function PreviewDialog({
             <div className="t2c-mobile-profile-preview">
               <div className="t2c-mobile-device">
                 <div className="t2c-mobile-device-header">
-                  <img src="/static/branding/tap2connect-logo-optimized.webp" alt="Tap2Connect" />
+                  <img src={brandLogo} alt="Tap2Connect" />
                 </div>
                 <div className="t2c-mobile-cover" />
                 <div className="t2c-mobile-avatar">

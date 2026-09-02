@@ -2,6 +2,7 @@ import { type FormEvent, useState } from 'react'
 import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right.js'
 import CheckCircle2 from 'lucide-react/dist/esm/icons/check-circle-2.js'
 import { apiFetch, displayError } from '../../lib/api'
+import { contactNfcCard } from '../../lib/assets'
 import './ContactSection.css'
 
 type SubmissionState =
@@ -75,7 +76,7 @@ export function ContactSection() {
         </div>
 
         <div className="contact-product" aria-hidden="true">
-          <img src="/static/home/contact-nfc-card.png" alt="" loading="lazy" />
+          <img src={contactNfcCard} alt="" loading="lazy" />
         </div>
       </div>
     </section>

@@ -4,6 +4,23 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone
 
+
+class PlatformAccess(User):
+    class Meta:
+        proxy = True
+        default_permissions = ()
+        permissions = [
+            ('access_platform_overview', 'Can access platform overview'),
+            ('access_platform_organizations', 'Can access platform organizations'),
+            ('access_platform_members', 'Can access platform members'),
+            ('access_platform_professionals', 'Can access platform professional profiles'),
+            ('access_platform_templates', 'Can access platform Template Studio'),
+            ('access_platform_cards', 'Can access platform cards'),
+            ('access_platform_activity', 'Can access platform activity'),
+            ('access_platform_reports', 'Can access platform reports'),
+            ('access_platform_settings', 'Can access platform settings'),
+        ]
+
 # Skill
 class Skill(models.Model):
     name = models.CharField(max_length=100, unique=True)

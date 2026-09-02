@@ -217,6 +217,7 @@ export type EditorBootstrap = {
   ok: true
   authenticated: boolean
   isSuperuser: boolean
+  canManageTemplates: boolean
   accountType: string
   profileFields: ProfileFields
   templates: CardTemplateRecord[]

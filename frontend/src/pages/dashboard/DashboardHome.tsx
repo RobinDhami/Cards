@@ -7,6 +7,8 @@ import LayoutTemplate from 'lucide-react/dist/esm/icons/layout-template.js'
 import UserPlus from 'lucide-react/dist/esm/icons/user-plus.js'
 import Users from 'lucide-react/dist/esm/icons/users.js'
 import { ManageShell } from '../../components/manage/ManageShell'
+import { apiHref } from '../../lib/api'
+import { brandLogo } from '../../lib/assets'
 import { schoolWorkspaceNav } from '../school/schoolWorkspaceNav'
 import './DashboardHome.css'
 
@@ -318,7 +320,7 @@ export function DashboardHome() {
     let isCurrent = true
     async function loadDashboard() {
       try {
-        const response = await fetch(endpoint, { credentials: 'include', headers: { Accept: 'application/json' } })
+        const response = await fetch(apiHref(endpoint), { credentials: 'include', headers: { Accept: 'application/json' } })
         const contentType = response.headers.get('content-type') ?? ''
         if (!contentType.includes('application/json')) {
           window.location.href = '/login/'
@@ -351,7 +353,7 @@ export function DashboardHome() {
     <ManageShell
       brand={school?.name || 'Tap2Connect'}
       brandDetail={school ? 'School administration' : 'Platform administration'}
-      logo={school?.logoUrl || '/static/branding/tap2connect-logo-optimized.webp'}
+      logo={school?.logoUrl || brandLogo}
       nav={schoolWorkspaceNav(school?.id, data.isSuperAdmin)}
       title="Overview"
       subtitle="Platform organizations, members, profiles, templates, and assigned cards"

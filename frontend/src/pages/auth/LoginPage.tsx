@@ -21,8 +21,8 @@ function LoginForm({ surface }: { surface: LoginSurface }) {
     apiFetch<{ authenticated: boolean; redirectPath: string; user: { role: string } }>('/api/session/')
       .then((session) => {
         const matchesSurface = isPlatform
-          ? session.user.role === 'super_admin'
-          : session.user.role !== 'super_admin'
+          ? ['super_admin', 'platform_staff'].includes(session.user.role)
+          : !['super_admin', 'platform_staff'].includes(session.user.role)
         if (session.authenticated && matchesSurface && session.redirectPath) {
           window.location.replace(session.redirectPath)
         }
@@ -68,7 +68,7 @@ function LoginForm({ surface }: { surface: LoginSurface }) {
         <h1 id="login-title">{surface === 'platform' ? 'Platform administration' : 'Welcome back!'}</h1>
         <p className="auth-copy">
           {surface === 'platform'
-            ? 'Sign in with a platform Super Admin account.'
+            ? 'Sign in with a Super Admin or Platform Staff account.'
             : 'Login to manage your Tap2Connect profiles, cards, and workspace.'}
         </p>
 
@@ -114,13 +114,13 @@ function LoginForm({ surface }: { surface: LoginSurface }) {
             </div>
           </div>
           <button className="auth-submit" type="submit" disabled={submitting}>
-            {submitting ? 'Logging in...' : (surface === 'platform' ? 'Login as Super Admin' : 'Login to your account')}
+            {submitting ? 'Logging in...' : (surface === 'platform' ? 'Login to Platform' : 'Login to your account')}
           </button>
         </form>
 
         <p className="auth-support">
           {surface === 'platform'
-            ? 'This login is restricted to platform Super Administrators.'
+            ? 'This login is restricted to authorized platform accounts.'
             : 'Need access? Contact your school or Tap2Connect admin.'}
         </p>
       </section>

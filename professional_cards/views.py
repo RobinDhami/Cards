@@ -4,6 +4,7 @@ import re
 from urllib.parse import quote
 
 import qrcode
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, update_session_auth_hash
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -138,6 +139,8 @@ def _admin_context(active_module='professional_cards'):
 
 
 def _absolute_public_url(request, profile):
+    if settings.SITE_URL:
+        return f"{settings.SITE_URL}{profile.public_url_path}"
     return request.build_absolute_uri(profile.public_url_path)
 
 

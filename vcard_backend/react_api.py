@@ -4,7 +4,9 @@ from decimal import Decimal, InvalidOperation
 
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.hashers import check_password
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Permission, User
+from django.contrib.auth.password_validation import validate_password
+from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Count, Q, Sum
@@ -41,6 +43,11 @@ from professional_cards.views import (
     platform_admin_required,
 )
 from vcards.models import College, ProfileActivity, Skill, StudentCard, StudentProfile
+from vcards.platform_access import (
+    PLATFORM_MODULES,
+    platform_access_payload,
+    platform_permission_codename,
+)
 from vcards.views import (
     ACADEMIC_LEVEL_CHOICES,
     GENDER_CHOICES,
@@ -167,6 +174,145 @@ def _require_platform_admin(request):
     return None
 
 
+PLATFORM_STAFF_ASSIGNABLE_MODULES = tuple(
+    module for module in PLATFORM_MODULES if module not in {'members', 'cards'}
+)
+
+
+def _require_super_admin(request):
+    login_error = _require_login(request)
+    if login_error:
+        return login_error
+    if not request.user.is_superuser:
+        return _json_error('Only Super Admins can manage Platform Staff.', status=403)
+    return None
+
+
+def _platform_staff_permissions():
+    codenames = [
+        platform_permission_codename(module)
+        for module in PLATFORM_STAFF_ASSIGNABLE_MODULES
+    ]
+    return {
+        permission.codename.removeprefix('access_platform_'): permission
+        for permission in Permission.objects.filter(
+            content_type__app_label='vcards',
+            codename__in=codenames,
+        )
+    }
+
+
+def _platform_staff_queryset():
+    codenames = [platform_permission_codename(module) for module in PLATFORM_MODULES]
+    return (
+        User.objects.filter(is_superuser=False)
+        .filter(
+            Q(
+                user_permissions__content_type__app_label='vcards',
+                user_permissions__codename__in=codenames,
+            )
+            | Q(
+                groups__permissions__content_type__app_label='vcards',
+                groups__permissions__codename__in=codenames,
+            )
+        )
+        .distinct()
+        .order_by('first_name', 'last_name', 'username')
+    )
+
+
+def _platform_staff_payload(user):
+    assigned_codenames = {
+        permission.codename for permission in user.user_permissions.all()
+    }
+    for group in user.groups.all():
+        assigned_codenames.update(
+            permission.codename for permission in group.permissions.all()
+        )
+    return {
+        'id': user.id,
+        'fullName': user.get_full_name().strip() or user.username,
+        'username': user.username,
+        'email': user.email,
+        'allowedModules': [
+            module
+            for module in PLATFORM_STAFF_ASSIGNABLE_MODULES
+            if platform_permission_codename(module) in assigned_codenames
+        ],
+        'isActive': user.is_active,
+    }
+
+
+def _platform_staff_modules_payload():
+    return [
+        {'key': module, 'label': PLATFORM_MODULES[module]['label']}
+        for module in PLATFORM_STAFF_ASSIGNABLE_MODULES
+    ]
+
+
+def _validated_platform_staff_modules(payload):
+    requested = payload.get('allowedModules')
+    if not isinstance(requested, list):
+        raise ValidationError({'allowedModules': ['Select at least one module.']})
+    requested_modules = list(dict.fromkeys(str(module) for module in requested))
+    invalid = [
+        module for module in requested_modules
+        if module not in PLATFORM_STAFF_ASSIGNABLE_MODULES
+    ]
+    if invalid:
+        raise ValidationError({'allowedModules': ['One or more selected modules are not assignable.']})
+    if not requested_modules:
+        raise ValidationError({'allowedModules': ['Select at least one module.']})
+    return requested_modules
+
+
+def _apply_platform_staff_identity(user, payload, creating=False):
+    full_name = str(payload.get('fullName') or '').strip()
+    username = str(payload.get('username') or '').strip()
+    email = str(payload.get('email') or '').strip()
+    temporary_password = str(payload.get('temporaryPassword') or '')
+    if not full_name:
+        raise ValidationError({'fullName': ['Full name is required.']})
+    if not username:
+        raise ValidationError({'username': ['Username is required.']})
+    duplicate = User.objects.exclude(pk=user.pk).filter(username__iexact=username).exists()
+    if duplicate:
+        raise ValidationError({'username': ['A user with this username already exists.']})
+    if email:
+        validate_email(email)
+    if creating and not temporary_password:
+        raise ValidationError({'temporaryPassword': ['Temporary password is required.']})
+    if temporary_password:
+        validate_password(temporary_password, user=user)
+
+    first_name, separator, last_name = full_name.partition(' ')
+    user.first_name = first_name
+    user.last_name = last_name if separator else ''
+    user.username = username
+    user.email = email
+    if temporary_password:
+        user.set_password(temporary_password)
+    if 'isActive' in payload:
+        user.is_active = _bool(payload.get('isActive'), default=True)
+    user.is_staff = False
+    user.is_superuser = False
+
+
+def _set_platform_staff_modules(user, modules):
+    permission_map = _platform_staff_permissions()
+    if set(modules) - set(permission_map):
+        raise ValidationError({'allowedModules': ['Platform module permissions are not configured.']})
+    assignable_permissions = list(permission_map.values())
+    preserved_permissions = list(
+        user.user_permissions.exclude(
+            pk__in=[permission.pk for permission in assignable_permissions],
+        )
+    )
+    user.user_permissions.set(
+        [*preserved_permissions, *(permission_map[module] for module in modules)]
+    )
+
+
 def _session_payload(request):
     user = request.user
     workspace = _resolve_user_workspace(user)
@@ -188,12 +334,73 @@ def _session_payload(request):
         },
         'redirectPath': workspace['destination'],
         'workspaceError': workspace['message'],
+        'platformAccess': platform_access_payload(user),
     }
 
 
 @require_http_methods(['GET'])
 def session_api(request):
     return JsonResponse(_session_payload(request))
+
+
+@require_http_methods(['GET', 'POST'])
+def platform_staff_api(request):
+    permission_error = _require_super_admin(request)
+    if permission_error:
+        return permission_error
+
+    if request.method == 'GET':
+        staff = _platform_staff_queryset().prefetch_related(
+            'user_permissions',
+            'groups__permissions',
+        )
+        return JsonResponse({
+            'ok': True,
+            'staff': [_platform_staff_payload(user) for user in staff],
+            'modules': _platform_staff_modules_payload(),
+        })
+
+    payload = _json_body(request)
+    try:
+        modules = _validated_platform_staff_modules(payload)
+        with transaction.atomic():
+            user = User()
+            _apply_platform_staff_identity(user, payload, creating=True)
+            user.save()
+            _set_platform_staff_modules(user, modules)
+    except ValidationError as exc:
+        errors = getattr(exc, 'message_dict', {'form': exc.messages})
+        return _json_error('Please correct the highlighted fields.', errors=errors)
+    except IntegrityError:
+        return _json_error('A user with this username already exists.')
+    return JsonResponse({'ok': True, 'staffMember': _platform_staff_payload(user)}, status=201)
+
+
+@require_http_methods(['PATCH', 'POST'])
+def platform_staff_detail_api(request, user_id):
+    permission_error = _require_super_admin(request)
+    if permission_error:
+        return permission_error
+    user = get_object_or_404(
+        _platform_staff_queryset().prefetch_related(
+            'user_permissions',
+            'groups__permissions',
+        ),
+        pk=user_id,
+    )
+    payload = _json_body(request)
+    try:
+        modules = _validated_platform_staff_modules(payload)
+        with transaction.atomic():
+            _apply_platform_staff_identity(user, payload)
+            user.save()
+            _set_platform_staff_modules(user, modules)
+    except ValidationError as exc:
+        errors = getattr(exc, 'message_dict', {'form': exc.messages})
+        return _json_error('Please correct the highlighted fields.', errors=errors)
+    except IntegrityError:
+        return _json_error('A user with this username already exists.')
+    return JsonResponse({'ok': True, 'staffMember': _platform_staff_payload(user)})
 
 
 @require_http_methods(['POST'])
@@ -904,7 +1111,10 @@ def _student_manage_payload(request, student):
         'profilePhoto': _file_url(student.profile_photo),
         'coverPhoto': _file_url(student.cover_photo),
         'cv': _file_url(student.cv),
-        'birthCertificate': _file_url(student.birth_certificate),
+        'birthCertificate': (
+            reverse('view_birth_certificate', args=[student.id])
+            if student.birth_certificate else ''
+        ),
         'skills': list(student.skills.order_by('name').values_list('name', flat=True)),
         'canManageSchoolFields': can_manage_school_fields,
         'completion': _calculate_profile_completion(student),

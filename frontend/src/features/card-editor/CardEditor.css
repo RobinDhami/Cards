@@ -69,6 +69,14 @@
   object-fit: contain;
 }
 
+.platform-editor-sidebar.manage-sidebar {
+  z-index: 10001;
+}
+
+.t2c-card-editor.is-template-studio {
+  inset-inline-start: 240px;
+}
+
 .t2c-side-switch,
 .t2c-history-buttons,
 .t2c-zoom-control,

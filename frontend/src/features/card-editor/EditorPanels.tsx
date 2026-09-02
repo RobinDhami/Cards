@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { backendHref } from '../../lib/api'
 import AlignCenter from 'lucide-react/dist/esm/icons/align-center.js'
 import AlignHorizontalDistributeCenter from 'lucide-react/dist/esm/icons/align-horizontal-distribute-center.js'
 import AlignLeft from 'lucide-react/dist/esm/icons/align-left.js'
@@ -231,7 +232,7 @@ type LibraryPanelProps = {
   profileFields: ProfileFields
   document: CardDocument
   selectedIds: string[]
-  isSuperuser: boolean
+  canManageTemplates: boolean
   authenticated: boolean
   uploading: boolean
   onCollapse: () => void
@@ -266,7 +267,7 @@ export function EditorLibraryPanel({
   profileFields,
   document,
   selectedIds,
-  isSuperuser,
+  canManageTemplates,
   authenticated,
   uploading,
   onCollapse,
@@ -313,7 +314,7 @@ export function EditorLibraryPanel({
         title={editorTools.find((item) => item.id === tool)?.label ?? 'Tools'}
         onCollapse={onCollapse}
         action={
-          tool === 'templates' && isSuperuser ? (
+          tool === 'templates' && canManageTemplates ? (
             <button
               type="button"
               className="t2c-panel-text-action"
@@ -498,10 +499,10 @@ export function EditorLibraryPanel({
                   <option value="signature">Signature</option>
                   <option value="decoration">Decorative image</option>
                   <option value="icon">Custom icon</option>
-                  {isSuperuser ? <option value="brand">Official brand asset</option> : null}
+                  {canManageTemplates ? <option value="brand">Official brand asset</option> : null}
                 </select>
               </label>
-              {isSuperuser ? (
+              {canManageTemplates ? (
                 <label className="t2c-checkbox-row">
                   <input
                     type="checkbox"
@@ -537,7 +538,7 @@ export function EditorLibraryPanel({
               <div className="t2c-asset-grid">
                 {filteredAssets.filter((asset) => !asset.isGlobal).map((asset) => (
                   <button type="button" onClick={() => onAddImage(asset)} key={asset.id}>
-                    <img src={asset.url} alt="" />
+                    <img src={backendHref(asset.url)} alt="" />
                     <span>{asset.name}</span>
                     <small>{readableBytes(asset.fileSize)}</small>
                   </button>
@@ -554,7 +555,7 @@ export function EditorLibraryPanel({
               <div className="t2c-asset-grid">
                 {filteredAssets.filter((asset) => asset.isGlobal).map((asset) => (
                   <button type="button" onClick={() => onAddImage(asset)} key={asset.id}>
-                    <img src={asset.url} alt="" />
+                    <img src={backendHref(asset.url)} alt="" />
                     <span>{asset.name}</span>
                   </button>
                 ))}

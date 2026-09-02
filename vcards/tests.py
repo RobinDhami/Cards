@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, Permission, User
 from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -330,6 +330,240 @@ class StudentDigitalCardTests(StudentDigitalCardTestMixin, TestCase):
         )
 
 
+class PlatformStaffAccessTests(TestCase):
+    password = 'PlatformStaffPass123!'
+
+    def setUp(self):
+        self.template_permission = Permission.objects.get(
+            content_type__app_label='vcards',
+            codename='access_platform_templates',
+        )
+        self.template_user = User.objects.create_user(
+            username='template.staff',
+            password=self.password,
+        )
+        graphics_group = Group.objects.get(name='Graphics Designer')
+        self.template_user.groups.add(graphics_group)
+
+    def _platform_login(self, user=None):
+        user = user or self.template_user
+        return self.client.post(
+            reverse('react_platform_session_login_api'),
+            data=json.dumps({'username': user.username, 'password': self.password}),
+            content_type='application/json',
+        )
+
+    def test_super_admin_login_and_full_platform_access_remain_available(self):
+        super_admin = User.objects.create_superuser('full.platform.admin', password=self.password)
+
+        response = self._platform_login(super_admin)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['redirectPath'], '/dashboard/')
+        self.assertEqual(
+            response.json()['platformAccess']['allowedModules'],
+            ['overview', 'organizations', 'members', 'professionals', 'templates', 'cards', 'activity', 'reports', 'settings'],
+        )
+
+    def test_template_staff_platform_login_redirects_to_template_studio(self):
+        response = self._platform_login()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['redirectPath'], '/dashboard/templates/')
+        self.assertEqual(response.json()['user']['role'], 'platform_staff')
+        self.assertEqual(response.json()['platformAccess']['allowedModules'], ['templates'])
+
+    def test_template_staff_is_directed_away_from_normal_login(self):
+        response = self.client.post(
+            reverse('react_session_login_api'),
+            data=json.dumps({'username': self.template_user.username, 'password': self.password}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertIn('/platform/login/', response.json()['message'])
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_template_staff_can_open_template_studio_and_manage_templates(self):
+        self.client.force_login(self.template_user)
+
+        page_response = self.client.get(reverse('dashboard_template_studio'))
+        api_response = self.client.get(reverse('card_designer:templates'), {'manage': '1'})
+        bootstrap_response = self.client.get(reverse('card_designer:bootstrap'))
+
+        self.assertEqual(page_response.status_code, 200)
+        self.assertEqual(api_response.status_code, 200)
+        self.assertTrue(bootstrap_response.json()['canManageTemplates'])
+
+    def test_template_staff_cannot_open_other_platform_pages(self):
+        self.client.force_login(self.template_user)
+        denied_paths = [
+            '/dashboard/',
+            '/dashboard/schools/',
+            '/dashboard/students/',
+            '/dashboard/professional-cards/',
+            '/dashboard/print/',
+            '/dashboard/activity/',
+            '/dashboard/reports/',
+            '/dashboard/settings/',
+        ]
+
+        for path in denied_paths:
+            with self.subTest(path=path):
+                self.assertEqual(self.client.get(path).status_code, 403)
+
+    def test_template_staff_cannot_bypass_other_module_apis(self):
+        self.client.force_login(self.template_user)
+        denied_api_paths = [
+            reverse('dashboard_overview_api'),
+            reverse('react_dashboard_schools_api'),
+            reverse('react_dashboard_members_api'),
+            reverse('react_professional_profiles_api'),
+            reverse('react_dashboard_reports_api'),
+            reverse('react_dashboard_settings_api'),
+            reverse('react_dashboard_print_controls_api'),
+        ]
+
+        for path in denied_api_paths:
+            with self.subTest(path=path):
+                self.assertEqual(self.client.get(path).status_code, 403)
+
+    def test_staff_with_two_permissions_receives_both_without_role_code(self):
+        organizations_permission = Permission.objects.get(
+            content_type__app_label='vcards',
+            codename='access_platform_organizations',
+        )
+        multi_module_user = User.objects.create_user(
+            username='multi.module.staff',
+            password=self.password,
+        )
+        multi_module_user.user_permissions.add(self.template_permission, organizations_permission)
+
+        response = self._platform_login(multi_module_user)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['redirectPath'], '/dashboard/schools/')
+        self.assertEqual(response.json()['platformAccess']['allowedModules'], ['organizations', 'templates'])
+
+
+class PlatformStaffManagementTests(TestCase):
+    password = 'PlatformAdminPass123!'
+
+    def setUp(self):
+        self.super_admin = User.objects.create_superuser(
+            username='staff.manager',
+            password=self.password,
+        )
+        self.client.force_login(self.super_admin)
+
+    def _create_staff(self, **overrides):
+        payload = {
+            'fullName': 'Graphics Designer',
+            'username': 'graphics.staff',
+            'email': 'graphics@example.com',
+            'temporaryPassword': 'TemporaryPass123!',
+            'allowedModules': ['templates'],
+            'isActive': True,
+            **overrides,
+        }
+        return self.client.post(
+            reverse('react_platform_staff_api'),
+            data=json.dumps(payload),
+            content_type='application/json',
+        )
+
+    def test_super_admin_can_open_staff_access_and_non_super_admin_cannot(self):
+        allowed = self.client.get(reverse('dashboard_platform_staff_access'))
+        staff_user = User.objects.create_user(username='settings.staff', password=self.password)
+        settings_permission = Permission.objects.get(
+            content_type__app_label='vcards',
+            codename='access_platform_settings',
+        )
+        staff_user.user_permissions.add(settings_permission)
+        self.client.force_login(staff_user)
+        denied_page = self.client.get(reverse('dashboard_platform_staff_access'))
+        denied_api = self.client.get(reverse('react_platform_staff_api'))
+
+        self.assertEqual(allowed.status_code, 200)
+        self.assertEqual(denied_page.status_code, 403)
+        self.assertEqual(denied_api.status_code, 403)
+
+    def test_super_admin_creates_templates_only_staff_without_privilege_escalation(self):
+        response = self._create_staff(isSuperuser=True, isStaff=True)
+
+        self.assertEqual(response.status_code, 201)
+        staff_user = User.objects.get(username='graphics.staff')
+        self.assertFalse(staff_user.is_superuser)
+        self.assertFalse(staff_user.is_staff)
+        self.assertTrue(staff_user.check_password('TemporaryPass123!'))
+        self.assertEqual(response.json()['staffMember']['allowedModules'], ['templates'])
+        self.assertTrue(staff_user.has_perm('vcards.access_platform_templates'))
+        self.assertFalse(staff_user.has_perm('vcards.access_platform_settings'))
+
+        self.client.logout()
+        login_response = self.client.post(
+            reverse('react_platform_session_login_api'),
+            data=json.dumps({
+                'username': staff_user.username,
+                'password': 'TemporaryPass123!',
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(login_response.status_code, 200)
+        self.assertEqual(login_response.json()['platformAccess']['allowedModules'], ['templates'])
+
+    def test_staff_cannot_assign_hidden_or_unknown_modules(self):
+        response = self._create_staff(allowedModules=['templates', 'cards'])
+
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(User.objects.filter(username='graphics.staff').exists())
+
+    def test_super_admin_can_edit_access_deactivate_and_set_temporary_password(self):
+        staff_user = User.objects.create_user(
+            username='existing.staff',
+            password='OriginalPass123!',
+            first_name='Existing',
+            last_name='Staff',
+        )
+        staff_user.user_permissions.add(Permission.objects.get(
+            content_type__app_label='vcards',
+            codename='access_platform_templates',
+        ))
+
+        response = self.client.patch(
+            reverse('react_platform_staff_detail_api', args=[staff_user.id]),
+            data=json.dumps({
+                'fullName': 'Updated Staff',
+                'username': 'existing.staff',
+                'email': 'updated@example.com',
+                'temporaryPassword': 'ReplacementPass123!',
+                'allowedModules': ['professionals', 'reports'],
+                'isActive': False,
+                'isSuperuser': True,
+            }),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200, response.content)
+        staff_user.refresh_from_db()
+        self.assertFalse(staff_user.is_active)
+        self.assertFalse(staff_user.is_superuser)
+        self.assertFalse(staff_user.is_staff)
+        self.assertTrue(staff_user.check_password('ReplacementPass123!'))
+        self.assertEqual(response.json()['staffMember']['allowedModules'], ['professionals', 'reports'])
+
+    def test_staff_list_excludes_super_admin_accounts(self):
+        self._create_staff()
+
+        payload = self.client.get(reverse('react_platform_staff_api')).json()
+
+        self.assertEqual([member['username'] for member in payload['staff']], ['graphics.staff'])
+        self.assertEqual(
+            [module['key'] for module in payload['modules']],
+            ['overview', 'organizations', 'professionals', 'templates', 'activity', 'reports', 'settings'],
+        )
+
+
 class SchoolDashboardScopeTests(TestCase):
     def setUp(self):
         self.super_admin = User.objects.create_superuser(
@@ -601,6 +835,37 @@ class SuperAdminOverviewV1Tests(TestCase):
             'publishedTemplates': 1,
             'activeAssignedCards': 1,
         })
+
+    def test_published_template_kpi_tracks_only_current_records(self):
+        published = CardTemplate.objects.create(
+            name='Published Template',
+            status=CardTemplate.STATUS_PUBLISHED,
+        )
+        CardTemplate.objects.create(
+            name='Draft Template',
+            status=CardTemplate.STATUS_DRAFT,
+        )
+        CardTemplateVersion.objects.create(
+            template=published,
+            version=1,
+            name=published.name,
+            category=published.category,
+        )
+
+        before_delete = self.client.get(reverse('dashboard_overview_api')).json()
+        self.assertEqual(before_delete['kpis']['publishedTemplates'], 1)
+
+        published.delete()
+
+        after_delete = self.client.get(reverse('dashboard_overview_api')).json()
+        self.assertEqual(after_delete['kpis']['publishedTemplates'], 0)
+        self.assertFalse(CardTemplateVersion.objects.exists())
+        self.assertFalse(
+            any(
+                item['type'] == 'template_published'
+                for item in after_delete['recentActivity']
+            )
+        )
 
     def test_growth_returns_six_months_and_groups_additions(self):
         current_month = timezone.localdate().replace(day=1)

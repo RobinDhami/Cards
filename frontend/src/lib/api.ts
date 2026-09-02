@@ -16,7 +16,19 @@ export class ApiError extends Error {
   }
 }
 
-export const backendOrigin = import.meta.env.DEV ? 'http://127.0.0.1:8000' : ''
+const configuredBackendOrigin = String(import.meta.env.VITE_API_BASE_URL ?? '')
+  .trim()
+  .replace(/\/+$/, '')
+
+export const backendOrigin = configuredBackendOrigin
+  || (import.meta.env.DEV ? 'http://127.0.0.1:8000' : '')
+
+export function apiHref(href: string) {
+  if (!configuredBackendOrigin || href.startsWith('http://') || href.startsWith('https://')) {
+    return href
+  }
+  return `${configuredBackendOrigin}${href.startsWith('/') ? href : `/${href}`}`
+}
 
 export function appHref(href: string) {
   if (!href || href.startsWith('/') || !backendOrigin || !href.startsWith(backendOrigin)) {
@@ -72,13 +84,14 @@ function cookieValue(name: string) {
 
 async function ensureCsrfToken(forceRefresh = false) {
   if (forceRefresh) csrfToken = ''
+  if (csrfToken && !forceRefresh) return csrfToken
   const cookieToken = cookieValue('csrftoken')
   if (cookieToken && !forceRefresh) {
     csrfToken = cookieToken
     return csrfToken
   }
   if (!csrfRequest) {
-    csrfRequest = fetch('/api/session/', {
+    csrfRequest = fetch(apiHref('/api/session/'), {
       credentials: 'include',
       headers: { Accept: 'application/json' },
     })
@@ -116,7 +129,7 @@ export async function apiFetch<T>(
     headers.set('Content-Type', 'application/json')
   }
 
-  const request = () => fetch(url, {
+  const request = () => fetch(apiHref(url), {
     ...options,
     credentials: 'include',
     headers,

@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 
-from .models import CardAsset, CardDesign, CardTemplate
+from .models import CardAsset, CardDesign, CardTemplate, CardTemplateVersion
 
 
 TEST_DOCUMENT = {
@@ -165,6 +165,49 @@ class CardDesignerApiTests(TestCase):
         self.assertEqual(published.status_code, 200)
         self.assertEqual(published.json()["template"]["status"], "published")
         self.assertEqual(draft.versions.count(), 1)
+
+    def test_deleting_published_template_removes_active_record_and_version_history(self):
+        CardTemplateVersion.objects.create(
+            template=self.template,
+            version=1,
+            name=self.template.name,
+            category=self.template.category,
+        )
+        self.client.login(username="admin", password="secret")
+
+        deleted = self.client.delete(
+            f"/api/card-designer/templates/{self.template.id}/",
+            data=json.dumps({"confirm": True}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(deleted.status_code, 200)
+        self.assertFalse(CardTemplate.objects.filter(pk=self.template.id).exists())
+        self.assertFalse(
+            CardTemplateVersion.objects.filter(template_id=self.template.id).exists()
+        )
+        self.assertEqual(
+            self.client.get("/api/card-designer/templates/?manage=1").json()["templates"],
+            [],
+        )
+        self.assertEqual(
+            self.client.get("/api/card-designer/bootstrap/").json()["templates"],
+            [],
+        )
+
+    def test_empty_template_lists_remain_empty_across_repeated_requests(self):
+        CardTemplate.objects.all().delete()
+        self.client.login(username="admin", password="secret")
+
+        for _ in range(2):
+            self.assertEqual(
+                self.client.get("/api/card-designer/templates/?manage=1").json()["templates"],
+                [],
+            )
+            self.assertEqual(
+                self.client.get("/api/card-designer/bootstrap/").json()["templates"],
+                [],
+            )
 
     def test_private_asset_file_is_owner_only(self):
         asset = CardAsset.objects.create(

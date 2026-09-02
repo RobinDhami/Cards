@@ -46,6 +46,7 @@ from .models import (
 )
 from card_designer.models import CardTemplate, CardTemplateVersion
 from professional_cards.models import ProfessionalProfile
+from .platform_access import default_platform_destination, get_allowed_platform_modules
 
 
 def legacy_react_response(request, *args, **kwargs):
@@ -286,6 +287,9 @@ def _resolve_user_workspace(user, surface='session'):
     if surface == 'platform':
         if user.is_superuser:
             return {'role': 'super_admin', 'destination': reverse('admin_dashboard'), 'message': ''}
+        destination = default_platform_destination(user)
+        if destination:
+            return {'role': 'platform_staff', 'destination': destination, 'message': ''}
         return {
             'role': 'public',
             'destination': '',
@@ -300,6 +304,20 @@ def _resolve_user_workspace(user, surface='session'):
                 'message': 'Platform administrators must sign in at /platform/login/.',
             }
         return {'role': 'super_admin', 'destination': reverse('admin_dashboard'), 'message': ''}
+
+    platform_modules = get_allowed_platform_modules(user)
+    if platform_modules:
+        if surface == 'normal':
+            return {
+                'role': 'platform_staff',
+                'destination': '',
+                'message': 'Platform staff must sign in at /platform/login/.',
+            }
+        return {
+            'role': 'platform_staff',
+            'destination': default_platform_destination(user),
+            'message': '',
+        }
 
     organizations = list(College.objects.filter(admin_user=user).order_by('id')[:2])
     owned_profile = StudentProfile.objects.filter(auth_user=user).first()
@@ -361,6 +379,8 @@ def _get_user_role(user):
         return 'public'
     if _is_super_admin(user):
         return 'super_admin'
+    if get_allowed_platform_modules(user):
+        return 'platform_staff'
     if _get_managed_school(user):
         return 'school_admin'
     owned_profile = _get_owned_profile(user)
@@ -1445,7 +1465,7 @@ def _normalize_public_url(url):
 
 
 def _build_public_contact_url(request, student):
-    return request.build_absolute_uri(reverse('student_contact_card', args=[student.id]))
+    return _absolute_url(request, reverse('student_contact_card', args=[student.id]))
 
 
 def _safe_export_name(value, fallback='member'):

@@ -14,6 +14,7 @@ import Trash2 from 'lucide-react/dist/esm/icons/trash-2.js'
 import UserRound from 'lucide-react/dist/esm/icons/user-round.js'
 import Users from 'lucide-react/dist/esm/icons/users.js'
 import X from 'lucide-react/dist/esm/icons/x.js'
+import { brandLogo } from '../../lib/assets'
 import {
   Field,
   FileInput,
@@ -398,7 +399,7 @@ export function ProfessionalProfileList() {
     <ManageShell
       brand="Tap2Connect"
       brandDetail="Professional profiles"
-      logo="/static/branding/tap2connect-logo-optimized.webp"
+      logo={brandLogo}
       nav={workspace.nav}
       title="Professional Cards"
       subtitle={`${counts.active} active of ${counts.total} profiles`}
@@ -681,7 +682,7 @@ export function ProfessionalProfileEditor() {
     <ManageShell
       brand="Tap2Connect"
       brandDetail={route.isOwner ? 'Profile owner workspace' : 'Professional profiles'}
-      logo="/static/branding/tap2connect-logo-optimized.webp"
+      logo={brandLogo}
       nav={route.isOwner ? [
         { label: 'Profile editor', href: window.location.pathname, icon: UserRound, active: true },
         { label: 'Public profile', href: publicUrl || `/p/${route.slug}/`, icon: Eye },
@@ -1106,7 +1107,7 @@ export function ProfessionalEditLogin() {
     <main className="profile-login-page">
       <form className="profile-login-card" onSubmit={submit}>
         <a href="/" className="profile-login-logo" aria-label="Tap2Connect home">
-          <img src="/static/branding/tap2connect-logo-optimized.webp" alt="Tap2Connect" />
+          <img src={brandLogo} alt="Tap2Connect" />
         </a>
         <h1>Edit profile</h1>
         <p>Log in with the account that manages {profileName} to update this networking card.</p>

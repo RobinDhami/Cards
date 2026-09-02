@@ -11,7 +11,8 @@ from django.views.decorators.http import require_http_methods
 
 from professional_cards.models import ProfessionalProfile
 from vcards.models import StudentProfile
-from vcards.views import _get_user_role
+from vcards.platform_access import has_platform_module_access
+from vcards.views import _absolute_url, _get_user_role
 
 from .models import (
     CARD_HEIGHT_MM,
@@ -46,12 +47,12 @@ def _require_login(request):
     return None
 
 
-def _require_superuser(request):
+def _require_template_manager(request):
     login_error = _require_login(request)
     if login_error:
         return login_error
-    if not request.user.is_superuser:
-        return _error("Only a Super Admin can manage global templates.", status=403)
+    if not has_platform_module_access(request.user, 'templates'):
+        return _error("You do not have access to manage platform templates.", status=403)
     return None
 
 
@@ -102,7 +103,7 @@ def _profile_fields(request):
             "company_logo": _file_url(
                 professional.organization_logo or professional.personal_logo
             ),
-            "qr_code": request.build_absolute_uri(professional.public_url_path),
+            "qr_code": _absolute_url(request, professional.public_url_path),
         }
 
     student = StudentProfile.objects.filter(auth_user=request.user).select_related("college").first()
@@ -121,7 +122,7 @@ def _profile_fields(request):
             "social_username": student.linkedin or student.instagram,
             "profile_photo": _file_url(student.profile_photo),
             "company_logo": company_logo,
-            "qr_code": request.build_absolute_uri(student.profile_url),
+            "qr_code": _absolute_url(request, student.profile_url),
         }
 
     sample["full_name"] = request.user.get_full_name().strip() or request.user.username
@@ -250,6 +251,7 @@ def bootstrap(request):
             "ok": True,
             "authenticated": request.user.is_authenticated,
             "isSuperuser": bool(request.user.is_authenticated and request.user.is_superuser),
+            "canManageTemplates": has_platform_module_access(request.user, 'templates'),
             "accountType": account_type,
             "profileFields": _profile_fields(request),
             "templates": [_serialize_template(template) for template in templates],
@@ -465,8 +467,8 @@ def assets(request):
     if not uploaded_file:
         return _error("Choose an image to upload.")
     is_global = str(request.POST.get("isGlobal") or "").lower() == "true"
-    if is_global and not request.user.is_superuser:
-        return _error("Only a Super Admin can add global assets.", status=403)
+    if is_global and not has_platform_module_access(request.user, 'templates'):
+        return _error("You do not have access to add global template assets.", status=403)
 
     asset = CardAsset(
         owner=None if is_global else request.user,
@@ -494,7 +496,7 @@ def asset_detail(request, asset_id):
     asset = get_object_or_404(CardAsset, pk=asset_id)
     if not (
         asset.owner_id == request.user.id
-        or (request.user.is_superuser and asset.is_global)
+        or (has_platform_module_access(request.user, 'templates') and asset.is_global)
     ):
         return _error("You cannot delete this asset.", status=403)
     payload = _json_body(request) or {}
@@ -523,7 +525,7 @@ def templates(request):
     if request.method == "GET":
         manage = request.GET.get("manage") == "1"
         if manage:
-            admin_error = _require_superuser(request)
+            admin_error = _require_template_manager(request)
             if admin_error:
                 return admin_error
             queryset = CardTemplate.objects.all()
@@ -543,7 +545,7 @@ def templates(request):
             }
         )
 
-    admin_error = _require_superuser(request)
+    admin_error = _require_template_manager(request)
     if admin_error:
         return admin_error
     payload = _json_body(request)
@@ -577,12 +579,12 @@ def template_detail(request, template_id):
     if request.method == "GET":
         if (
             template.status != CardTemplate.STATUS_PUBLISHED
-            and not (request.user.is_authenticated and request.user.is_superuser)
+            and not has_platform_module_access(request.user, 'templates')
         ):
             return _error("This template is not published.", status=404)
         return JsonResponse({"ok": True, "template": _serialize_template(template)})
 
-    admin_error = _require_superuser(request)
+    admin_error = _require_template_manager(request)
     if admin_error:
         return admin_error
     payload = _json_body(request)
@@ -690,7 +692,7 @@ def template_thumbnail(request, template_id):
         return _error("This template has no thumbnail.", status=404)
     if (
         template.status != CardTemplate.STATUS_PUBLISHED
-        and not (request.user.is_authenticated and request.user.is_superuser)
+        and not has_platform_module_access(request.user, 'templates')
     ):
         return _error("This template is not published.", status=404)
     content_type = mimetypes.guess_type(template.thumbnail.name)[0] or "application/octet-stream"

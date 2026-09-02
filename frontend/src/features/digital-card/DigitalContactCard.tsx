@@ -2,6 +2,7 @@ import BadgeCheck from 'lucide-react/dist/esm/icons/badge-check.js'
 import MapPin from 'lucide-react/dist/esm/icons/map-pin.js'
 import ShieldCheck from 'lucide-react/dist/esm/icons/shield-check.js'
 import { useCallback, useState } from 'react'
+import { brandLogo } from '../../lib/assets'
 import { ConnectPreview } from './ConnectPreview'
 import { ContactActions } from './ContactActions'
 import { ContactDocuments } from './ContactDocuments'
@@ -114,7 +115,7 @@ export function DigitalContactCard({ profile }: { profile: PublicStudent }) {
           </div>
           <div className="digital-card-footer__powered">
             <span>Powered by</span>
-            <img src="/static/branding/tap2connect-logo-optimized.webp" alt="Tap2Connect" />
+            <img src={brandLogo} alt="Tap2Connect" />
           </div>
         </footer>
       </article>

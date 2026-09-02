@@ -3,7 +3,6 @@ import type {
   CardDesignId,
   CardDocument,
   CardSide,
-  CardTemplateRecord,
   EditorElement,
   ElementStyle,
   DecorationType,
@@ -12,6 +11,7 @@ import type {
   QrOptions,
   ShapeType,
 } from './types'
+import { brandLogo } from '../../lib/assets'
 
 export const CARD_WIDTH = 900
 export const CARD_HEIGHT = 500
@@ -29,7 +29,7 @@ export const SAMPLE_PROFILE_FIELDS: ProfileFields = {
   connection_id: 'T2C-00001',
   social_username: '@tap2connect',
   profile_photo: '',
-  company_logo: '/static/branding/tap2connect-logo-optimized.webp',
+  company_logo: brandLogo,
   qr_code: 'https://tap2connectnepal.com',
 }
 
@@ -393,7 +393,7 @@ function templateDocument(
       style: { ...baseStyle(accent), stroke: accent },
     },
     {
-      ...createImageElement('/static/branding/tap2connect-logo-optimized.webp', 'T2C Logo'),
+      ...createImageElement(brandLogo, 'T2C Logo'),
       id: `${design}-logo`,
       x: 78,
       y: 60,
@@ -443,120 +443,6 @@ function templateDocument(
     },
   ]
   return document
-}
-
-function blueModernMarketingDocument(side: CardSide): CardDocument {
-  const document = createBlankDocument('#ffffff')
-  document.size = { width: 860, height: 540 }
-  const base = createImageElement(
-    `/static/card-editor/templates/blue-modern-marketing/${side}.svg`,
-    `${side === 'front' ? 'Front' : 'Back'} Canva artwork`,
-  )
-  Object.assign(base, {
-    id: `blue-modern-${side}-artwork`, x: 0, y: 0, width: 860, height: 540,
-    fit: 'fill', locked: true, maintainProportion: false,
-  })
-  if (side === 'back') {
-    const cover = createShapeElement('rectangle')
-    Object.assign(cover, {
-      id: 'blue-modern-back-field-cover', name: 'Editable slogan background',
-      x: 165, y: 265, width: 530, height: 95, locked: true,
-      style: { ...cover.style, fill: '#f9fafc', stroke: 'transparent', strokeWidth: 0 },
-    })
-    const slogan = createTextElement('Tap Share Connect', 'heading')
-    Object.assign(slogan, {
-      id: 'blue-modern-back-slogan', name: 'Back slogan', x: 170, y: 275,
-      width: 520, height: 70,
-      style: { ...slogan.style, fill: '#17136f', fontFamily: 'Arial', fontSize: 38, fontWeight: 700, align: 'center' },
-    })
-    document.elements = [base, cover, slogan]
-    return document
-  }
-
-  const cover = createShapeElement('rectangle')
-  Object.assign(cover, {
-    id: 'blue-modern-front-field-cover', name: 'Editable details background',
-    x: 375, y: 35, width: 475, height: 455, locked: true,
-    style: { ...cover.style, fill: '#fbfcfd', stroke: 'transparent', strokeWidth: 0 },
-  })
-  const field = (id: string, name: string, text: string, y: number, size: number, weight = 400) => {
-    const element = createTextElement(text, size >= 30 ? 'heading' : 'body')
-    Object.assign(element, {
-      id, name, x: 400, y, width: 410, height: size >= 30 ? 58 : 40,
-      style: { ...element.style, fill: '#1f438f', fontFamily: 'Arial', fontSize: size, fontWeight: weight, align: 'right' },
-    })
-    return element
-  }
-  const contactIcon = (id: string, icon: IconType, y: number) => {
-    const element = createIconElement(icon)
-    Object.assign(element, {
-      id, x: 816, y, width: 28, height: 28,
-      style: { ...element.style, fill: 'transparent', stroke: '#21177b', strokeWidth: 2 },
-    })
-    return element
-  }
-  document.elements = [
-    base,
-    cover,
-    field('blue-modern-name', 'Full name', '{{full_name}}', 52, 36, 700),
-    field('blue-modern-role', 'Job title', '{{job_title}}', 112, 24, 400),
-    field('blue-modern-phone', 'Phone number', '{{phone}}', 205, 20),
-    field('blue-modern-website', 'Website', '{{website}}', 273, 20),
-    field('blue-modern-email', 'Email address', '{{email}}', 341, 20),
-    field('blue-modern-address', 'Address', '{{address}}', 409, 20),
-    contactIcon('blue-modern-phone-icon', 'telephone', 208),
-    contactIcon('blue-modern-website-icon', 'website', 276),
-    contactIcon('blue-modern-email-icon', 'mail', 344),
-    contactIcon('blue-modern-address-icon', 'address', 412),
-  ]
-  return document
-}
-
-export function createFallbackTemplates(): CardTemplateRecord[] {
-  const definitions: Array<{
-    id: CardDesignId | 'linework'
-    label: string
-    category: string
-    premium?: boolean
-  }> = [
-    { id: 'midnight', label: 'Midnight', category: 'professional' },
-    { id: 'signature', label: 'Signature Blue', category: 'corporate' },
-    { id: 'minimal', label: 'Minimal White', category: 'minimal' },
-    { id: 'linework', label: 'Linework', category: 'creative', premium: true },
-  ]
-  const templates: CardTemplateRecord[] = definitions.map((item, index) => ({
-    id: `built-in-${item.id}`,
-    name: item.label,
-    slug: item.id,
-    description: `A clean ${item.category} Tap2Connect card.`,
-    category: item.category,
-    status: 'published',
-    frontData: templateDocument(item.id, 'front'),
-    backData: templateDocument(item.id, 'back'),
-    supportsBack: true,
-    isFeatured: index < 2,
-    isPremium: Boolean(item.premium),
-    eligibleAccountTypes: [],
-    sortOrder: index,
-    version: 1,
-    thumbnailUrl: '',
-    publishedAt: null,
-    updatedAt: new Date(0).toISOString(),
-  }))
-  templates.push({
-    id: 'built-in-blue-modern-marketing',
-    name: 'Blue Modern Marketing Manager',
-    slug: 'blue-modern-marketing-manager',
-    description: 'Imported two-sided Canva business card with editable profile fields.',
-    category: 'marketing', status: 'published',
-    frontData: blueModernMarketingDocument('front'),
-    backData: blueModernMarketingDocument('back'),
-    supportsBack: true, isFeatured: true, isPremium: false,
-    eligibleAccountTypes: [], sortOrder: templates.length, version: 1,
-    thumbnailUrl: '/static/card-editor/templates/blue-modern-marketing/front.svg',
-    publishedAt: null, updatedAt: new Date(0).toISOString(),
-  })
-  return templates
 }
 
 export function createInitialSnapshot(
