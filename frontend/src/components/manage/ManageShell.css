@@ -182,11 +182,18 @@
 .manage-app--sidebar-compact .manage-sidebar { width: 64px; }
 .manage-app--sidebar-compact .manage-main { margin-left: 64px; }
 .manage-app--sidebar-compact .manage-brand { justify-content: center; padding-inline: 8px; }
-.manage-app--sidebar-compact .manage-brand > span:nth-child(2),
+.manage-app--sidebar-compact .manage-brand > span:not(.manage-brand-mark),
 .manage-app--sidebar-compact .manage-nav a span,
 .manage-app--sidebar-compact .manage-account > span:nth-child(2),
 .manage-app--sidebar-compact .manage-account > button { display: none; }
 .manage-app--sidebar-compact .manage-brand-mark { width: 32px; height: 32px; }
+.manage-app--sidebar-compact .manage-brand-mark img { display: none; }
+.manage-app--sidebar-compact .manage-brand-mark::after {
+  content: "T2C";
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
 .manage-app--sidebar-compact .manage-sidebar-toggle {
   position: absolute;
   top: 76px;

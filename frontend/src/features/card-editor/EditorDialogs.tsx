@@ -42,6 +42,7 @@ type TemplateManagerProps = {
   onClose: () => void
   onTemplatesChange: (templates: CardTemplateRecord[]) => void
   onTemplateChange: (template: CardTemplateRecord) => void
+  onTemplateDelete: (templateId: string) => void
   onSelectTemplate: (template: CardTemplateRecord) => void
   onApplyTemplate: (template: CardTemplateRecord) => void
   onPreviewTemplate: (template: CardTemplateRecord) => void
@@ -68,6 +69,7 @@ export function TemplateManager({
   onClose,
   onTemplatesChange,
   onTemplateChange,
+  onTemplateDelete,
   onSelectTemplate,
   onApplyTemplate,
   onPreviewTemplate,
@@ -202,7 +204,8 @@ export function TemplateManager({
           (template) => template.id !== pendingAction.template.id,
         )
         syncTemplates(next)
-        setSelectedId(next[0]?.id ?? null)
+        setSelectedId(null)
+        onTemplateDelete(pendingAction.template.id)
         setMessage('Template deleted.')
       } else {
         const response = await templateAction(
@@ -566,6 +569,7 @@ type PreviewDialogProps = {
   snapshot: DesignSnapshot
   profileFields: ProfileFields
   issues: EditorValidationIssue[]
+  showContinue?: boolean
   onClose: () => void
   onContinue: () => void
   onSelectIssue: (issue: EditorValidationIssue) => void
@@ -576,6 +580,7 @@ export function PreviewDialog({
   snapshot,
   profileFields,
   issues,
+  showContinue = true,
   onClose,
   onContinue,
   onSelectIssue,
@@ -599,7 +604,11 @@ export function PreviewDialog({
         <header>
           <div>
             <h2 id="preview-title">Review your card</h2>
-            <p>Check both sides and resolve print or QR warnings before continuing.</p>
+            <p>
+              {showContinue
+                ? 'Check both sides and resolve print or QR warnings before continuing.'
+                : 'Review both sides and resolve print or QR warnings before publishing.'}
+            </p>
           </div>
           <button type="button" onClick={onClose} aria-label="Close preview">
             <X size={19} />
@@ -722,10 +731,12 @@ export function PreviewDialog({
           </span>
           <div>
             <button type="button" onClick={onClose}>Back to editor</button>
-            <button type="button" className="is-primary" onClick={onContinue}>
-              Continue
-              <ChevronRight size={17} />
-            </button>
+            {showContinue ? (
+              <button type="button" className="is-primary" onClick={onContinue}>
+                Continue
+                <ChevronRight size={17} />
+              </button>
+            ) : null}
           </div>
         </footer>
       </section>

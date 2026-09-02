@@ -92,6 +92,10 @@
   z-index: 10000;
 }
 
+.t2c-card-editor.is-template-studio.has-modal {
+  z-index: 10000;
+}
+
 @media (max-width: 960px) {
   .t2c-card-editor.is-template-studio {
     inset-inline-start: 0;

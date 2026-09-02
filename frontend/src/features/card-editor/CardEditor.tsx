@@ -346,7 +346,7 @@ export function AdvancedCardEditor({
           const initialTemplate = response.templates.find((template) => template.id === initialTemplateId)
           if (initialTemplate) {
             const templateSnapshot: DesignSnapshot = {
-              name: `${initialTemplate.name} card`,
+              name: initialTemplate.name,
               finish,
               front: deepClone(initialTemplate.frontData),
               back: deepClone(initialTemplate.backData),
@@ -354,6 +354,7 @@ export function AdvancedCardEditor({
             setSnapshot(templateSnapshot)
             latestSnapshotRef.current = templateSnapshot
             setCurrentTemplateId(initialTemplate.id)
+            setEditingTemplate(initialTemplate)
             setDesign(null)
             setDirty(false)
             setLastAction(`Open ${initialTemplate.name} template`)
@@ -373,7 +374,7 @@ export function AdvancedCardEditor({
             : 'offline',
         )
         const localDraft = safeLocalDraft()
-        if (response.authenticated && localDraft?.designId) {
+        if (mode !== 'template-studio' && response.authenticated && localDraft?.designId) {
           try {
             const designResponse = await loadDesign(localDraft.designId)
             const loaded = designResponse.design
@@ -406,7 +407,7 @@ export function AdvancedCardEditor({
   }, [finish, initialSnapshot, initialTemplateId, mode, open])
 
   useEffect(() => {
-    if (!open) return
+    if (!open || mode === 'template-studio') return
     const timer = window.setTimeout(() => {
       const localDraft: LocalDraft = {
         version: 2,
@@ -429,7 +430,7 @@ export function AdvancedCardEditor({
       if (!authenticated && dirty) setSaveStatus('offline')
     }, 350)
     return () => window.clearTimeout(timer)
-  }, [authenticated, currentTemplateId, design?.id, dirty, open, snapshot])
+  }, [authenticated, currentTemplateId, design?.id, dirty, mode, open, snapshot])
 
   const persistDesign = useCallback(
     async (createRevision = false, reason = 'autosave') => {
@@ -1099,7 +1100,7 @@ export function AdvancedCardEditor({
 
   return (
     <div
-      className={`t2c-card-editor${mode === 'template-studio' ? ' is-template-studio' : ''}${compactPlatformSidebar ? ' is-shell-compact' : ''}${focusMode ? ' is-focus-mode' : ''}${leftCollapsed ? ' is-left-collapsed' : ''}${rightCollapsed ? ' is-right-collapsed' : ''}`}
+      className={`t2c-card-editor${mode === 'template-studio' ? ' is-template-studio' : ''}${compactPlatformSidebar ? ' is-shell-compact' : ''}${focusMode ? ' is-focus-mode' : ''}${templateManagerOpen || previewOpen || historyOpen || closeConfirmationOpen ? ' has-modal' : ''}${leftCollapsed ? ' is-left-collapsed' : ''}${rightCollapsed ? ' is-right-collapsed' : ''}`}
       role="dialog"
       aria-modal="true"
       aria-label="Tap2Connect advanced card editor"
@@ -1163,19 +1164,21 @@ export function AdvancedCardEditor({
         </div>
 
         <div className="t2c-editor-topbar-actions">
-          <button type="button" onClick={() => setPreviewOpen(true)}>
+          <button type="button" onClick={() => setPreviewOpen(true)} aria-label="Preview" title="Preview">
             <Eye size={16} />
             <span>Preview</span>
           </button>
           <button
             type="button"
             onClick={() => void (mode === 'template-studio' ? saveActiveTemplate() : manualSave())}
+            aria-label="Save draft"
+            title="Save draft"
           >
             <Save size={16} />
             <span>Save draft</span>
           </button>
           {canManageTemplates ? (
-            <button type="button" onClick={() => setTemplateManagerOpen(true)}>
+            <button type="button" onClick={() => setTemplateManagerOpen(true)} aria-label="Publish" title="Publish">
               <ScanLine size={16} />
               <span>Publish</span>
             </button>
@@ -1186,7 +1189,12 @@ export function AdvancedCardEditor({
             </button>
           )}
           {mode === 'template-studio' ? (
-            <button type="button" onClick={() => onFocusModeChange?.(!focusMode)}>
+            <button
+              type="button"
+              onClick={() => onFocusModeChange?.(!focusMode)}
+              aria-label={focusMode ? 'Exit focus' : 'Focus'}
+              title={focusMode ? 'Exit focus' : 'Focus'}
+            >
               <Focus size={16} />
               <span>{focusMode ? 'Exit focus' : 'Focus'}</span>
             </button>
@@ -1325,7 +1333,7 @@ export function AdvancedCardEditor({
             >
               {leftCollapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
             </button>
-            <span>Drag guides from rulers Â· Double-click text to edit</span>
+            <span>Drag guides from rulers · Double-click text to edit</span>
             <button
               type="button"
               onClick={() => setRightCollapsed((value) => !value)}
@@ -1565,6 +1573,7 @@ export function AdvancedCardEditor({
         snapshot={snapshot}
         profileFields={profileFields}
         issues={validationIssues}
+        showContinue={mode !== 'template-studio'}
         onClose={() => setPreviewOpen(false)}
         onContinue={finalContinue}
         onSelectIssue={(issue: EditorValidationIssue) => {
@@ -1587,6 +1596,21 @@ export function AdvancedCardEditor({
             setTemplates((items) => items.map((item) => (
               item.id === template.id ? template : item
             )))
+          }}
+          onTemplateDelete={(templateId) => {
+            setTemplates((items) => items.filter((item) => item.id !== templateId))
+            if (editingTemplate?.id !== templateId) return
+            const blank = createBlankSnapshot(finish)
+            setEditingTemplate(null)
+            setCurrentTemplateId(null)
+            setSnapshot(blank)
+            latestSnapshotRef.current = blank
+            setPast([])
+            setFuture([])
+            setDirty(false)
+            setSaveStatus('saved')
+            setSelectedIds([])
+            setSide('front')
           }}
           onSelectTemplate={(template) => openTemplateForEditing(template, false)}
           onApplyTemplate={applyTemplate}
