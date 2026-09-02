@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
-import { PlatformSidebar } from '../../components/manage/PlatformSidebar'
+import { ManageShell } from '../../components/manage/ManageShell'
+import { platformNavigation } from '../../components/manage/platformNavigation'
 import { apiFetch } from '../../lib/api'
+import { brandLogo } from '../../lib/assets'
 import { AdvancedCardEditor } from './CardEditor'
 
 
@@ -16,30 +18,40 @@ export function CardEditorPage() {
 
   useEffect(() => {
     if (!isTemplateStudio) return
+    document.title = 'Templates | Tap2Connect'
     apiFetch<NonNullable<typeof session>>('/api/session/').then(setSession).catch(() => {
       window.location.assign('/platform/login/')
     })
   }, [isTemplateStudio])
 
+  const editor = (
+    <AdvancedCardEditor
+      open
+      initialFrontDesign="midnight"
+      initialBackDesign="minimal"
+      finish="pvc"
+      mode={isTemplateStudio ? 'template-studio' : 'design'}
+      onClose={() => {
+        window.location.assign(isTemplateStudio ? (session?.redirectPath || '/platform/login/') : '/')
+      }}
+    />
+  )
+
+  if (!isTemplateStudio) return editor
+  if (!session) return <div className="manage-state">Loading Template Studio…</div>
+
   return (
-    <>
-      {isTemplateStudio && session ? (
-        <PlatformSidebar
-          allowedModules={session.platformAccess.allowedModules}
-          userName={session.user.displayName}
-          userRole={session.platformAccess.isSuperAdmin ? 'Super Admin' : 'Platform Staff'}
-        />
-      ) : null}
-      <AdvancedCardEditor
-        open
-        initialFrontDesign="midnight"
-        initialBackDesign="minimal"
-        finish="pvc"
-        mode={isTemplateStudio ? 'template-studio' : 'design'}
-        onClose={() => {
-          window.location.assign(isTemplateStudio ? (session?.redirectPath || '/platform/login/') : '/')
-        }}
-      />
-    </>
+    <ManageShell
+      brand="Tap2Connect"
+      brandDetail="Platform administration"
+      logo={brandLogo}
+      nav={platformNavigation(session.platformAccess.allowedModules)}
+      title="Templates"
+      subtitle="Create and manage reusable platform card templates"
+      userName={session.user.displayName}
+      userRole={session.platformAccess.isSuperAdmin ? 'Super Admin' : 'Platform Staff'}
+    >
+      {editor}
+    </ManageShell>
   )
 }

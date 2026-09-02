@@ -1,0 +1,221 @@
+.platform-insights-page {
+  display: grid;
+  gap: 14px;
+  color: #0f172a;
+}
+
+.platform-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.platform-section-heading h2 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.platform-section-heading p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 10px;
+}
+
+.platform-section-heading > span {
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.platform-activity-card,
+.platform-growth-report,
+.platform-composition-report,
+.platform-ranking-report {
+  padding: 18px;
+}
+
+.platform-activity-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 16px 0;
+}
+
+.platform-activity-filters button {
+  border: 1px solid #dbe3ee;
+  border-radius: 999px;
+  background: #fff;
+  padding: 6px 10px;
+  color: #64748b;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.platform-activity-filters button.is-active {
+  border-color: #0b4bcb;
+  background: #eff6ff;
+  color: #0b4bcb;
+}
+
+.platform-activity-feed {
+  border-top: 1px solid #edf1f6;
+}
+
+.platform-activity-feed article {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  min-height: 62px;
+  border-bottom: 1px solid #edf1f6;
+}
+
+.platform-event-icon,
+.platform-report-metric > span {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #0b4bcb;
+}
+
+.platform-event-icon.is-member_added { background: #ecfdf5; color: #047857; }
+.platform-event-icon.is-professional_profile_created { background: #f5f3ff; color: #6d28d9; }
+.platform-event-icon.is-template_published { background: #fffbeb; color: #b45309; }
+.platform-event-icon.is-card_assigned { background: #ecfeff; color: #0e7490; }
+
+.platform-activity-feed strong,
+.platform-activity-feed small {
+  display: block;
+}
+
+.platform-activity-feed strong { font-size: 11px; }
+.platform-activity-feed small { margin-top: 3px; color: #64748b; font-size: 10px; }
+.platform-activity-feed time { color: #64748b; font-size: 9px; white-space: nowrap; }
+
+.platform-report-metrics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.platform-report-metric {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 11px;
+  padding: 14px;
+}
+
+.platform-report-metric div { min-width: 0; }
+.platform-report-metric small { display: block; overflow: hidden; color: #64748b; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.platform-report-metric strong { display: block; margin-top: 3px; font-size: 20px; }
+
+.platform-report-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
+  gap: 14px;
+}
+
+.platform-ranking-report { grid-column: 1 / -1; }
+
+.platform-report-legend {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  margin-top: 12px;
+  color: #64748b;
+  font-size: 9px;
+}
+
+.platform-report-legend span::before {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 5px;
+  border-radius: 2px;
+  background: #0b4bcb;
+  content: '';
+}
+
+.platform-report-legend .is-organizations::before { background: #14b8a6; }
+
+.platform-growth-bars {
+  display: grid;
+  height: 220px;
+  grid-template-columns: repeat(6, 1fr);
+  align-items: end;
+  gap: 10px;
+  margin-top: 8px;
+  border-bottom: 1px solid #dbe3ee;
+  background: repeating-linear-gradient(to bottom, #fff 0, #fff 54px, #edf1f6 55px);
+}
+
+.platform-growth-bars > div {
+  display: grid;
+  height: 100%;
+  grid-template-rows: minmax(0, 1fr) 24px;
+  align-items: end;
+  text-align: center;
+}
+
+.platform-growth-columns {
+  display: flex;
+  height: 100%;
+  align-items: end;
+  justify-content: center;
+  gap: 4px;
+}
+
+.platform-growth-columns i {
+  display: block;
+  width: min(22px, 35%);
+  border-radius: 4px 4px 0 0;
+  background: #0b4bcb;
+}
+
+.platform-growth-columns i.is-organizations { background: #14b8a6; }
+.platform-growth-bars small { align-self: center; color: #64748b; font-size: 9px; }
+
+.platform-composition-bars {
+  display: grid;
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.platform-composition-bars > div > span {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 10px;
+}
+
+.platform-composition-bars small { color: #64748b; }
+.platform-composition-bars i { display: block; height: 7px; margin-top: 7px; overflow: hidden; border-radius: 999px; background: #edf1f6; }
+.platform-composition-bars b { display: block; height: 100%; border-radius: inherit; }
+
+.platform-report-ranking { margin-top: 12px; border-top: 1px solid #edf1f6; }
+.platform-report-ranking a { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 44px; border-bottom: 1px solid #edf1f6; color: inherit; font-size: 10px; text-decoration: none; }
+.platform-report-ranking a > span { color: #94a3b8; font-weight: 800; }
+.platform-report-ranking a > b { color: #64748b; font-size: 9px; }
+.platform-insights-empty { padding: 40px 16px; color: #64748b; font-size: 11px; text-align: center; }
+
+@media (max-width: 1100px) {
+  .platform-report-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 760px) {
+  .platform-report-metrics,
+  .platform-report-grid { grid-template-columns: 1fr; }
+  .platform-ranking-report { grid-column: auto; }
+  .platform-activity-feed article { grid-template-columns: 34px minmax(0, 1fr); padding: 8px 0; }
+  .platform-activity-feed time { grid-column: 2; }
+  .platform-growth-report { overflow: hidden; }
+  .platform-growth-bars { min-width: 0; gap: 4px; }
+}

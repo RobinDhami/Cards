@@ -69,12 +69,16 @@
   object-fit: contain;
 }
 
-.platform-editor-sidebar.manage-sidebar {
-  z-index: 10001;
+.t2c-card-editor.is-template-studio {
+  inset-block-start: 72px;
+  inset-inline-start: 240px;
+  z-index: 10;
 }
 
-.t2c-card-editor.is-template-studio {
-  inset-inline-start: 240px;
+@media (max-width: 960px) {
+  .t2c-card-editor.is-template-studio {
+    inset-inline-start: 0;
+  }
 }
 
 .t2c-side-switch,

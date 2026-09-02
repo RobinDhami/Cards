@@ -3,6 +3,8 @@ import { lazy, Suspense } from 'react'
 const HomePage = lazy(() => import('./pages/home/HomePage').then((module) => ({ default: module.HomePage })))
 const DashboardHome = lazy(() => import('./pages/dashboard/DashboardHome').then((module) => ({ default: module.DashboardHome })))
 const PlatformSettings = lazy(() => import('./pages/dashboard/PlatformSettings').then((module) => ({ default: module.PlatformSettings })))
+const PlatformActivity = lazy(() => import('./pages/dashboard/PlatformInsights').then((module) => ({ default: module.PlatformActivity })))
+const PlatformReports = lazy(() => import('./pages/dashboard/PlatformInsights').then((module) => ({ default: module.PlatformReports })))
 const PublicProfessionalProfile = lazy(() => import('./pages/profiles/PublicProfessionalProfile').then((module) => ({ default: module.PublicProfessionalProfile })))
 const LoginPage = lazy(() => import('./pages/auth/LoginPage').then((module) => ({ default: module.LoginPage })))
 const PlatformLoginPage = lazy(() => import('./pages/auth/LoginPage').then((module) => ({ default: module.PlatformLoginPage })))
@@ -35,7 +37,6 @@ const schoolDashboardRoutes = [
   /^\/dashboard\/organizations\/\d+\/members\/\d+\/credentials\/?$/,
   /^\/dashboard\/students\/?$/,
   /^\/dashboard\/teachers\/?$/,
-  /^\/dashboard\/reports\/?$/,
   /^\/dashboard\/settings\/?$/,
   /^\/dashboard\/print\/?$/,
   /^\/dashboard\/qr-export\/?$/,
@@ -132,6 +133,14 @@ function AppRoutes() {
 
   if (/^\/dashboard\/settings(?:\/staff-access)?\/?$/.test(path)) {
     return <PlatformSettings />
+  }
+
+  if (path === '/dashboard/activity/' || path === '/dashboard/activity') {
+    return <PlatformActivity />
+  }
+
+  if (path === '/dashboard/reports/' || path === '/dashboard/reports') {
+    return <PlatformReports />
   }
 
   if (routeMatches(path, schoolDashboardRoutes)) {

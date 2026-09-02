@@ -46,7 +46,12 @@ from .models import (
 )
 from card_designer.models import CardTemplate, CardTemplateVersion
 from professional_cards.models import ProfessionalProfile
-from .platform_access import default_platform_destination, get_allowed_platform_modules
+from .platform_access import (
+    default_platform_destination,
+    get_allowed_platform_modules,
+    has_platform_module_access,
+    platform_access_payload,
+)
 
 
 def legacy_react_response(request, *args, **kwargs):
@@ -1898,7 +1903,7 @@ def _shift_month(month_start, offset):
     )
 
 
-def _platform_overview_v1_payload():
+def _platform_overview_v1_payload(recent_activity_limit=8):
     members = StudentProfile.objects.filter(
         profile_category='school',
         college__isnull=False,
@@ -1996,7 +2001,7 @@ def _platform_overview_v1_payload():
     ]
 
     recent_activity = []
-    for organization in College.objects.only('id', 'name', 'created_at').order_by('-created_at')[:8]:
+    for organization in College.objects.only('id', 'name', 'created_at').order_by('-created_at')[:recent_activity_limit]:
         recent_activity.append({
             'id': f'organization-{organization.id}',
             'type': 'organization_created',
@@ -2004,7 +2009,7 @@ def _platform_overview_v1_payload():
             'detail': organization.name,
             'createdAt': organization.created_at,
         })
-    for member in members.select_related('college').order_by('-created_at')[:8]:
+    for member in members.select_related('college').order_by('-created_at')[:recent_activity_limit]:
         recent_activity.append({
             'id': f'member-{member.id}',
             'type': 'member_added',
@@ -2012,7 +2017,7 @@ def _platform_overview_v1_payload():
             'detail': f'{member.name} · {member.college.name}',
             'createdAt': member.created_at,
         })
-    for card in active_cards.select_related('student__college').order_by('-created_at')[:8]:
+    for card in active_cards.select_related('student__college').order_by('-created_at')[:recent_activity_limit]:
         organization_name = card.student.college.name if card.student.college else ''
         recent_activity.append({
             'id': f'card-{card.id}',
@@ -2021,7 +2026,7 @@ def _platform_overview_v1_payload():
             'detail': f'{card.student.name} · {organization_name}',
             'createdAt': card.created_at,
         })
-    for profile in ProfessionalProfile.objects.only('id', 'full_name', 'created_at').order_by('-created_at')[:8]:
+    for profile in ProfessionalProfile.objects.only('id', 'full_name', 'created_at').order_by('-created_at')[:recent_activity_limit]:
         recent_activity.append({
             'id': f'professional-{profile.id}',
             'type': 'professional_profile_created',
@@ -2029,7 +2034,7 @@ def _platform_overview_v1_payload():
             'detail': profile.full_name,
             'createdAt': profile.created_at,
         })
-    for version in CardTemplateVersion.objects.select_related('template').order_by('-created_at')[:8]:
+    for version in CardTemplateVersion.objects.select_related('template').order_by('-created_at')[:recent_activity_limit]:
         recent_activity.append({
             'id': f'template-version-{version.id}',
             'type': 'template_published',
@@ -2040,7 +2045,7 @@ def _platform_overview_v1_payload():
     recent_activity.sort(key=lambda item: item['createdAt'], reverse=True)
     serialized_activity = [
         {**item, 'createdAt': item['createdAt'].isoformat()}
-        for item in recent_activity[:8]
+        for item in recent_activity[:recent_activity_limit]
     ]
 
     return {
@@ -2064,6 +2069,37 @@ def _platform_overview_v1_payload():
             'publishedTemplates': reverse('dashboard_template_studio'),
         },
     }
+
+
+def _platform_page_context(user):
+    return {
+        'user': {
+            'displayName': user.get_full_name().strip() or user.username,
+            'roleLabel': 'Super Admin' if user.is_superuser else 'Platform Staff',
+        },
+        'platformAccess': platform_access_payload(user),
+    }
+
+
+@login_required
+def dashboard_platform_activity_api(request):
+    if not has_platform_module_access(request.user, 'activity'):
+        return JsonResponse({'error': 'You do not have access to platform activity.'}, status=403)
+    overview = _platform_overview_v1_payload(recent_activity_limit=40)
+    return JsonResponse({
+        **_platform_page_context(request.user),
+        'recentActivity': overview['recentActivity'],
+    })
+
+
+@login_required
+def dashboard_platform_reports_api(request):
+    if not has_platform_module_access(request.user, 'reports'):
+        return JsonResponse({'error': 'You do not have access to platform reports.'}, status=403)
+    return JsonResponse({
+        **_platform_page_context(request.user),
+        **_platform_overview_v1_payload(),
+    })
 
 
 @login_required

@@ -420,6 +420,8 @@ class PlatformStaffAccessTests(TestCase):
             reverse('react_dashboard_members_api'),
             reverse('react_professional_profiles_api'),
             reverse('react_dashboard_reports_api'),
+            reverse('dashboard_platform_activity_api'),
+            reverse('dashboard_platform_reports_api'),
             reverse('react_dashboard_settings_api'),
             reverse('react_dashboard_print_controls_api'),
         ]
@@ -444,6 +446,24 @@ class PlatformStaffAccessTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['redirectPath'], '/dashboard/schools/')
         self.assertEqual(response.json()['platformAccess']['allowedModules'], ['organizations', 'templates'])
+
+    def test_activity_and_reports_apis_follow_module_permissions(self):
+        activity_user = User.objects.create_user(
+            username='activity.staff',
+            password=self.password,
+        )
+        activity_user.user_permissions.add(Permission.objects.get(
+            content_type__app_label='vcards',
+            codename='access_platform_activity',
+        ))
+        self.client.force_login(activity_user)
+
+        activity_response = self.client.get(reverse('dashboard_platform_activity_api'))
+        reports_response = self.client.get(reverse('dashboard_platform_reports_api'))
+
+        self.assertEqual(activity_response.status_code, 200)
+        self.assertEqual(reports_response.status_code, 403)
+        self.assertEqual(activity_response.json()['platformAccess']['allowedModules'], ['activity'])
 
 
 class PlatformStaffManagementTests(TestCase):
@@ -955,6 +975,46 @@ class SuperAdminOverviewV1Tests(TestCase):
         self.assertEqual(payload['recentActivity'], [])
         self.assertEqual(len(payload['growth']['months']), 6)
         self.assertEqual(sum(item['value'] for item in payload['memberComposition']), 0)
+
+    def test_platform_activity_reuses_reliable_timestamped_events(self):
+        organization = College.objects.create(name='Activity Organization')
+        member = self._member(organization, 31)
+        StudentCard.objects.create(student=member, card_uid='activity-card')
+        ProfessionalProfile.objects.create(full_name='Activity Professional', slug='activity-professional')
+
+        response = self.client.get(reverse('dashboard_platform_activity_api'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertSetEqual(
+            {item['type'] for item in response.json()['recentActivity']},
+            {'organization_created', 'member_added', 'card_assigned', 'professional_profile_created'},
+        )
+
+    def test_platform_reports_return_platform_aggregates_without_school_shell(self):
+        organization = College.objects.create(name='Reports Organization')
+        self._member(organization, 32)
+
+        response = self.client.get(reverse('dashboard_platform_reports_api'))
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload['kpis']['organizations'], 1)
+        self.assertEqual(payload['kpis']['organizationMembers'], 1)
+        self.assertNotIn('shell', payload)
+        self.assertNotIn('schoolOptions', payload)
+
+    def test_visible_platform_pages_and_organization_reports_keep_distinct_routes(self):
+        organization = College.objects.create(name='Route Ownership Organization')
+
+        activity_page = self.client.get(reverse('dashboard_activity'))
+        platform_reports_page = self.client.get(reverse('dashboard_reports'))
+        organization_reports_page = self.client.get(
+            reverse('dashboard_organization_reports', args=[organization.id])
+        )
+
+        self.assertEqual(activity_page.status_code, 200)
+        self.assertEqual(platform_reports_page.status_code, 200)
+        self.assertEqual(organization_reports_page.status_code, 200)
 
 
 class ReactMigrationApiTests(TestCase):
