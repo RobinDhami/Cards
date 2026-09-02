@@ -15,6 +15,8 @@ export function CardEditorPage() {
     user: { displayName: string; role: string }
     platformAccess: { isSuperAdmin: boolean; allowedModules: string[] }
   } | null>(null)
+  const [focusMode, setFocusMode] = useState(false)
+  const [platformSidebarMode, setPlatformSidebarMode] = useState<'default' | 'compact'>('compact')
 
   useEffect(() => {
     if (!isTemplateStudio) return
@@ -31,6 +33,9 @@ export function CardEditorPage() {
       initialBackDesign="minimal"
       finish="pvc"
       mode={isTemplateStudio ? 'template-studio' : 'design'}
+      focusMode={focusMode}
+      compactPlatformSidebar={isTemplateStudio && platformSidebarMode === 'compact'}
+      onFocusModeChange={setFocusMode}
       onClose={() => {
         window.location.assign(isTemplateStudio ? (session?.redirectPath || '/platform/login/') : '/')
       }}
@@ -50,6 +55,8 @@ export function CardEditorPage() {
       subtitle="Create and manage reusable platform card templates"
       userName={session.user.displayName}
       userRole={session.platformAccess.isSuperAdmin ? 'Super Admin' : 'Platform Staff'}
+      sidebarMode={focusMode ? 'hidden' : platformSidebarMode}
+      onSidebarModeChange={setPlatformSidebarMode}
     >
       {editor}
     </ManageShell>

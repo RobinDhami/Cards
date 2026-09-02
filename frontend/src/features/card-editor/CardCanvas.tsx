@@ -57,6 +57,7 @@ type CardCanvasProps = {
   showGrid: boolean
   showSafeArea: boolean
   showBleed: boolean
+  showRulers?: boolean
   snapToGrid: boolean
   snapToElements: boolean
   onSelect: (id: string | null, additive?: boolean) => void
@@ -852,6 +853,7 @@ export const CardCanvas = forwardRef<CardCanvasHandle, CardCanvasProps>(function
     showGrid,
     showSafeArea,
     showBleed,
+    showRulers = true,
     snapToGrid,
     snapToElements,
     onSelect,
@@ -990,7 +992,7 @@ export const CardCanvas = forwardRef<CardCanvasHandle, CardCanvasProps>(function
 
   return (
     <div className="t2c-canvas-viewport" ref={containerRef}>
-      <div
+      {showRulers ? <div
         className="t2c-canvas-ruler t2c-canvas-ruler--horizontal"
         style={{ width: stageWidth }}
         aria-hidden="true"
@@ -1007,8 +1009,8 @@ export const CardCanvas = forwardRef<CardCanvasHandle, CardCanvasProps>(function
             {index * 10}
           </span>
         ))}
-      </div>
-      <div
+      </div> : null}
+      {showRulers ? <div
         className="t2c-canvas-ruler t2c-canvas-ruler--vertical"
         style={{ height: stageHeight }}
         aria-hidden="true"
@@ -1025,7 +1027,7 @@ export const CardCanvas = forwardRef<CardCanvasHandle, CardCanvasProps>(function
             {index * 10}
           </span>
         ))}
-      </div>
+      </div> : null}
       <div
         className="t2c-canvas-stage-shell"
         style={{ width: stageWidth, height: stageHeight }}

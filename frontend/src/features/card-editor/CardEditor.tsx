@@ -10,6 +10,7 @@ import Check from 'lucide-react/dist/esm/icons/check.js'
 import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right.js'
 import Copy from 'lucide-react/dist/esm/icons/copy.js'
 import Expand from 'lucide-react/dist/esm/icons/expand.js'
+import Focus from 'lucide-react/dist/esm/icons/focus.js'
 import Eye from 'lucide-react/dist/esm/icons/eye.js'
 import Grid3X3 from 'lucide-react/dist/esm/icons/grid-3-x-3.js'
 import History from 'lucide-react/dist/esm/icons/history.js'
@@ -149,6 +150,9 @@ export function AdvancedCardEditor({
   initialBackDesign,
   finish,
   mode = 'design',
+  focusMode = false,
+  compactPlatformSidebar = false,
+  onFocusModeChange,
   initialTemplateId = null,
   onClose,
 }: CardDesignerProps) {
@@ -177,10 +181,12 @@ export function AdvancedCardEditor({
   const [showGrid, setShowGrid] = useState(false)
   const [showSafeArea, setShowSafeArea] = useState(true)
   const [showBleed, setShowBleed] = useState(true)
+  const [showRulers, setShowRulers] = useState(true)
   const [snapToGrid, setSnapToGrid] = useState(true)
   const [snapToElements, setSnapToElements] = useState(true)
-  const [leftCollapsed, setLeftCollapsed] = useState(false)
-  const [rightCollapsed, setRightCollapsed] = useState(false)
+  const [leftCollapsed, setLeftCollapsed] = useState(mode === 'template-studio')
+  const [rightCollapsed, setRightCollapsed] = useState(mode === 'template-studio')
+  const [inspectorPinned, setInspectorPinned] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
   const [templateManagerOpen, setTemplateManagerOpen] = useState(false)
   const [historyOpen, setHistoryOpen] = useState(false)
@@ -194,6 +200,7 @@ export function AdvancedCardEditor({
   const [contextMenu, setContextMenu] = useState<ContextMenuState>(null)
   const [closeConfirmationOpen, setCloseConfirmationOpen] = useState(false)
   const [topMenuOpen, setTopMenuOpen] = useState(false)
+  const [viewMenuOpen, setViewMenuOpen] = useState(false)
   const clipboardRef = useRef<EditorElement[]>([])
   const openedRef = useRef(false)
   const templateStudioOpenedRef = useRef(false)
@@ -225,6 +232,14 @@ export function AdvancedCardEditor({
   useEffect(() => {
     latestDesignRef.current = design
   }, [design])
+
+  useEffect(() => {
+    if (selectedIds.length) {
+      setRightCollapsed(false)
+    } else if (!inspectorPinned) {
+      setRightCollapsed(true)
+    }
+  }, [inspectorPinned, selectedIds.length])
 
   const commitSnapshot = useCallback(
     (next: DesignSnapshot, label: string) => {
@@ -286,35 +301,6 @@ export function AdvancedCardEditor({
     },
     [commitDocument, currentDocument],
   )
-
-  const changeOrientation = useCallback((orientation: 'landscape' | 'portrait') => {
-    const target = orientation === 'portrait' ? { width: 540, height: 860 } : { width: 860, height: 540 }
-    const transformDocument = (document: CardDocument): CardDocument => {
-      const scaleX = target.width / document.size.width
-      const scaleY = target.height / document.size.height
-      return {
-        ...document,
-        size: target,
-        guides: {
-          vertical: document.guides.vertical.map((value) => value * scaleX),
-          horizontal: document.guides.horizontal.map((value) => value * scaleY),
-        },
-        elements: document.elements.map((element) => ({
-          ...element,
-          x: element.x * scaleX,
-          y: element.y * scaleY,
-          width: element.width * scaleX,
-          height: element.height * scaleY,
-        })),
-      }
-    }
-    commitSnapshot(
-      { ...latestSnapshotRef.current, front: transformDocument(latestSnapshotRef.current.front), back: transformDocument(latestSnapshotRef.current.back) },
-      `Switch to ${orientation} CR80`,
-    )
-    setSelectedIds([])
-    setZoom(1)
-  }, [commitSnapshot])
 
   useEffect(() => {
     if (!open) return
@@ -1113,14 +1099,18 @@ export function AdvancedCardEditor({
 
   return (
     <div
-      className={`t2c-card-editor${mode === 'template-studio' ? ' is-template-studio' : ''}${leftCollapsed ? ' is-left-collapsed' : ''}${rightCollapsed ? ' is-right-collapsed' : ''}`}
+      className={`t2c-card-editor${mode === 'template-studio' ? ' is-template-studio' : ''}${compactPlatformSidebar ? ' is-shell-compact' : ''}${focusMode ? ' is-focus-mode' : ''}${leftCollapsed ? ' is-left-collapsed' : ''}${rightCollapsed ? ' is-right-collapsed' : ''}`}
       role="dialog"
       aria-modal="true"
       aria-label="Tap2Connect advanced card editor"
     >
       <header className="t2c-editor-topbar">
         <div className="t2c-editor-topbar-left">
-          <img src={brandLogo} alt="Tap2Connect" />
+          {mode === 'template-studio' ? (
+            <strong className="t2c-editor-product-title">Template Studio</strong>
+          ) : (
+            <img src={brandLogo} alt="Tap2Connect" />
+          )}
           <div className="t2c-side-switch" aria-label="Card side">
             <button
               type="button"
@@ -1195,15 +1185,22 @@ export function AdvancedCardEditor({
               <span>Save as design</span>
             </button>
           )}
-          <button
-            type="button"
-            className="t2c-editor-continue"
-            onClick={() => setPreviewOpen(true)}
-          >
-            Continue
-            <ChevronRight size={17} />
-          </button>
-          <div className="t2c-top-menu-wrap">
+          {mode === 'template-studio' ? (
+            <button type="button" onClick={() => onFocusModeChange?.(!focusMode)}>
+              <Focus size={16} />
+              <span>{focusMode ? 'Exit focus' : 'Focus'}</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="t2c-editor-continue"
+              onClick={() => setPreviewOpen(true)}
+            >
+              Continue
+              <ChevronRight size={17} />
+            </button>
+          )}
+          {mode !== 'template-studio' ? <div className="t2c-top-menu-wrap">
             <button
               type="button"
               onClick={() => setTopMenuOpen((current) => !current)}
@@ -1228,7 +1225,7 @@ export function AdvancedCardEditor({
                 </button>
               </div>
             ) : null}
-          </div>
+          </div> : null}
           <button type="button" onClick={requestClose} aria-label="Close editor" title="Close">
             <X size={19} />
           </button>
@@ -1240,8 +1237,12 @@ export function AdvancedCardEditor({
           activeTool={activeTool}
           collapsed={leftCollapsed}
           onChange={(tool) => {
-            setActiveTool(tool)
-            setLeftCollapsed(false)
+            if (tool === activeTool && !leftCollapsed) {
+              setLeftCollapsed(true)
+            } else {
+              setActiveTool(tool)
+              setLeftCollapsed(false)
+            }
           }}
         />
         {!leftCollapsed ? (
@@ -1343,6 +1344,7 @@ export function AdvancedCardEditor({
             showGrid={showGrid}
             showSafeArea={showSafeArea}
             showBleed={showBleed}
+            showRulers={showRulers}
             snapToGrid={snapToGrid}
             snapToElements={snapToElements}
             onSelect={selectElement}
@@ -1383,10 +1385,6 @@ export function AdvancedCardEditor({
           />
 
           <div className="t2c-canvas-controls">
-            <div className="t2c-orientation-control" aria-label="Card orientation">
-              <button type="button" className={currentDocument.size.width > currentDocument.size.height ? 'is-active' : ''} onClick={() => changeOrientation('landscape')}>Landscape</button>
-              <button type="button" className={currentDocument.size.height > currentDocument.size.width ? 'is-active' : ''} onClick={() => changeOrientation('portrait')}>Portrait</button>
-            </div>
             <div className="t2c-zoom-control">
               <button
                 type="button"
@@ -1407,32 +1405,34 @@ export function AdvancedCardEditor({
               </button>
             </div>
             <button type="button" onClick={() => setZoom(1)}>Fit</button>
-            <button type="button" onClick={() => setZoom(0.72)}>Actual size</button>
-            <button
-              type="button"
-              className={showGrid ? 'is-active' : ''}
-              onClick={() => setShowGrid((value) => !value)}
-            >
-              <Grid3X3 size={15} />
-              Grid
-            </button>
-            <button
-              type="button"
-              className={snapToGrid || snapToElements ? 'is-active' : ''}
-              onClick={() => {
-                const next = !(snapToGrid || snapToElements)
-                setSnapToGrid(next)
-                setSnapToElements(next)
-              }}
-            >
-              <ScanLine size={15} />
-              Snap
-            </button>
-            <button type="button" onClick={() => addGuide('vertical')}>+ V guide</button>
-            <button type="button" onClick={() => addGuide('horizontal')}>+ H guide</button>
-            <button type="button" onClick={toggleFullscreen} aria-label="Fullscreen" title="Fullscreen">
-              <Expand size={15} />
-            </button>
+            <div className="t2c-view-menu-wrap">
+              <button type="button" onClick={() => setViewMenuOpen((current) => !current)}>
+                <Grid3X3 size={15} /> View
+              </button>
+              {viewMenuOpen ? (
+                <div className="t2c-view-menu">
+                  <button type="button" onClick={() => setShowGrid((value) => !value)}>{showGrid ? '✓ ' : ''}Grid</button>
+                  <button type="button" onClick={() => {
+                    const next = !(snapToGrid || snapToElements)
+                    setSnapToGrid(next)
+                    setSnapToElements(next)
+                  }}>{snapToGrid || snapToElements ? '✓ ' : ''}Snap</button>
+                  <button type="button" onClick={() => setShowRulers((value) => !value)}>{showRulers ? '✓ ' : ''}Rulers</button>
+                  <button type="button" onClick={() => addGuide('vertical')}>Add vertical guide</button>
+                  <button type="button" onClick={() => addGuide('horizontal')}>Add horizontal guide</button>
+                  <button type="button" onClick={() => setShowSafeArea((value) => !value)}>{showSafeArea ? '✓ ' : ''}Safe area</button>
+                  <button type="button" onClick={() => setShowBleed((value) => !value)}>{showBleed ? '✓ ' : ''}Bleed</button>
+                  {mode !== 'template-studio' ? <button type="button" onClick={toggleFullscreen}><Expand size={14} /> Fullscreen</button> : null}
+                </div>
+              ) : null}
+            </div>
+            <span className="t2c-canvas-dimensions">
+              {currentDocument.size.width > currentDocument.size.height ? '86 × 54 mm' : '54 × 86 mm'}
+            </span>
+            <span className={validationIssues.some((issue) => issue.level === 'error') ? 't2c-print-status has-error' : 't2c-print-status is-safe'}>
+              {validationIssues.some((issue) => issue.level === 'error') ? <AlertCircle size={14} /> : <Check size={14} />}
+              {validationIssues.some((issue) => issue.level === 'error') ? `${validationIssues.length} checks` : 'Print-safe'}
+            </span>
           </div>
 
           {inlineTextElement ? (
@@ -1481,6 +1481,8 @@ export function AdvancedCardEditor({
         {!rightCollapsed ? (
           <EditorInspectorPanel
             selectedElements={selected}
+            pinned={inspectorPinned}
+            onTogglePin={() => setInspectorPinned((value) => !value)}
             onCollapse={() => setRightCollapsed(true)}
             onPatch={updateSelected}
             onStylePatch={updateSelectedStyle}
@@ -1494,7 +1496,7 @@ export function AdvancedCardEditor({
         ) : null}
       </div>
 
-      <footer className="t2c-editor-statusbar">
+      {mode !== 'template-studio' ? <footer className="t2c-editor-statusbar">
         <span>CR80 card ({currentDocument.size.width > currentDocument.size.height ? 'landscape' : 'portrait'})</span>
         <span>{currentDocument.size.width > currentDocument.size.height ? '86 × 54 mm' : '54 × 86 mm'}</span>
         <span>Bleed: 2 mm</span>
@@ -1524,7 +1526,7 @@ export function AdvancedCardEditor({
             ? `${validationIssues.length} checks`
             : 'Print-safe'}
         </span>
-      </footer>
+      </footer> : null}
 
       <div className="t2c-mobile-tool-bar" aria-label="Mobile editor tools">
         {editorTools.slice(0, 6).map((tool) => {

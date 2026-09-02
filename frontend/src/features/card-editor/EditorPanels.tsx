@@ -28,6 +28,8 @@ import MapPin from 'lucide-react/dist/esm/icons/map-pin.js'
 import Minus from 'lucide-react/dist/esm/icons/minus.js'
 import MoveRight from 'lucide-react/dist/esm/icons/move-right.js'
 import Phone from 'lucide-react/dist/esm/icons/phone.js'
+import Pin from 'lucide-react/dist/esm/icons/pin.js'
+import PinOff from 'lucide-react/dist/esm/icons/pin-off.js'
 import Plus from 'lucide-react/dist/esm/icons/plus.js'
 import QrCode from 'lucide-react/dist/esm/icons/qr-code.js'
 import RotateCcw from 'lucide-react/dist/esm/icons/rotate-ccw.js'
@@ -326,7 +328,7 @@ export function EditorLibraryPanel({
         }
       />
 
-      {tool === 'templates' || tool === 'uploads' || tool === 'brand' ? (
+      {tool === 'templates' || tool === 'assets' ? (
         <label className="t2c-panel-search">
           <Search size={15} />
           <input
@@ -439,26 +441,15 @@ export function EditorLibraryPanel({
 
         {tool === 'text' ? (
           <div className="t2c-text-presets">
-            <button type="button" onClick={() => onAddText('heading')}>
-              <strong>Add a heading</strong>
-            </button>
-            <button type="button" onClick={() => onAddText('subheading')}>
-              <b>Add a subheading</b>
-            </button>
-            <button type="button" onClick={() => onAddText('body')}>
-              Add normal text
-            </button>
-            <button type="button" onClick={() => onAddText('small')}>
-              <small>Add small text</small>
-            </button>
-            <button type="button" onClick={() => onAddText('contact')}>
-              <ContactRound size={16} />
-              Add contact text
-            </button>
-            <button type="button" onClick={() => onAddText('body', 'Custom text')}>
+            <button type="button" className="t2c-primary-panel-button" onClick={() => onAddText('body')}>
               <Plus size={16} />
-              Custom text box
+              Add text
             </button>
+            <h3>Presets</h3>
+            <div className="t2c-text-preset-row">
+              <button type="button" onClick={() => onAddText('heading')}><strong>Heading</strong></button>
+              <button type="button" onClick={() => onAddText('body')}>Body</button>
+            </div>
             <section className="t2c-library-section">
               <h3>Smart profile fields</h3>
               <div className="t2c-smart-field-list">
@@ -480,10 +471,26 @@ export function EditorLibraryPanel({
                 ))}
               </div>
             </section>
+            <section className="t2c-library-section">
+              <h3>Contact presets</h3>
+              <div className="t2c-component-list">
+                {contactComponents.map((component) => (
+                  <button
+                    type="button"
+                    onClick={() => onAddText('contact', component.text, component.name)}
+                    key={component.label}
+                  >
+                    <ContactRound size={17} />
+                    <span><b>{component.label}</b><small>{resolveProfileTokens(component.text, profileFields)}</small></span>
+                    <Plus size={15} />
+                  </button>
+                ))}
+              </div>
+            </section>
           </div>
         ) : null}
 
-        {tool === 'uploads' ? (
+        {tool === 'assets' ? (
           <>
             <section className="t2c-upload-drop">
               <UploadCloud size={26} />
@@ -545,13 +552,8 @@ export function EditorLibraryPanel({
                 ))}
               </div>
             </section>
-          </>
-        ) : null}
-
-        {tool === 'brand' ? (
-          <>
             <section className="t2c-library-section">
-              <h3>Official T2C assets</h3>
+              <h3>Global assets</h3>
               <div className="t2c-asset-grid">
                 {filteredAssets.filter((asset) => asset.isGlobal).map((asset) => (
                   <button type="button" onClick={() => onAddImage(asset)} key={asset.id}>
@@ -613,28 +615,6 @@ export function EditorLibraryPanel({
               </button>
             </section>
           </>
-        ) : null}
-
-        {tool === 'contact' ? (
-          <section className="t2c-library-section">
-            <h3>Contact components</h3>
-            <div className="t2c-component-list">
-              {contactComponents.map((component) => (
-                <button
-                  type="button"
-                  onClick={() => onAddText('contact', component.text, component.name)}
-                  key={component.label}
-                >
-                  <ContactRound size={18} />
-                  <span>
-                    <b>{component.label}</b>
-                    <small>{resolveProfileTokens(component.text, profileFields)}</small>
-                  </span>
-                  <Plus size={15} />
-                </button>
-              ))}
-            </div>
-          </section>
         ) : null}
 
         {tool === 'background' ? (
@@ -871,6 +851,8 @@ function IconChoice({
 
 type InspectorPanelProps = {
   selectedElements: EditorElement[]
+  pinned: boolean
+  onTogglePin: () => void
   onCollapse: () => void
   onPatch: (patch: Partial<EditorElement>, label: string) => void
   onStylePatch: (patch: Partial<ElementStyle>, label: string) => void
@@ -896,6 +878,8 @@ type InspectorPanelProps = {
 
 export function EditorInspectorPanel({
   selectedElements,
+  pinned,
+  onTogglePin,
   onCollapse,
   onPatch,
   onStylePatch,
@@ -912,7 +896,15 @@ export function EditorInspectorPanel({
   if (!selected) {
     return (
       <aside className="t2c-editor-inspector" aria-label="Properties panel">
-        <PanelHeading title="Properties" onCollapse={onCollapse} />
+        <PanelHeading
+          title="Properties"
+          onCollapse={onCollapse}
+          action={
+            <button type="button" onClick={onTogglePin} title="Keep properties open" aria-label="Keep properties open">
+              {pinned ? <PinOff size={15} /> : <Pin size={15} />}
+            </button>
+          }
+        />
         <div className="t2c-empty-inspector">
           <Shapes size={25} />
           <strong>Select an element</strong>
@@ -928,9 +920,14 @@ export function EditorInspectorPanel({
         title={multiple ? `${selectedElements.length} elements` : selected.name}
         onCollapse={onCollapse}
         action={
-          <button type="button" onClick={onDelete} title="Delete selection" aria-label="Delete selection">
-            <Trash2 size={16} />
-          </button>
+          <>
+            <button type="button" onClick={onTogglePin} title={pinned ? 'Unpin properties' : 'Pin properties'} aria-label={pinned ? 'Unpin properties' : 'Pin properties'}>
+              {pinned ? <PinOff size={15} /> : <Pin size={15} />}
+            </button>
+            <button type="button" onClick={onDelete} title="Delete selection" aria-label="Delete selection">
+              <Trash2 size={16} />
+            </button>
+          </>
         }
       />
       <div className="t2c-editor-inspector-content">

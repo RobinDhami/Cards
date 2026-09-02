@@ -2,6 +2,8 @@ import { useState } from 'react'
 import type { ComponentType, ReactNode, SVGProps } from 'react'
 import Bell from 'lucide-react/dist/esm/icons/bell.js'
 import ChevronDown from 'lucide-react/dist/esm/icons/chevron-down.js'
+import ChevronsLeft from 'lucide-react/dist/esm/icons/chevrons-left.js'
+import ChevronsRight from 'lucide-react/dist/esm/icons/chevrons-right.js'
 import LogOut from 'lucide-react/dist/esm/icons/log-out.js'
 import Menu from 'lucide-react/dist/esm/icons/menu.js'
 import X from 'lucide-react/dist/esm/icons/x.js'
@@ -32,6 +34,8 @@ type ManageShellProps = {
   schoolOptions?: Array<{ id: number; name: string }>
   selectedSchool?: number | null
   onSchoolChange?: (schoolId: number) => void
+  sidebarMode?: 'default' | 'compact' | 'hidden'
+  onSidebarModeChange?: (mode: 'default' | 'compact') => void
 }
 
 export function ManageShell({
@@ -50,6 +54,8 @@ export function ManageShell({
   schoolOptions,
   selectedSchool,
   onSchoolChange,
+  sidebarMode = 'default',
+  onSidebarModeChange,
 }: ManageShellProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [isSigningOut, setIsSigningOut] = useState(false)
@@ -73,6 +79,17 @@ export function ManageShell({
         <span className="manage-brand-mark">
           {logo ? <img src={logo} alt="" /> : brand.slice(0, 1).toUpperCase()}
         </span>
+        {sidebarMode !== 'hidden' && onSidebarModeChange ? (
+          <button
+            type="button"
+            className="manage-sidebar-toggle"
+            onClick={() => onSidebarModeChange(sidebarMode === 'compact' ? 'default' : 'compact')}
+            aria-label={sidebarMode === 'compact' ? 'Expand platform navigation' : 'Collapse platform navigation'}
+            title={sidebarMode === 'compact' ? 'Expand navigation' : 'Collapse navigation'}
+          >
+            {sidebarMode === 'compact' ? <ChevronsRight size={16} /> : <ChevronsLeft size={16} />}
+          </button>
+        ) : null}
         <span>
           <strong>{brand}</strong>
           <small>{brandDetail}</small>
@@ -108,8 +125,8 @@ export function ManageShell({
   )
 
   return (
-    <div className="manage-app" style={{ '--manage-accent': accent } as React.CSSProperties}>
-      {sidebar}
+    <div className={`manage-app manage-app--sidebar-${sidebarMode}`} style={{ '--manage-accent': accent } as React.CSSProperties}>
+      {sidebarMode !== 'hidden' ? sidebar : null}
       <div
         className={`manage-overlay${menuOpen ? ' is-open' : ''}`}
         onClick={() => setMenuOpen(false)}

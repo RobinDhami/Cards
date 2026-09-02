@@ -6,10 +6,8 @@ export type EditorTool =
   | 'templates'
   | 'elements'
   | 'text'
-  | 'uploads'
-  | 'brand'
+  | 'assets'
   | 'qr'
-  | 'contact'
   | 'background'
   | 'layers'
 
@@ -251,6 +249,9 @@ export type CardDesignerProps = {
   initialBackDesign: CardDesignId
   finish: CardFinishId
   mode?: 'design' | 'template-studio'
+  focusMode?: boolean
+  compactPlatformSidebar?: boolean
+  onFocusModeChange?: (focused: boolean) => void
   initialTemplateId?: string | null
   onClose: () => void
 }

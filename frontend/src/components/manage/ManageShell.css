@@ -66,6 +66,20 @@
   object-fit: contain;
 }
 
+.manage-sidebar-toggle {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  margin-left: auto;
+  flex: none;
+  place-items: center;
+  border: 1px solid var(--manage-line);
+  border-radius: 6px;
+  background: #fff;
+  color: #64748b;
+  cursor: pointer;
+}
+
 .manage-brand strong,
 .manage-brand small,
 .manage-account strong,
@@ -164,6 +178,29 @@
   min-width: 0;
   margin-left: 240px;
 }
+
+.manage-app--sidebar-compact .manage-sidebar { width: 64px; }
+.manage-app--sidebar-compact .manage-main { margin-left: 64px; }
+.manage-app--sidebar-compact .manage-brand { justify-content: center; padding-inline: 8px; }
+.manage-app--sidebar-compact .manage-brand > span:nth-child(2),
+.manage-app--sidebar-compact .manage-nav a span,
+.manage-app--sidebar-compact .manage-account > span:nth-child(2),
+.manage-app--sidebar-compact .manage-account > button { display: none; }
+.manage-app--sidebar-compact .manage-brand-mark { width: 32px; height: 32px; }
+.manage-app--sidebar-compact .manage-sidebar-toggle {
+  position: absolute;
+  top: 76px;
+  left: 48px;
+  z-index: 2;
+  width: 24px;
+  height: 24px;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.1);
+}
+.manage-app--sidebar-compact .manage-nav { padding-inline: 10px; }
+.manage-app--sidebar-compact .manage-nav a { justify-content: center; padding-inline: 0; }
+.manage-app--sidebar-compact .manage-account { display: flex; justify-content: center; padding-inline: 8px; }
+.manage-app--sidebar-hidden .manage-main { margin-left: 0; }
+.manage-app--sidebar-hidden .manage-header { display: none; }
 
 .manage-header {
   position: sticky;
