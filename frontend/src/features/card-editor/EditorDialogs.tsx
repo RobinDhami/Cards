@@ -35,9 +35,12 @@ import { displayError } from '../../lib/api'
 type TemplateManagerProps = {
   open: boolean
   snapshot: DesignSnapshot
+  activeTemplateId: string | null
   categories: Array<{ value: string; label: string }>
   onClose: () => void
   onTemplatesChange: (templates: CardTemplateRecord[]) => void
+  onTemplateChange: (template: CardTemplateRecord) => void
+  onSelectTemplate: (template: CardTemplateRecord) => void
   onApplyTemplate: (template: CardTemplateRecord) => void
 }
 
@@ -57,9 +60,12 @@ const templateAudienceOptions = [
 export function TemplateManager({
   open,
   snapshot,
+  activeTemplateId,
   categories,
   onClose,
   onTemplatesChange,
+  onTemplateChange,
+  onSelectTemplate,
   onApplyTemplate,
 }: TemplateManagerProps) {
   const [templates, setTemplates] = useState<CardTemplateRecord[]>([])
@@ -86,11 +92,15 @@ export function TemplateManager({
     loadManagedTemplates()
       .then((response) => {
         setTemplates(response.templates)
-        setSelectedId((current) => current ?? response.templates[0]?.id ?? null)
+        setSelectedId((current) => (
+          current && response.templates.some((template) => template.id === current)
+            ? current
+            : activeTemplateId
+        ))
       })
       .catch((error) => setMessage(displayError(error)))
       .finally(() => setLoading(false))
-  }, [open])
+  }, [activeTemplateId, open])
 
   useEffect(() => {
     if (!selected) return
@@ -148,6 +158,7 @@ export function TemplateManager({
           template.id === selected.id ? response.template : template,
         ),
       )
+      onTemplateChange(response.template)
       setMessage('Template draft updated.')
     } catch (error) {
       setMessage(displayError(error))
@@ -253,7 +264,10 @@ export function TemplateManager({
               <button
                 type="button"
                 className={selectedId === template.id ? 'is-active' : ''}
-                onClick={() => setSelectedId(template.id)}
+                onClick={() => {
+                  setSelectedId(template.id)
+                  onSelectTemplate(template)
+                }}
                 key={template.id}
               >
                 <span className={`t2c-template-status t2c-template-status--${template.status}`} />
@@ -394,7 +408,7 @@ export function TemplateManager({
                   <>
                     <button type="button" onClick={() => onApplyTemplate(selected)}>
                       <Eye size={16} />
-                      Preview in editor
+                      Open in editor
                     </button>
                     <button type="button" onClick={duplicateSelected} disabled={saving}>
                       <Copy size={16} />

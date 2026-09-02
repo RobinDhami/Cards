@@ -50,6 +50,7 @@ import {
   loadDesignRevisions,
   loadEditorBootstrap,
   restoreDesignRevision,
+  updateTemplate,
   updateDesign,
   uploadAsset,
 } from './api'
@@ -163,9 +164,10 @@ export function AdvancedCardEditor({
   const [future, setFuture] = useState<DesignSnapshot[]>([])
   const [bootstrap, setBootstrap] = useState<EditorBootstrap | null>(null)
   const [templates, setTemplates] = useState<CardTemplateRecord[]>([])
+  const [editingTemplate, setEditingTemplate] = useState<CardTemplateRecord | null>(null)
   const [assets, setAssets] = useState<CardAssetRecord[]>([])
   const [currentTemplateId, setCurrentTemplateId] = useState<string | null>(
-    `built-in-${initialFrontDesign}`,
+    mode === 'template-studio' ? null : `built-in-${initialFrontDesign}`,
   )
   const [design, setDesign] = useState<CardDesignRecord | null>(null)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
@@ -320,7 +322,7 @@ export function AdvancedCardEditor({
     document.body.style.overflow = 'hidden'
     if (!openedRef.current) {
       const localDraft = safeLocalDraft()
-      if (localDraft && !initialTemplateId) {
+      if (mode !== 'template-studio' && localDraft && !initialTemplateId) {
         setSnapshot(localDraft.snapshot)
         latestSnapshotRef.current = localDraft.snapshot
         setCurrentTemplateId(localDraft.currentTemplateId)
@@ -340,8 +342,12 @@ export function AdvancedCardEditor({
         }
         setSaveStatus('offline')
       } else {
-        setSnapshot(initialSnapshot)
-        latestSnapshotRef.current = initialSnapshot
+        const startingSnapshot = mode === 'template-studio'
+          ? createBlankSnapshot(finish)
+          : initialSnapshot
+        setSnapshot(startingSnapshot)
+        latestSnapshotRef.current = startingSnapshot
+        setCurrentTemplateId(null)
       }
       openedRef.current = true
     }
@@ -514,12 +520,12 @@ export function AdvancedCardEditor({
   }, [authenticated, currentTemplateId, persistDesign])
 
   useEffect(() => {
-    if (!open || !authenticated || !dirty) return
+    if (!open || mode === 'template-studio' || !authenticated || !dirty) return
     const timer = window.setTimeout(() => {
       void persistDesign(false, 'autosave')
     }, 1200)
     return () => window.clearTimeout(timer)
-  }, [authenticated, dirty, open, persistDesign, snapshot])
+  }, [authenticated, dirty, mode, open, persistDesign, snapshot])
 
   useEffect(() => {
     if (!open) return
@@ -731,7 +737,33 @@ export function AdvancedCardEditor({
     }
   }
 
+  const openTemplateForEditing = (template: CardTemplateRecord, closeManager = true) => {
+    const nextSnapshot: DesignSnapshot = {
+      name: template.name,
+      finish: snapshot.finish,
+      front: deepClone(template.frontData),
+      back: deepClone(template.backData),
+    }
+    setSnapshot(nextSnapshot)
+    latestSnapshotRef.current = nextSnapshot
+    setPast([])
+    setFuture([])
+    setDirty(false)
+    setSaveStatus('saved')
+    setLastAction(`Open ${template.name} template`)
+    setCurrentTemplateId(template.id)
+    setEditingTemplate(template)
+    setDesign(null)
+    latestDesignRef.current = null
+    setSelectedIds([])
+    if (closeManager) setTemplateManagerOpen(false)
+  }
+
   const applyTemplate = (template: CardTemplateRecord) => {
+    if (mode === 'template-studio') {
+      openTemplateForEditing(template)
+      return
+    }
     commitSnapshot(
       {
         ...snapshot,
@@ -749,6 +781,7 @@ export function AdvancedCardEditor({
     const blank = createBlankSnapshot(finish)
     commitSnapshot(blank, 'Create blank design')
     setCurrentTemplateId(null)
+    setEditingTemplate(null)
     setDesign(null)
     latestDesignRef.current = null
     setSelectedIds([])
@@ -934,6 +967,37 @@ export function AdvancedCardEditor({
     }
   }
 
+  const saveActiveTemplate = async () => {
+    if (!editingTemplate) {
+      setTemplateManagerOpen(true)
+      setMessage('Create or open a template before saving.')
+      return null
+    }
+    setSaveStatus('saving')
+    setMessage('')
+    try {
+      const current = latestSnapshotRef.current
+      const response = await updateTemplate(editingTemplate.id, {
+        name: current.name,
+        frontData: current.front,
+        backData: current.back,
+      })
+      setEditingTemplate(response.template)
+      setTemplates((items) => items.map((item) => (
+        item.id === response.template.id ? response.template : item
+      )))
+      setDirty(false)
+      setSaveStatus('saved')
+      setLastAction('Template draft saved')
+      setMessage('Template draft saved.')
+      return response.template
+    } catch (error) {
+      setMessage(displayError(error))
+      setSaveStatus('error')
+      return null
+    }
+  }
+
   const openHistory = async () => {
     setHistoryOpen(true)
     setTopMenuOpen(false)
@@ -1108,7 +1172,10 @@ export function AdvancedCardEditor({
             <Eye size={16} />
             <span>Preview</span>
           </button>
-          <button type="button" onClick={() => void manualSave()}>
+          <button
+            type="button"
+            onClick={() => void (mode === 'template-studio' ? saveActiveTemplate() : manualSave())}
+          >
             <Save size={16} />
             <span>Save draft</span>
           </button>
@@ -1504,9 +1571,17 @@ export function AdvancedCardEditor({
         <TemplateManager
           open={templateManagerOpen}
           snapshot={snapshot}
+          activeTemplateId={editingTemplate?.id ?? null}
           categories={bootstrap?.templateCategories ?? []}
           onClose={() => setTemplateManagerOpen(false)}
           onTemplatesChange={setTemplates}
+          onTemplateChange={(template) => {
+            setEditingTemplate(template)
+            setTemplates((items) => items.map((item) => (
+              item.id === template.id ? template : item
+            )))
+          }}
+          onSelectTemplate={(template) => openTemplateForEditing(template, false)}
           onApplyTemplate={applyTemplate}
         />
       ) : null}
