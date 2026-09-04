@@ -7,8 +7,10 @@ from django.utils.deconstruct import deconstructible
 class PrivateCardMediaStorage(FileSystemStorage):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("location", settings.PRIVATE_CARD_MEDIA_ROOT)
-        kwargs.setdefault("base_url", None)
         super().__init__(*args, **kwargs)
+
+    def url(self, name):
+        raise ValueError("Private card media does not have a public URL.")
 
 
 private_card_media_storage = PrivateCardMediaStorage()

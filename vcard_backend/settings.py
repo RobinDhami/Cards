@@ -28,6 +28,31 @@ def env_list(name):
     return [value.strip() for value in os.environ.get(name, "").split(",") if value.strip()]
 
 
+def env_filesystem_path(name, development_default):
+    value = os.environ.get(name, "").strip()
+    if not value:
+        if DEBUG:
+            return development_default
+        raise ImproperlyConfigured(f"{name} must be set when DEBUG is False.")
+    if "://" in value:
+        raise ImproperlyConfigured(f"{name} must be a filesystem path, not a URL.")
+    return Path(value).expanduser()
+
+
+def env_public_url(name, development_default):
+    value = os.environ.get(name, "").strip()
+    if not value:
+        if DEBUG:
+            value = development_default
+        else:
+            raise ImproperlyConfigured(f"{name} must be set when DEBUG is False.")
+    if not value.startswith(("/", "http://", "https://")):
+        raise ImproperlyConfigured(
+            f"{name} must be an absolute URL or a root-relative URL path."
+        )
+    return f'{value.rstrip("/")}/'
+
+
 RENDER = os.environ.get("RENDER") is not None
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -185,14 +210,11 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
 
 # Media files (uploaded files)
-MEDIA_URL = f'{os.environ.get("MEDIA_URL", "/media/").rstrip("/")}/'
-media_root = os.environ.get("MEDIA_ROOT", "").strip()
-private_card_media_root = os.environ.get("PRIVATE_CARD_MEDIA_ROOT", "").strip()
-MEDIA_ROOT = Path(media_root) if media_root else BASE_DIR / "media"
-PRIVATE_CARD_MEDIA_ROOT = (
-    Path(private_card_media_root)
-    if private_card_media_root
-    else BASE_DIR / "private_card_media"
+MEDIA_URL = env_public_url("MEDIA_URL", "/media/")
+MEDIA_ROOT = env_filesystem_path("MEDIA_ROOT", BASE_DIR / "media")
+PRIVATE_CARD_MEDIA_ROOT = env_filesystem_path(
+    "PRIVATE_CARD_MEDIA_ROOT",
+    BASE_DIR / "private_card_media",
 )
 CLOUDINARY_CLOUD_NAME = os.environ.get("CLOUDINARY_CLOUD_NAME", "")
 CLOUDINARY_API_KEY = os.environ.get("CLOUDINARY_API_KEY", "")
