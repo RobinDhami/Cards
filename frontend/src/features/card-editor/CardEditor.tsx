@@ -137,7 +137,7 @@ function safeLocalDraft(): LocalDraft | null {
 }
 
 function saveStatusLabel(status: SaveStatus, authenticated: boolean) {
-  if (status === 'saving') return 'Savingâ€¦'
+  if (status === 'saving') return 'Saving…'
   if (status === 'error') return 'Save failed'
   if (status === 'offline') return authenticated ? 'Saved locally' : 'Local draft'
   if (status === 'saved') return 'All changes saved'
@@ -177,7 +177,7 @@ export function AdvancedCardEditor({
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [dirty, setDirty] = useState(false)
   const [lastAction, setLastAction] = useState('Open editor')
-  const [zoom, setZoom] = useState(1)
+  const [zoom, setZoom] = useState(mode === 'template-studio' ? 0.8 : 1)
   const [showGrid, setShowGrid] = useState(false)
   const [showSafeArea, setShowSafeArea] = useState(true)
   const [showBleed, setShowBleed] = useState(true)
@@ -1108,7 +1108,13 @@ export function AdvancedCardEditor({
       <header className="t2c-editor-topbar">
         <div className="t2c-editor-topbar-left">
           {mode === 'template-studio' ? (
-            <strong className="t2c-editor-product-title">Template Studio</strong>
+            <div className="t2c-editor-brand">
+              <span className="t2c-editor-brand-mark" aria-hidden="true">T2C</span>
+              <span>
+                <strong className="t2c-editor-product-title">Template Studio</strong>
+                <small>Create. Customize. Reuse.</small>
+              </span>
+            </div>
           ) : (
             <img src={brandLogo} alt="Tap2Connect" />
           )}
@@ -1159,17 +1165,18 @@ export function AdvancedCardEditor({
           <span className={`t2c-save-state is-${saveStatus}`}>
             {saveStatus === 'saved' ? <Check size={13} /> : null}
             {saveStatus === 'error' ? <AlertCircle size={13} /> : null}
-            {mode === 'template-studio' ? 'Template Studio' : saveStatusLabel(saveStatus, authenticated)}
+            {saveStatusLabel(saveStatus, authenticated)}
           </span>
         </div>
 
         <div className="t2c-editor-topbar-actions">
-          <button type="button" onClick={() => setPreviewOpen(true)} aria-label="Preview" title="Preview">
+          <button type="button" className="t2c-editor-preview" onClick={() => setPreviewOpen(true)} aria-label="Preview" title="Preview">
             <Eye size={16} />
             <span>Preview</span>
           </button>
           <button
             type="button"
+            className="t2c-editor-save"
             onClick={() => void (mode === 'template-studio' ? saveActiveTemplate() : manualSave())}
             aria-label="Save draft"
             title="Save draft"
@@ -1178,7 +1185,7 @@ export function AdvancedCardEditor({
             <span>Save draft</span>
           </button>
           {canManageTemplates ? (
-            <button type="button" onClick={() => setTemplateManagerOpen(true)} aria-label="Publish" title="Publish">
+            <button type="button" className="t2c-editor-publish" onClick={() => setTemplateManagerOpen(true)} aria-label="Publish" title="Publish">
               <ScanLine size={16} />
               <span>Publish</span>
             </button>
@@ -1191,6 +1198,7 @@ export function AdvancedCardEditor({
           {mode === 'template-studio' ? (
             <button
               type="button"
+              className="t2c-editor-focus"
               onClick={() => onFocusModeChange?.(!focusMode)}
               aria-label={focusMode ? 'Exit focus' : 'Focus'}
               title={focusMode ? 'Exit focus' : 'Focus'}
@@ -1234,7 +1242,7 @@ export function AdvancedCardEditor({
               </div>
             ) : null}
           </div> : null}
-          <button type="button" onClick={requestClose} aria-label="Close editor" title="Close">
+          <button type="button" className="t2c-editor-close" onClick={requestClose} aria-label="Close editor" title="Close">
             <X size={19} />
           </button>
         </div>
@@ -1412,7 +1420,7 @@ export function AdvancedCardEditor({
                 <Plus size={15} />
               </button>
             </div>
-            <button type="button" onClick={() => setZoom(1)}>Fit</button>
+            <button type="button" onClick={() => setZoom(mode === 'template-studio' ? 0.8 : 1)}>Fit</button>
             <div className="t2c-view-menu-wrap">
               <button type="button" onClick={() => setViewMenuOpen((current) => !current)}>
                 <Grid3X3 size={15} /> View
