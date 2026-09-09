@@ -387,6 +387,18 @@ def _build_organization_links(profile, whatsapp_digits):
     return [item for item in links if item['enabled']]
 
 
+def _build_google_review_action(profile):
+    if not profile.google_review_url:
+        return None
+    return {
+        'href': profile.google_review_url,
+        'label': 'Review us on Google',
+        'icon': 'star',
+        'brand_class': 'brand-google-review',
+        'external': True,
+    }
+
+
 def _build_primary_cta(profile, whatsapp_digits):
     if not profile.show_primary_cta:
         return None
@@ -664,6 +676,7 @@ def _public_profile_payload(request, profile):
     whatsapp_digits = _normalize_phone(profile.whatsapp_number or profile.phone)
     primary_actions, extra_actions = _build_public_actions(profile, whatsapp_digits)
     organization_links = _build_organization_links(profile, whatsapp_digits)
+    google_review_action = _build_google_review_action(profile)
     featured_cta = _build_primary_cta(profile, whatsapp_digits)
     if featured_cta:
         if profile.profile_focus == 'organization':
@@ -754,6 +767,7 @@ def _public_profile_payload(request, profile):
             'email': profile.email,
             'website': profile.website,
             'bookingUrl': profile.booking_url,
+            'googleReviewUrl': profile.google_review_url,
             'officeAddress': profile.office_address,
             'publicMapUrl': _public_map_url(profile),
             'businessHours': profile.business_hours,
@@ -767,6 +781,7 @@ def _public_profile_payload(request, profile):
             'organizationLinks': organization_links,
             'extra': extra_actions,
             'featuredCta': featured_cta,
+            'googleReview': google_review_action,
             'qrCodeUrl': reverse('professional_cards:qr_code', args=[profile.slug]),
             'vcardUrl': reverse('professional_cards:vcard', args=[profile.slug]),
             'editLoginUrl': reverse('professional_cards:edit_login', args=[profile.slug]),

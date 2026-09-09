@@ -161,6 +161,7 @@ const defaultFields: Record<string, string | number | boolean | null> = {
   booking_url: '',
   office_address: '',
   google_maps_url: '',
+  google_review_url: '',
   show_map_on_profile: false,
   business_hours: '',
   show_primary_cta: true,
@@ -239,6 +240,13 @@ const contactFields: FieldConfig[] = [
   { key: 'business_hours', label: 'Availability / business hours' },
   { key: 'office_address', label: 'Office / campus address', type: 'textarea', wide: true },
   { key: 'google_maps_url', label: 'Google Maps link', type: 'url', wide: true },
+  {
+    key: 'google_review_url',
+    label: 'Google Review link',
+    type: 'url',
+    placeholder: 'Paste the direct “Write a review” link from your Google Business Profile',
+    wide: true,
+  },
 ]
 
 const ctaFields: FieldConfig[] = [

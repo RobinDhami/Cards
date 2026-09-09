@@ -154,6 +154,7 @@ class ProfessionalProfileForm(forms.ModelForm):
             'booking_url',
             'office_address',
             'google_maps_url',
+            'google_review_url',
             'show_map_on_profile',
             'business_hours',
             'show_primary_cta',
@@ -210,6 +211,7 @@ class ProfessionalProfileForm(forms.ModelForm):
             'networking_statement': 'Short networking statement',
             'office_address': 'Office / Campus Address',
             'google_maps_url': 'Google Maps Link',
+            'google_review_url': 'Google Review Link',
             'show_map_on_profile': 'Show map on public profile',
             'business_hours': 'Availability / Business Hours',
             'show_primary_cta': 'Show primary CTA',
@@ -257,6 +259,9 @@ class ProfessionalProfileForm(forms.ModelForm):
         self.fields['academic_address'].widget.attrs.update({'placeholder': 'Campus, city, or academic location'})
         self.fields['primary_cta_label'].widget.attrs.update({'placeholder': 'Contact T2C, Visit website, Book a meeting'})
         self.fields['primary_cta_url'].widget.attrs.update({'placeholder': 'Required only for Custom Link'})
+        self.fields['google_review_url'].widget.attrs.update({
+            'placeholder': 'https://g.page/r/your-business/review',
+        })
         owner = self.instance.owner if self.instance and self.instance.owner_id else None
         owner_is_profile_user = bool(owner and not owner.is_staff and not owner.is_superuser)
         if owner_is_profile_user:

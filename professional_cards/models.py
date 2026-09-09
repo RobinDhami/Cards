@@ -210,6 +210,7 @@ class ProfessionalProfile(models.Model):
     booking_url = models.URLField(blank=True, default='')
     office_address = models.TextField(blank=True, default='')
     google_maps_url = models.URLField(blank=True, default='')
+    google_review_url = models.URLField(blank=True, default='')
     show_map_on_profile = models.BooleanField(default=False)
     business_hours = models.CharField(max_length=180, blank=True, default='')
     show_primary_cta = models.BooleanField(default=True)

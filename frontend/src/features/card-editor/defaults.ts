@@ -25,6 +25,7 @@ export const SAMPLE_PROFILE_FIELDS: ProfileFields = {
   phone: '+977 980-1234567',
   email: 'hello@tap2connectnepal.com',
   website: 'https://tap2connectnepal.com',
+  google_review_url: 'https://g.page/r/your-business/review',
   address: 'Kathmandu, Nepal',
   connection_id: 'T2C-00001',
   social_username: '@tap2connect',
@@ -531,6 +532,7 @@ export const smartFieldChoices: Array<{ key: keyof ProfileFields; label: string 
   { key: 'phone', label: 'Phone number' },
   { key: 'email', label: 'Email' },
   { key: 'website', label: 'Website' },
+  { key: 'google_review_url', label: 'Google review link' },
   { key: 'address', label: 'Address' },
   { key: 'connection_id', label: 'Connection ID' },
   { key: 'social_username', label: 'Social username' },
@@ -540,6 +542,7 @@ export const contactComponents = [
   { label: 'Phone contact line', text: '{{phone}}', name: 'Phone' },
   { label: 'Email contact line', text: '{{email}}', name: 'Email' },
   { label: 'Website contact line', text: '{{website}}', name: 'Website' },
+  { label: 'Google review link', text: '{{google_review_url}}', name: 'Google Review' },
   { label: 'Address contact line', text: '{{address}}', name: 'Address' },
   {
     label: 'Complete contact line',

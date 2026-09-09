@@ -20,6 +20,7 @@ class OrganizationProfileTests(TestCase):
             office_address='Kathmandu, Nepal',
             tiktok_url='https://www.tiktok.com/@digitalnepal',
             booking_url='https://example.com/demo',
+            google_review_url='https://g.page/r/digital-nepal/review',
             primary_cta_type='demo',
             business_hours='Mon - Fri, 9:00 AM - 6:00 PM',
         )
@@ -49,11 +50,30 @@ class OrganizationProfileTests(TestCase):
             ['WhatsApp', 'Email', 'Website', 'Map'],
         )
         self.assertIn('TikTok', [item['label'] for item in payload['actions']['extra']])
+        self.assertEqual(
+            payload['actions']['googleReview'],
+            {
+                'href': 'https://g.page/r/digital-nepal/review',
+                'label': 'Review us on Google',
+                'icon': 'star',
+                'brand_class': 'brand-google-review',
+                'external': True,
+            },
+        )
         self.assertEqual(payload['services'][0]['href'], f'/p/digital-nepal/offering/{self.offering.id}/')
         self.assertEqual(payload['actions']['analyticsUrl'], '')
         self.assertNotIn('views', payload)
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.views, 1)
+
+    def test_google_review_action_is_hidden_without_a_link(self):
+        self.profile.google_review_url = ''
+        self.profile.save(update_fields=['google_review_url'])
+
+        response = self.client.get('/api/professional-profiles/digital-nepal/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.json()['actions']['googleReview'])
 
     def test_owner_preview_does_not_inflate_views_and_actions_are_counted(self):
         self.client.force_login(self.owner)

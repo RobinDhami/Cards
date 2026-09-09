@@ -27,6 +27,7 @@ import Share2 from 'lucide-react/dist/esm/icons/share-2.js'
 import ShieldCheck from 'lucide-react/dist/esm/icons/shield-check.js'
 import Send from 'lucide-react/dist/esm/icons/send.js'
 import Sparkles from 'lucide-react/dist/esm/icons/sparkles.js'
+import Star from 'lucide-react/dist/esm/icons/star.js'
 import UserPlus from 'lucide-react/dist/esm/icons/user-plus.js'
 import Users from 'lucide-react/dist/esm/icons/users.js'
 import X from 'lucide-react/dist/esm/icons/x.js'
@@ -91,6 +92,7 @@ type PublicProfile = {
   email: string
   website: string
   bookingUrl: string
+  googleReviewUrl: string
   officeAddress: string
   publicMapUrl: string
   businessHours: string
@@ -146,6 +148,7 @@ type PublicProfileData = {
     organizationLinks: PublicAction[]
     extra: PublicAction[]
     featuredCta: PublicAction | null
+    googleReview: PublicAction | null
     qrCodeUrl: string
     vcardUrl: string
     editLoginUrl: string
@@ -167,6 +170,7 @@ const actionIcons: Record<string, LucideIcon> = {
   'map-pin': MapPin,
   'message-circle': MessageCircle,
   phone: Phone,
+  star: Star,
   'user-plus': UserPlus,
 }
 
@@ -395,6 +399,24 @@ function OrganizationContactLinks({ actions }: { actions: PublicAction[] }) {
         })}
       </nav>
     </section>
+  )
+}
+
+function GoogleReviewCta({ action }: { action: PublicAction | null }) {
+  if (!action) return null
+  return (
+    <aside className="profile-google-review" aria-label="Google review">
+      <a href={actionHref(action.href)} target="_blank" rel="noopener noreferrer">
+        <span className="profile-google-review-icon">
+          <Star size={19} fill="currentColor" aria-hidden="true" />
+        </span>
+        <span className="profile-google-review-copy">
+          <strong>{action.label}</strong>
+          <small>Share your experience and help others find us</small>
+        </span>
+        <ExternalLink size={16} aria-hidden="true" />
+      </a>
+    </aside>
   )
 }
 
@@ -1117,6 +1139,7 @@ function ModernTemplate({ data, showToast }: { data: PublicProfileData; showToas
       <TopBar data={data} onShare={() => shareProfile(data, showToast)} />
       <Hero profile={profile} />
       <PrimaryActions actions={data.actions.primary} />
+      <GoogleReviewCta action={data.actions.googleReview} />
       <Intro>{profile.shortTagline}</Intro>
       <Opportunity profile={profile} />
       <FocusSection profile={profile} />
@@ -1141,6 +1164,7 @@ function OrganizationTemplate({ data, showToast }: { data: PublicProfileData; sh
       <TopBar data={data} onShare={() => shareProfile(data, showToast)} />
       <Hero profile={profile} />
       <OrganizationActionPair data={data} />
+      <GoogleReviewCta action={data.actions.googleReview} />
       <Intro>{profile.about || profile.shortTagline || profile.organizationTagline}</Intro>
       <OrganizationContactLinks actions={data.actions.organizationLinks} />
       <Services services={data.services} title="What We Offer" variant="organization" />

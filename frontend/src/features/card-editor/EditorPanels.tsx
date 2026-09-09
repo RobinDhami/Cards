@@ -590,6 +590,7 @@ export function EditorLibraryPanel({
                   ['Digital profile QR', '{{qr_code}}'],
                   ['Save contact QR', 'MECARD:N:{{full_name}};TEL:{{phone}};EMAIL:{{email}};;'],
                   ['Website QR', '{{website}}'],
+                  ['Google Review QR', '{{google_review_url}}'],
                   ['Connection QR', 'https://tap2connectnepal.com/connect/{{connection_id}}'],
                 ].map(([label, value]) => (
                   <button type="button" onClick={() => onAddQr(value, label)} key={label}>

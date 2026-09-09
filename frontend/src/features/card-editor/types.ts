@@ -157,6 +157,7 @@ export type ProfileFields = {
   phone: string
   email: string
   website: string
+  google_review_url: string
   address: string
   connection_id: string
   social_username: string
