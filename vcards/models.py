@@ -1,3 +1,6 @@
+from decimal import Decimal
+
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
@@ -16,10 +19,49 @@ class PlatformAccess(User):
             ('access_platform_professionals', 'Can access platform professional profiles'),
             ('access_platform_templates', 'Can access platform Template Studio'),
             ('access_platform_cards', 'Can access platform cards'),
+            ('access_platform_card_operations', 'Can access platform card operations'),
             ('access_platform_activity', 'Can access platform activity'),
             ('access_platform_reports', 'Can access platform reports'),
             ('access_platform_settings', 'Can access platform settings'),
         ]
+
+
+class CardBatch(models.Model):
+    FAULT_REPRINT_REASON_CHOICES = [
+        ('printing_issue', 'Printing issue'),
+        ('nfc_not_working', 'NFC not working'),
+        ('wrong_details', 'Wrong details'),
+        ('damaged', 'Damaged'),
+        ('qr_issue', 'QR issue'),
+        ('other', 'Other'),
+    ]
+
+    batch_name = models.CharField(max_length=100, unique=True)
+    date = models.DateField(default=timezone.localdate)
+    cards_printed = models.PositiveIntegerField(default=0)
+    faulty_cards = models.PositiveIntegerField(default=0)
+    reprinted_cards = models.PositiveIntegerField(default=0)
+    cards_sold = models.PositiveIntegerField(default=0)
+    total_sales_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0.00'))],
+    )
+    fault_reprint_reason = models.CharField(
+        max_length=30,
+        choices=FAULT_REPRINT_REASON_CHOICES,
+        blank=True,
+    )
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-date', '-id']
+
+    def __str__(self):
+        return self.batch_name
 
 # Skill
 class Skill(models.Model):

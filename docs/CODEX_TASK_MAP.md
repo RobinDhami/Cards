@@ -296,6 +296,8 @@ Own migration fallbacks, obsolete routes, duplicated Django/React handlers, dead
 - The migration inventory may be stale; the current repository state is authoritative.
 - Do not create a Shop task solely because older documentation mentions one.
 
+## 11 — Card Inventory, Sales & Profit Tracking
+
 # Shared / Architectural Hotspots
 
 Shared areas:

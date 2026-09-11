@@ -5,6 +5,7 @@ const DashboardHome = lazy(() => import('./pages/dashboard/DashboardHome').then(
 const PlatformSettings = lazy(() => import('./pages/dashboard/PlatformSettings').then((module) => ({ default: module.PlatformSettings })))
 const PlatformActivity = lazy(() => import('./pages/dashboard/PlatformInsights').then((module) => ({ default: module.PlatformActivity })))
 const PlatformReports = lazy(() => import('./pages/dashboard/PlatformInsights').then((module) => ({ default: module.PlatformReports })))
+const CardOperations = lazy(() => import('./pages/dashboard/CardOperations').then((module) => ({ default: module.CardOperations })))
 const PublicProfessionalProfile = lazy(() => import('./pages/profiles/PublicProfessionalProfile').then((module) => ({ default: module.PublicProfessionalProfile })))
 const LoginPage = lazy(() => import('./pages/auth/LoginPage').then((module) => ({ default: module.LoginPage })))
 const PlatformLoginPage = lazy(() => import('./pages/auth/LoginPage').then((module) => ({ default: module.PlatformLoginPage })))
@@ -141,6 +142,10 @@ function AppRoutes() {
 
   if (path === '/dashboard/reports/' || path === '/dashboard/reports') {
     return <PlatformReports />
+  }
+
+  if (path === '/dashboard/card-operations/' || path === '/dashboard/card-operations') {
+    return <CardOperations />
   }
 
   if (routeMatches(path, schoolDashboardRoutes)) {

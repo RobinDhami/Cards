@@ -8,6 +8,7 @@ PLATFORM_MODULES = OrderedDict([
     ('professionals', {'label': 'Profiles', 'destination': '/dashboard/professional-cards/'}),
     ('templates', {'label': 'Templates', 'destination': '/dashboard/templates/'}),
     ('cards', {'label': 'Cards', 'destination': '/dashboard/print/'}),
+    ('card_operations', {'label': 'Card Operations', 'destination': '/dashboard/card-operations/'}),
     ('activity', {'label': 'Activity', 'destination': '/dashboard/activity/'}),
     ('reports', {'label': 'Reports', 'destination': '/dashboard/reports/'}),
     ('settings', {'label': 'Settings', 'destination': '/dashboard/settings/'}),
@@ -76,6 +77,8 @@ def required_platform_module_for_path(path):
         return 'members'
     if normalized.startswith(('/dashboard/print', '/dashboard/qr-export')):
         return 'cards'
+    if normalized.startswith('/dashboard/card-operations'):
+        return 'card_operations'
     if normalized == '/dashboard/activity':
         return 'activity'
     if normalized == '/dashboard/reports':

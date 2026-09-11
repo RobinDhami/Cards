@@ -16,7 +16,7 @@ from django.middleware.csrf import get_token
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.dateparse import parse_datetime
+from django.utils.dateparse import parse_date, parse_datetime
 from django.utils.text import slugify
 from django.views.decorators.http import require_http_methods
 
@@ -42,9 +42,10 @@ from professional_cards.views import (
     can_manage_professional_profile,
     platform_admin_required,
 )
-from vcards.models import College, ProfileActivity, Skill, StudentCard, StudentProfile
+from vcards.models import CardBatch, College, ProfileActivity, Skill, StudentCard, StudentProfile
 from vcards.platform_access import (
     PLATFORM_MODULES,
+    has_platform_module_access,
     platform_access_payload,
     platform_permission_codename,
 )
@@ -186,6 +187,156 @@ def _require_super_admin(request):
     if not request.user.is_superuser:
         return _json_error('Only Super Admins can manage Platform Staff.', status=403)
     return None
+
+
+def _require_platform_module(request, module):
+    login_error = _require_login(request)
+    if login_error:
+        return login_error
+    if not has_platform_module_access(request.user, module):
+        return _json_error('You do not have access to this platform module.', status=403)
+    return None
+
+
+def _card_batch_payload(batch):
+    return {
+        'id': batch.id,
+        'batchName': batch.batch_name,
+        'date': batch.date.isoformat(),
+        'cardsPrinted': batch.cards_printed,
+        'faultyCards': batch.faulty_cards,
+        'reprintedCards': batch.reprinted_cards,
+        'cardsSold': batch.cards_sold,
+        'totalSalesAmount': f'{batch.total_sales_amount:.2f}',
+        'faultReprintReason': batch.fault_reprint_reason,
+        'notes': batch.notes,
+    }
+
+
+def _card_batch_summary():
+    totals = CardBatch.objects.aggregate(
+        cards_printed=Sum('cards_printed'),
+        faulty_cards=Sum('faulty_cards'),
+        reprinted_cards=Sum('reprinted_cards'),
+        cards_sold=Sum('cards_sold'),
+        total_sales_amount=Sum('total_sales_amount'),
+    )
+    return {
+        'totalPrinted': totals['cards_printed'] or 0,
+        'totalFaulty': totals['faulty_cards'] or 0,
+        'totalReprinted': totals['reprinted_cards'] or 0,
+        'totalSold': totals['cards_sold'] or 0,
+        'totalSalesAmount': f"{totals['total_sales_amount'] or Decimal('0.00'):.2f}",
+    }
+
+
+def _update_card_batch_from_payload(batch, payload):
+    errors = {}
+    batch_name = str(payload.get('batchName') or '').strip()
+    if not batch_name:
+        errors['batchName'] = ['Batch number or name is required.']
+    elif len(batch_name) > 100:
+        errors['batchName'] = ['Keep the batch name to 100 characters or fewer.']
+
+    date = parse_date(str(payload.get('date') or ''))
+    if not date:
+        errors['date'] = ['Enter a valid date.']
+
+    numeric_fields = {
+        'cardsPrinted': 'cards_printed',
+        'faultyCards': 'faulty_cards',
+        'reprintedCards': 'reprinted_cards',
+        'cardsSold': 'cards_sold',
+    }
+    values = {}
+    for key, field in numeric_fields.items():
+        try:
+            value = int(str(payload.get(key, '')).strip())
+        except (TypeError, ValueError):
+            errors[key] = ['Enter a whole number of zero or more.']
+            continue
+        if value < 0:
+            errors[key] = ['Value cannot be negative.']
+            continue
+        values[field] = value
+
+    total_sales_amount = _decimal(payload.get('totalSalesAmount'))
+    if total_sales_amount is None:
+        errors['totalSalesAmount'] = ['Enter a valid sales amount.']
+    elif total_sales_amount < 0:
+        errors['totalSalesAmount'] = ['Sales amount cannot be negative.']
+
+    reason = str(payload.get('faultReprintReason') or '').strip()
+    valid_reasons = {value for value, _ in CardBatch.FAULT_REPRINT_REASON_CHOICES}
+    if reason and reason not in valid_reasons:
+        errors['faultReprintReason'] = ['Choose a valid fault or reprint reason.']
+    notes = str(payload.get('notes') or '').strip()
+
+    if errors:
+        raise ValidationError(errors)
+
+    batch.batch_name = batch_name
+    batch.date = date
+    batch.total_sales_amount = total_sales_amount
+    batch.fault_reprint_reason = reason
+    batch.notes = notes
+    for field, value in values.items():
+        setattr(batch, field, value)
+    try:
+        batch.full_clean()
+    except ValidationError as exc:
+        raise ValidationError(getattr(exc, 'message_dict', {'form': exc.messages})) from exc
+
+
+@require_http_methods(['GET', 'POST'])
+def card_batches_api(request):
+    permission_error = _require_platform_module(request, 'card_operations')
+    if permission_error:
+        return permission_error
+
+    if request.method == 'GET':
+        batches = CardBatch.objects.all()
+        return JsonResponse({
+            'ok': True,
+            'batches': [_card_batch_payload(batch) for batch in batches],
+            'summary': _card_batch_summary(),
+            'faultReprintReasons': _choice_list(CardBatch.FAULT_REPRINT_REASON_CHOICES),
+        })
+
+    batch = CardBatch()
+    try:
+        _update_card_batch_from_payload(batch, _json_body(request))
+        batch.save()
+    except ValidationError as exc:
+        return _json_error(
+            'Please correct the highlighted fields.',
+            errors=getattr(exc, 'message_dict', {'form': exc.messages}),
+        )
+    return JsonResponse({'ok': True, 'batch': _card_batch_payload(batch)}, status=201)
+
+
+@require_http_methods(['GET', 'PATCH', 'DELETE'])
+def card_batch_detail_api(request, batch_id):
+    permission_error = _require_platform_module(request, 'card_operations')
+    if permission_error:
+        return permission_error
+    batch = get_object_or_404(CardBatch, pk=batch_id)
+
+    if request.method == 'GET':
+        return JsonResponse({'ok': True, 'batch': _card_batch_payload(batch)})
+    if request.method == 'DELETE':
+        batch.delete()
+        return JsonResponse({'ok': True})
+
+    try:
+        _update_card_batch_from_payload(batch, _json_body(request))
+        batch.save()
+    except ValidationError as exc:
+        return _json_error(
+            'Please correct the highlighted fields.',
+            errors=getattr(exc, 'message_dict', {'form': exc.messages}),
+        )
+    return JsonResponse({'ok': True, 'batch': _card_batch_payload(batch)})
 
 
 def _platform_staff_permissions():

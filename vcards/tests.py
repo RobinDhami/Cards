@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from card_designer.models import CardTemplate, CardTemplateVersion
 from professional_cards.models import ProfessionalProfile
-from vcards.models import College, ProfileActivity, Skill, StudentCard, StudentProfile
+from vcards.models import CardBatch, College, ProfileActivity, Skill, StudentCard, StudentProfile
 
 
 class StudentDigitalCardTestMixin:
@@ -362,7 +362,7 @@ class PlatformStaffAccessTests(TestCase):
         self.assertEqual(response.json()['redirectPath'], '/dashboard/')
         self.assertEqual(
             response.json()['platformAccess']['allowedModules'],
-            ['overview', 'organizations', 'members', 'professionals', 'templates', 'cards', 'activity', 'reports', 'settings'],
+            ['overview', 'organizations', 'members', 'professionals', 'templates', 'cards', 'card_operations', 'activity', 'reports', 'settings'],
         )
 
     def test_template_staff_platform_login_redirects_to_template_studio(self):
@@ -403,6 +403,7 @@ class PlatformStaffAccessTests(TestCase):
             '/dashboard/students/',
             '/dashboard/professional-cards/',
             '/dashboard/print/',
+            '/dashboard/card-operations/',
             '/dashboard/activity/',
             '/dashboard/reports/',
             '/dashboard/settings/',
@@ -424,6 +425,7 @@ class PlatformStaffAccessTests(TestCase):
             reverse('dashboard_platform_reports_api'),
             reverse('react_dashboard_settings_api'),
             reverse('react_dashboard_print_controls_api'),
+            reverse('react_card_batches_api'),
         ]
 
         for path in denied_api_paths:
@@ -582,8 +584,89 @@ class PlatformStaffManagementTests(TestCase):
         self.assertEqual([member['username'] for member in payload['staff']], ['graphics.staff'])
         self.assertEqual(
             [module['key'] for module in payload['modules']],
-            ['overview', 'organizations', 'professionals', 'templates', 'activity', 'reports', 'settings'],
+            ['overview', 'organizations', 'professionals', 'templates', 'card_operations', 'activity', 'reports', 'settings'],
         )
+
+
+class CardBatchOperationsTests(TestCase):
+    password = 'CardOperationsPass123!'
+
+    def setUp(self):
+        self.super_admin = User.objects.create_superuser(
+            username='card.operations.admin',
+            password=self.password,
+        )
+        self.staff_user = User.objects.create_user(
+            username='template.only.staff',
+            password=self.password,
+        )
+        self.staff_user.user_permissions.add(Permission.objects.get(
+            content_type__app_label='vcards',
+            codename='access_platform_templates',
+        ))
+
+    def _payload(self, **overrides):
+        return {
+            'batchName': 'Batch #001',
+            'date': '2026-09-04',
+            'cardsPrinted': 5,
+            'faultyCards': 1,
+            'reprintedCards': 1,
+            'cardsSold': 4,
+            'totalSalesAmount': '2000.00',
+            'faultReprintReason': 'nfc_not_working',
+            'notes': 'One NFC chip failed.',
+            **overrides,
+        }
+
+    def test_super_admin_can_create_edit_delete_and_summarize_batches(self):
+        self.client.force_login(self.super_admin)
+        create = self.client.post(
+            reverse('react_card_batches_api'),
+            data=json.dumps(self._payload()),
+            content_type='application/json',
+        )
+        self.assertEqual(create.status_code, 201, create.content)
+        batch_id = create.json()['batch']['id']
+
+        listing = self.client.get(reverse('react_card_batches_api'))
+        self.assertEqual(listing.status_code, 200)
+        self.assertEqual(listing.json()['summary'], {
+            'totalPrinted': 5,
+            'totalFaulty': 1,
+            'totalReprinted': 1,
+            'totalSold': 4,
+            'totalSalesAmount': '2000.00',
+        })
+        self.assertEqual(listing.json()['batches'][0]['faultReprintReason'], 'nfc_not_working')
+
+        update = self.client.patch(
+            reverse('react_card_batch_detail_api', args=[batch_id]),
+            data=json.dumps(self._payload(cardsSold=5, totalSalesAmount='2500.00')),
+            content_type='application/json',
+        )
+        self.assertEqual(update.status_code, 200, update.content)
+        self.assertEqual(update.json()['batch']['cardsSold'], 5)
+
+        delete = self.client.delete(reverse('react_card_batch_detail_api', args=[batch_id]))
+        self.assertEqual(delete.status_code, 200)
+        self.assertFalse(CardBatch.objects.exists())
+        self.assertEqual(self.client.get(reverse('react_card_batches_api')).json()['summary']['totalSalesAmount'], '0.00')
+
+    def test_negative_values_are_rejected_and_unauthorized_users_are_denied(self):
+        self.client.force_login(self.super_admin)
+        invalid = self.client.post(
+            reverse('react_card_batches_api'),
+            data=json.dumps(self._payload(cardsPrinted=-1, totalSalesAmount='-2.00')),
+            content_type='application/json',
+        )
+        self.assertEqual(invalid.status_code, 400)
+        self.assertIn('cardsPrinted', invalid.json()['errors'])
+        self.assertIn('totalSalesAmount', invalid.json()['errors'])
+
+        self.client.force_login(self.staff_user)
+        self.assertEqual(self.client.get(reverse('dashboard_card_operations')).status_code, 403)
+        self.assertEqual(self.client.get(reverse('react_card_batches_api')).status_code, 403)
 
 
 class SchoolDashboardScopeTests(TestCase):
