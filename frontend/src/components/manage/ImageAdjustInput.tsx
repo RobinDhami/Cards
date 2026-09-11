@@ -120,8 +120,10 @@ export function ImageAdjustInput({
   onChange: (file: File | null) => void
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const pendingPreviewRef = useRef('')
   const [sourceUrl, setSourceUrl] = useState('')
   const [sourceFile, setSourceFile] = useState<File | null>(null)
+  const [pendingPreviewUrl, setPendingPreviewUrl] = useState('')
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [rotation, setRotation] = useState(0)
@@ -136,6 +138,18 @@ export function ImageAdjustInput({
   useEffect(() => () => {
     if (sourceUrl) URL.revokeObjectURL(sourceUrl)
   }, [sourceUrl])
+
+  useEffect(() => () => {
+    if (pendingPreviewRef.current) URL.revokeObjectURL(pendingPreviewRef.current)
+  }, [])
+
+  useEffect(() => {
+    // Once the saved image arrives from the API, it supersedes the temporary preview.
+    if (!currentUrl || !pendingPreviewRef.current) return
+    URL.revokeObjectURL(pendingPreviewRef.current)
+    pendingPreviewRef.current = ''
+    setPendingPreviewUrl('')
+  }, [currentUrl])
 
   useEffect(() => {
     if (!sourceUrl) return
@@ -165,6 +179,13 @@ export function ImageAdjustInput({
     resetAdjustments('fit')
   }
 
+  function setPendingPreview(file: File) {
+    if (pendingPreviewRef.current) URL.revokeObjectURL(pendingPreviewRef.current)
+    const nextUrl = URL.createObjectURL(file)
+    pendingPreviewRef.current = nextUrl
+    setPendingPreviewUrl(nextUrl)
+  }
+
   function closeEditor() {
     if (sourceUrl) URL.revokeObjectURL(sourceUrl)
     setSourceUrl('')
@@ -186,6 +207,7 @@ export function ImageAdjustInput({
         padding,
         background,
       })
+      setPendingPreview(file)
       onChange(file)
       closeEditor()
     } catch (reason) {
@@ -195,15 +217,17 @@ export function ImageAdjustInput({
     }
   }
 
+  const previewUrl = pendingPreviewUrl || currentUrl
+
   return (
     <>
       <label className="image-adjust-trigger">
         <span className="image-adjust-thumb">
-          {currentUrl ? <img src={currentUrl} alt="" /> : <ImageIcon size={19} aria-hidden="true" />}
+          {previewUrl ? <img src={previewUrl} alt="" /> : <ImageIcon size={19} aria-hidden="true" />}
         </span>
         <span>
           <strong>{label}</strong>
-          <small>{currentUrl ? 'Current image saved. Choose another to adjust it.' : 'Choose, crop and preview an image.'}</small>
+          <small>{pendingPreviewUrl ? 'New image ready — save the profile to publish it.' : currentUrl ? 'Current image saved. Choose another to adjust it.' : 'Choose, crop and preview an image.'}</small>
         </span>
         <span className="image-adjust-choose"><Upload size={13} /> Choose</span>
         <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => selectFile(event.target.files?.[0] ?? null)} />

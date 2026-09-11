@@ -772,7 +772,7 @@ export function ProfessionalProfileEditor() {
               <TextInput type="color" value={fieldString(fields.accent_color)} onChange={(event) => updateField('accent_color', event.target.value)} />
             </Field>
           </div>
-          <div className="professional-file-grid">
+          <div className="professional-file-grid" aria-label="Profile media uploads">
             <ImageAdjustInput label="Profile photo" mode="profile" currentUrl={fieldString(fields.profile_photo)} onChange={(file) => setFiles((current) => ({ ...current, profile_photo: file }))} />
             <ImageAdjustInput label="Cover photo" mode="cover" currentUrl={fieldString(fields.cover_photo)} onChange={(file) => setFiles((current) => ({ ...current, cover_photo: file }))} />
             <ImageAdjustInput
