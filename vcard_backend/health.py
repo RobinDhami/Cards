@@ -10,5 +10,8 @@ def health_check(request):
             cursor.execute("SELECT 1")
             cursor.fetchone()
     except DatabaseError:
-        return JsonResponse({"status": "unavailable"}, status=503)
-    return JsonResponse({"status": "ok"})
+        return JsonResponse(
+            {"status": "unavailable", "database": "unavailable"},
+            status=503,
+        )
+    return JsonResponse({"status": "ok", "database": "ok"})
