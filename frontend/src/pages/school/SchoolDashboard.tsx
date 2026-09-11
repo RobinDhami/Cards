@@ -8,7 +8,6 @@ import Download from 'lucide-react/dist/esm/icons/download.js'
 import Edit3 from 'lucide-react/dist/esm/icons/edit-3.js'
 import Eye from 'lucide-react/dist/esm/icons/eye.js'
 import FileSpreadsheet from 'lucide-react/dist/esm/icons/file-spreadsheet.js'
-import GraduationCap from 'lucide-react/dist/esm/icons/graduation-cap.js'
 import IdCard from 'lucide-react/dist/esm/icons/id-card.js'
 import KeyRound from 'lucide-react/dist/esm/icons/key-round.js'
 import Plus from 'lucide-react/dist/esm/icons/plus.js'
@@ -462,8 +461,8 @@ export function MembersPage({ memberType }: { memberType: 'student' | 'teacher' 
   const workspaceRoot = isAllMembers ? `/dashboard/organizations/${schoolId}` : ''
   const createActions = isAllMembers ? (
     <>
-      <button className="manage-button" type="button" onClick={() => setCreateType('teacher')}><Plus size={14} />Add staff</button>
-      <button className="manage-button is-primary" type="button" onClick={() => setCreateType('student')}><Plus size={14} />Add student</button>
+      <button className="manage-button" type="button" onClick={() => setCreateType('teacher')}><Plus size={14} />Add staff member</button>
+      <button className="manage-button is-primary" type="button" onClick={() => setCreateType('student')}><Plus size={14} />Add member</button>
     </>
   ) : (
     <button className="manage-button is-primary" type="button" onClick={() => setCreateType(memberType)}><Plus size={14} />Add {memberType}</button>
@@ -473,7 +472,7 @@ export function MembersPage({ memberType }: { memberType: 'student' | 'teacher' 
     <SchoolShell
       shell={shell}
       title={title}
-      subtitle={`${members.length} matching records in ${shell.currentSchool?.name}`}
+      subtitle={`${members.length} member records in ${shell.currentSchool?.name}`}
       actions={createActions}
     >
       {error ? <div className="manage-alert school-message">{error}</div> : null}
@@ -533,9 +532,9 @@ export function SchoolReportsPage() {
   if (!shell || !report) return <div className="manage-state">{error || 'Loading reports…'}</div>
 
   return (
-    <SchoolShell shell={shell} title="Reports" subtitle="Thirty-day school identity activity">
+    <SchoolShell shell={shell} title="Reports" subtitle="Thirty-day organization member activity">
       <section className="school-report-metrics">
-        <SchoolMetric label="Students" value={report.studentCount} icon={<GraduationCap size={17} />} />
+        <SchoolMetric label="Members" value={report.memberCount} icon={<UserRound size={17} />} />
         <SchoolMetric label="Live profiles" value={report.liveProfileCount} icon={<BadgeCheck size={17} />} />
         <SchoolMetric label="Active cards" value={report.activeCardCount} icon={<IdCard size={17} />} />
         <SchoolMetric label="Interactions" value={report.interactionCount} icon={<Activity size={17} />} />
@@ -616,7 +615,7 @@ export function SchoolSettingsPage() {
     try {
       const response = await apiFetch<{ school: SchoolSummary }>(`/api/dashboard/settings/${queryString({ school: school.id })}`, { method: 'POST', body })
       setSchool(response.school)
-      setSuccess(`${shell?.isSuperAdmin ? 'Organization' : 'School'} settings saved.`)
+      setSuccess('Settings saved.')
       setValues((current) => ({ ...current, adminPassword: '' }))
     } catch (reason) {
       setError(displayError(reason))
@@ -629,13 +628,13 @@ export function SchoolSettingsPage() {
 
   const update = (key: string, value: string) => setValues((current) => ({ ...current, [key]: value }))
   return (
-    <SchoolShell shell={shell} title={shell.isSuperAdmin ? 'Organization Settings' : 'School Settings'} subtitle={`Branding and identity defaults for ${school.name}`}>
+    <SchoolShell shell={shell} title="Settings" subtitle={`Branding and identity defaults for ${school.name}`}>
       <form onSubmit={save}>
         {error ? <div className="manage-alert school-message">{error}</div> : null}
         {success ? <div className="manage-alert is-success school-message">{success}</div> : null}
-        <FormSection title={shell.isSuperAdmin ? 'Organization identity' : 'School identity'}>
+        <FormSection title="Organization identity">
           <div className="form-grid">
-            <Field label={shell.isSuperAdmin ? 'Organization name' : 'School name'}><TextInput value={values.name ?? ''} onChange={(event) => update('name', event.target.value)} required /></Field>
+            <Field label="Organization name"><TextInput value={values.name ?? ''} onChange={(event) => update('name', event.target.value)} required /></Field>
             <Field label="Slogan"><TextInput value={values.slogan ?? ''} onChange={(event) => update('slogan', event.target.value)} /></Field>
             <Field label="Address" wide><TextArea value={values.address ?? ''} onChange={(event) => update('address', event.target.value)} /></Field>
             <Field label={shell.isSuperAdmin ? 'Primary contact name' : 'Principal name'}><TextInput value={values.principalName ?? ''} onChange={(event) => update('principalName', event.target.value)} /></Field>
@@ -645,7 +644,7 @@ export function SchoolSettingsPage() {
             <Field label="Description" wide><TextArea value={values.description ?? ''} onChange={(event) => update('description', event.target.value)} /></Field>
           </div>
           <div className="professional-file-grid">
-            <FileInput label={shell.isSuperAdmin ? 'Organization logo' : 'School logo'} currentUrl={school.logo} accept="image/*" onChange={setLogo} />
+            <FileInput label="Organization logo" currentUrl={school.logo} accept="image/*" onChange={setLogo} />
             <FileInput label={shell.isSuperAdmin ? 'Authorized signature' : 'Principal signature'} currentUrl={school.principalSignature} accept="image/*" onChange={setSignature} />
           </div>
         </FormSection>
@@ -657,7 +656,7 @@ export function SchoolSettingsPage() {
               ['themeSecondary', 'Secondary'],
               ['themeTernary', 'Accent'],
             ].map(([key, label]) => <Field label={label} key={key}><TextInput type="color" value={values[key] ?? '#000000'} onChange={(event) => update(key, event.target.value)} /></Field>)}
-            <Field label={shell.isSuperAdmin ? 'Member username prefix' : 'Student username prefix'}><TextInput value={values.usernamePrefix ?? ''} onChange={(event) => update('usernamePrefix', event.target.value)} placeholder={school.effectiveUsernamePrefix} /></Field>
+            <Field label="Member username prefix"><TextInput value={values.usernamePrefix ?? ''} onChange={(event) => update('usernamePrefix', event.target.value)} placeholder={school.effectiveUsernamePrefix} /></Field>
           </div>
         </FormSection>
         <FormSection title="Administrator login">
@@ -708,14 +707,14 @@ export function BulkUploadPage() {
 
   if (!shell) return <LoadingSchool />
   return (
-    <SchoolShell shell={shell} title="Bulk Upload" subtitle={shell.isSuperAdmin ? `Import member data into ${shell.currentSchool?.name}` : 'Create student or staff profiles from CSV and Excel'}>
+    <SchoolShell shell={shell} title="Bulk Upload" subtitle={shell.isSuperAdmin ? `Import member data into ${shell.currentSchool?.name}` : 'Create member profiles from CSV and Excel'}>
       {error ? <div className="manage-alert school-message">{error}</div> : null}
       <section className="school-upload-grid">
         <form className="manage-card school-upload-panel" onSubmit={upload}>
           <span><FileSpreadsheet size={25} /></span>
           <h2>Upload member data</h2>
           <p>Required columns: <code>name</code> and <code>phone</code>. Optional columns include email, username, role, roll_number, academic_level, section, address, emergency contact, blood group, and gender.</p>
-          <Field label="Profile type"><SelectInput value={memberType} onChange={(event) => setMemberType(event.target.value)}><option value="student">Students</option><option value="teacher">Teachers & staff</option><option value="other">Other members</option></SelectInput></Field>
+          <Field label="Profile type"><SelectInput value={memberType} onChange={(event) => setMemberType(event.target.value)}><option value="student">Students</option><option value="teacher">Teachers & Staff</option><option value="other">Other Members</option></SelectInput></Field>
           <FileInput label="CSV or Excel file" accept=".csv,.xlsx,.xls" onChange={setFile} />
           <button className="manage-button is-primary" type="submit" disabled={!file || uploading}><Upload size={14} />{uploading ? 'Uploading…' : 'Run upload'}</button>
         </form>
@@ -773,15 +772,15 @@ export function StudentCredentialsPage() {
 
   if (!shell || !credentials) return <div className="manage-state">{error || 'Loading credentials…'}</div>
   return (
-    <SchoolShell shell={shell} title="Student Credentials" subtitle={`Manage login access for ${credentials.name}`}>
+    <SchoolShell shell={shell} title="Member Credentials" subtitle={`Manage login access for this member: ${credentials.name}`}>
       <form className="manage-card school-credentials-panel" onSubmit={save}>
         <span><KeyRound size={23} /></span>
         <h2>{credentials.name}</h2>
-        <p>Username prefix: {credentials.usernamePrefix}. Suggested username: <code>{credentials.suggestedUsername}</code>.</p>
+        <p>Member username prefix: {credentials.usernamePrefix}. Suggested username: <code>{credentials.suggestedUsername}</code>.</p>
         {error ? <div className="manage-alert">{error}</div> : null}
         {success ? <div className="manage-alert is-success">{success}</div> : null}
-        <Field label="Username"><TextInput value={username} onChange={(event) => setUsername(event.target.value)} required /></Field>
-        <Field label="New password" hint="Leave blank to keep the current password. Minimum eight characters."><TextInput type="password" value={password} onChange={(event) => setPassword(event.target.value)} /></Field>
+        <Field label="Member username"><TextInput value={username} onChange={(event) => setUsername(event.target.value)} required /></Field>
+        <Field label="Temporary password" hint="Leave blank to keep the current password. Minimum eight characters."><TextInput type="password" value={password} onChange={(event) => setPassword(event.target.value)} /></Field>
         <div><a className="manage-button" href={organizationWorkspace ? `/dashboard/organizations/${schoolId}/members/` : withSchool('/dashboard/students/', schoolId)}>Cancel</a><button className="manage-button is-primary" type="submit"><Save size={14} />Save credentials</button></div>
       </form>
     </SchoolShell>
@@ -830,7 +829,7 @@ export function PrintControlsPage({ mode }: { mode: 'print' | 'qr' }) {
     else next.add(memberId)
     return next
   })
-  const title = mode === 'qr' ? 'QR & Data Export' : 'ID Card Studio'
+  const title = mode === 'qr' ? 'QR & Export' : 'Print Studio'
 
   return (
     <SchoolShell shell={shell} title={title} subtitle={`${selected.size} of ${members.length} members selected`}>
