@@ -1,4 +1,5 @@
 import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3.js'
+import Boxes from 'lucide-react/dist/esm/icons/boxes.js'
 import Building2 from 'lucide-react/dist/esm/icons/building-2.js'
 import GraduationCap from 'lucide-react/dist/esm/icons/graduation-cap.js'
 import LayoutList from 'lucide-react/dist/esm/icons/layout-list.js'
@@ -22,6 +23,7 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
     const workspaceRoot = `/dashboard/organizations/${schoolId}`
     return [
       ...(isSuperAdmin ? [{ label: 'All Organizations', href: '/dashboard/schools/', icon: Building2, active: false }] : []),
+      ...(isSuperAdmin ? [{ label: 'Card Operations', href: '/dashboard/card-operations/', icon: Boxes, active: false }] : []),
       { label: 'Overview', href: `${workspaceRoot}/`, icon: LayoutDashboard, active: path === workspaceRoot || path === `${workspaceRoot}/` },
       { label: 'Members', href: `${workspaceRoot}/members/`, icon: LayoutList, active: path.includes('/members') || path.includes('/credentials') },
       { label: 'Bulk Upload', href: `${workspaceRoot}/bulk-upload/`, icon: Upload, active: path.includes('/bulk-upload') },
@@ -35,7 +37,7 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
   if (isSuperAdmin) {
     return platformNavigation([
       'overview', 'organizations', 'members', 'professionals', 'templates',
-      'cards', 'activity', 'reports', 'settings',
+      'cards', 'card_operations', 'activity', 'reports', 'settings',
     ], path)
   }
 
