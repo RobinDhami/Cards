@@ -15,8 +15,8 @@ export type ImageAdjustMode = 'profile' | 'logo' | 'cover' | 'featured'
 
 const imageModeConfig = {
   profile: { aspect: 1, width: 800, height: 800, cropShape: 'round' as const, guidance: 'Center the face inside the circular safe area.' },
-  logo: { aspect: 1, width: 800, height: 800, cropShape: 'rect' as const, guidance: 'Keep the full logo visible inside the safe area.' },
-  cover: { aspect: 2.08, width: 1248, height: 600, cropShape: 'rect' as const, guidance: 'Keep important content away from the outer edges.' },
+  logo: { aspect: 1, width: 800, height: 800, cropShape: 'rect' as const, guidance: 'Use Fit for a full wordmark, or Fill and zoom in for a square mark that should occupy more of the tile.' },
+  cover: { aspect: 2.08, width: 1248, height: 600, cropShape: 'rect' as const, guidance: 'This is a wide 2.08:1 banner (1248 × 600). Portrait images are intentionally cropped; keep the important area in the frame.' },
   featured: { aspect: 1.5, width: 1200, height: 800, cropShape: 'rect' as const, guidance: 'Frame the strongest part of this work sample.' },
 }
 

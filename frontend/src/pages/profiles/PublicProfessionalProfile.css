@@ -187,7 +187,8 @@
 
 .profile-cover {
   position: relative;
-  height: 196px;
+  aspect-ratio: 2.08 / 1;
+  height: auto;
   overflow: hidden;
   border-radius: 24px;
   background: linear-gradient(
