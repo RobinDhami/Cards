@@ -42,7 +42,7 @@ from professional_cards.views import (
     can_manage_professional_profile,
     platform_admin_required,
 )
-from vcards.models import CardBatch, College, ProfileActivity, Skill, StudentCard, StudentProfile
+from vcards.models import CardBatch, CardBatchCard, College, ProfileActivity, Skill, StudentCard, StudentProfile
 from vcards.platform_access import (
     PLATFORM_MODULES,
     has_platform_module_access,
@@ -348,6 +348,150 @@ def card_batch_detail_api(request, batch_id):
             errors=getattr(exc, 'message_dict', {'form': exc.messages}),
         )
     return JsonResponse({'ok': True, 'batch': _card_batch_payload(batch)})
+
+
+def _linked_card_profile_payload(card):
+    if card.student_profile_id:
+        profile = card.student_profile
+        return {
+            'type': 'member',
+            'id': profile.id,
+            'label': profile.name,
+            'detail': profile.organization_name or (profile.college.name if profile.college_id else profile.username),
+        }
+    if card.professional_profile_id:
+        profile = card.professional_profile
+        return {
+            'type': 'professional',
+            'id': profile.id,
+            'label': profile.full_name,
+            'detail': profile.company_name or profile.profession,
+        }
+    return None
+
+
+def _card_batch_card_payload(card):
+    return {
+        'id': card.id,
+        'cardLabel': card.card_label,
+        'status': card.status,
+        'salePrice': f'{card.sale_price:.2f}',
+        'linkedProfile': _linked_card_profile_payload(card),
+        'notes': card.notes,
+    }
+
+
+def _update_card_batch_card_from_payload(card, payload):
+    errors = {}
+    card_label = str(payload.get('cardLabel') or '').strip()
+    if len(card_label) > 100:
+        errors['cardLabel'] = ['Keep the card label to 100 characters or fewer.']
+    status = str(payload.get('status') or 'available').strip()
+    valid_statuses = {value for value, _ in CardBatchCard.STATUS_CHOICES}
+    if status not in valid_statuses:
+        errors['status'] = ['Choose a valid card status.']
+    sale_price = _decimal(payload.get('salePrice'))
+    if sale_price is None:
+        errors['salePrice'] = ['Enter a valid sale price.']
+    elif sale_price < 0:
+        errors['salePrice'] = ['Sale price cannot be negative.']
+
+    linked_profile = payload.get('linkedProfile') or None
+    student_profile = None
+    professional_profile = None
+    if linked_profile:
+        if not isinstance(linked_profile, dict):
+            errors['linkedProfile'] = ['Choose a valid profile.']
+        else:
+            profile_type = str(linked_profile.get('type') or '')
+            profile_id = _int(linked_profile.get('id'))
+            if not profile_id:
+                errors['linkedProfile'] = ['Choose a valid profile.']
+            elif profile_type == 'member':
+                student_profile = StudentProfile.objects.filter(pk=profile_id).first()
+                if not student_profile:
+                    errors['linkedProfile'] = ['The selected member profile no longer exists.']
+            elif profile_type == 'professional':
+                professional_profile = ProfessionalProfile.objects.filter(pk=profile_id).first()
+                if not professional_profile:
+                    errors['linkedProfile'] = ['The selected professional profile no longer exists.']
+            else:
+                errors['linkedProfile'] = ['Choose a valid profile.']
+
+    if errors:
+        raise ValidationError(errors)
+    card.card_label = card_label
+    card.status = status
+    card.sale_price = sale_price
+    card.student_profile = student_profile
+    card.professional_profile = professional_profile
+    card.notes = str(payload.get('notes') or '').strip()
+    try:
+        card.full_clean()
+    except ValidationError as exc:
+        raise ValidationError(getattr(exc, 'message_dict', {'form': exc.messages})) from exc
+
+
+@require_http_methods(['GET'])
+def card_batch_profile_search_api(request):
+    permission_error = _require_platform_module(request, 'card_operations')
+    if permission_error:
+        return permission_error
+    query = str(request.GET.get('q') or '').strip()
+    if not query:
+        return JsonResponse({'ok': True, 'profiles': []})
+    members = StudentProfile.objects.select_related('college').filter(
+        Q(name__icontains=query) | Q(username__icontains=query),
+    ).order_by('name')[:12]
+    professionals = ProfessionalProfile.objects.filter(
+        Q(full_name__icontains=query) | Q(slug__icontains=query),
+    ).order_by('full_name')[:12]
+    return JsonResponse({'ok': True, 'profiles': [
+        *[{
+            'type': 'member', 'id': profile.id, 'label': profile.name,
+            'detail': profile.organization_name or (profile.college.name if profile.college_id else profile.username),
+        } for profile in members],
+        *[{
+            'type': 'professional', 'id': profile.id, 'label': profile.full_name,
+            'detail': profile.company_name or profile.profession,
+        } for profile in professionals],
+    ]})
+
+
+@require_http_methods(['GET', 'POST'])
+def card_batch_cards_api(request, batch_id):
+    permission_error = _require_platform_module(request, 'card_operations')
+    if permission_error:
+        return permission_error
+    batch = get_object_or_404(CardBatch, pk=batch_id)
+    if request.method == 'GET':
+        cards = batch.physical_cards.select_related('student_profile__college', 'professional_profile')
+        return JsonResponse({'ok': True, 'cards': [_card_batch_card_payload(card) for card in cards]})
+    card = CardBatchCard(batch=batch)
+    try:
+        _update_card_batch_card_from_payload(card, _json_body(request))
+        card.save()
+    except ValidationError as exc:
+        return _json_error('Please correct the highlighted fields.', errors=getattr(exc, 'message_dict', {'form': exc.messages}))
+    return JsonResponse({'ok': True, 'card': _card_batch_card_payload(card)}, status=201)
+
+
+@require_http_methods(['PATCH', 'DELETE'])
+def card_batch_card_detail_api(request, batch_id, card_id):
+    permission_error = _require_platform_module(request, 'card_operations')
+    if permission_error:
+        return permission_error
+    card = get_object_or_404(CardBatchCard, pk=card_id, batch_id=batch_id)
+    if request.method == 'DELETE':
+        card.delete()
+        return JsonResponse({'ok': True})
+    try:
+        _update_card_batch_card_from_payload(card, _json_body(request))
+        card.save()
+    except ValidationError as exc:
+        return _json_error('Please correct the highlighted fields.', errors=getattr(exc, 'message_dict', {'form': exc.messages}))
+    card = CardBatchCard.objects.select_related('student_profile__college', 'professional_profile').get(pk=card.pk)
+    return JsonResponse({'ok': True, 'card': _card_batch_card_payload(card)})
 
 
 def _platform_staff_permissions():

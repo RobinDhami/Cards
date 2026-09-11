@@ -63,6 +63,37 @@ class CardBatch(models.Model):
     def __str__(self):
         return self.batch_name
 
+
+class CardBatchCard(models.Model):
+    STATUS_CHOICES = [
+        ('available', 'Available'),
+        ('faulty', 'Faulty'),
+        ('reprinted', 'Reprinted'),
+        ('sold', 'Sold'),
+    ]
+
+    batch = models.ForeignKey(CardBatch, on_delete=models.CASCADE, related_name='physical_cards')
+    card_label = models.CharField(max_length=100, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available')
+    sale_price = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), validators=[MinValueValidator(Decimal('0.00'))])
+    student_profile = models.ForeignKey('StudentProfile', on_delete=models.SET_NULL, related_name='physical_card_entries', blank=True, null=True)
+    professional_profile = models.ForeignKey('professional_cards.ProfessionalProfile', on_delete=models.SET_NULL, related_name='physical_card_entries', blank=True, null=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['id']
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(student_profile__isnull=True) | models.Q(professional_profile__isnull=True),
+                name='card_batch_card_at_most_one_profile',
+            ),
+        ]
+
+    def __str__(self):
+        return self.card_label or f'Card #{self.pk}'
+
 # Skill
 class Skill(models.Model):
     name = models.CharField(max_length=100, unique=True)
