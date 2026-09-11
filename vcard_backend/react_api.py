@@ -198,6 +198,16 @@ def _require_platform_module(request, module):
     return None
 
 
+def _platform_page_context(user):
+    return {
+        'user': {
+            'displayName': user.get_full_name().strip() or user.username,
+            'roleLabel': 'Super Admin' if user.is_superuser else 'Platform Staff',
+        },
+        'platformAccess': platform_access_payload(user),
+    }
+
+
 def _card_batch_payload(batch):
     return {
         'id': batch.id,
@@ -298,6 +308,7 @@ def card_batches_api(request):
         batches = CardBatch.objects.all()
         return JsonResponse({
             'ok': True,
+            **_platform_page_context(request.user),
             'batches': [_card_batch_payload(batch) for batch in batches],
             'summary': _card_batch_summary(),
             'faultReprintReasons': _choice_list(CardBatch.FAULT_REPRINT_REASON_CHOICES),

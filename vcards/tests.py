@@ -631,6 +631,8 @@ class CardBatchOperationsTests(TestCase):
 
         listing = self.client.get(reverse('react_card_batches_api'))
         self.assertEqual(listing.status_code, 200)
+        self.assertTrue(listing.json()['platformAccess']['isSuperAdmin'])
+        self.assertIn('card_operations', listing.json()['platformAccess']['allowedModules'])
         self.assertEqual(listing.json()['summary'], {
             'totalPrinted': 5,
             'totalFaulty': 1,
@@ -667,6 +669,19 @@ class CardBatchOperationsTests(TestCase):
         self.client.force_login(self.staff_user)
         self.assertEqual(self.client.get(reverse('dashboard_card_operations')).status_code, 403)
         self.assertEqual(self.client.get(reverse('react_card_batches_api')).status_code, 403)
+
+    def test_platform_staff_with_card_operations_permission_can_load_batches(self):
+        self.staff_user.user_permissions.add(Permission.objects.get(
+            content_type__app_label='vcards',
+            codename='access_platform_card_operations',
+        ))
+        self.client.force_login(self.staff_user)
+
+        response = self.client.get(reverse('react_card_batches_api'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.json()['platformAccess']['isSuperAdmin'])
+        self.assertEqual(response.json()['platformAccess']['allowedModules'], ['templates', 'card_operations'])
 
 
 class SchoolDashboardScopeTests(TestCase):

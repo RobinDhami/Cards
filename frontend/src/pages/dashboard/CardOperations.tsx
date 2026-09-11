@@ -15,7 +15,7 @@ import { brandLogo } from '../../lib/assets'
 import './CardOperations.css'
 
 type Icon = ComponentType<SVGProps<SVGSVGElement> & { size?: number }>
-type PlatformContext = { user: { displayName: string; roleLabel: string }; platformAccess: { allowedModules: string[] } }
+type PlatformContext = { user?: { displayName: string; roleLabel: string }; platformAccess?: { allowedModules: string[] } }
 type Batch = {
   id: number
   batchName: string
@@ -129,7 +129,7 @@ export function CardOperations() {
   const showReason = form.faultyCards > 0 || form.reprintedCards > 0
 
   return (
-    <ManageShell brand="Tap2Connect" brandDetail="Platform administration" logo={brandLogo} nav={platformNavigation(data.platformAccess.allowedModules)} title="Card Operations" subtitle="Track physical card batches, faults, reprints, sales, and totals" userName={data.user.displayName} userRole={data.user.roleLabel}>
+    <ManageShell brand="Tap2Connect" brandDetail="Platform administration" logo={brandLogo} nav={platformNavigation(data.platformAccess?.allowedModules ?? [])} title="Card Operations" subtitle="Track physical card batches, faults, reprints, sales, and totals" userName={data.user?.displayName ?? ''} userRole={data.user?.roleLabel ?? ''}>
       <div className="card-operations-page">
         <section className="card-operations-metrics" aria-label="Card batch summary">
           <BatchMetric icon={Boxes} label="Total Printed" value={data.summary.totalPrinted} tone="blue" />
