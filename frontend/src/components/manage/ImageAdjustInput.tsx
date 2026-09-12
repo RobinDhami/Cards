@@ -121,9 +121,11 @@ export function ImageAdjustInput({
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const pendingPreviewRef = useRef('')
+  const adjustedPreviewRef = useRef('')
   const [sourceUrl, setSourceUrl] = useState('')
   const [sourceFile, setSourceFile] = useState<File | null>(null)
   const [pendingPreviewUrl, setPendingPreviewUrl] = useState('')
+  const [adjustedPreviewUrl, setAdjustedPreviewUrl] = useState('')
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [rotation, setRotation] = useState(0)
@@ -145,6 +147,10 @@ export function ImageAdjustInput({
     if (pendingPreviewRef.current) URL.revokeObjectURL(pendingPreviewRef.current)
   }, [])
 
+  useEffect(() => () => {
+    if (adjustedPreviewRef.current) URL.revokeObjectURL(adjustedPreviewRef.current)
+  }, [])
+
   useEffect(() => {
     // Once the saved image arrives from the API, it supersedes the temporary preview.
     if (!currentUrl || !pendingPreviewRef.current) return
@@ -161,6 +167,44 @@ export function ImageAdjustInput({
     document.addEventListener('keydown', closeOnEscape)
     return () => document.removeEventListener('keydown', closeOnEscape)
   })
+
+  useEffect(() => {
+    if (mode !== 'logo' || !sourceUrl || !sourceFile || !croppedArea) {
+      if (adjustedPreviewRef.current) URL.revokeObjectURL(adjustedPreviewRef.current)
+      adjustedPreviewRef.current = ''
+      setAdjustedPreviewUrl('')
+      return
+    }
+
+    let cancelled = false
+    const timer = window.setTimeout(() => {
+      void adjustedImageFile({
+        sourceUrl,
+        sourceName: sourceFile.name,
+        crop: croppedArea,
+        rotation,
+        mode,
+        padding,
+        background,
+      }).then((file) => {
+        const nextUrl = URL.createObjectURL(file)
+        if (cancelled) {
+          URL.revokeObjectURL(nextUrl)
+          return
+        }
+        if (adjustedPreviewRef.current) URL.revokeObjectURL(adjustedPreviewRef.current)
+        adjustedPreviewRef.current = nextUrl
+        setAdjustedPreviewUrl(nextUrl)
+      }).catch(() => {
+        // Export errors are shown when Apply image is selected; the live preview is best-effort.
+      })
+    }, 120)
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+    }
+  }, [background, croppedArea, mode, padding, rotation, sourceFile, sourceUrl])
 
   function resetAdjustments(nextFitMode: 'fit' | 'fill' = fitMode) {
     setCrop({ x: 0, y: 0 })
@@ -307,6 +351,12 @@ export function ImageAdjustInput({
                           </button>
                         ))}
                       </div>
+                    </div>
+                    <div className="image-adjust-saved-preview">
+                      <strong>Saved logo preview</strong>
+                      <span className={background === 'transparent' ? 'is-transparent' : ''}>
+                        {adjustedPreviewUrl ? <img src={adjustedPreviewUrl} alt="Exact result that will be saved" /> : <ImageIcon size={16} aria-hidden="true" />}
+                      </span>
                     </div>
                   </>
                 ) : null}

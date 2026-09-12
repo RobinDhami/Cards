@@ -296,6 +296,41 @@
   background-size: 12px 12px;
 }
 
+.image-adjust-saved-preview {
+  display: grid;
+  gap: 8px;
+}
+
+.image-adjust-saved-preview > strong {
+  color: #172554;
+  font-size: 10px;
+}
+
+.image-adjust-saved-preview > span {
+  display: grid;
+  width: 82px;
+  height: 82px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #d8e0ea;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #64748b;
+}
+
+.image-adjust-saved-preview > span.is-transparent {
+  background-color: #ffffff;
+  background-image: linear-gradient(45deg, #e2e8f0 25%, transparent 25%), linear-gradient(-45deg, #e2e8f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e2e8f0 75%), linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+  background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+  background-size: 12px 12px;
+}
+
+.image-adjust-saved-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 .image-adjust-reset {
   display: inline-flex;
   width: fit-content;
