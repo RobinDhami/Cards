@@ -146,6 +146,13 @@
   background: #ffffff;
 }
 
+/* The cover stage itself matches the delivered 1248 × 600 frame. This makes
+   Fit (100%) a true no-crop baseline instead of fitting media to a taller UI panel. */
+.image-adjust-stage.is-cover {
+  min-height: 0;
+  aspect-ratio: 2.08 / 1;
+}
+
 .image-adjust-stage.is-transparent {
   background-color: #ffffff;
   background-image:

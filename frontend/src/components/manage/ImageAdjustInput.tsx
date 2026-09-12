@@ -134,6 +134,8 @@ export function ImageAdjustInput({
   const [working, setWorking] = useState(false)
   const [error, setError] = useState('')
   const config = imageModeConfig[mode]
+  const supportsFitMode = mode === 'logo' || mode === 'cover'
+  const isFitMode = supportsFitMode && fitMode === 'fit'
 
   useEffect(() => () => {
     if (sourceUrl) URL.revokeObjectURL(sourceUrl)
@@ -162,6 +164,7 @@ export function ImageAdjustInput({
 
   function resetAdjustments(nextFitMode: 'fit' | 'fill' = fitMode) {
     setCrop({ x: 0, y: 0 })
+    // Zoom is relative to the cropper's object-fit baseline: Fit always starts at 100%.
     setZoom(nextFitMode === 'fit' && mode === 'logo' ? 0.84 : 1)
     setRotation(0)
     setPadding(mode === 'logo' ? 16 : 0)
@@ -255,9 +258,9 @@ export function ImageAdjustInput({
                   rotation={rotation}
                   aspect={config.aspect}
                   cropShape={config.cropShape}
-                  objectFit={mode === 'logo' && fitMode === 'fit' ? 'contain' : 'cover'}
-                  restrictPosition={mode !== 'logo' || fitMode === 'fill'}
-                  minZoom={mode === 'logo' && fitMode === 'fit' ? 0.5 : 1}
+                  objectFit={isFitMode ? 'contain' : 'cover'}
+                  restrictPosition={!isFitMode}
+                  minZoom={mode === 'logo' && isFitMode ? 0.5 : 1}
                   maxZoom={3}
                   onCropChange={setCrop}
                   onZoomChange={setZoom}
@@ -268,8 +271,8 @@ export function ImageAdjustInput({
               </div>
 
               <aside className="image-adjust-controls">
-                {mode === 'logo' ? (
-                  <div className="image-adjust-segmented" aria-label="Logo fit mode">
+                {supportsFitMode ? (
+                  <div className="image-adjust-segmented" aria-label={`${label} fit mode`}>
                     {(['fit', 'fill'] as const).map((item) => (
                       <button className={fitMode === item ? 'is-selected' : ''} type="button" onClick={() => {
                         setFitMode(item)
