@@ -3,6 +3,7 @@ import re
 
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models.functions import Lower
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -103,6 +104,9 @@ class Skill(models.Model):
 
 # College
 class College(models.Model):
+    class Meta:
+        constraints = [models.UniqueConstraint(Lower('organization_code'), name='college_code_ci_unique')]
+
     ORGANIZATION_TYPE_CHOICES = [
         ('education', 'Education'),
         ('club', 'Club'),
@@ -114,6 +118,7 @@ class College(models.Model):
     # Blank preserves the legacy generic workspace behaviour for existing records.
     organization_type = models.CharField(max_length=20, choices=ORGANIZATION_TYPE_CHOICES, blank=True, default='')
     organization_code = models.CharField(max_length=12, unique=True, blank=True, null=True, default=None)
+    member_username_sequence = models.PositiveBigIntegerField(default=0, editable=False)
     admin_user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='managed_schools', blank=True, null=True)
     slogan = models.CharField(max_length=255, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
@@ -137,6 +142,15 @@ class College(models.Model):
 
     def save(self, *args, **kwargs):
         self.organization_code = re.sub(r'[^A-Z0-9]', '', self.organization_code.upper()) or None if self.organization_code else None
+        # The allocator owns this field. A stale settings form must never
+        # overwrite the database's high-water mark with its earlier value.
+        if self.pk:
+            requested_fields = kwargs.get('update_fields')
+            kwargs['update_fields'] = [
+                field.name for field in self._meta.concrete_fields
+                if not field.primary_key and field.name != 'member_username_sequence'
+                and (requested_fields is None or field.name in requested_fields)
+            ]
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -182,6 +196,9 @@ class BaseProfile(models.Model):
 
 # Student Profile
 class StudentProfile(BaseProfile):
+    class Meta:
+        constraints = [models.UniqueConstraint(Lower('username'), name='member_username_ci_unique')]
+
     PROFILE_CATEGORY_CHOICES = [
         ('school', 'School / College Profile'),
         ('organization', 'Organization Profile'),

@@ -44,6 +44,7 @@ from professional_cards.views import (
 )
 from vcards.models import CardBatch, CardBatchCard, College, ProfileActivity, Skill, StudentCard, StudentProfile
 from vcards.organization_modules import identifier_label, organization_module
+from vcards.usernames import create_organization_member, validate_member_username
 from vcards.platform_access import (
     PLATFORM_MODULES,
     has_platform_module_access,
@@ -2013,9 +2014,9 @@ def dashboard_members_api(request):
     if not name or not phone:
         return _json_error('Name and phone are required.')
     roll_number = str(source.get('roll_number') or source.get('rollNumber') or '').strip()
-    username = str(source.get('username') or '').strip() or _suggest_school_username(school, name, roll_number)
+    username = str(source.get('username') or '').strip()
     raw_password = str(source.get('password') or '') or _generate_profile_password(name)
-    student = StudentProfile(
+    member_fields = dict(
         name=name,
         phone=phone,
         email=str(source.get('email') or ''),
@@ -2030,11 +2031,8 @@ def dashboard_members_api(request):
     )
     try:
         with transaction.atomic():
-            student.save()
+            student = create_organization_member(raw_password, **member_fields)
             _update_student_from_request(request, student, True)
-            if _profile_supports_self_service(student):
-                _sync_profile_auth_user(student, raw_password)
-                student.save(update_fields=['auth_user', 'username'])
     except (ValidationError, IntegrityError) as exc:
         return _json_error(str(exc))
     return JsonResponse({
@@ -2159,14 +2157,16 @@ def dashboard_credentials_api(request, student_id):
         return _json_error('Username is required.')
     if password and len(password) < 8:
         return _json_error('New passwords must be at least 8 characters long.')
-    if StudentProfile.objects.exclude(pk=student.pk).filter(username=username).exists():
-        return _json_error('That username is already in use.')
-    student.username = username
-    if password:
-        student.password = password
-    student.save()
-    _sync_profile_auth_user(student, password or None)
-    student.save(update_fields=['auth_user', 'username'])
+    try:
+        with transaction.atomic():
+            student.username = validate_member_username(username, student) if username != student.username else username
+            if password:
+                student.password = password
+            student.save()
+            _sync_profile_auth_user(student, password or None)
+            student.save(update_fields=['auth_user', 'username'])
+    except (ValidationError, IntegrityError) as exc:
+        return _json_error(str(exc))
     return JsonResponse({'ok': True, 'credentials': {'username': student.username}})
 
 
@@ -2188,58 +2188,76 @@ def dashboard_bulk_upload_api(request):
         dataframe = pd.read_csv(upload) if upload.name.lower().endswith('.csv') else pd.read_excel(upload)
     except Exception as exc:
         return _json_error(f'Could not read the uploaded file: {exc}')
-    missing = [column for column in ['name', 'phone'] if column not in dataframe.columns]
-    if missing:
-        return _json_error(f"Missing required columns: {', '.join(missing)}")
-    member_type = str(request.POST.get('role_type') or 'student')
-    if member_type not in organization_module(school)['member_types']:
+    if 'name' not in dataframe.columns and 'full_name' not in dataframe.columns:
+        return _json_error('Missing required column: name or full_name')
+    requested_type = str(request.POST.get('role_type') or '').strip().lower()
+    module = organization_module(school)
+    if requested_type and requested_type not in module['member_types']:
         return _json_error('Choose a valid profile type.')
-    default_role = {'student': 'Student', 'teacher': 'Teacher', 'staff': 'Staff', 'member': 'General Member', 'other': 'Member'}[member_type]
+    default_type = requested_type or module['member_types'][0]
+    default_role = {'student': 'Student', 'teacher': 'Teacher', 'staff': 'Staff', 'member': 'General Member', 'other': 'Member'}
+
+    def row_value(row, *keys):
+        for key in keys:
+            value = row.get(key, '')
+            if value is not None and str(value).strip():
+                return str(value).strip()
+        return ''
+
+    def row_member_type(row):
+        raw_type = row_value(row, 'member_type', 'member_category', 'category', 'memberType').lower()
+        aliases = {
+            'students': 'student', 'teachers': 'teacher', 'teachers & staff': 'teacher',
+            'staff / administration': 'staff', 'general members': 'member', 'other members': 'other',
+        }
+        return aliases.get(raw_type, raw_type) or default_type
+
     created = 0
     skipped = []
     credentials = []
     for index, row in dataframe.fillna('').iterrows():
-        name = str(row.get('name') or '').strip()
-        phone = str(row.get('phone') or '').strip()
-        if not name or not phone:
+        name = row_value(row, 'name', 'full_name')
+        phone = row_value(row, 'phone', 'contact', 'mobile')
+        email = row_value(row, 'email', 'email_address')
+        if not name or not (phone or email):
             skipped.append(index + 2)
             continue
-        roll_number = str(row.get('roll_number') or '').strip()
-        username = str(row.get('username') or '').strip() or _suggest_school_username(school, name, roll_number)
+        member_type = row_member_type(row)
+        if member_type not in module['member_types']:
+            skipped.append(index + 2)
+            continue
+        roll_number = row_value(row, 'roll_number', 'employee_id')
+        username = row_value(row, 'username')
         password = _generate_profile_password(name)
         try:
-            student = StudentProfile.objects.create(
+            student = create_organization_member(password,
                 name=name,
                 phone=phone,
-                email=str(row.get('email') or '').strip(),
+                email=email,
                 username=username,
-                unique_identifier=(str(row.get('membership_id') or row.get('student_id') or row.get('employee_id') or '').strip() or None),
+                unique_identifier=(row_value(row, 'identifier', 'student_id', 'employee_id', 'membership_id') or None),
                 college=school,
                 profile_category='school',
                 member_type=member_type,
-                role=str(row.get('role') or default_role).strip(),
-                address=str(row.get('address') or '').strip(),
-                emergency_contact_name=str(row.get('emergency_contact_name') or '').strip(),
-                emergency_contact_phone=str(row.get('emergency_contact_phone') or '').strip(),
-                academic_level=str(row.get('academic_level') or '').strip(),
-                section=str(row.get('section') or '').strip(),
+                role=row_value(row, 'role', 'designation') or default_role.get(member_type, 'Member'),
+                address=row_value(row, 'address'),
+                emergency_contact_name=row_value(row, 'emergency_contact_name'),
+                emergency_contact_phone=row_value(row, 'emergency_contact_phone'),
+                academic_level=row_value(row, 'academic_level', 'class', 'grade'),
+                section=row_value(row, 'section'),
                 roll_number=roll_number,
-                academic_year=str(row.get('academic_year') or '').strip(),
-                faculty_program=str(row.get('faculty_program') or '').strip(),
-                department=str(row.get('department') or '').strip(),
-                committee=str(row.get('committee') or '').strip(),
-                membership_term=str(row.get('membership_term') or '').strip(),
-                join_date=parse_date(str(row.get('join_date') or '').strip()) or None,
-                blood_group=str(row.get('blood_group') or '').strip(),
-                gender=str(row.get('gender') or '').strip(),
-                organization_name=school.name,
+                academic_year=row_value(row, 'academic_year'),
+                faculty_program=row_value(row, 'faculty_program', 'program'),
+                department=row_value(row, 'department'),
+                committee=row_value(row, 'committee'),
+                membership_term=row_value(row, 'membership_term'),
+                join_date=parse_date(row_value(row, 'join_date')) or None,
+                blood_group=row_value(row, 'blood_group'),
+                gender=row_value(row, 'gender'),
                 password=password,
             )
-            if _profile_supports_self_service(student):
-                _sync_profile_auth_user(student, password)
-                student.save(update_fields=['auth_user', 'username'])
             created += 1
-            credentials.append({'name': name, 'username': username, 'password': password})
+            credentials.append({'name': name, 'username': student.username, 'password': password})
         except (ValidationError, IntegrityError):
             skipped.append(index + 2)
     return JsonResponse({

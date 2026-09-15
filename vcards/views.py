@@ -531,7 +531,11 @@ def _sync_profile_auth_user(student, raw_password=None):
             student.auth_user = None
         return None
     profile_user = student.auth_user
-    target_username = _ensure_unique_username(student.username, profile_user.id if profile_user else None)
+    from .usernames import username_is_taken
+    target_username = student.username
+    if username_is_taken(target_username, student):
+        from django.core.exceptions import ValidationError
+        raise ValidationError('That username is already in use across Tap2Connect.')
     if not profile_user:
         profile_user = User(username=target_username)
     else:
@@ -569,35 +573,19 @@ def _generate_profile_password(name):
 
 
 def _school_username_prefix(school):
-    configured = (school.student_username_prefix or '').strip()
-    source = configured or school.name
-    normalized = slugify(source).replace('-', '.')
-    normalized = re.sub(r'[^a-z0-9.]+', '', normalized).strip('.')
-    return (normalized or f'school{school.id}')[:80]
+    return (school.organization_code or '').strip().upper()
 
 
 def _ensure_available_profile_username(base, student=None):
-    base = (base or 'student').strip()[:140].rstrip('.')
-    candidate = base
-    counter = 2
-    profile_query = StudentProfile.objects.all()
-    user_query = User.objects.all()
-    if student and student.pk:
-        profile_query = profile_query.exclude(pk=student.pk)
-        if student.auth_user_id:
-            user_query = user_query.exclude(pk=student.auth_user_id)
-    while profile_query.filter(username=candidate).exists() or user_query.filter(username=candidate).exists():
-        candidate = f'{base[:135]}.{counter}'
-        counter += 1
-    return candidate
+    from .usernames import validate_member_username
+    return validate_member_username(base, student)
 
 
 def _suggest_school_username(school, name='', roll_number='', student=None):
-    suffix_source = (roll_number or '').strip() or (name or '').strip() or 'student'
-    suffix = slugify(suffix_source).replace('-', '.')
-    suffix = re.sub(r'[^a-z0-9.]+', '', suffix).strip('.') or 'student'
-    base = f'{_school_username_prefix(school)}.{suffix}'[:140].rstrip('.')
-    return _ensure_available_profile_username(base, student)
+    if student and student.pk:
+        return student.username
+    from .usernames import generate_organization_member_username
+    return generate_organization_member_username(school, name)
 
 
 def _build_dashboard_query(school=None):
@@ -2421,11 +2409,7 @@ def dashboard_bulk_upload(request):
 
             username_seed = str(row.get('username') or '').strip()
             roll_number = str(row.get('roll_number', '')).strip()
-            generated_username = (
-                _ensure_available_profile_username(username_seed)
-                if username_seed else
-                _suggest_school_username(selected_school, name, roll_number)
-            )
+            generated_username = username_seed
             raw_password = _generate_profile_password(name)
             student = StudentProfile(
                 name=name,
@@ -2448,10 +2432,8 @@ def dashboard_bulk_upload(request):
                 organization_name=selected_school.name,
                 password=raw_password,
             )
-            student.save()
-            if _profile_supports_self_service(student):
-                _sync_profile_auth_user(student, raw_password)
-                student.save(update_fields=['auth_user', 'username'])
+            from .usernames import persist_organization_member
+            student = persist_organization_member(student, raw_password)
             created_count += 1
 
         upload_summary = {
@@ -2748,6 +2730,14 @@ def student_credentials(request, student_id):
     if request.method == 'POST':
         new_username = request.POST.get('username', '').strip()
         new_password = request.POST.get('new_password', '')
+        from .usernames import validate_member_username
+        from django.core.exceptions import ValidationError
+        try:
+            if new_username != student.username:
+                new_username = validate_member_username(new_username, student)
+        except ValidationError as exc:
+            messages.error(request, str(exc))
+            return redirect(f"{reverse('student_credentials', args=[student.id])}{_build_dashboard_query(student.college)}")
         if not new_username:
             messages.error(request, 'Username is required.')
         elif (
@@ -3007,11 +2997,7 @@ def add_student_to_college(request, college_id):
         student_name = request.POST.get('name', '').strip()
         roll_number = request.POST.get('roll_number', '').strip()
         requested_username = request.POST.get('username', '').strip()
-        assigned_username = (
-            _ensure_available_profile_username(requested_username)
-            if requested_username else
-            _suggest_school_username(college, student_name, roll_number)
-        )
+        assigned_username = requested_username
         raw_password = _generate_profile_password(student_name)
         member_type = _extract_member_type_from_post(request, role_type)
         student = StudentProfile(
@@ -3042,9 +3028,8 @@ def add_student_to_college(request, college_id):
         if request.FILES.get('cover_photo'):
             student.cover_photo = request.FILES['cover_photo']
         student.portfolio_template = _get_portfolio_template(student) or student.portfolio_template
-        student.save()
-        _sync_profile_auth_user(student, raw_password)
-        student.save(update_fields=['auth_user', 'username'])
+        from .usernames import persist_organization_member
+        student = persist_organization_member(student, raw_password)
         _assign_profile_skills(student, request)
         # Store social links now so they are ready for digital card use later.
         social_fields = ['facebook', 'instagram', 'twitter', 'linkedin', 'youtube', 'tiktok', 'github', 'figma', 'upwork', 'website', 'messenger', 'whatsapp']
