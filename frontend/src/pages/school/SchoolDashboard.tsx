@@ -136,7 +136,7 @@ function SchoolShell({
       brand={school?.name || 'Tap2Connect'}
       brandDetail={school ? (shell.isSuperAdmin ? 'Super Admin · Organization workspace' : 'Organization administration') : 'Platform administration'}
       logo={school?.logo || brandLogo}
-      nav={schoolWorkspaceNav(school?.id, shell.isSuperAdmin)}
+      nav={schoolWorkspaceNav(school?.id, shell.isSuperAdmin, school?.organizationType)}
       title={title}
       subtitle={subtitle}
       userName={shell.user.displayName}
@@ -184,6 +184,9 @@ function SchoolMetric({
 export function SchoolsPage() {
   const [shell, setShell] = useState<DashboardShellData | null>(null)
   const [schools, setSchools] = useState<SchoolSummary[]>([])
+  const [organizationTypeCounts, setOrganizationTypeCounts] = useState<Record<string, number>>({})
+  const [typeFilter, setTypeFilter] = useState('all')
+  const [search, setSearch] = useState('')
   const [error, setError] = useState('')
   const [createOpen, setCreateOpen] = useState(false)
   const [creating, setCreating] = useState(false)
@@ -197,10 +200,11 @@ export function SchoolsPage() {
     adminPassword: '',
   })
 
-  const load = () => apiFetch<{ shell: DashboardShellData; schools: SchoolSummary[] }>('/api/dashboard/schools/')
+  const load = () => apiFetch<{ shell: DashboardShellData; schools: SchoolSummary[]; organizationTypeCounts: Record<string, number> }>('/api/dashboard/schools/')
     .then((payload) => {
       setShell(payload.shell)
       setSchools(payload.schools)
+      setOrganizationTypeCounts(payload.organizationTypeCounts)
     })
     .catch((reason) => setError(displayError(reason)))
 
@@ -239,15 +243,28 @@ export function SchoolsPage() {
   }
 
   if (!shell) return <LoadingSchool />
+  const filteredSchools = schools.filter((school) => (
+    (typeFilter === 'all' || (school.organizationType || 'generic') === typeFilter)
+    && `${school.name} ${school.address} ${school.adminUsername}`.toLowerCase().includes(search.trim().toLowerCase())
+  ))
+  const typeTabs = [
+    ['all', 'All Organizations'], ['education', 'Education'], ['club', 'Clubs'], ['business', 'Business'], ['other', 'Other'], ['generic', 'Generic / Unclassified'],
+  ] as const
 
   return (
     <SchoolShell
       shell={shell}
       title="Organizations"
-      subtitle={`${schools.length} organizations on the platform`}
+      subtitle={`${filteredSchools.length} of ${schools.length} organizations on the platform`}
       actions={<button className="manage-button is-primary" type="button" onClick={() => setCreateOpen((current) => !current)}><Plus size={14} />Add organization</button>}
     >
       {error ? <div className="manage-alert school-message">{error}</div> : null}
+      <section className="school-organization-filters manage-card" aria-label="Organization filters">
+        <div role="tablist" aria-label="Organization type">
+          {typeTabs.map(([value, label]) => <button key={value} type="button" role="tab" aria-selected={typeFilter === value} className={typeFilter === value ? 'is-active' : ''} onClick={() => setTypeFilter(value)}>{label} <span>{organizationTypeCounts[value] ?? 0}</span></button>)}
+        </div>
+        <label><Search size={14} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search organizations" /></label>
+      </section>
       {createOpen ? (
         <form className="school-create-panel manage-card" onSubmit={createSchool}>
           <div><h2>Create organization workspace</h2><p>Set the organization and its first administrator account.</p></div>
@@ -265,11 +282,11 @@ export function SchoolsPage() {
       ) : null}
 
       <section className="school-card-grid">
-        {schools.map((school) => (
+        {filteredSchools.map((school) => (
           <article className="school-summary-card manage-card" key={school.id}>
             <header>
               <span>{school.logo ? <img src={school.logo} alt="" /> : <Building2 size={21} />}</span>
-              <div><h2>{school.name}</h2><p>{school.address || 'Address not added'}</p></div>
+              <div><h2>{school.name}</h2><p>{school.address || 'Address not added'} · <strong>{school.organizationType === 'generic' ? 'Generic / Unclassified' : school.organizationType[0].toUpperCase() + school.organizationType.slice(1)}</strong></p></div>
               <button type="button" onClick={() => deleteSchool(school)} title="Delete organization" aria-label="Delete organization"><Trash2 size={14} /></button>
             </header>
             <div className="school-summary-stats">
@@ -425,8 +442,8 @@ export function MembersPage({ memberType }: { memberType: string }) {
   const [section, setSection] = useState('')
   const [academicLevel, setAcademicLevel] = useState('')
   const [role, setRole] = useState('')
-  const [category, setCategory] = useState('all')
-  const [group, setGroup] = useState('')
+  const [category, setCategory] = useState(() => new URLSearchParams(window.location.search).get('category') || 'all')
+  const [group, setGroup] = useState(() => new URLSearchParams(window.location.search).get('group') || '')
   const [createType, setCreateType] = useState<string | null>(() => (
     new URLSearchParams(window.location.search).get('create') === '1'
       ? (memberType === 'teacher' ? 'teacher' : 'student')

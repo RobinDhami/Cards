@@ -31,6 +31,22 @@
   margin-top: 12px;
 }
 
+.school-organization-filters {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.85rem;
+}
+
+.school-organization-filters [role='tablist'] { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.school-organization-filters button { border: 1px solid var(--manage-border); border-radius: 999px; background: transparent; color: inherit; cursor: pointer; padding: 0.42rem 0.68rem; }
+.school-organization-filters button.is-active { background: var(--manage-accent); border-color: var(--manage-accent); color: white; }
+.school-organization-filters button span { opacity: 0.72; font-size: 0.78em; }
+.school-organization-filters label { display: flex; align-items: center; gap: 0.45rem; }
+.school-organization-filters input { border: 0; outline: 0; min-width: 180px; }
+
 .school-card-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

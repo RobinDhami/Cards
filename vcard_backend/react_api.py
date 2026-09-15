@@ -1817,10 +1817,14 @@ def dashboard_schools_api(request):
         return _json_error('Only platform administrators can manage organizations.', status=403)
     if request.method == 'GET':
         schools = College.objects.select_related('admin_user').order_by('name')
+        organization_type_counts = {'all': schools.count(), 'generic': 0, 'education': 0, 'club': 0, 'business': 0, 'other': 0}
+        for row in schools.values('organization_type').annotate(total=Count('id')):
+            organization_type_counts[row['organization_type'] or 'generic'] = row['total']
         return JsonResponse({
             'ok': True,
             'shell': _dashboard_shell(request, 'schools'),
             'schools': [_school_payload(school, with_stats=True) for school in schools],
+            'organizationTypeCounts': organization_type_counts,
         })
 
     payload = _json_body(request)

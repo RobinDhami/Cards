@@ -11,13 +11,15 @@ import Upload from 'lucide-react/dist/esm/icons/upload.js'
 import Users from 'lucide-react/dist/esm/icons/users.js'
 import { queryString } from '../../lib/api'
 import { platformNavigation } from '../../components/manage/platformNavigation'
+import { workspaceMemberNavigation } from './organizationModuleConfig'
 
 export function withSchool(path: string, schoolId?: number | null) {
   return `${path}${schoolId ? queryString({ school: schoolId }) : ''}`
 }
 
-export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = false) {
+export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = false, organizationType = '') {
   const path = window.location.pathname
+  const search = window.location.search
 
   if (schoolId && path.startsWith('/dashboard/organizations/')) {
     const workspaceRoot = `/dashboard/organizations/${schoolId}`
@@ -25,7 +27,10 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
       ...(isSuperAdmin ? [{ label: 'All Organizations', href: '/dashboard/schools/', icon: Building2, active: false }] : []),
       ...(isSuperAdmin ? [{ label: 'Card Operations', href: '/dashboard/card-operations/', icon: Boxes, active: false }] : []),
       { label: 'Overview', href: `${workspaceRoot}/`, icon: LayoutDashboard, active: path === workspaceRoot || path === `${workspaceRoot}/` },
-      { label: 'Members', href: `${workspaceRoot}/members/`, icon: LayoutList, active: path.includes('/members') || path.includes('/credentials') },
+      ...workspaceMemberNavigation(organizationType).map((item) => ({
+        label: item.label, href: `${workspaceRoot}/members/${item.query}`, icon: LayoutList,
+        active: path.includes('/members') && (item.query ? search === item.query : !search),
+      })),
       { label: 'Bulk Upload', href: `${workspaceRoot}/bulk-upload/`, icon: Upload, active: path.includes('/bulk-upload') },
       { label: 'Print Studio', href: `${workspaceRoot}/print/`, icon: Printer, active: path.includes('/print') },
       { label: 'QR & Export', href: `${workspaceRoot}/exports/`, icon: QrCode, active: path.includes('/exports') },

@@ -26,3 +26,19 @@ export const organizationModuleConfig = {
 export function moduleConfig(key?: string) {
   return organizationModuleConfig[key as OrganizationModuleKey] || organizationModuleConfig.generic
 }
+
+export function workspaceMemberNavigation(key?: string) {
+  if (key === 'education') {
+    return [
+      { label: 'Members', query: '' }, { label: 'Students', query: '?category=student' },
+      { label: 'Teachers', query: '?category=teacher' }, { label: 'Staff / Administration', query: '?category=staff' },
+    ]
+  }
+  if (key === 'club') {
+    return [
+      { label: 'Members', query: '' }, { label: 'Executive / Board', query: '?group=executive' },
+      { label: 'Committee', query: '?group=committee' }, { label: 'General Members', query: '?group=general' },
+    ]
+  }
+  return [{ label: 'Members', query: '' }]
+}

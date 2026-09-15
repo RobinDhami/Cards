@@ -1288,3 +1288,13 @@ class OrganizationModuleTests(TestCase):
         response = self.client.get(reverse('react_dashboard_members_api'), {'school': organization.id, 'type': 'all'})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['shell']['currentSchool']['organizationType'], 'generic')
+
+    def test_platform_organization_directory_returns_real_module_counts(self):
+        education = College.objects.create(name='Filtered Education', organization_type='education')
+        College.objects.create(name='Filtered Club', organization_type='club')
+        response = self.client.get(reverse('react_dashboard_schools_api'))
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertIn(education.id, [item['id'] for item in payload['schools']])
+        self.assertEqual(payload['organizationTypeCounts']['education'], 1)
+        self.assertEqual(payload['organizationTypeCounts']['club'], 1)
