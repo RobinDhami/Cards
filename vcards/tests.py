@@ -1267,6 +1267,43 @@ class OrganizationModuleTests(TestCase):
         self.assertEqual(profile['identifierLabel'], 'Employee ID')
         self.assertIn({'label': 'Department', 'value': 'Technology'}, profile['structuredDetails'])
 
+    def test_education_student_keeps_academic_fields_and_student_identifier(self):
+        school = College.objects.create(name='Student Education', organization_type='education')
+        response = self.client.post(
+            f"{reverse('react_dashboard_members_api')}?school={school.id}",
+            data=json.dumps({
+                'name': 'Student One', 'phone': '9800000013', 'member_type': 'student', 'student_id': 'VIS-001',
+                'academic_year': '2026', 'faculty_program': 'Science', 'academic_level': 'grade_10', 'section': 'A', 'roll_number': '12',
+            }), content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 201)
+        student = StudentProfile.objects.get(name='Student One')
+        self.assertEqual(student.unique_identifier, 'VIS-001')
+        self.assertEqual(student.faculty_program, 'Science')
+        profile = self.client.get(reverse('react_student_public_api', args=[student.id])).json()['profile']
+        self.assertEqual(profile['identifierLabel'], 'Student ID')
+        self.assertIn({'label': 'Faculty / Program', 'value': 'Science'}, profile['structuredDetails'])
+
+    def test_education_staff_uses_broad_category_and_role_as_designation(self):
+        school = College.objects.create(name='Staff Education', organization_type='education')
+        response = self.client.post(
+            f"{reverse('react_dashboard_members_api')}?school={school.id}",
+            data=json.dumps({'name': 'Staff One', 'phone': '9800000014', 'member_type': 'staff', 'employee_id': 'EMP-01', 'role': 'Registrar', 'department': 'Administration'}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 201)
+        staff = StudentProfile.objects.get(name='Staff One')
+        self.assertEqual(staff.member_type, 'staff')
+        self.assertEqual(staff.role, 'Registrar')
+        self.assertEqual(staff.unique_identifier, 'EMP-01')
+
+    def test_legacy_studentprofile_member_types_remain_valid(self):
+        legacy = StudentProfile.objects.create(
+            name='Legacy Teacher', username='legacy.teacher', password='LegacyPass123!', phone='9800000015', member_type='teacher',
+        )
+        self.assertEqual(legacy.member_type, 'teacher')
+        self.assertTrue(legacy.unique_identifier)
+
     def test_club_uses_member_category_and_flexible_role_fields(self):
         club = College.objects.create(name='Club Module', organization_type='club')
         response = self.client.post(
