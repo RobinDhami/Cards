@@ -43,6 +43,7 @@ from professional_cards.views import (
     platform_admin_required,
 )
 from vcards.models import CardBatch, CardBatchCard, College, ProfileActivity, Skill, StudentCard, StudentProfile
+from vcards.organization_modules import identifier_label, organization_module
 from vcards.platform_access import (
     PLATFORM_MODULES,
     has_platform_module_access,
@@ -1391,7 +1392,8 @@ def _student_fields(student):
         'name', 'phone', 'email', 'bio', 'username', 'profile_category', 'member_type',
         'organization_name', 'role', 'address', 'emergency_contact_name',
         'emergency_contact_phone', 'map_url', 'academic_level', 'section',
-        'roll_number', 'blood_group', 'gender', 'about_intro', 'about_featured',
+        'roll_number', 'academic_year', 'faculty_program', 'department', 'committee',
+        'membership_term', 'join_date', 'blood_group', 'gender', 'about_intro', 'about_featured',
         'about_current', 'additional_info_heading', 'additional_info_description',
         'social_stack', 'facebook', 'messenger', 'whatsapp', 'instagram', 'twitter',
         'linkedin', 'youtube', 'tiktok', 'github', 'figma', 'upwork', 'website',
@@ -1413,6 +1415,7 @@ def _student_manage_payload(request, student):
         'fields': _student_fields(student),
         'collegeId': student.college_id,
         'collegeName': student.college.name if student.college else '',
+        'organizationType': student.college.organization_type if student.college else '',
         'uniqueIdentifier': student.unique_identifier or '',
         'profilePhoto': _file_url(student.profile_photo),
         'coverPhoto': _file_url(student.cover_photo),
@@ -1452,6 +1455,22 @@ def _student_manage_payload(request, student):
 
 def _public_student_payload(request, student):
     context = _school_card_context(request, student)
+    organization = student.college
+    module_key = organization_module(organization)['key'] if organization else 'generic'
+    if module_key == 'education' and student.member_type == 'student':
+        structured_details = [
+            ('Academic year', student.academic_year), ('Faculty / Program', student.faculty_program),
+            ('Class / Grade', context['grade_label']), ('Section', student.section), ('Roll number', student.roll_number),
+        ]
+    elif module_key == 'education':
+        structured_details = [('Department', student.department), ('Designation', student.role)]
+    elif module_key == 'club':
+        structured_details = [
+            ('Role / Position', student.role), ('Committee', student.committee),
+            ('Membership term', student.membership_term), ('Join date', student.join_date.isoformat() if student.join_date else ''),
+        ]
+    else:
+        structured_details = []
     return {
         'id': student.id,
         'name': student.name,
@@ -1472,7 +1491,7 @@ def _public_student_payload(request, student):
         'section': context['section_label'],
         'gradeSection': context['grade_section'],
         'identifier': context['student_identifier'],
-        'identifierLabel': context['student_identifier_label'],
+        'identifierLabel': identifier_label(organization, student) if organization else context['student_identifier_label'],
         'role': student.role or context['member_type_label'],
         'organization': student.organization_name or context['school_name'],
         'address': context['student_address'] or context['school_address'],
@@ -1499,6 +1518,7 @@ def _public_student_payload(request, student):
         },
         'canViewPrivateDetails': context['can_view_private_details'],
         'publicUrl': context['public_card_url'],
+        'structuredDetails': [{'label': label, 'value': value} for label, value in structured_details if value],
     }
 
 
@@ -1542,7 +1562,8 @@ STUDENT_MUTABLE_FIELDS = [
     'name', 'phone', 'email', 'bio', 'username', 'profile_category', 'member_type',
     'organization_name', 'role', 'address', 'emergency_contact_name',
     'emergency_contact_phone', 'map_url', 'academic_level', 'section',
-    'roll_number', 'blood_group', 'gender', 'about_intro', 'about_featured',
+    'roll_number', 'academic_year', 'faculty_program', 'department', 'committee',
+    'membership_term', 'join_date', 'blood_group', 'gender', 'about_intro', 'about_featured',
     'about_current', 'additional_info_heading', 'additional_info_description',
     'facebook', 'messenger', 'whatsapp', 'instagram', 'twitter', 'linkedin',
     'youtube', 'tiktok', 'github', 'figma', 'upwork', 'website',
@@ -1555,12 +1576,13 @@ STUDENT_MUTABLE_FIELDS = [
 def _update_student_from_request(request, student, allow_school_fields):
     payload = _json_body(request)
     source = payload.get('fields', payload) if isinstance(payload, dict) else payload
-    protected_school_fields = {'profile_category', 'member_type', 'academic_level', 'section', 'roll_number'}
+    protected_school_fields = {'profile_category', 'member_type', 'academic_level', 'section', 'roll_number', 'academic_year', 'faculty_program', 'department', 'committee', 'membership_term', 'join_date'}
     for field in STUDENT_MUTABLE_FIELDS:
         if field in protected_school_fields and not allow_school_fields:
             continue
         if field in source:
-            setattr(student, field, source.get(field) or '')
+            value = source.get(field) or ''
+            setattr(student, field, parse_date(str(value)) if field == 'join_date' and value else value)
     if 'show_contact_card' in source:
         student.show_contact_card = _bool(source.get('show_contact_card'), student.show_contact_card)
     if allow_school_fields and 'college' in source:
@@ -1723,9 +1745,17 @@ def _dashboard_school(request, required=True):
 
 
 def _school_payload(school, with_stats=False):
+    module = organization_module(school)
     payload = {
         'id': school.id,
         'name': school.name,
+        'organizationType': school.organization_type or 'generic',
+        'module': {
+            'key': module['key'],
+            'memberTypes': [{'value': value, 'label': module['member_labels'][value]} for value in module['member_types']],
+            'bulkColumns': module['bulk_columns'],
+            'filters': module.get('filters', ()),
+        },
         'slogan': school.slogan or '',
         'address': school.address or '',
         'logo': _file_url(school.logo),
@@ -1744,11 +1774,15 @@ def _school_payload(school, with_stats=False):
         'adminUsername': school.admin_user.username if school.admin_user else '',
     }
     if with_stats:
-        student_query = school.students.filter(profile_category='school', member_type='student')
+        members = school.students.filter(profile_category='school')
+        student_query = members.filter(member_type='student')
         payload['stats'] = {
+            'members': members.count(),
             'students': student_query.count(),
-            'teachers': school.students.filter(profile_category='school', member_type='teacher').count(),
-            'live': student_query.filter(show_contact_card=True).count(),
+            'teachers': members.filter(member_type='teacher').count(),
+            'staff': members.filter(member_type='staff').count(),
+            'clubMembers': members.filter(member_type='member').count(),
+            'live': members.filter(show_contact_card=True).count(),
         }
     return payload
 
@@ -1825,6 +1859,8 @@ def _apply_school_fields(request, school, source):
         'themeSecondary': 'theme_secondary',
         'themeTernary': 'theme_ternary',
         'description': 'description',
+        'organizationType': 'organization_type',
+        'organization_type': 'organization_type',
     }
     for key, field in mapping.items():
         if key in source:
@@ -1885,6 +1921,12 @@ def _member_row(member):
         'academicLabel': member.get_academic_level_display() if member.academic_level else '',
         'section': member.section,
         'rollNumber': member.roll_number,
+        'academicYear': member.academic_year,
+        'facultyProgram': member.faculty_program,
+        'department': member.department,
+        'committee': member.committee,
+        'membershipTerm': member.membership_term,
+        'joinDate': member.join_date.isoformat() if member.join_date else '',
         'identifier': member.unique_identifier or '',
         'photo': _file_url(member.profile_photo),
         'isVisible': member.show_contact_card,
@@ -1913,6 +1955,7 @@ def dashboard_members_api(request):
         academic_level = str(request.GET.get('academic_level') or '').strip()
         section = str(request.GET.get('section') or '').strip()
         role_filter = str(request.GET.get('role') or '').strip()
+        group_filter = str(request.GET.get('group') or '').strip()
         if search:
             query = query.filter(
                 Q(name__icontains=search)
@@ -1926,6 +1969,14 @@ def dashboard_members_api(request):
             query = query.filter(section=section)
         if role_filter:
             query = query.filter(role=role_filter)
+        if group_filter in organization_module(school).get('filters', ()):
+            executive_roles = ('president', 'vice president', 'secretary', 'treasurer', 'board member', 'past president')
+            if group_filter == 'executive':
+                query = query.filter(role__iregex='|'.join(executive_roles))
+            elif group_filter == 'committee':
+                query = query.exclude(committee='')
+            elif group_filter == 'general':
+                query = query.filter(member_type='member', committee='').exclude(role__iregex='|'.join(executive_roles))
         return JsonResponse({
             'ok': True,
             'shell': _dashboard_shell(request, 'members' if member_type == 'all' else ('teachers' if member_type == 'teacher' else 'students'), school),
@@ -1948,6 +1999,8 @@ def dashboard_members_api(request):
     name = str(source.get('name') or '').strip()
     phone = str(source.get('phone') or '').strip()
     member_type = str(source.get('member_type') or source.get('memberType') or 'student')
+    if member_type not in organization_module(school)['member_types']:
+        return _json_error('Choose a valid member category for this organization.')
     if not name or not phone:
         return _json_error('Name and phone are required.')
     roll_number = str(source.get('roll_number') or source.get('rollNumber') or '').strip()
@@ -1962,7 +2015,8 @@ def dashboard_members_api(request):
         profile_category='school',
         member_type=member_type,
         organization_name=school.name,
-        role=str(source.get('role') or ('Teacher' if member_type == 'teacher' else 'Student')),
+        role=str(source.get('role') or {'teacher': 'Teacher', 'staff': 'Staff', 'member': 'General Member'}.get(member_type, 'Student')),
+        unique_identifier=str(source.get('identifier') or source.get('student_id') or source.get('employee_id') or source.get('membership_id') or '').strip() or None,
         password=raw_password,
     )
     try:
@@ -2121,9 +2175,9 @@ def dashboard_bulk_upload_api(request):
     if missing:
         return _json_error(f"Missing required columns: {', '.join(missing)}")
     member_type = str(request.POST.get('role_type') or 'student')
-    if member_type not in {'student', 'teacher', 'other'}:
+    if member_type not in organization_module(school)['member_types']:
         return _json_error('Choose a valid profile type.')
-    default_role = {'student': 'Student', 'teacher': 'Teacher', 'other': 'Member'}[member_type]
+    default_role = {'student': 'Student', 'teacher': 'Teacher', 'staff': 'Staff', 'member': 'General Member', 'other': 'Member'}[member_type]
     created = 0
     skipped = []
     credentials = []
@@ -2142,6 +2196,7 @@ def dashboard_bulk_upload_api(request):
                 phone=phone,
                 email=str(row.get('email') or '').strip(),
                 username=username,
+                unique_identifier=(str(row.get('membership_id') or row.get('student_id') or row.get('employee_id') or '').strip() or None),
                 college=school,
                 profile_category='school',
                 member_type=member_type,
@@ -2152,6 +2207,12 @@ def dashboard_bulk_upload_api(request):
                 academic_level=str(row.get('academic_level') or '').strip(),
                 section=str(row.get('section') or '').strip(),
                 roll_number=roll_number,
+                academic_year=str(row.get('academic_year') or '').strip(),
+                faculty_program=str(row.get('faculty_program') or '').strip(),
+                department=str(row.get('department') or '').strip(),
+                committee=str(row.get('committee') or '').strip(),
+                membership_term=str(row.get('membership_term') or '').strip(),
+                join_date=parse_date(str(row.get('join_date') or '').strip()) or None,
                 blood_group=str(row.get('blood_group') or '').strip(),
                 gender=str(row.get('gender') or '').strip(),
                 organization_name=school.name,

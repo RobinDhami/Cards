@@ -598,6 +598,11 @@
   background: #ffffff;
 }
 
+.digital-card-structured-details dl { display: grid; gap: 0.6rem; margin: 0; }
+.digital-card-structured-details dl div { display: flex; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--t2c-color-border, #e5e7eb); padding-bottom: 0.5rem; }
+.digital-card-structured-details dt { color: var(--t2c-color-text-muted, #64748b); }
+.digital-card-structured-details dd { margin: 0; font-weight: 600; text-align: right; }
+
 .digital-card-toast {
   position: fixed;
   top: var(--t2c-space-4);

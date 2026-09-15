@@ -1246,3 +1246,45 @@ class ReactMigrationApiTests(TestCase):
         self.assertEqual(member.email, '')
         self.assertIsNone(member.whatsapp)
         self.assertEqual(member.academic_level, 'grade_10')
+
+
+class OrganizationModuleTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser('module.admin', password='ModulePass123!')
+        self.client.force_login(self.admin)
+
+    def test_education_organization_uses_broad_categories_and_public_fields(self):
+        school = College.objects.create(name='Education Module', organization_type='education')
+        response = self.client.post(
+            f"{reverse('react_dashboard_members_api')}?school={school.id}",
+            data=json.dumps({'name': 'Teacher One', 'phone': '9800000011', 'member_type': 'teacher', 'role': 'Computer Science Teacher', 'department': 'Technology'}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 201)
+        teacher = StudentProfile.objects.get(name='Teacher One')
+        self.assertEqual(teacher.department, 'Technology')
+        profile = self.client.get(reverse('react_student_public_api', args=[teacher.id])).json()['profile']
+        self.assertEqual(profile['identifierLabel'], 'Employee ID')
+        self.assertIn({'label': 'Department', 'value': 'Technology'}, profile['structuredDetails'])
+
+    def test_club_uses_member_category_and_flexible_role_fields(self):
+        club = College.objects.create(name='Club Module', organization_type='club')
+        response = self.client.post(
+            f"{reverse('react_dashboard_members_api')}?school={club.id}",
+            data=json.dumps({'name': 'Member One', 'phone': '9800000012', 'member_type': 'member', 'membership_id': 'RC-001', 'role': 'President', 'committee': 'Executive', 'membership_term': '2026/27', 'join_date': '2026-01-01'}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 201)
+        member = StudentProfile.objects.get(name='Member One')
+        self.assertEqual(member.member_type, 'member')
+        self.assertEqual(member.role, 'President')
+        self.assertEqual(member.committee, 'Executive')
+        self.assertEqual(member.unique_identifier, 'RC-001')
+        payload = self.client.get(reverse('react_dashboard_members_api'), {'school': club.id, 'type': 'all'}).json()
+        self.assertEqual(payload['shell']['currentSchool']['module']['key'], 'club')
+
+    def test_blank_organization_type_keeps_generic_module(self):
+        organization = College.objects.create(name='Legacy Generic')
+        response = self.client.get(reverse('react_dashboard_members_api'), {'school': organization.id, 'type': 'all'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['shell']['currentSchool']['organizationType'], 'generic')

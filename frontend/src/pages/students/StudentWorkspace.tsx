@@ -60,6 +60,7 @@ type StudentManageProfile = {
   fields: Record<string, string | boolean | number | null>
   collegeId: number | null
   collegeName: string
+  organizationType: string
   uniqueIdentifier: string
   profilePhoto: string
   coverPhoto: string
@@ -552,6 +553,9 @@ export function StudentEditor() {
             </EditField>
             <EditField label="Section"><input className="student-edit-input" name="section" value={fieldString(fields, 'section')} placeholder="Section" onChange={(event) => update('section', event.target.value)} /></EditField>
             <EditField label="Roll Number"><input className="student-edit-input" name="roll_number" value={fieldString(fields, 'roll_number')} placeholder="Roll #" onChange={(event) => update('roll_number', event.target.value)} /></EditField>
+            {profile.organizationType === 'education' && fieldString(fields, 'member_type') === 'student' ? <><EditField label="Academic year"><input className="student-edit-input" value={fieldString(fields, 'academic_year')} onChange={(event) => update('academic_year', event.target.value)} /></EditField><EditField label="Faculty / Program"><input className="student-edit-input" value={fieldString(fields, 'faculty_program')} onChange={(event) => update('faculty_program', event.target.value)} /></EditField></> : null}
+            {profile.organizationType === 'education' && fieldString(fields, 'member_type') !== 'student' ? <EditField label="Department"><input className="student-edit-input" value={fieldString(fields, 'department')} onChange={(event) => update('department', event.target.value)} /></EditField> : null}
+            {profile.organizationType === 'club' ? <><EditField label="Committee"><input className="student-edit-input" value={fieldString(fields, 'committee')} onChange={(event) => update('committee', event.target.value)} /></EditField><EditField label="Membership term"><input className="student-edit-input" value={fieldString(fields, 'membership_term')} onChange={(event) => update('membership_term', event.target.value)} /></EditField><EditField label="Join date"><input className="student-edit-input" type="date" value={fieldString(fields, 'join_date')} onChange={(event) => update('join_date', event.target.value)} /></EditField></> : null}
             <EditField label="Gender">
               <select className="student-edit-input" name="gender" value={fieldString(fields, 'gender')} onChange={(event) => update('gender', event.target.value)}>
                 <option value="">Not set</option>

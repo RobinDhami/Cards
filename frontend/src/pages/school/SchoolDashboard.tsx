@@ -30,6 +30,7 @@ import {
 import { ManageShell } from '../../components/manage/ManageShell'
 import { apiFetch, backendHref, displayError, jsonBody, queryString } from '../../lib/api'
 import { schoolWorkspaceNav, withSchool } from './schoolWorkspaceNav'
+import { moduleConfig } from './organizationModuleConfig'
 import './SchoolDashboard.css'
 
 type Choice = { value: string; label: string }
@@ -37,6 +38,8 @@ type Choice = { value: string; label: string }
 type SchoolSummary = {
   id: number
   name: string
+  organizationType: string
+  module: { key: string; memberTypes: Choice[]; bulkColumns: string[] }
   slogan: string
   address: string
   logo: string
@@ -53,7 +56,7 @@ type SchoolSummary = {
   themeTernary: string
   description: string
   adminUsername: string
-  stats?: { students: number; teachers: number; live: number }
+  stats?: { members: number; students: number; teachers: number; staff: number; clubMembers: number; live: number }
 }
 
 type DashboardShellData = {
@@ -186,6 +189,7 @@ export function SchoolsPage() {
   const [creating, setCreating] = useState(false)
   const [newSchool, setNewSchool] = useState({
     name: '',
+    organizationType: 'other',
     address: '',
     phone: '',
     email: '',
@@ -215,7 +219,7 @@ export function SchoolsPage() {
         body: jsonBody(newSchool),
       })
       setCreateOpen(false)
-      setNewSchool({ name: '', address: '', phone: '', email: '', adminUsername: '', adminPassword: '' })
+      setNewSchool({ name: '', organizationType: 'other', address: '', phone: '', email: '', adminUsername: '', adminPassword: '' })
       await load()
     } catch (reason) {
       setError(displayError(reason))
@@ -249,6 +253,7 @@ export function SchoolsPage() {
           <div><h2>Create organization workspace</h2><p>Set the organization and its first administrator account.</p></div>
           <div className="form-grid is-three">
             <Field label="Organization name"><TextInput value={newSchool.name} onChange={(event) => setNewSchool((current) => ({ ...current, name: event.target.value }))} required /></Field>
+            <Field label="Organization type"><SelectInput value={newSchool.organizationType} onChange={(event) => setNewSchool((current) => ({ ...current, organizationType: event.target.value }))}><option value="education">Education</option><option value="club">Club</option><option value="business">Business</option><option value="other">Other</option></SelectInput></Field>
             <Field label="Address"><TextInput value={newSchool.address} onChange={(event) => setNewSchool((current) => ({ ...current, address: event.target.value }))} /></Field>
             <Field label="Phone"><TextInput value={newSchool.phone} onChange={(event) => setNewSchool((current) => ({ ...current, phone: event.target.value }))} /></Field>
             <Field label="Email"><TextInput type="email" value={newSchool.email} onChange={(event) => setNewSchool((current) => ({ ...current, email: event.target.value }))} /></Field>
@@ -268,8 +273,8 @@ export function SchoolsPage() {
               <button type="button" onClick={() => deleteSchool(school)} title="Delete organization" aria-label="Delete organization"><Trash2 size={14} /></button>
             </header>
             <div className="school-summary-stats">
-              <span><strong>{school.stats?.students ?? 0}</strong>Students</span>
-              <span><strong>{school.stats?.teachers ?? 0}</strong>Staff</span>
+              <span><strong>{school.stats?.members ?? 0}</strong>Members</span>
+              <span><strong>{school.organizationType === 'club' ? school.stats?.clubMembers ?? 0 : school.stats?.students ?? 0}</strong>{school.organizationType === 'club' ? 'General' : 'Students'}</span>
               <span><strong>{school.stats?.live ?? 0}</strong>Live IDs</span>
             </div>
             <footer>
@@ -345,7 +350,7 @@ function MemberCreatePanel({
   onCreated,
   onCancel,
 }: {
-  memberType: 'student' | 'teacher'
+  memberType: string
   academicLevels: Choice[]
   onCreated: (password: string) => void
   onCancel: () => void
@@ -354,10 +359,12 @@ function MemberCreatePanel({
     name: '',
     phone: '',
     email: '',
-    role: memberType === 'teacher' ? 'Teacher' : 'Student',
+    role: memberType === 'teacher' ? 'Teacher' : memberType === 'staff' ? 'Staff' : memberType === 'member' ? 'General Member' : 'Student',
     roll_number: '',
+    identifier: '',
     academic_level: '',
     section: '',
+    academic_year: '', faculty_program: '', department: '', committee: '', membership_term: '', join_date: '',
   })
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -381,14 +388,15 @@ function MemberCreatePanel({
 
   return (
     <form className="school-create-panel manage-card" onSubmit={submit}>
-      <div><h2>Add {memberType === 'teacher' ? 'teacher or staff member' : 'student'}</h2><p>A username and secure starter password are generated automatically.</p></div>
+      <div><h2>Add {memberType}</h2><p>A username and secure starter password are generated automatically.</p></div>
       {error ? <div className="manage-alert">{error}</div> : null}
       <div className="form-grid is-three">
         <Field label="Full name"><TextInput value={values.name} onChange={(event) => setValues((current) => ({ ...current, name: event.target.value }))} required /></Field>
         <Field label="Phone"><TextInput value={values.phone} onChange={(event) => setValues((current) => ({ ...current, phone: event.target.value }))} required /></Field>
         <Field label="Email"><TextInput type="email" value={values.email} onChange={(event) => setValues((current) => ({ ...current, email: event.target.value }))} /></Field>
         <Field label="Role"><TextInput value={values.role} onChange={(event) => setValues((current) => ({ ...current, role: event.target.value }))} /></Field>
-        <Field label="Roll / employee number"><TextInput value={values.roll_number} onChange={(event) => setValues((current) => ({ ...current, roll_number: event.target.value }))} /></Field>
+        <Field label="Roll number"><TextInput value={values.roll_number} onChange={(event) => setValues((current) => ({ ...current, roll_number: event.target.value }))} /></Field>
+        <Field label="Member ID (optional)"><TextInput value={values.identifier} onChange={(event) => setValues((current) => ({ ...current, identifier: event.target.value }))} /></Field>
         {memberType === 'student' ? (
           <Field label="Class / level">
             <SelectInput value={values.academic_level} onChange={(event) => setValues((current) => ({ ...current, academic_level: event.target.value }))}>
@@ -398,13 +406,16 @@ function MemberCreatePanel({
           </Field>
         ) : null}
         <Field label="Section"><TextInput value={values.section} onChange={(event) => setValues((current) => ({ ...current, section: event.target.value }))} /></Field>
+        {memberType === 'student' ? <><Field label="Academic year"><TextInput value={values.academic_year} onChange={(event) => setValues((current) => ({ ...current, academic_year: event.target.value }))} /></Field><Field label="Faculty / program"><TextInput value={values.faculty_program} onChange={(event) => setValues((current) => ({ ...current, faculty_program: event.target.value }))} /></Field></> : null}
+        {memberType === 'teacher' || memberType === 'staff' ? <Field label="Department"><TextInput value={values.department} onChange={(event) => setValues((current) => ({ ...current, department: event.target.value }))} /></Field> : null}
+        {memberType === 'member' ? <><Field label="Committee"><TextInput value={values.committee} onChange={(event) => setValues((current) => ({ ...current, committee: event.target.value }))} /></Field><Field label="Membership term"><TextInput value={values.membership_term} onChange={(event) => setValues((current) => ({ ...current, membership_term: event.target.value }))} /></Field><Field label="Join date"><TextInput type="date" value={values.join_date} onChange={(event) => setValues((current) => ({ ...current, join_date: event.target.value }))} /></Field></> : null}
       </div>
       <div><button className="manage-button" type="button" onClick={onCancel}>Cancel</button><button className="manage-button is-primary" type="submit" disabled={saving}>{saving ? 'Creating…' : `Add ${memberType}`}</button></div>
     </form>
   )
 }
 
-export function MembersPage({ memberType }: { memberType: 'student' | 'teacher' | 'all' }) {
+export function MembersPage({ memberType }: { memberType: string }) {
   const schoolId = selectedSchoolId()
   const isAllMembers = memberType === 'all'
   const [shell, setShell] = useState<DashboardShellData | null>(null)
@@ -414,7 +425,9 @@ export function MembersPage({ memberType }: { memberType: 'student' | 'teacher' 
   const [section, setSection] = useState('')
   const [academicLevel, setAcademicLevel] = useState('')
   const [role, setRole] = useState('')
-  const [createType, setCreateType] = useState<'student' | 'teacher' | null>(() => (
+  const [category, setCategory] = useState('all')
+  const [group, setGroup] = useState('')
+  const [createType, setCreateType] = useState<string | null>(() => (
     new URLSearchParams(window.location.search).get('create') === '1'
       ? (memberType === 'teacher' ? 'teacher' : 'student')
       : null
@@ -424,12 +437,13 @@ export function MembersPage({ memberType }: { memberType: 'student' | 'teacher' 
 
   const endpoint = useMemo(() => `/api/dashboard/members/${queryString({
     school: schoolId,
-    type: memberType,
+    type: isAllMembers ? category : memberType,
     q: query,
     section,
     academic_level: academicLevel,
     role,
-  })}`, [schoolId, memberType, query, section, academicLevel, role])
+    group,
+  })}`, [schoolId, memberType, category, isAllMembers, query, section, academicLevel, role, group])
 
   const load = useCallback(() => apiFetch<{
     shell: DashboardShellData
@@ -457,12 +471,12 @@ export function MembersPage({ memberType }: { memberType: 'student' | 'teacher' 
   }
 
   if (!shell) return <LoadingSchool />
+  const config = moduleConfig(shell.currentSchool?.organizationType)
   const title = isAllMembers ? 'Members' : (memberType === 'teacher' ? 'Teachers & Staff' : 'Students')
   const workspaceRoot = isAllMembers ? `/dashboard/organizations/${schoolId}` : ''
   const createActions = isAllMembers ? (
     <>
-      <button className="manage-button" type="button" onClick={() => setCreateType('teacher')}><Plus size={14} />Add staff member</button>
-      <button className="manage-button is-primary" type="button" onClick={() => setCreateType('student')}><Plus size={14} />Add member</button>
+      {config.memberTypes.map((choice, index) => <button className={`manage-button${index === 0 ? ' is-primary' : ''}`} type="button" onClick={() => setCreateType(choice.value)} key={choice.value}><Plus size={14} />Add {choice.label.slice(0, -1)}</button>)}
     </>
   ) : (
     <button className="manage-button is-primary" type="button" onClick={() => setCreateType(memberType)}><Plus size={14} />Add {memberType}</button>
@@ -481,6 +495,8 @@ export function MembersPage({ memberType }: { memberType: 'student' | 'teacher' 
 
       <section className="school-filter-bar manage-card">
         <label><Search size={14} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Search ${title.toLowerCase()}`} /></label>
+        {isAllMembers ? <select value={category} onChange={(event) => setCategory(event.target.value)}><option value="all">All members</option>{config.memberTypes.map((choice) => <option key={choice.value} value={choice.value}>{choice.label}</option>)}</select> : null}
+        {'filters' in config && config.filters ? <select value={group} onChange={(event) => setGroup(event.target.value)}><option value="">All club members</option>{config.filters.map((choice) => <option key={choice.value} value={choice.value}>{choice.label}</option>)}</select> : null}
         {memberType === 'student' ? (
           <>
             <select value={academicLevel} onChange={(event) => setAcademicLevel(event.target.value)}><option value="">All classes</option>{filters.academicLevels.map((choice) => <option key={choice.value} value={choice.value}>{choice.label}</option>)}</select>
@@ -499,7 +515,7 @@ export function MembersPage({ memberType }: { memberType: 'student' | 'teacher' 
               {members.map((member) => (
                 <tr key={member.id}>
                   <td><div className="school-member"><span>{member.photo ? <img src={member.photo} alt="" /> : <UserRound size={15} />}</span><strong>{member.name}<small>{member.phone || member.email}</small></strong></div></td>
-                  <td>{isAllMembers ? (member.memberType === 'student' ? [member.academicLabel, member.section].filter(Boolean).join(' · ') || 'Student' : member.role) : (memberType === 'student' ? [member.academicLabel, member.section].filter(Boolean).join(' · ') || 'Not set' : member.role)}</td>
+                  <td>{member.memberType === 'student' ? [member.academicLabel, member.section].filter(Boolean).join(' · ') || 'Student' : member.role}</td>
                   <td>{member.username}</td>
                   <td><span className={`school-status${member.isVisible ? ' is-live' : ''}`}>{member.isVisible ? 'Live' : 'Hidden'}</span></td>
                   <td>{member.views + member.contacts + member.downloads}</td>
@@ -583,6 +599,7 @@ export function SchoolSettingsPage() {
         setSchool(payload.school)
         setValues({
           name: payload.school.name,
+          organizationType: payload.school.organizationType === 'generic' ? 'other' : payload.school.organizationType,
           slogan: payload.school.slogan,
           address: payload.school.address,
           principalName: payload.school.principalName,
@@ -635,6 +652,7 @@ export function SchoolSettingsPage() {
         <FormSection title="Organization identity">
           <div className="form-grid">
             <Field label="Organization name"><TextInput value={values.name ?? ''} onChange={(event) => update('name', event.target.value)} required /></Field>
+            <Field label="Organization type"><SelectInput value={values.organizationType ?? 'other'} onChange={(event) => update('organizationType', event.target.value)}><option value="education">Education</option><option value="club">Club</option><option value="business">Business</option><option value="other">Other</option></SelectInput></Field>
             <Field label="Slogan"><TextInput value={values.slogan ?? ''} onChange={(event) => update('slogan', event.target.value)} /></Field>
             <Field label="Address" wide><TextArea value={values.address ?? ''} onChange={(event) => update('address', event.target.value)} /></Field>
             <Field label={shell.isSuperAdmin ? 'Primary contact name' : 'Principal name'}><TextInput value={values.principalName ?? ''} onChange={(event) => update('principalName', event.target.value)} /></Field>
@@ -706,6 +724,7 @@ export function BulkUploadPage() {
   }
 
   if (!shell) return <LoadingSchool />
+  const config = moduleConfig(shell.currentSchool?.organizationType)
   return (
     <SchoolShell shell={shell} title="Bulk Upload" subtitle={shell.isSuperAdmin ? `Import member data into ${shell.currentSchool?.name}` : 'Create member profiles from CSV and Excel'}>
       {error ? <div className="manage-alert school-message">{error}</div> : null}
@@ -713,8 +732,8 @@ export function BulkUploadPage() {
         <form className="manage-card school-upload-panel" onSubmit={upload}>
           <span><FileSpreadsheet size={25} /></span>
           <h2>Upload member data</h2>
-          <p>Required columns: <code>name</code> and <code>phone</code>. Optional columns include email, username, role, roll_number, academic_level, section, address, emergency contact, blood group, and gender.</p>
-          <Field label="Profile type"><SelectInput value={memberType} onChange={(event) => setMemberType(event.target.value)}><option value="student">Students</option><option value="teacher">Teachers & Staff</option><option value="other">Other Members</option></SelectInput></Field>
+          <p>Required columns: <code>name</code> and <code>phone</code>. {config.bulkHint}</p>
+          <Field label="Member category"><SelectInput value={memberType} onChange={(event) => setMemberType(event.target.value)}>{config.memberTypes.map((choice) => <option key={choice.value} value={choice.value}>{choice.label}</option>)}</SelectInput></Field>
           <FileInput label="CSV or Excel file" accept=".csv,.xlsx,.xls" onChange={setFile} />
           <button className="manage-button is-primary" type="submit" disabled={!file || uploading}><Upload size={14} />{uploading ? 'Uploading…' : 'Run upload'}</button>
         </form>

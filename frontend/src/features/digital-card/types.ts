@@ -45,4 +45,5 @@ export type PublicStudent = {
   }
   canViewPrivateDetails: boolean
   publicUrl: string
+  structuredDetails: Array<{ label: string; value: string }>
 }

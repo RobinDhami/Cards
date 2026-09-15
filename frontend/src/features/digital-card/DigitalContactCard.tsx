@@ -82,6 +82,12 @@ export function DigitalContactCard({ profile }: { profile: PublicStudent }) {
               </blockquote>
             ) : null}
 
+            {profile.structuredDetails.length > 0 ? (
+              <ProfileSection className="digital-card-structured-details" title="Member details">
+                <dl>{profile.structuredDetails.map((detail) => <div key={detail.label}><dt>{detail.label}</dt><dd>{detail.value}</dd></div>)}</dl>
+              </ProfileSection>
+            ) : null}
+
             {profile.current || profile.featured ? (
               <ProfileSection className="digital-card-focus" title={focusTitle}>
                 <div className="digital-card-focus__list">

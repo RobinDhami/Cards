@@ -102,7 +102,16 @@ class Skill(models.Model):
 
 # College
 class College(models.Model):
+    ORGANIZATION_TYPE_CHOICES = [
+        ('education', 'Education'),
+        ('club', 'Club'),
+        ('business', 'Business'),
+        ('other', 'Other'),
+    ]
+
     name = models.CharField(max_length=255, unique=True)
+    # Blank preserves the legacy generic workspace behaviour for existing records.
+    organization_type = models.CharField(max_length=20, choices=ORGANIZATION_TYPE_CHOICES, blank=True, default='')
     admin_user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='managed_schools', blank=True, null=True)
     slogan = models.CharField(max_length=255, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
@@ -171,7 +180,9 @@ class StudentProfile(BaseProfile):
 
     MEMBER_TYPE_CHOICES = [
         ('student', 'Student'),
-        ('teacher', 'Teacher / Staff'),
+        ('teacher', 'Teacher'),
+        ('staff', 'Staff / Administration'),
+        ('member', 'Member'),
         ('other', 'Other Member'),
     ]
 
@@ -216,6 +227,12 @@ class StudentProfile(BaseProfile):
     academic_level = models.CharField(max_length=20, choices=ACADEMIC_LEVEL_CHOICES, blank=True, default='')
     section = models.CharField(max_length=20, blank=True, default='')
     roll_number = models.CharField(max_length=30, blank=True, default='')
+    academic_year = models.CharField(max_length=40, blank=True, default='')
+    faculty_program = models.CharField(max_length=120, blank=True, default='')
+    department = models.CharField(max_length=120, blank=True, default='')
+    committee = models.CharField(max_length=120, blank=True, default='')
+    membership_term = models.CharField(max_length=60, blank=True, default='')
+    join_date = models.DateField(blank=True, null=True)
     blood_group = models.CharField(max_length=10, blank=True, default='')
     gender = models.CharField(max_length=20, choices=GENDER_CHOICES, blank=True, default='')
     about_intro = models.TextField(blank=True, null=True)
