@@ -1749,6 +1749,7 @@ def _school_payload(school, with_stats=False):
     payload = {
         'id': school.id,
         'name': school.name,
+        'organizationCode': school.organization_code or '',
         'organizationType': school.organization_type or 'generic',
         'module': {
             'key': module['key'],
@@ -1838,6 +1839,8 @@ def dashboard_schools_api(request):
         with transaction.atomic():
             school = College(name=name)
             _apply_school_fields(request, school, source)
+            if not school.organization_code:
+                return _json_error('Organization code is required.')
             school.save()
             _sync_school_admin_user(school, username, password)
             school.save()
@@ -1849,6 +1852,8 @@ def dashboard_schools_api(request):
 def _apply_school_fields(request, school, source):
     mapping = {
         'name': 'name',
+        'organizationCode': 'organization_code',
+        'organization_code': 'organization_code',
         'slogan': 'slogan',
         'address': 'address',
         'principalName': 'principal_name',

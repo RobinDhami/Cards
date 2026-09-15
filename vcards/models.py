@@ -1,4 +1,5 @@
 from decimal import Decimal
+import re
 
 from django.core.validators import MinValueValidator
 from django.db import models
@@ -112,6 +113,7 @@ class College(models.Model):
     name = models.CharField(max_length=255, unique=True)
     # Blank preserves the legacy generic workspace behaviour for existing records.
     organization_type = models.CharField(max_length=20, choices=ORGANIZATION_TYPE_CHOICES, blank=True, default='')
+    organization_code = models.CharField(max_length=12, unique=True, blank=True, null=True, default=None)
     admin_user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='managed_schools', blank=True, null=True)
     slogan = models.CharField(max_length=255, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
@@ -128,6 +130,15 @@ class College(models.Model):
     theme_ternary = models.CharField(max_length=20, blank=True, default='#c9a84c')
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        super().clean()
+        self.organization_code = re.sub(r'[^A-Z0-9]', '', self.organization_code.upper()) or None if self.organization_code else None
+
+    def save(self, *args, **kwargs):
+        self.organization_code = re.sub(r'[^A-Z0-9]', '', self.organization_code.upper()) or None if self.organization_code else None
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.name
 

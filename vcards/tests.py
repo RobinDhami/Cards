@@ -1298,3 +1298,31 @@ class OrganizationModuleTests(TestCase):
         self.assertIn(education.id, [item['id'] for item in payload['schools']])
         self.assertEqual(payload['organizationTypeCounts']['education'], 1)
         self.assertEqual(payload['organizationTypeCounts']['club'], 1)
+
+    def test_organization_code_is_normalized_and_returned_by_setup_api(self):
+        response = self.client.post(
+            reverse('react_dashboard_schools_api'),
+            data=json.dumps({
+                'name': 'Vedanga International School', 'organizationType': 'education',
+                'organizationCode': 'v i-s!', 'adminUsername': 'vedanga.admin', 'adminPassword': 'AdminPass123!',
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['school']['organizationCode'], 'VIS')
+        self.assertEqual(College.objects.get(name='Vedanga International School').organization_code, 'VIS')
+
+    def test_organization_code_is_globally_unique(self):
+        College.objects.create(name='Existing Code', organization_code='VIS')
+        response = self.client.post(
+            reverse('react_dashboard_schools_api'),
+            data=json.dumps({
+                'name': 'Duplicate Code', 'organizationCode': 'vis', 'adminUsername': 'duplicate.admin', 'adminPassword': 'AdminPass123!'
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_legacy_organization_can_remain_without_a_code(self):
+        organization = College.objects.create(name='No Code Legacy')
+        self.assertIsNone(organization.organization_code)

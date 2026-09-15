@@ -38,6 +38,7 @@ type Choice = { value: string; label: string }
 type SchoolSummary = {
   id: number
   name: string
+  organizationCode: string
   organizationType: string
   module: { key: string; memberTypes: Choice[]; bulkColumns: string[] }
   slogan: string
@@ -192,6 +193,7 @@ export function SchoolsPage() {
   const [creating, setCreating] = useState(false)
   const [newSchool, setNewSchool] = useState({
     name: '',
+    organizationCode: '',
     organizationType: 'other',
     address: '',
     phone: '',
@@ -223,7 +225,7 @@ export function SchoolsPage() {
         body: jsonBody(newSchool),
       })
       setCreateOpen(false)
-      setNewSchool({ name: '', organizationType: 'other', address: '', phone: '', email: '', adminUsername: '', adminPassword: '' })
+      setNewSchool({ name: '', organizationCode: '', organizationType: 'other', address: '', phone: '', email: '', adminUsername: '', adminPassword: '' })
       await load()
     } catch (reason) {
       setError(displayError(reason))
@@ -270,6 +272,7 @@ export function SchoolsPage() {
           <div><h2>Create organization workspace</h2><p>Set the organization and its first administrator account.</p></div>
           <div className="form-grid is-three">
             <Field label="Organization name"><TextInput value={newSchool.name} onChange={(event) => setNewSchool((current) => ({ ...current, name: event.target.value }))} required /></Field>
+            <Field label="Organization code" hint="Unique uppercase code, e.g. VIS"><TextInput value={newSchool.organizationCode} onChange={(event) => setNewSchool((current) => ({ ...current, organizationCode: event.target.value.toUpperCase() }))} maxLength={12} required /></Field>
             <Field label="Organization type"><SelectInput value={newSchool.organizationType} onChange={(event) => setNewSchool((current) => ({ ...current, organizationType: event.target.value }))}><option value="education">Education</option><option value="club">Club</option><option value="business">Business</option><option value="other">Other</option></SelectInput></Field>
             <Field label="Address"><TextInput value={newSchool.address} onChange={(event) => setNewSchool((current) => ({ ...current, address: event.target.value }))} /></Field>
             <Field label="Phone"><TextInput value={newSchool.phone} onChange={(event) => setNewSchool((current) => ({ ...current, phone: event.target.value }))} /></Field>
@@ -286,7 +289,7 @@ export function SchoolsPage() {
           <article className="school-summary-card manage-card" key={school.id}>
             <header>
               <span>{school.logo ? <img src={school.logo} alt="" /> : <Building2 size={21} />}</span>
-              <div><h2>{school.name}</h2><p>{school.address || 'Address not added'} · <strong>{school.organizationType === 'generic' ? 'Generic / Unclassified' : school.organizationType[0].toUpperCase() + school.organizationType.slice(1)}</strong></p></div>
+              <div><h2>{school.name}</h2><p>{school.address || 'Address not added'} · <strong>{school.organizationType === 'generic' ? 'Generic / Unclassified' : school.organizationType[0].toUpperCase() + school.organizationType.slice(1)}</strong>{school.organizationCode ? ` · ${school.organizationCode}` : ''}</p></div>
               <button type="button" onClick={() => deleteSchool(school)} title="Delete organization" aria-label="Delete organization"><Trash2 size={14} /></button>
             </header>
             <div className="school-summary-stats">
@@ -616,6 +619,7 @@ export function SchoolSettingsPage() {
         setSchool(payload.school)
         setValues({
           name: payload.school.name,
+          organizationCode: payload.school.organizationCode,
           organizationType: payload.school.organizationType === 'generic' ? 'other' : payload.school.organizationType,
           slogan: payload.school.slogan,
           address: payload.school.address,
@@ -669,6 +673,7 @@ export function SchoolSettingsPage() {
         <FormSection title="Organization identity">
           <div className="form-grid">
             <Field label="Organization name"><TextInput value={values.name ?? ''} onChange={(event) => update('name', event.target.value)} required /></Field>
+            <Field label="Organization code" hint="Unique uppercase code; changing it does not rewrite member usernames."><TextInput value={values.organizationCode ?? ''} onChange={(event) => update('organizationCode', event.target.value.toUpperCase())} maxLength={12} /></Field>
             <Field label="Organization type"><SelectInput value={values.organizationType ?? 'other'} onChange={(event) => update('organizationType', event.target.value)}><option value="education">Education</option><option value="club">Club</option><option value="business">Business</option><option value="other">Other</option></SelectInput></Field>
             <Field label="Slogan"><TextInput value={values.slogan ?? ''} onChange={(event) => update('slogan', event.target.value)} /></Field>
             <Field label="Address" wide><TextArea value={values.address ?? ''} onChange={(event) => update('address', event.target.value)} /></Field>
