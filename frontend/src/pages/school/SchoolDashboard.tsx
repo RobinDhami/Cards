@@ -30,7 +30,7 @@ import {
 import { ManageShell } from '../../components/manage/ManageShell'
 import { apiFetch, backendHref, displayError, jsonBody, queryString } from '../../lib/api'
 import { schoolWorkspaceNav, withSchool } from './schoolWorkspaceNav'
-import { moduleConfig } from './organizationModuleConfig'
+import { dashboardMetrics, moduleConfig } from './organizationModuleConfig'
 import './SchoolDashboard.css'
 
 type Choice = { value: string; label: string }
@@ -95,6 +95,11 @@ type ReportPayload = {
   studentCount: number
   liveProfileCount: number
   activeCardCount: number
+  teacherCount: number
+  staffCount: number
+  executiveCount: number
+  committeeCount: number
+  generalMemberCount: number
   interactionCount: number
   profileViews: number
   contactActions: number
@@ -327,6 +332,7 @@ export function OrganizationWorkspaceOverview() {
 
   if (!shell || !report) return error ? <div className="manage-state">{error}</div> : <LoadingSchool />
   const organization = shell.currentSchool
+  const metrics = dashboardMetrics(organization?.organizationType)
   const workspaceRoot = `/dashboard/organizations/${schoolId}`
 
   return (
@@ -346,10 +352,7 @@ export function OrganizationWorkspaceOverview() {
       </section>
 
       <section className="school-report-metrics">
-        <SchoolMetric label="Members" value={report.memberCount} icon={<UserRound size={17} />} />
-        <SchoolMetric label="Live profiles" value={report.liveProfileCount} icon={<BadgeCheck size={17} />} />
-        <SchoolMetric label="Active cards" value={report.activeCardCount} icon={<IdCard size={17} />} />
-        <SchoolMetric label="Interactions" value={report.interactionCount} icon={<Activity size={17} />} />
+        {metrics.map(([key, label]) => <SchoolMetric key={key} label={label} value={report[key as keyof ReportPayload] as number} icon={key === 'activeCardCount' ? <IdCard size={17} /> : key === 'liveProfileCount' ? <BadgeCheck size={17} /> : <UserRound size={17} />} />)}
       </section>
 
       <section className="manage-card school-workspace-actions">
@@ -414,9 +417,11 @@ function MemberCreatePanel({
         <Field label="Full name"><TextInput value={values.name} onChange={(event) => setValues((current) => ({ ...current, name: event.target.value }))} required /></Field>
         <Field label="Phone"><TextInput value={values.phone} onChange={(event) => setValues((current) => ({ ...current, phone: event.target.value }))} required /></Field>
         <Field label="Email"><TextInput type="email" value={values.email} onChange={(event) => setValues((current) => ({ ...current, email: event.target.value }))} /></Field>
-        <Field label="Role"><TextInput value={values.role} onChange={(event) => setValues((current) => ({ ...current, role: event.target.value }))} /></Field>
-        <Field label="Roll number"><TextInput value={values.roll_number} onChange={(event) => setValues((current) => ({ ...current, roll_number: event.target.value }))} /></Field>
-        <Field label="Member ID (optional)"><TextInput value={values.identifier} onChange={(event) => setValues((current) => ({ ...current, identifier: event.target.value }))} /></Field>
+        {memberType !== 'student' ? <Field label={memberType === 'member' ? 'Role / position' : 'Designation'}><TextInput value={values.role} list={memberType === 'member' ? 'club-role-suggestions' : undefined} onChange={(event) => setValues((current) => ({ ...current, role: event.target.value }))} /></Field> : null}
+        {memberType === 'member' ? <datalist id="club-role-suggestions">{['President', 'Vice President', 'Secretary', 'Treasurer', 'Board Member', 'Committee Member', 'General Member', 'Past President'].map((role) => <option key={role} value={role} />)}</datalist> : null}
+        {memberType === 'student' ? <><Field label="Roll number"><TextInput value={values.roll_number} onChange={(event) => setValues((current) => ({ ...current, roll_number: event.target.value }))} /></Field><Field label="Student ID (optional)"><TextInput value={values.identifier} onChange={(event) => setValues((current) => ({ ...current, identifier: event.target.value }))} /></Field></> : null}
+        {memberType === 'teacher' || memberType === 'staff' ? <Field label="Employee ID (optional)"><TextInput value={values.identifier} onChange={(event) => setValues((current) => ({ ...current, identifier: event.target.value }))} /></Field> : null}
+        {memberType === 'member' ? <Field label="Membership ID (optional)"><TextInput value={values.identifier} onChange={(event) => setValues((current) => ({ ...current, identifier: event.target.value }))} /></Field> : null}
         {memberType === 'student' ? (
           <Field label="Class / level">
             <SelectInput value={values.academic_level} onChange={(event) => setValues((current) => ({ ...current, academic_level: event.target.value }))}>
@@ -425,8 +430,7 @@ function MemberCreatePanel({
             </SelectInput>
           </Field>
         ) : null}
-        <Field label="Section"><TextInput value={values.section} onChange={(event) => setValues((current) => ({ ...current, section: event.target.value }))} /></Field>
-        {memberType === 'student' ? <><Field label="Academic year"><TextInput value={values.academic_year} onChange={(event) => setValues((current) => ({ ...current, academic_year: event.target.value }))} /></Field><Field label="Faculty / program"><TextInput value={values.faculty_program} onChange={(event) => setValues((current) => ({ ...current, faculty_program: event.target.value }))} /></Field></> : null}
+        {memberType === 'student' ? <><Field label="Section"><TextInput value={values.section} onChange={(event) => setValues((current) => ({ ...current, section: event.target.value }))} /></Field><Field label="Academic year"><TextInput value={values.academic_year} onChange={(event) => setValues((current) => ({ ...current, academic_year: event.target.value }))} /></Field><Field label="Faculty / program"><TextInput value={values.faculty_program} onChange={(event) => setValues((current) => ({ ...current, faculty_program: event.target.value }))} /></Field></> : null}
         {memberType === 'teacher' || memberType === 'staff' ? <Field label="Department"><TextInput value={values.department} onChange={(event) => setValues((current) => ({ ...current, department: event.target.value }))} /></Field> : null}
         {memberType === 'member' ? <><Field label="Committee"><TextInput value={values.committee} onChange={(event) => setValues((current) => ({ ...current, committee: event.target.value }))} /></Field><Field label="Membership term"><TextInput value={values.membership_term} onChange={(event) => setValues((current) => ({ ...current, membership_term: event.target.value }))} /></Field><Field label="Join date"><TextInput type="date" value={values.join_date} onChange={(event) => setValues((current) => ({ ...current, join_date: event.target.value }))} /></Field></> : null}
       </div>

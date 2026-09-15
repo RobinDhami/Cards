@@ -2065,13 +2065,21 @@ def dashboard_reports_api(request):
         analytics['students'].annotate(interactions=Count('activities'))
         .order_by('-interactions', 'name')[:8]
     )
+    members = analytics['members']
+    executive_roles = ('president', 'vice president', 'secretary', 'treasurer', 'board member', 'past president')
+    executive_count = members.filter(role__iregex='|'.join(executive_roles)).count()
     return JsonResponse({
         'ok': True,
         'shell': _dashboard_shell(request, 'reports', school),
         'report': {
             'memberCount': analytics['members'].count(),
             'studentCount': analytics['students'].count(),
-            'liveProfileCount': analytics['students'].filter(show_contact_card=True).count(),
+            'teacherCount': members.filter(member_type='teacher').count(),
+            'staffCount': members.filter(member_type='staff').count(),
+            'executiveCount': executive_count,
+            'committeeCount': members.exclude(committee='').count(),
+            'generalMemberCount': members.filter(member_type='member', committee='').exclude(role__iregex='|'.join(executive_roles)).count(),
+            'liveProfileCount': members.filter(show_contact_card=True).count(),
             'activeCardCount': analytics['active_card_count'],
             'interactionCount': recent.count(),
             'profileViews': breakdown.get('view', 0),

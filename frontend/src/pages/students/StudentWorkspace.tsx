@@ -522,7 +522,7 @@ export function StudentEditor() {
           <div className="student-edit-grid is-two">
             <EditField label="Full Name"><input className="student-edit-input" name="name" value={fieldString(fields, 'name')} placeholder="Full name" onChange={(event) => update('name', event.target.value)} /></EditField>
             <EditField label="Username"><input className="student-edit-input" name="username" value={fieldString(fields, 'username')} placeholder="Username" onChange={(event) => update('username', event.target.value)} /></EditField>
-            <EditField label="IEMIS No."><input className="student-edit-input" value={profile.uniqueIdentifier} readOnly /></EditField>
+            <EditField label={profile.organizationType === 'club' ? 'Membership ID' : profile.organizationType === 'education' && fieldString(fields, 'member_type') !== 'student' ? 'Employee ID' : 'Student ID'}><input className="student-edit-input" value={profile.uniqueIdentifier} readOnly /></EditField>
             {profile.canManageSchoolFields ? (
               <EditField label="Member Type">
                 <select className="student-edit-input" value={fieldString(fields, 'member_type')} onChange={(event) => update('member_type', event.target.value)}>
@@ -545,14 +545,14 @@ export function StudentEditor() {
 
         <EditSection icon={<BookOpen size={16} />} title="Academic Data" delay={0.5}>
           <div className="student-edit-grid is-three">
-            <EditField label="Class / Grade">
+            {profile.organizationType !== 'club' && (profile.organizationType !== 'education' || fieldString(fields, 'member_type') === 'student') ? <EditField label="Class / Grade">
               <select className="student-edit-input" name="academic_level" value={fieldString(fields, 'academic_level')} onChange={(event) => update('academic_level', event.target.value)}>
                 <option value="">Select class / grade</option>
                 {profile.options.academicLevels.map((choice) => <option key={choice.value} value={choice.value}>{choice.label}</option>)}
               </select>
-            </EditField>
-            <EditField label="Section"><input className="student-edit-input" name="section" value={fieldString(fields, 'section')} placeholder="Section" onChange={(event) => update('section', event.target.value)} /></EditField>
-            <EditField label="Roll Number"><input className="student-edit-input" name="roll_number" value={fieldString(fields, 'roll_number')} placeholder="Roll #" onChange={(event) => update('roll_number', event.target.value)} /></EditField>
+            </EditField> : null}
+            {profile.organizationType !== 'club' && (profile.organizationType !== 'education' || fieldString(fields, 'member_type') === 'student') ? <EditField label="Section"><input className="student-edit-input" name="section" value={fieldString(fields, 'section')} placeholder="Section" onChange={(event) => update('section', event.target.value)} /></EditField> : null}
+            {profile.organizationType !== 'club' && (profile.organizationType !== 'education' || fieldString(fields, 'member_type') === 'student') ? <EditField label="Roll Number"><input className="student-edit-input" name="roll_number" value={fieldString(fields, 'roll_number')} placeholder="Roll #" onChange={(event) => update('roll_number', event.target.value)} /></EditField> : null}
             {profile.organizationType === 'education' && fieldString(fields, 'member_type') === 'student' ? <><EditField label="Academic year"><input className="student-edit-input" value={fieldString(fields, 'academic_year')} onChange={(event) => update('academic_year', event.target.value)} /></EditField><EditField label="Faculty / Program"><input className="student-edit-input" value={fieldString(fields, 'faculty_program')} onChange={(event) => update('faculty_program', event.target.value)} /></EditField></> : null}
             {profile.organizationType === 'education' && fieldString(fields, 'member_type') !== 'student' ? <EditField label="Department"><input className="student-edit-input" value={fieldString(fields, 'department')} onChange={(event) => update('department', event.target.value)} /></EditField> : null}
             {profile.organizationType === 'club' ? <><EditField label="Committee"><input className="student-edit-input" value={fieldString(fields, 'committee')} onChange={(event) => update('committee', event.target.value)} /></EditField><EditField label="Membership term"><input className="student-edit-input" value={fieldString(fields, 'membership_term')} onChange={(event) => update('membership_term', event.target.value)} /></EditField><EditField label="Join date"><input className="student-edit-input" type="date" value={fieldString(fields, 'join_date')} onChange={(event) => update('join_date', event.target.value)} /></EditField></> : null}

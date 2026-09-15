@@ -1304,6 +1304,21 @@ class OrganizationModuleTests(TestCase):
         self.assertEqual(legacy.member_type, 'teacher')
         self.assertTrue(legacy.unique_identifier)
 
+    def test_module_report_metrics_use_real_education_and_club_members(self):
+        education = College.objects.create(name='Metrics Education', organization_type='education')
+        club = College.objects.create(name='Metrics Club', organization_type='club')
+        for index, member_type in enumerate(('student', 'teacher', 'staff')):
+            StudentProfile.objects.create(name=f'Education {member_type}', username=f'education.{member_type}', password='MetricsPass123!', phone=f'98000000{20 + index}', college=education, member_type=member_type)
+        StudentProfile.objects.create(name='Club President', username='club.president', password='MetricsPass123!', phone='9800000030', college=club, member_type='member', role='President')
+        StudentProfile.objects.create(name='Club Committee', username='club.committee', password='MetricsPass123!', phone='9800000031', college=club, member_type='member', role='Committee Member', committee='Membership')
+        StudentProfile.objects.create(name='Club General', username='club.general', password='MetricsPass123!', phone='9800000032', college=club, member_type='member', role='General Member')
+
+        education_report = self.client.get(reverse('react_dashboard_reports_api'), {'school': education.id}).json()['report']
+        club_report = self.client.get(reverse('react_dashboard_reports_api'), {'school': club.id}).json()['report']
+
+        self.assertEqual((education_report['studentCount'], education_report['teacherCount'], education_report['staffCount']), (1, 1, 1))
+        self.assertEqual((club_report['executiveCount'], club_report['committeeCount'], club_report['generalMemberCount']), (1, 1, 1))
+
     def test_club_uses_member_category_and_flexible_role_fields(self):
         club = College.objects.create(name='Club Module', organization_type='club')
         response = self.client.post(
