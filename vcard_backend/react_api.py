@@ -11,7 +11,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import TruncDate
-from django.http import JsonResponse, QueryDict
+from django.http import HttpResponse, JsonResponse, QueryDict
 from django.middleware.csrf import get_token
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -43,7 +43,7 @@ from professional_cards.views import (
     platform_admin_required,
 )
 from vcards.models import CardBatch, CardBatchCard, College, ProfileActivity, Skill, StudentCard, StudentProfile
-from vcards.organization_modules import identifier_label, organization_module
+from vcards.organization_modules import IMPORT_COLUMN_LABELS, identifier_label, normalize_import_column, organization_module
 from vcards.usernames import create_organization_member, validate_member_username
 from vcards.platform_access import (
     PLATFORM_MODULES,
@@ -2246,6 +2246,60 @@ def dashboard_credentials_api(request, student_id):
     return JsonResponse({'ok': True, 'credentials': {'username': student.username}})
 
 
+@require_http_methods(['GET'])
+def dashboard_bulk_upload_template_api(request):
+    permission_error = _require_login(request)
+    if permission_error:
+        return permission_error
+    school, role = _dashboard_school(request)
+    if role not in {'super_admin', 'school_admin'}:
+        return _json_error('You do not have access to bulk upload templates.', status=403)
+    if not school:
+        return _json_error('Select a school first.', status=404)
+
+    from io import BytesIO
+    from openpyxl import Workbook
+
+    module = organization_module(school)
+    columns = tuple(module['bulk_columns'])
+    workbook = Workbook()
+    members_sheet = workbook.active
+    members_sheet.title = 'Members'
+    members_sheet.append([IMPORT_COLUMN_LABELS[column] for column in columns])
+    example = {
+        'name': 'Lionel Messi', 'email': 'lionel@example.com', 'phone': '98XXXXXXXX',
+        'member_type': module['member_types'][0], 'academic_level': '10', 'section': 'A',
+        'roll_number': '12', 'academic_year': '2083', 'faculty_program': 'Science',
+        'role': 'President', 'identifier': 'VIS-001', 'membership_id': 'RC-001',
+        'committee': 'Executive Committee', 'membership_term': '2026/27', 'join_date': '2026-07-01',
+    }
+    members_sheet.append([example.get(column, '') for column in columns])
+    instructions = workbook.create_sheet('Instructions')
+    instructions.append(['Bulk Import Instructions'])
+    instructions.append(['One member per row. Full Name and either Phone or Email are required.'])
+    instructions.append(['All other columns are optional and depend on the organization module.'])
+    instructions.append([f"Accepted member types: {', '.join(module['member_types'])}"])
+    instructions.append(['Join Date must use YYYY-MM-DD format.'])
+    instructions.append(['Username does not need to be supplied; it is generated automatically.'])
+    instructions.append(['Do not repeat organization name, logo, address, website, branding, or other shared data.'])
+    instructions.append(['Do not change header names unless the importer supports the corresponding alias.'])
+    instructions.append(['Use the Members sheet for import data; keep the example row as a formatting guide.'])
+    for sheet in (members_sheet, instructions):
+        sheet.freeze_panes = 'A2'
+        sheet.column_dimensions['A'].width = 28
+        for cell in sheet[1]:
+            cell.font = cell.font.copy(bold=True)
+    output = BytesIO()
+    workbook.save(output)
+    output.seek(0)
+    response = HttpResponse(
+        output.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = f'attachment; filename="{module["key"]}_member_import_template.xlsx"'
+    return response
+
+
 @require_http_methods(['POST'])
 def dashboard_bulk_upload_api(request):
     permission_error = _require_login(request)
@@ -2264,7 +2318,8 @@ def dashboard_bulk_upload_api(request):
         dataframe = pd.read_csv(upload) if upload.name.lower().endswith('.csv') else pd.read_excel(upload)
     except Exception as exc:
         return _json_error(f'Could not read the uploaded file: {exc}')
-    if 'name' not in dataframe.columns and 'full_name' not in dataframe.columns:
+    dataframe = dataframe.rename(columns={column: normalize_import_column(column) for column in dataframe.columns})
+    if 'name' not in dataframe.columns:
         return _json_error('Missing required column: name or full_name')
     requested_type = str(request.POST.get('role_type') or '').strip().lower()
     module = organization_module(school)

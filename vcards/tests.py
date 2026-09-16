@@ -684,7 +684,7 @@ class PlatformStaffManagementTests(TestCase):
             content_type='application/json',
         )
 
-        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.status_code, 200)
         staff_user.refresh_from_db()
         self.assertFalse(staff_user.is_active)
         self.assertFalse(staff_user.is_superuser)
@@ -1546,7 +1546,7 @@ class OrganizationModuleTests(TestCase):
             {'school': education.id, 'file': SimpleUploadedFile('education.csv', csv, content_type='text/csv')},
         )
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(response.json()['summary']['createdCount'], 2)
         self.assertEqual(response.json()['summary']['skippedRows'], [4])
         student = StudentProfile.objects.get(name='Student Import')
@@ -1567,7 +1567,7 @@ class OrganizationModuleTests(TestCase):
             {'school': club.id, 'file': SimpleUploadedFile('club.csv', csv, content_type='text/csv')},
         )
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, response.content)
         member = StudentProfile.objects.get(name='Club President')
         self.assertEqual(response.json()['summary']['createdCount'], 1)
         self.assertEqual((member.member_type, member.role, member.unique_identifier, member.committee, member.membership_term), ('member', 'President', 'RC-001', 'Executive', '2026/27'))
@@ -1586,6 +1586,38 @@ class OrganizationModuleTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['summary']['createdCount'], 1)
         self.assertEqual(StudentProfile.objects.get(name='Legacy Member').role, 'Member')
+
+    def test_education_bulk_template_headers_and_example_row(self):
+        education = College.objects.create(name='Template Education', organization_type='education', organization_code='EDU')
+        response = self.client.get(reverse('react_dashboard_bulk_upload_template_api'), {'school': education.id})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        workbook = load_workbook(BytesIO(response.content), read_only=True)
+        self.assertEqual(workbook.sheetnames, ['Members', 'Instructions'])
+        self.assertEqual(list(workbook['Members'].values)[:2], [
+            ('Full Name', 'Email', 'Phone', 'Member Type', 'Class/Grade', 'Section', 'Roll Number', 'Academic Year', 'Faculty/Program', 'Department', 'Designation', 'Student/Employee ID'),
+            ('Lionel Messi', 'lionel@example.com', '98XXXXXXXX', 'student', '10', 'A', '12', '2083', 'Science', None, 'President', 'VIS-001'),
+        ])
+
+    def test_club_bulk_template_headers_and_example_row(self):
+        club = College.objects.create(name='Template Club', organization_type='club', organization_code='CLB')
+        response = self.client.get(reverse('react_dashboard_bulk_upload_template_api'), {'school': club.id})
+        workbook = load_workbook(BytesIO(response.content), read_only=True)
+        self.assertEqual(list(workbook['Members'].values)[:2], [
+            ('Full Name', 'Email', 'Phone', 'Designation', 'Membership ID', 'Committee', 'Membership Term', 'Join Date'),
+            ('Lionel Messi', 'lionel@example.com', '98XXXXXXXX', 'President', 'RC-001', 'Executive Committee', '2026/27', '2026-07-01'),
+        ])
+
+    def test_generic_bulk_template_and_template_permissions(self):
+        organization = College.objects.create(name='Template Generic', organization_code='GEN')
+        response = self.client.get(reverse('react_dashboard_bulk_upload_template_api'), {'school': organization.id})
+        workbook = load_workbook(BytesIO(response.content), read_only=True)
+        self.assertEqual(list(workbook['Members'].values)[0], ('Full Name', 'Phone', 'Email', 'Member Type', 'Designation', 'Roll Number', 'Class/Grade', 'Section'))
+        self.assertIn('generic_member_import_template.xlsx', response['Content-Disposition'])
+
+        self.client.force_login(User.objects.create_user('template.member', password='TemplatePass123!'))
+        denied = self.client.get(reverse('react_dashboard_bulk_upload_template_api'), {'school': organization.id})
+        self.assertEqual(denied.status_code, 403)
 
 
 class OrganizationCardExportCompatibilityTests(TestCase):

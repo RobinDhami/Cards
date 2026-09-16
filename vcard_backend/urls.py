@@ -107,6 +107,7 @@ urlpatterns = [
     path('api/dashboard/settings/', react_api.dashboard_settings_api, name='react_dashboard_settings_api'),
     path('api/dashboard/credentials/<int:student_id>/', react_api.dashboard_credentials_api, name='react_dashboard_credentials_api'),
     path('api/dashboard/bulk-upload/', react_api.dashboard_bulk_upload_api, name='react_dashboard_bulk_upload_api'),
+    path('api/dashboard/bulk-upload/template/', react_api.dashboard_bulk_upload_template_api, name='react_dashboard_bulk_upload_template_api'),
     path('api/dashboard/print-controls/', react_api.dashboard_print_controls_api, name='react_dashboard_print_controls_api'),
 ]
 

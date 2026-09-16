@@ -803,7 +803,7 @@ export function BulkUploadPage() {
           <p>Required columns: <code>name</code> and <code>phone</code>. {config.bulkHint}</p>
           <Field label="Member category"><SelectInput value={memberType} onChange={(event) => setMemberType(event.target.value)}>{config.memberTypes.map((choice) => <option key={choice.value} value={choice.value}>{choice.label}</option>)}</SelectInput></Field>
           <FileInput label="CSV or Excel file" accept=".csv,.xlsx,.xls" onChange={setFile} />
-          <button className="manage-button is-primary" type="submit" disabled={!file || uploading}><Upload size={14} />{uploading ? 'Uploading…' : 'Run upload'}</button>
+          <div className="form-actions"><a className="manage-button" href={`/api/dashboard/bulk-upload/template/${queryString({ school: schoolId })}`} download><Download size={14} />Download Import Template</a><button className="manage-button is-primary" type="submit" disabled={!file || uploading}><Upload size={14} />{uploading ? 'Uploading…' : 'Run upload'}</button></div>
         </form>
         <article className="manage-card school-upload-results">
           <h2>Upload result</h2>
