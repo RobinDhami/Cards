@@ -1,6 +1,10 @@
 import BadgeCheck from 'lucide-react/dist/esm/icons/badge-check.js'
+import CalendarDays from 'lucide-react/dist/esm/icons/calendar-days.js'
+import Globe2 from 'lucide-react/dist/esm/icons/globe-2.js'
 import MapPin from 'lucide-react/dist/esm/icons/map-pin.js'
+import Map from 'lucide-react/dist/esm/icons/map.js'
 import ShieldCheck from 'lucide-react/dist/esm/icons/shield-check.js'
+import UsersRound from 'lucide-react/dist/esm/icons/users-round.js'
 import { useCallback, useState } from 'react'
 import { brandLogo } from '../../lib/assets'
 import { ConnectPreview } from './ConnectPreview'
@@ -34,9 +38,11 @@ export function DigitalContactCard({ profile }: { profile: PublicStudent }) {
   }
 
   const organizationName = profile.school.name || profile.organization
+  const identityDetail = [profile.role, profile.memberSummary].filter(Boolean).join(' • ')
   const focusTitle = profile.memberType.toLowerCase().includes('teacher')
     ? 'About & Availability'
     : 'About & Current Focus'
+  const isClub = profile.school.organizationType === 'club'
 
   return (
     <main className="t2c-ui digital-card-page">
@@ -46,7 +52,7 @@ export function DigitalContactCard({ profile }: { profile: PublicStudent }) {
         </button>
       ) : null}
 
-      <article className="digital-contact-card">
+      <article className={`digital-contact-card${isClub ? ' is-club-template' : ''}`}>
         <OrganizationHeader
           organization={profile.school}
           fallbackName={profile.organization}
@@ -64,7 +70,7 @@ export function DigitalContactCard({ profile }: { profile: PublicStudent }) {
                 <h1>{profile.name}</h1>
                 <BadgeCheck size={25} aria-label="Verified identity" />
               </div>
-              <p>{profile.role} · {profile.organization}</p>
+              <p>{identityDetail} · {profile.organization}</p>
               {profile.address ? (
                 <span className="digital-card-identity__location">
                   <MapPin size={18} aria-hidden="true" />
@@ -74,6 +80,25 @@ export function DigitalContactCard({ profile }: { profile: PublicStudent }) {
             </section>
 
             <ContactActions profile={profile} />
+
+            {isClub ? <>
+              <ProfileSection className="digital-card-club-contact" title="Club contact">
+                <div className="digital-card-club-contact__grid">
+                  {profile.school.email ? <a href={`mailto:${profile.school.email}`}><strong>Email</strong><span>{profile.school.email}</span></a> : null}
+                  {profile.school.phone ? <a href={`tel:${profile.school.phone}`}><strong>Phone</strong><span>{profile.school.phone}</span></a> : null}
+                  {profile.school.websiteUrl ? <a href={profile.school.websiteUrl} target="_blank" rel="noreferrer"><Globe2 size={18} /><strong>Website</strong><span>{profile.school.website}</span></a> : null}
+                  {profile.school.mapUrl ? <a href={profile.school.mapUrl} target="_blank" rel="noreferrer"><Map size={18} /><strong>View map</strong><span>{profile.school.address || 'Club location'}</span></a> : null}
+                </div>
+              </ProfileSection>
+              {(profile.school.clubDistrict || profile.school.charteredOn || profile.school.sponsoringClub) ? <ProfileSection className="digital-card-club-information" title="Club information">
+                <dl>
+                  <div><dt><UsersRound size={18} />Club name</dt><dd>{profile.school.name}</dd></div>
+                  {profile.school.clubDistrict ? <div><dt><MapPin size={18} />District</dt><dd>{profile.school.clubDistrict}</dd></div> : null}
+                  {profile.school.charteredOn ? <div><dt><CalendarDays size={18} />Chartered on</dt><dd>{new Intl.DateTimeFormat(undefined, { dateStyle: 'long' }).format(new Date(`${profile.school.charteredOn}T00:00:00`))}</dd></div> : null}
+                  {profile.school.sponsoringClub ? <div><dt><UsersRound size={18} />Sponsoring club</dt><dd>{profile.school.sponsoringClub}</dd></div> : null}
+                </dl>
+              </ProfileSection> : null}
+            </> : null}
 
             {profile.intro ? (
               <blockquote className="digital-card-quote">

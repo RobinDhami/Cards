@@ -49,6 +49,46 @@
   object-fit: contain;
 }
 
+.digital-contact-card.is-club-template {
+  --t2c-color-blue: #006d76;
+  --t2c-color-ink: #08244d;
+  background: #fbfdfd;
+}
+
+.is-club-template .digital-card-hero__cover {
+  background: linear-gradient(135deg, #063f76, #005f69);
+}
+
+.digital-card-club-contact__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.digital-card-club-contact__grid a {
+  display: grid;
+  min-height: 80px;
+  gap: 0.25rem;
+  padding: 0.85rem;
+  border: 1px solid #d6e8e8;
+  border-radius: 14px;
+  color: #083d5b;
+  text-decoration: none;
+}
+
+.digital-card-club-contact__grid a svg { color: #00767a; }
+.digital-card-club-contact__grid span { overflow-wrap: anywhere; color: #62758a; font-size: 0.78rem; }
+
+.digital-card-club-information dl {
+  display: grid;
+  gap: 0.9rem;
+  margin: 0;
+}
+
+.digital-card-club-information dl > div { display: grid; gap: 0.2rem; }
+.digital-card-club-information dt { display: flex; align-items: center; gap: 0.5rem; color: #00767a; font-weight: 700; }
+.digital-card-club-information dd { margin: 0 0 0 1.65rem; color: #18375b; }
+
 .digital-card-organization__copy {
   flex: 1;
   min-width: 0;

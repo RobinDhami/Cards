@@ -1,10 +1,14 @@
 import json
 from datetime import datetime
+from io import BytesIO
+from zipfile import ZipFile
 
 from django.contrib.auth.models import Group, Permission, User
-from django.test import Client, TestCase
+from django.test import Client, RequestFactory, TestCase
 from django.urls import reverse
 from django.utils import timezone
+from django.core.files.uploadedfile import SimpleUploadedFile
+from openpyxl import load_workbook
 
 from card_designer.models import CardTemplate, CardTemplateVersion
 from professional_cards.models import ProfessionalProfile
@@ -232,32 +236,71 @@ class WorkspaceLoginTests(TestCase):
         self.assertEqual(response.json()['message'], 'This account is not assigned to an active workspace.')
         self.assertNotIn('_auth_user_id', self.client.session)
 
-    def test_multiple_organization_assignments_are_rejected(self):
+    def test_multiple_organization_assignments_show_workspace_choices(self):
         admin_user = self._user('ambiguous.admin')
-        College.objects.create(name='Organization One', admin_user=admin_user)
-        College.objects.create(name='Organization Two', admin_user=admin_user)
+        first = College.objects.create(name='Organization One', admin_user=admin_user)
+        second = College.objects.create(name='Organization Two', admin_user=admin_user)
 
         response = self._login(admin_user.username)
 
-        self.assertEqual(response.status_code, 403)
-        self.assertIn('multiple organizations', response.json()['message'])
-        self.assertNotIn('_auth_user_id', self.client.session)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['redirectPath'], '/workspaces/')
+        self.assertEqual(
+            {choice['key'] for choice in response.json()['workspaceChoices']},
+            {f'organization:{first.id}', f'organization:{second.id}'},
+        )
+        select = self.client.post(
+            reverse('react_session_workspace_select_api'),
+            data=json.dumps({'workspace': f'organization:{second.id}'}),
+            content_type='application/json',
+        )
+        self.assertEqual(select.status_code, 200)
+        self.assertEqual(select.json()['redirectPath'], reverse('dashboard_organization_workspace', args=[second.id]))
+        self.assertEqual(self.client.get(reverse('react_session_api')).json()['redirectPath'], select.json()['redirectPath'])
 
-    def test_conflicting_workspace_assignments_are_rejected(self):
+    def test_org_admin_and_personal_profile_show_workspace_choices(self):
         owner = self._user('conflicting.owner')
-        College.objects.create(name='Conflicting Organization', admin_user=owner)
-        ProfessionalProfile.objects.create(
-            owner=owner,
-            full_name='Conflicting Owner',
-            slug='conflicting-owner',
-            is_active=True,
+        organization = College.objects.create(name='Vedanga International School', admin_user=owner)
+        profile = StudentProfile.objects.create(
+            auth_user=owner, name='Hari Gautam', username='hari.gautam', password=self.password, phone='9800000991',
         )
 
         response = self._login(owner.username)
 
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['redirectPath'], '/workspaces/')
+        self.assertEqual(
+            {(choice['label'], choice['description']) for choice in response.json()['workspaceChoices']},
+            {('Vedanga International School', 'Organization Workspace'), ('Hari Gautam', 'My Profile')},
+        )
+        self.assertIn(f'organization:{organization.id}', {choice['key'] for choice in response.json()['workspaceChoices']})
+        self.assertIn(f'member:{profile.id}', {choice['key'] for choice in response.json()['workspaceChoices']})
+
+    def test_multiple_valid_contexts_include_professional_profile(self):
+        owner = self._user('multi.context')
+        organization = College.objects.create(name='Multi Organization', admin_user=owner)
+        professional = ProfessionalProfile.objects.create(owner=owner, full_name='Multi Professional', slug='multi-professional')
+        response = self._login(owner.username)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['redirectPath'], '/workspaces/')
+        self.assertEqual(
+            {choice['key'] for choice in response.json()['workspaceChoices']},
+            {f'organization:{organization.id}', f'professional:{professional.id}'},
+        )
+
+    def test_unauthorized_context_is_not_shown_or_selectable(self):
+        owner = self._user('authorized.owner')
+        organization = College.objects.create(name='Authorized Organization', admin_user=owner)
+        other = College.objects.create(name='Other Organization', admin_user=self._user('other.owner'))
+        self._login(owner.username)
+        session = self.client.get(reverse('react_session_api')).json()
+        self.assertEqual([choice['key'] for choice in session['workspaceChoices']], [f'organization:{organization.id}'])
+        response = self.client.post(
+            reverse('react_session_workspace_select_api'),
+            data=json.dumps({'workspace': f'organization:{other.id}'}),
+            content_type='application/json',
+        )
         self.assertEqual(response.status_code, 403)
-        self.assertIn('conflicting workspace assignments', response.json()['message'])
-        self.assertNotIn('_auth_user_id', self.client.session)
 
     def test_existing_super_admin_dashboard_route_remains_functional(self):
         super_admin = User.objects.create_superuser('dashboard.admin', password=self.password)
@@ -267,6 +310,79 @@ class WorkspaceLoginTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json()['isSuperAdmin'])
+
+
+class OrganizationCredentialTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(username='credentials.admin', password='AdminPass123!')
+        self.organization = College.objects.create(
+            name='Credential Organization', organization_code='CRED', admin_user=self.admin,
+        )
+        self.client.force_login(self.admin)
+
+    def _create_member(self):
+        response = self.client.post(
+            reverse('react_dashboard_members_api'),
+            data=json.dumps({'name': 'Credential Member', 'phone': '9800000199', 'member_type': 'student'}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 201, response.content)
+        return StudentProfile.objects.get(name='Credential Member'), response.json()['generatedPassword']
+
+    def test_secure_temporary_credential_is_generated_and_hashed(self):
+        member, temporary_password = self._create_member()
+        self.assertTrue(temporary_password.startswith('T2C-'))
+        self.assertGreaterEqual(len(temporary_password), 24)
+        self.assertNotIn(member.name.lower().replace(' ', ''), temporary_password.lower())
+        self.assertNotEqual(member.password, temporary_password)
+        self.assertTrue(member.password.startswith('pbkdf2_'))
+        self.assertTrue(member.auth_user.check_password(temporary_password))
+        self.assertTrue(member.password_change_required)
+
+    def test_first_login_requires_password_change_then_clears_requirement(self):
+        member, temporary_password = self._create_member()
+        self.client.logout()
+        login_response = self.client.post(
+            reverse('react_session_login_api'),
+            data=json.dumps({'username': member.username, 'password': temporary_password}),
+            content_type='application/json',
+        )
+        self.assertEqual(login_response.status_code, 200)
+        dashboard_url = reverse('react_student_dashboard_api', args=[member.id])
+        self.assertTrue(self.client.get(dashboard_url).json()['dashboard']['stats']['passwordChangeRequired'])
+        blocked = self.client.post(dashboard_url, data=json.dumps({'action': 'toggle_contact_card'}), content_type='application/json')
+        self.assertEqual(blocked.status_code, 403)
+        changed = self.client.post(dashboard_url, data=json.dumps({
+            'action': 'change_password', 'currentPassword': temporary_password,
+            'newPassword': 'ChangedCredentialPass123!', 'confirmPassword': 'ChangedCredentialPass123!',
+        }), content_type='application/json')
+        self.assertEqual(changed.status_code, 200)
+        member.refresh_from_db()
+        self.assertFalse(member.password_change_required)
+        self.assertTrue(member.auth_user.check_password('ChangedCredentialPass123!'))
+
+    def test_credentials_are_not_exposed_to_unrelated_accounts(self):
+        member, _ = self._create_member()
+        other = User.objects.create_user(username='credentials.other', password='OtherPass123!')
+        self.client.force_login(other)
+        response = self.client.get(reverse('react_dashboard_credentials_api', args=[member.id]))
+        self.assertEqual(response.status_code, 403)
+
+    def test_bulk_import_credential_results_are_limited_to_the_organization_admin(self):
+        csv = b'name,phone\nBulk Credential,9800000200\n'
+        response = self.client.post(
+            reverse('react_dashboard_bulk_upload_api'),
+            {'school': self.organization.id, 'file': SimpleUploadedFile('credentials.csv', csv, content_type='text/csv')},
+        )
+        self.assertEqual(response.status_code, 200)
+        credential = response.json()['summary']['credentials'][0]
+        self.assertTrue(credential['password'].startswith('T2C-'))
+        self.client.force_login(User.objects.create_user(username='bulk.other', password='OtherPass123!'))
+        blocked = self.client.post(
+            reverse('react_dashboard_bulk_upload_api'),
+            {'school': self.organization.id, 'file': SimpleUploadedFile('credentials.csv', csv, content_type='text/csv')},
+        )
+        self.assertEqual(blocked.status_code, 403)
 
 
 class StudentDigitalCardTests(StudentDigitalCardTestMixin, TestCase):
@@ -1254,7 +1370,7 @@ class OrganizationModuleTests(TestCase):
         self.client.force_login(self.admin)
 
     def test_education_organization_uses_broad_categories_and_public_fields(self):
-        school = College.objects.create(name='Education Module', organization_type='education')
+        school = College.objects.create(name='Education Module', organization_type='education', organization_code='EDU1')
         response = self.client.post(
             f"{reverse('react_dashboard_members_api')}?school={school.id}",
             data=json.dumps({'name': 'Teacher One', 'phone': '9800000011', 'member_type': 'teacher', 'role': 'Computer Science Teacher', 'department': 'Technology'}),
@@ -1265,10 +1381,10 @@ class OrganizationModuleTests(TestCase):
         self.assertEqual(teacher.department, 'Technology')
         profile = self.client.get(reverse('react_student_public_api', args=[teacher.id])).json()['profile']
         self.assertEqual(profile['identifierLabel'], 'Employee ID')
-        self.assertIn({'label': 'Department', 'value': 'Technology'}, profile['structuredDetails'])
+        self.assertEqual(profile['memberSummary'], 'Technology Department')
 
     def test_education_student_keeps_academic_fields_and_student_identifier(self):
-        school = College.objects.create(name='Student Education', organization_type='education')
+        school = College.objects.create(name='Student Education', organization_type='education', organization_code='EDU2')
         response = self.client.post(
             f"{reverse('react_dashboard_members_api')}?school={school.id}",
             data=json.dumps({
@@ -1283,9 +1399,10 @@ class OrganizationModuleTests(TestCase):
         profile = self.client.get(reverse('react_student_public_api', args=[student.id])).json()['profile']
         self.assertEqual(profile['identifierLabel'], 'Student ID')
         self.assertIn({'label': 'Faculty / Program', 'value': 'Science'}, profile['structuredDetails'])
+        self.assertEqual(profile['memberSummary'], 'Grade 10 • Section A')
 
     def test_education_staff_uses_broad_category_and_role_as_designation(self):
-        school = College.objects.create(name='Staff Education', organization_type='education')
+        school = College.objects.create(name='Staff Education', organization_type='education', organization_code='EDU3')
         response = self.client.post(
             f"{reverse('react_dashboard_members_api')}?school={school.id}",
             data=json.dumps({'name': 'Staff One', 'phone': '9800000014', 'member_type': 'staff', 'employee_id': 'EMP-01', 'role': 'Registrar', 'department': 'Administration'}),
@@ -1320,7 +1437,7 @@ class OrganizationModuleTests(TestCase):
         self.assertEqual((club_report['executiveCount'], club_report['committeeCount'], club_report['generalMemberCount']), (1, 1, 1))
 
     def test_club_uses_member_category_and_flexible_role_fields(self):
-        club = College.objects.create(name='Club Module', organization_type='club')
+        club = College.objects.create(name='Club Module', organization_type='club', organization_code='CLB1')
         response = self.client.post(
             f"{reverse('react_dashboard_members_api')}?school={club.id}",
             data=json.dumps({'name': 'Member One', 'phone': '9800000012', 'member_type': 'member', 'membership_id': 'RC-001', 'role': 'President', 'committee': 'Executive', 'membership_term': '2026/27', 'join_date': '2026-01-01'}),
@@ -1334,6 +1451,41 @@ class OrganizationModuleTests(TestCase):
         self.assertEqual(member.unique_identifier, 'RC-001')
         payload = self.client.get(reverse('react_dashboard_members_api'), {'school': club.id, 'type': 'all'}).json()
         self.assertEqual(payload['shell']['currentSchool']['module']['key'], 'club')
+        public_profile = self.client.get(reverse('react_student_public_api', args=[member.id])).json()['profile']
+        self.assertEqual(public_profile['memberSummary'], '2026/27')
+        self.assertEqual(public_profile['identifierLabel'], 'Membership ID')
+
+    def test_club_card_uses_shared_organization_template_data(self):
+        club = College.objects.create(
+            name='Leo Club of Kathmandu', organization_type='club', organization_code='LCK',
+            slogan='Leadership • Service • Impact', address='Kathmandu, Nepal',
+            website='https://leo.example.test', email='info@leo.example.test', phone='9800000050',
+            map_url='https://maps.example.test/leo', instagram='https://instagram.example.test/leo',
+            club_district='Leo District 325 I, Nepal', chartered_on='2010-08-16', sponsoring_club='Lions Club Kathmandu',
+        )
+        member = StudentProfile.objects.create(
+            college=club, name='Club Secretary', username='club.secretary', password='SecurePass123!',
+            phone='9800000051', member_type='member', role='Secretary', unique_identifier='LCK-2425-031',
+        )
+
+        profile = self.client.get(reverse('react_student_public_api', args=[member.id])).json()['profile']
+
+        self.assertEqual(profile['school']['organizationType'], 'club')
+        self.assertEqual(profile['school']['clubDistrict'], 'Leo District 325 I, Nepal')
+        self.assertEqual(profile['school']['charteredOn'], '2010-08-16')
+        self.assertEqual(profile['school']['sponsoringClub'], 'Lions Club Kathmandu')
+        self.assertEqual(profile['school']['mapUrl'], 'https://maps.example.test/leo')
+        self.assertEqual(profile['socials'], [{'key': 'instagram', 'url': 'https://instagram.example.test/leo', 'label': 'Instagram'}])
+        self.assertEqual(profile['actions']['edit'], '')
+
+    def test_public_organization_name_comes_from_college_not_member_copy(self):
+        school = College.objects.create(name='Canonical School', organization_type='education')
+        member = StudentProfile.objects.create(
+            college=school, name='Organization Member', username='organization.member', password='SecurePass123!',
+            phone='9800000098', member_type='student', organization_name='Outdated copied name',
+        )
+        profile = self.client.get(reverse('react_student_public_api', args=[member.id])).json()['profile']
+        self.assertEqual(profile['organization'], 'Canonical School')
 
     def test_blank_organization_type_keeps_generic_module(self):
         organization = College.objects.create(name='Legacy Generic')
@@ -1378,3 +1530,171 @@ class OrganizationModuleTests(TestCase):
     def test_legacy_organization_can_remain_without_a_code(self):
         organization = College.objects.create(name='No Code Legacy')
         self.assertIsNone(organization.organization_code)
+
+    def test_education_bulk_import_maps_member_fields_and_skips_invalid_rows(self):
+        education = College.objects.create(name='Bulk Education', organization_type='education', organization_code='EDU')
+        csv = (
+            'full_name,email,member_category,class,section,roll_number,academic_year,faculty_program,department,designation,student_id\n'
+            'Student Import,student@example.com,student,grade_10,A,12,2026,Science,,,'
+            'EDU-STU-1\n'
+            'Staff Import,staff@example.com,staff,,,,,,Administration,Registrar,EMP-1\n'
+            'Invalid Row,,,,,,,,,,\n'
+        ).encode()
+
+        response = self.client.post(
+            reverse('react_dashboard_bulk_upload_api'),
+            {'school': education.id, 'file': SimpleUploadedFile('education.csv', csv, content_type='text/csv')},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['summary']['createdCount'], 2)
+        self.assertEqual(response.json()['summary']['skippedRows'], [4])
+        student = StudentProfile.objects.get(name='Student Import')
+        staff = StudentProfile.objects.get(name='Staff Import')
+        self.assertEqual((student.academic_level, student.faculty_program, student.unique_identifier), ('grade_10', 'Science', 'EDU-STU-1'))
+        self.assertEqual((staff.member_type, staff.department, staff.role, staff.unique_identifier), ('staff', 'Administration', 'Registrar', 'EMP-1'))
+        self.assertTrue(User.objects.filter(username=student.username).exists())
+
+    def test_club_bulk_import_maps_membership_fields_and_generates_accounts(self):
+        club = College.objects.create(name='Bulk Club', organization_type='club', organization_code='CLB')
+        csv = (
+            'full_name,contact,email,member_category,designation,membership_id,committee,membership_term,join_date\n'
+            'Club President,9800000091,president@example.com,member,President,RC-001,Executive,2026/27,2026-01-01\n'
+        ).encode()
+
+        response = self.client.post(
+            reverse('react_dashboard_bulk_upload_api'),
+            {'school': club.id, 'file': SimpleUploadedFile('club.csv', csv, content_type='text/csv')},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        member = StudentProfile.objects.get(name='Club President')
+        self.assertEqual(response.json()['summary']['createdCount'], 1)
+        self.assertEqual((member.member_type, member.role, member.unique_identifier, member.committee, member.membership_term), ('member', 'President', 'RC-001', 'Executive', '2026/27'))
+        self.assertEqual(str(member.join_date), '2026-01-01')
+        self.assertTrue(member.username.startswith('CLB'))
+
+    def test_existing_bulk_upload_accepts_explicit_role_type(self):
+        organization = College.objects.create(name='Legacy Bulk Organization', organization_code='LEG')
+        csv = b'name,phone,role\nLegacy Member,9800000099,Member\n'
+
+        response = self.client.post(
+            reverse('react_dashboard_bulk_upload_api'),
+            {'school': organization.id, 'role_type': 'student', 'file': SimpleUploadedFile('members.csv', csv, content_type='text/csv')},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['summary']['createdCount'], 1)
+        self.assertEqual(StudentProfile.objects.get(name='Legacy Member').role, 'Member')
+
+
+class OrganizationCardExportCompatibilityTests(TestCase):
+    """Regression coverage for module members on the shared card/QR/export flow."""
+
+    def setUp(self):
+        self.admin = User.objects.create_superuser('card.export.admin', password='CardExportPass123!')
+        self.client.force_login(self.admin)
+        self.education = College.objects.create(
+            name='Vedanga International School',
+            organization_type='education',
+            organization_code='VIS',
+        )
+        self.club = College.objects.create(
+            name='Rotaract Club of Example',
+            organization_type='club',
+            organization_code='RCE',
+        )
+
+    def test_digital_only_education_member_has_a_profile_qr_without_a_physical_card(self):
+        member = StudentProfile.objects.create(
+            college=self.education,
+            name='Education Student',
+            username='education.card.member',
+            password='MemberPass123!',
+            phone='9800000100',
+            member_type='student',
+            academic_level='grade_10',
+            section='A',
+            unique_identifier='VIS-001',
+        )
+
+        qr_response = self.client.get(reverse('print_qr_code', args=[member.id]))
+        public_profile = self.client.get(reverse('react_student_public_api', args=[member.id]))
+
+        self.assertEqual(qr_response.status_code, 200)
+        self.assertEqual(qr_response['Content-Type'], 'image/png')
+        self.assertEqual(public_profile.status_code, 200)
+        self.assertFalse(StudentCard.objects.filter(student=member).exists())
+        self.assertEqual(public_profile.json()['profile']['organization'], self.education.name)
+
+    def test_shared_print_controls_and_qr_export_include_education_and_club_fields(self):
+        education_member = StudentProfile.objects.create(
+            college=self.education,
+            name='Education Staff', username='education.print.member', password='MemberPass123!',
+            phone='9800000101', member_type='staff', role='Registrar', department='Administration',
+            unique_identifier='EMP-01',
+        )
+        club_member = StudentProfile.objects.create(
+            college=self.club,
+            name='Club President', username='club.print.member', password='MemberPass123!',
+            phone='9800000102', member_type='member', role='President', committee='Executive',
+            membership_term='2026/27', join_date=datetime(2026, 1, 1).date(), unique_identifier='RC-001',
+        )
+
+        controls = self.client.get(reverse('react_dashboard_print_controls_api'), {'school': self.club.id})
+        self.assertEqual(controls.status_code, 200)
+        club_row = controls.json()['members'][0]
+        self.assertEqual(
+            {key: club_row[key] for key in ('role', 'committee', 'membershipTerm', 'joinDate', 'identifier')},
+            {'role': 'President', 'committee': 'Executive', 'membershipTerm': '2026/27', 'joinDate': '2026-01-01', 'identifier': 'RC-001'},
+        )
+
+        response = self.client.post(
+            f"{reverse('dashboard_qr_export_download')}?school={self.club.id}",
+            {'selected_ids': [str(club_member.id)]},
+        )
+        self.assertEqual(response.status_code, 200)
+        with ZipFile(BytesIO(response.content)) as archive:
+            workbook_name = next(name for name in archive.namelist() if name.endswith('.xlsx'))
+            workbook = load_workbook(BytesIO(archive.read(workbook_name)))
+        sheet = workbook['Print Data']
+        headers = [cell.value for cell in sheet[1]]
+        row = dict(zip(headers, [cell.value for cell in sheet[2]]))
+        self.assertEqual(row['School Name'], self.club.name)
+        self.assertEqual(row['Designation / Role'], 'President')
+        self.assertEqual(row['Committee'], 'Executive')
+        self.assertEqual(row['Membership Term'], '2026/27')
+        self.assertEqual(row['Join Date'], '2026-01-01')
+
+        pdf_response = self.client.post(
+            f"{reverse('dashboard_print_export_pdf')}?school={self.club.id}",
+            {'selected_ids': [str(club_member.id)]},
+        )
+        self.assertEqual(pdf_response.status_code, 200)
+        self.assertEqual(pdf_response['Content-Type'], 'application/pdf')
+
+        context = __import__('vcards.views', fromlist=['_build_card_context'])._build_card_context(
+            RequestFactory().get('/'), education_member,
+        )
+        self.assertEqual(context['school_name'], self.education.name)
+        self.assertEqual(context['member_department'], 'Administration')
+
+    def test_physical_card_assignment_still_links_to_a_club_member_profile(self):
+        member = StudentProfile.objects.create(
+            college=self.club,
+            name='Club Card Member', username='club.card.member', password='MemberPass123!',
+            phone='9800000103', member_type='member', unique_identifier='RC-002',
+        )
+        batch = CardBatch.objects.create(batch_name='Club cards', cards_printed=1)
+
+        response = self.client.post(
+            reverse('react_card_batch_cards_api', args=[batch.id]),
+            data=json.dumps({
+                'cardLabel': 'Club #1', 'status': 'sold', 'salePrice': '0.00',
+                'linkedProfile': {'type': 'member', 'id': member.id}, 'notes': '',
+            }),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 201, response.content)
+        self.assertEqual(response.json()['card']['linkedProfile']['label'], member.name)

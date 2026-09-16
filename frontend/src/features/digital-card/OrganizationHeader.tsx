@@ -31,7 +31,7 @@ export function OrganizationHeader({
         </span>
         <span className="digital-card-organization__copy">
           <strong>{name}</strong>
-          <small>Tap2Connect verified digital identity</small>
+          <small>{organization.slogan || 'Tap2Connect verified digital identity'}</small>
         </span>
       </div>
       <div className="digital-card-organization__actions">

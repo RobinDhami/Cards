@@ -621,9 +621,12 @@ def _set_platform_staff_modules(user, modules):
     )
 
 
-def _session_payload(request):
+def _session_payload(request, surface='session'):
     user = request.user
-    workspace = _resolve_user_workspace(user)
+    preferred_context_key = None
+    if user.is_authenticated and request.session.get('tap2connect_workspace_user_id') == user.id:
+        preferred_context_key = request.session.get('tap2connect_workspace_context')
+    workspace = _resolve_user_workspace(user, surface=surface, preferred_context_key=preferred_context_key)
     role = workspace['role']
     return {
         'ok': True,
@@ -642,6 +645,7 @@ def _session_payload(request):
         },
         'redirectPath': workspace['destination'],
         'workspaceError': workspace['message'],
+        'workspaceChoices': workspace.get('contexts', []),
         'platformAccess': platform_access_payload(user),
     }
 
@@ -719,12 +723,32 @@ def session_login_api(request):
     user = authenticate(request, username=username, password=password)
     if user is None:
         return _json_error('Invalid username or password.', status=400)
-    workspace = _resolve_user_workspace(user, surface='normal')
+    preferred_context_key = None
+    if request.session.get('tap2connect_workspace_user_id') == user.id:
+        preferred_context_key = request.session.get('tap2connect_workspace_context')
+    workspace = _resolve_user_workspace(user, surface='normal', preferred_context_key=preferred_context_key)
     if not workspace['destination']:
         logout(request)
         return _json_error(workspace['message'], status=403)
     login(request, user)
     return JsonResponse(_session_payload(request))
+
+
+@require_http_methods(['POST'])
+def session_workspace_select_api(request):
+    permission_error = _require_login(request)
+    if permission_error:
+        return permission_error
+    workspace = _resolve_user_workspace(request.user, surface='normal')
+    if workspace['role'] in {'super_admin', 'platform_staff'}:
+        return _json_error('Platform administrators use /platform/login/.', status=403)
+    key = str(_json_body(request).get('workspace') or '')
+    selected = next((item for item in workspace.get('contexts', []) if item['key'] == key), None)
+    if not selected:
+        return _json_error('That workspace is no longer available to this account.', status=403)
+    request.session['tap2connect_workspace_user_id'] = request.user.id
+    request.session['tap2connect_workspace_context'] = selected['key']
+    return JsonResponse({'ok': True, 'redirectPath': selected['destination']})
 
 
 @require_http_methods(['POST'])
@@ -740,7 +764,7 @@ def platform_session_login_api(request):
         logout(request)
         return _json_error(workspace['message'], status=403)
     login(request, user)
-    return JsonResponse(_session_payload(request))
+    return JsonResponse(_session_payload(request, surface='platform'))
 
 
 @require_http_methods(['POST'])
@@ -1461,17 +1485,31 @@ def _public_student_payload(request, student):
     if module_key == 'education' and student.member_type == 'student':
         structured_details = [
             ('Academic year', student.academic_year), ('Faculty / Program', student.faculty_program),
-            ('Class / Grade', context['grade_label']), ('Section', student.section), ('Roll number', student.roll_number),
         ]
+        member_summary = ' • '.join(
+            value for value in (context['grade_label'], f'Section {student.section}' if student.section else '') if value
+        )
     elif module_key == 'education':
-        structured_details = [('Department', student.department), ('Designation', student.role)]
+        structured_details = []
+        member_summary = (
+            student.department
+            if student.department.lower().endswith('department')
+            else f'{student.department} Department' if student.department else ''
+        )
     elif module_key == 'club':
         structured_details = [
-            ('Role / Position', student.role), ('Committee', student.committee),
-            ('Membership term', student.membership_term), ('Join date', student.join_date.isoformat() if student.join_date else ''),
+            ('Committee', student.committee),
+            ('Join date', student.join_date.isoformat() if student.join_date else ''),
         ]
+        member_summary = student.membership_term
     else:
         structured_details = []
+        member_summary = ''
+    club_socials = [
+        {'key': key, 'url': getattr(organization, key), 'label': label}
+        for key, label in (('instagram', 'Instagram'), ('linkedin', 'LinkedIn'), ('facebook', 'Facebook'), ('twitter', 'X'))
+        if organization and getattr(organization, key)
+    ]
     return {
         'id': student.id,
         'name': student.name,
@@ -1481,9 +1519,17 @@ def _public_student_payload(request, student):
             'name': context['school_name'],
             'website': context['school_website'],
             'websiteUrl': context['school_website_url'],
+            'email': organization.email if organization else '',
             'phone': context['school_phone'],
             'address': context['school_address'],
             'logo': context['school_logo_url'],
+            'coverPhoto': _file_url(organization.cover_photo) if organization else '',
+            'mapUrl': organization.map_url if organization else '',
+            'slogan': organization.slogan if organization else '',
+            'clubDistrict': organization.club_district if organization else '',
+            'charteredOn': organization.chartered_on.isoformat() if organization and organization.chartered_on else '',
+            'sponsoringClub': organization.sponsoring_club if organization else '',
+            'organizationType': organization.organization_type if organization else '',
         },
         'profilePhoto': context['student_photo_url'],
         'coverPhoto': context['cover_photo_url'],
@@ -1494,7 +1540,8 @@ def _public_student_payload(request, student):
         'identifier': context['student_identifier'],
         'identifierLabel': identifier_label(organization, student) if organization else context['student_identifier_label'],
         'role': student.role or context['member_type_label'],
-        'organization': student.organization_name or context['school_name'],
+        'organization': context['school_name'] if organization else student.organization_name,
+        'memberSummary': member_summary,
         'address': context['student_address'] or context['school_address'],
         'guardianLabel': context['parent_label'],
         'guardianName': context['parent_name'] if context['can_view_private_details'] else '',
@@ -1506,15 +1553,15 @@ def _public_student_payload(request, student):
         'featured': context['public_featured'],
         'current': context['public_current'],
         'skills': [skill.name for skill in context['public_skills']],
-        'socials': context['social_links'],
+        'socials': club_socials if module_key == 'club' else context['social_links'],
         'actions': {
             'phone': context['phone_action_url'],
             'whatsapp': context['whatsapp_action_url'],
-            'map': context['navigate_url'],
-            'website': context['website_url'],
+            'map': organization.map_url if module_key == 'club' and organization and organization.map_url else context['navigate_url'],
+            'website': context['school_website_url'] if module_key == 'club' else context['website_url'],
             'vcard': context['download_vcard_url'],
             'qr': context['qr_code_url'],
-            'edit': context['edit_profile_url'],
+            'edit': '' if module_key == 'club' else context['edit_profile_url'],
             'birthCertificate': context['birth_certificate_url'] if context['has_birth_certificate'] else '',
         },
         'canViewPrivateDetails': context['can_view_private_details'],
@@ -1630,6 +1677,8 @@ def student_manage_api(request, student_id):
     permission_error = _student_permission(request, student)
     if permission_error:
         return permission_error
+    if request.method != 'GET' and student.password_change_required and student.auth_user_id == request.user.id:
+        return _json_error('Change your temporary password before editing this profile.', status=403)
     if request.method == 'GET':
         return JsonResponse({'ok': True, 'profile': _student_manage_payload(request, student)})
     if request.method == 'DELETE':
@@ -1659,12 +1708,12 @@ def student_owner_dashboard_api(request, student_id):
     permission_error = _student_permission(request, student)
     if permission_error:
         return permission_error
-    if not _profile_supports_self_service(student):
-        return _json_error('This profile is managed by the school.', status=403)
 
     if request.method == 'POST':
         payload = _json_body(request)
         action = payload.get('action')
+        if student.password_change_required and action != 'change_password':
+            return _json_error('Change your temporary password before using this workspace.', status=403)
         if action == 'toggle_contact_card':
             student.show_contact_card = not student.show_contact_card
             student.save(update_fields=['show_contact_card'])
@@ -1678,9 +1727,10 @@ def student_owner_dashboard_api(request, student_id):
             if new_password != str(payload.get('confirmPassword') or ''):
                 return _json_error('New passwords do not match.')
             student.password = new_password
-            student.save(update_fields=['password'])
+            student.password_change_required = False
+            student.save(update_fields=['password', 'password_change_required'])
             user = _sync_profile_auth_user(student, new_password)
-            student.save(update_fields=['password', 'auth_user', 'username'])
+            student.save(update_fields=['password', 'password_change_required', 'auth_user', 'username'])
             update_session_auth_hash(request, user)
         else:
             return _json_error('Unknown dashboard action.')
@@ -1723,6 +1773,7 @@ def student_owner_dashboard_api(request, student_id):
                 'totalEngagement': student.views + student.downloads + student.contact_clicks,
                 'completion': _calculate_profile_completion(student),
                 'isVisible': student.show_contact_card,
+                'passwordChangeRequired': student.password_change_required,
             },
             'daily': daily,
             'recent': recent,
@@ -1761,11 +1812,20 @@ def _school_payload(school, with_stats=False):
         'slogan': school.slogan or '',
         'address': school.address or '',
         'logo': _file_url(school.logo),
+        'coverPhoto': _file_url(school.cover_photo),
         'principalName': school.principal_name or '',
         'principalSignature': _file_url(school.principal_signature),
         'website': school.website or '',
         'email': school.email or '',
         'phone': school.phone or '',
+        'mapUrl': school.map_url or '',
+        'facebook': school.facebook or '',
+        'instagram': school.instagram or '',
+        'linkedin': school.linkedin or '',
+        'twitter': school.twitter or '',
+        'clubDistrict': school.club_district or '',
+        'charteredOn': school.chartered_on.isoformat() if school.chartered_on else '',
+        'sponsoringClub': school.sponsoring_club or '',
         'usernamePrefix': school.student_username_prefix or '',
         'effectiveUsernamePrefix': _school_username_prefix(school),
         'themePrimary': school.theme_primary,
@@ -1862,6 +1922,16 @@ def _apply_school_fields(request, school, source):
         'website': 'website',
         'email': 'email',
         'phone': 'phone',
+        'mapUrl': 'map_url',
+        'map_url': 'map_url',
+        'facebook': 'facebook',
+        'instagram': 'instagram',
+        'linkedin': 'linkedin',
+        'twitter': 'twitter',
+        'clubDistrict': 'club_district',
+        'club_district': 'club_district',
+        'sponsoringClub': 'sponsoring_club',
+        'sponsoring_club': 'sponsoring_club',
         'usernamePrefix': 'student_username_prefix',
         'student_username_prefix': 'student_username_prefix',
         'themePrimary': 'theme_primary',
@@ -1877,8 +1947,13 @@ def _apply_school_fields(request, school, source):
             setattr(school, field, source.get(key) or '')
     if request.FILES.get('logo'):
         school.logo = request.FILES['logo']
+    if request.FILES.get('cover_photo'):
+        school.cover_photo = request.FILES['cover_photo']
     if request.FILES.get('principal_signature'):
         school.principal_signature = request.FILES['principal_signature']
+    if 'charteredOn' in source or 'chartered_on' in source:
+        chartered_on = source.get('charteredOn', source.get('chartered_on'))
+        school.chartered_on = parse_date(str(chartered_on)) if chartered_on else None
     school.full_clean(exclude=['admin_user'])
 
 
@@ -2162,6 +2237,7 @@ def dashboard_credentials_api(request, student_id):
             student.username = validate_member_username(username, student) if username != student.username else username
             if password:
                 student.password = password
+                student.password_change_required = True
             student.save()
             _sync_profile_auth_user(student, password or None)
             student.save(update_fields=['auth_user', 'username'])

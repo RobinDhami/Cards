@@ -123,11 +123,24 @@ class College(models.Model):
     slogan = models.CharField(max_length=255, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
     logo = models.ImageField(upload_to='college_logos/', blank=True, null=True)
+    # Shared organization brand content. Member profiles deliberately do not own
+    # these values, so every club card stays consistent.
+    cover_photo = models.ImageField(upload_to='organization_covers/', blank=True, null=True)
     principal_name = models.CharField(max_length=255, blank=True, default='')
     principal_signature = models.ImageField(upload_to='principal_signatures/', blank=True, null=True)
     website = models.URLField(blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
+    map_url = models.URLField(blank=True, null=True)
+    facebook = models.URLField(blank=True, null=True)
+    instagram = models.URLField(blank=True, null=True)
+    linkedin = models.URLField(blank=True, null=True)
+    twitter = models.URLField(blank=True, null=True)
+    # These are intentionally club-specific. Generic organization fields above
+    # remain available to every module without duplicating member data.
+    club_district = models.CharField(max_length=160, blank=True, default='')
+    chartered_on = models.DateField(blank=True, null=True)
+    sponsoring_club = models.CharField(max_length=255, blank=True, default='')
     student_username_prefix = models.CharField(max_length=80, blank=True, default='')
     theme_primary = models.CharField(max_length=20, blank=True, default='#1a3a5c')
     theme_light_primary = models.CharField(max_length=20, blank=True, default='#f7f5f0')
@@ -243,6 +256,7 @@ class StudentProfile(BaseProfile):
 
     college = models.ForeignKey(College, on_delete=models.SET_NULL, related_name='students', blank=True, null=True)
     auth_user = models.OneToOneField(User, on_delete=models.SET_NULL, related_name='managed_profile', blank=True, null=True)
+    password_change_required = models.BooleanField(default=False)
     unique_identifier = models.CharField(max_length=40, unique=True, blank=True, null=True, default=None)
     profile_category = models.CharField(max_length=20, choices=PROFILE_CATEGORY_CHOICES, default='school')
     member_type = models.CharField(max_length=20, choices=MEMBER_TYPE_CHOICES, default='student')

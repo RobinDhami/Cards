@@ -5,6 +5,7 @@ import ChevronDown from 'lucide-react/dist/esm/icons/chevron-down.js'
 import ChevronsLeft from 'lucide-react/dist/esm/icons/chevrons-left.js'
 import ChevronsRight from 'lucide-react/dist/esm/icons/chevrons-right.js'
 import LogOut from 'lucide-react/dist/esm/icons/log-out.js'
+import PanelsTopLeft from 'lucide-react/dist/esm/icons/panels-top-left.js'
 import Menu from 'lucide-react/dist/esm/icons/menu.js'
 import X from 'lucide-react/dist/esm/icons/x.js'
 import { apiFetch, backendHref } from '../../lib/api'
@@ -117,6 +118,9 @@ export function ManageShell({
           <strong>{userName}</strong>
           <small>{userRole}</small>
         </span>
+        <a className="manage-account-switch" href="/workspaces/" title="Switch workspace" aria-label="Switch workspace">
+          <PanelsTopLeft size={16} />
+        </a>
         <button type="button" onClick={signOut} title="Sign out" aria-label="Sign out" disabled={isSigningOut}>
           <LogOut size={16} />
         </button>

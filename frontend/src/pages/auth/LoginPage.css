@@ -226,6 +226,33 @@
   text-align: left;
 }
 
+.workspace-choice-list {
+  display: grid;
+  gap: 10px;
+  text-align: left;
+}
+
+.workspace-choice {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #d9dbe3;
+  border-radius: 3px;
+  background: #fff;
+  color: #10213a;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.workspace-choice:hover,
+.workspace-choice:focus-visible { border-color: #2457ff; }
+.workspace-choice:disabled { cursor: wait; opacity: .7; }
+.workspace-choice strong { font-size: 14px; }
+.workspace-choice span,
+.workspace-choice em { color: #626977; font-size: 12px; font-style: normal; }
+
 @media (max-width: 560px) {
   .auth-page {
     padding: 22px 18px 34px;

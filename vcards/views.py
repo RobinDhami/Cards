@@ -284,8 +284,42 @@ def _get_owned_professional_profile(user):
     return ProfessionalProfile.objects.filter(owner=user).first()
 
 
-def _resolve_user_workspace(user, surface='session'):
-    """Resolve one authoritative workspace without silently choosing conflicts."""
+def _workspace_contexts(user):
+    """Return only workspaces explicitly owned by this authenticated user."""
+    contexts = []
+    for organization in College.objects.filter(admin_user=user).order_by('id'):
+        contexts.append({
+            'key': f'organization:{organization.id}',
+            'role': 'school_admin',
+            'label': organization.name,
+            'description': 'Organization Workspace',
+            'destination': reverse('dashboard_organization_workspace', args=[organization.id]),
+        })
+    for profile in StudentProfile.objects.filter(auth_user=user).order_by('id'):
+        contexts.append({
+            'key': f'member:{profile.id}',
+            'role': profile.member_type or 'member',
+            'label': profile.name,
+            'description': 'My Profile',
+            'destination': reverse('student_owner_dashboard', args=[profile.id]),
+        })
+    try:
+        professional_profiles = ProfessionalProfile.objects.filter(owner=user).order_by('id')
+    except (ImportError, NameError):
+        professional_profiles = []
+    for profile in professional_profiles:
+        contexts.append({
+            'key': f'professional:{profile.id}',
+            'role': 'professional',
+            'label': profile.full_name,
+            'description': 'Professional Profile',
+            'destination': reverse('professional_cards:owner_edit', args=[profile.slug]),
+        })
+    return contexts
+
+
+def _resolve_user_workspace(user, surface='session', preferred_context_key=None):
+    """Resolve a workspace only from ownership relationships, never credentials."""
     if not user.is_authenticated:
         return {'role': 'public', 'destination': '', 'message': ''}
 
@@ -324,59 +358,25 @@ def _resolve_user_workspace(user, surface='session'):
             'message': '',
         }
 
-    organizations = list(College.objects.filter(admin_user=user).order_by('id')[:2])
-    owned_profile = StudentProfile.objects.filter(auth_user=user).first()
-    try:
-        from professional_cards.models import ProfessionalProfile
-    except ImportError:
-        professional_profiles = []
-    else:
-        professional_profiles = list(
-            ProfessionalProfile.objects.filter(owner=user, is_active=True).order_by('id')[:2]
-        )
-
-    if len(organizations) > 1:
-        return {
-            'role': 'invalid',
-            'destination': '',
-            'message': 'This account is assigned to multiple organizations. Contact a platform administrator.',
-        }
-    if len(professional_profiles) > 1:
-        return {
-            'role': 'invalid',
-            'destination': '',
-            'message': 'This account owns multiple active professional workspaces. Contact a platform administrator.',
-        }
-
-    assignments = []
-    if organizations:
-        assignments.append(('school_admin', organizations[0]))
-    if owned_profile and _profile_supports_self_service(owned_profile):
-        assignments.append((owned_profile.member_type or 'student', owned_profile))
-    if professional_profiles:
-        assignments.append(('professional', professional_profiles[0]))
-
-    if len(assignments) > 1:
-        return {
-            'role': 'invalid',
-            'destination': '',
-            'message': 'This account has conflicting workspace assignments. Contact a platform administrator.',
-        }
-    if not assignments:
+    contexts = _workspace_contexts(user)
+    if not contexts:
         return {
             'role': 'public',
             'destination': '',
             'message': 'This account is not assigned to an active workspace.',
         }
-
-    role, assignment = assignments[0]
-    if role == 'school_admin':
-        destination = reverse('dashboard_organization_workspace', args=[assignment.id])
-    elif role in {'student', 'teacher'}:
-        destination = reverse('student_owner_dashboard', args=[assignment.id])
-    else:
-        destination = reverse('professional_cards:owner_edit', args=[assignment.slug])
-    return {'role': role, 'destination': destination, 'message': ''}
+    if len(contexts) == 1:
+        context = contexts[0]
+        return {**context, 'contexts': contexts, 'message': ''}
+    selected = next((context for context in contexts if context['key'] == preferred_context_key), None)
+    if selected:
+        return {**selected, 'contexts': contexts, 'message': ''}
+    return {
+        'role': 'workspace_choice',
+        'destination': '/workspaces/',
+        'contexts': contexts,
+        'message': '',
+    }
 
 
 def _get_user_role(user):
@@ -476,7 +476,6 @@ def _can_manage_profile(user, student):
     if (
         student.auth_user_id
         and student.auth_user_id == user.id
-        and _profile_supports_self_service(student)
     ):
         return True
     managed_school = _get_managed_school(user)
@@ -566,10 +565,9 @@ def _sync_school_admin_user(college, username, raw_password):
     return admin_user
 
 
-def _generate_profile_password(name):
-    alphabet = string.ascii_letters + string.digits
-    random_part = ''.join(secrets.choice(alphabet) for _ in range(10))
-    return f'T2C-{random_part}'
+def _generate_profile_password(name=None):
+    """Create a high-entropy one-time credential without using identity data."""
+    return f'T2C-{secrets.token_urlsafe(18)}'
 
 
 def _school_username_prefix(school):
@@ -883,6 +881,13 @@ def _build_card_context(request, member, options=None):
         'member_class_label': member.get_academic_level_display() if member.academic_level else '',
         'member_section': member.section,
         'member_roll_number': member.roll_number,
+        # Keep module-specific values on the existing card context so the
+        # established print templates and PDF renderer can use them without
+        # duplicating profile or organization data onto the member record.
+        'member_department': member.department,
+        'member_committee': member.committee,
+        'member_membership_term': member.membership_term,
+        'member_join_date': member.join_date.isoformat() if member.join_date else '',
         'member_blood_group': member.blood_group,
         'member_emergency_contact_name': member.emergency_contact_name,
         'member_emergency_contact_phone': member.emergency_contact_phone,
@@ -1013,9 +1018,14 @@ def _build_print_data_workbook(request, school, members):
         'DOB',
         'ID Number',
         'Member Type',
+        'Designation / Role',
         'Class / Grade',
         'Section',
         'Roll Number',
+        'Department',
+        'Committee',
+        'Membership Term',
+        'Join Date',
         'Phone',
         'Email',
         'Blood Group',
@@ -1050,9 +1060,14 @@ def _build_print_data_workbook(request, school, members):
             _format_member_dob(member),
             member.unique_identifier or member.roll_number or f'STU-{member.id}',
             member.get_member_type_display(),
+            member.role,
             member.get_academic_level_display() if member.academic_level else '',
             member.section,
             member.roll_number,
+            member.department,
+            member.committee,
+            member.membership_term,
+            member.join_date.isoformat() if member.join_date else '',
             member.phone,
             member.email,
             member.blood_group,
@@ -1072,7 +1087,7 @@ def _build_print_data_workbook(request, school, members):
         qr_image.height = 78
         sheet.add_image(qr_image, f'A{row_index}')
 
-    widths = [14, 34, 46, 26, 18, 22, 18, 18, 12, 16, 18, 28, 14, 26, 22, 34, 26, 18, 34]
+    widths = [14, 34, 46, 26, 18, 22, 18, 24, 18, 12, 16, 22, 24, 22, 20, 18, 28, 14, 26, 22, 34, 26, 18, 34]
     for index, width in enumerate(widths, start=1):
         sheet.column_dimensions[get_column_letter(index)].width = width
     for row in sheet.iter_rows(min_row=2):
@@ -1083,7 +1098,7 @@ def _build_print_data_workbook(request, school, members):
     instructions.append(['Purpose', 'This package gives the printing team raw data and QR assets. They can decide the physical card design.'])
     instructions.append(['QR behavior', 'Each QR opens the member digital profile / portfolio URL.'])
     instructions.append(['QR files', 'PNG files are included in the qr_codes folder inside this ZIP.'])
-    instructions.append(['Suggested printed fields', 'Name, DOB, ID Number, Class / Grade, Section, QR code.'])
+    instructions.append(['Suggested printed fields', 'Name, DOB, ID Number, role/designation, relevant education or club fields, QR code.'])
     instructions.append(['School', school.name if school else ''])
     instructions.append(['Exported at', timezone.now().strftime('%Y-%m-%d %H:%M')])
     instructions.column_dimensions['A'].width = 24
@@ -2807,9 +2822,10 @@ def reset_student_password(request, student_id):
         return permission_response
     raw_password = _generate_profile_password(student.name)
     student.password = raw_password
-    student.save(update_fields=['password'])
+    student.password_change_required = True
+    student.save(update_fields=['password', 'password_change_required'])
     _sync_profile_auth_user(student, raw_password)
-    student.save(update_fields=['password', 'auth_user', 'username'])
+    student.save(update_fields=['password', 'password_change_required', 'auth_user', 'username'])
     if _profile_supports_self_service(student):
         messages.success(request, f'{student.name} password reset. New password: {raw_password}')
     else:

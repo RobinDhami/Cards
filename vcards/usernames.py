@@ -88,6 +88,7 @@ def create_organization_member(raw_password, **fields):
     from .models import College, StudentProfile
     from .views import _sync_profile_auth_user
     requested = fields.get('username')
+    fields.setdefault('password_change_required', True)
     while True:
         candidate = ''
         try:

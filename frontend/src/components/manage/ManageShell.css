@@ -135,7 +135,7 @@
 
 .manage-account {
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) 30px;
+  grid-template-columns: 34px minmax(0, 1fr) 30px 30px;
   align-items: center;
   gap: 9px;
   margin-top: auto;
@@ -163,6 +163,7 @@
 }
 
 .manage-account button,
+.manage-account-switch,
 .manage-icon-button {
   display: inline-grid;
   width: 32px;
@@ -186,7 +187,8 @@
 .manage-app--sidebar-compact .manage-brand > span:not(.manage-brand-mark),
 .manage-app--sidebar-compact .manage-nav a span,
 .manage-app--sidebar-compact .manage-account > span:nth-child(2),
-.manage-app--sidebar-compact .manage-account > button { display: none; }
+.manage-app--sidebar-compact .manage-account > button,
+.manage-app--sidebar-compact .manage-account-switch { display: none; }
 .manage-app--sidebar-compact .manage-brand-mark { width: 32px; height: 32px; }
 .manage-app--sidebar-compact .manage-brand-mark img { display: none; }
 .manage-app--sidebar-compact .manage-brand-mark::after {

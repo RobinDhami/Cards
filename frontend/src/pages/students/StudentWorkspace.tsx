@@ -83,6 +83,7 @@ type OwnerDashboard = {
     totalEngagement: number
     completion: number
     isVisible: boolean
+    passwordChangeRequired: boolean
   }
   daily: Array<{ day: string; view: number; download: number; contact: number }>
   recent: Array<{ id: number; type: string; action: string; createdAt: string }>
@@ -179,6 +180,7 @@ export function StudentOwnerDashboard() {
   }
 
   if (!dashboard) return <div className="manage-state">{error || 'Loading profile dashboard…'}</div>
+  const passwordChangeRequired = dashboard.stats.passwordChangeRequired
 
   return (
     <ManageShell
@@ -195,6 +197,7 @@ export function StudentOwnerDashboard() {
     >
       {error ? <div className="manage-alert student-owner-message">{error}</div> : null}
       {message ? <div className="manage-alert is-success student-owner-message">{message}</div> : null}
+      {passwordChangeRequired ? <div className="manage-alert student-owner-message">Set a new password before using your profile workspace.</div> : null}
       <section className="student-owner-summary manage-card">
         <div>
           <span>{dashboard.profile.profilePhoto ? <img src={dashboard.profile.profilePhoto} alt="" /> : <UserRound size={23} />}</span>
@@ -250,12 +253,12 @@ export function StudentOwnerDashboard() {
           <h2>Profile tools</h2>
           <p>Keep your identity current and secure.</p>
         </div>
-        <a className="manage-button is-primary" href={`/student/edit/${studentId}`}><Edit3 size={14} />Edit profile</a>
-        <button className="manage-button" type="button" onClick={() => setPasswordOpen((current) => !current)}><ShieldCheck size={14} />Change password</button>
-        <a className="manage-button" href={dashboard.profile.publicUrl}><QrCode size={14} />Open card</a>
+        {!passwordChangeRequired ? <a className="manage-button is-primary" href={`/student/edit/${studentId}`}><Edit3 size={14} />Edit profile</a> : null}
+        <button className="manage-button" type="button" onClick={() => setPasswordOpen((current) => !current)}><ShieldCheck size={14} />{passwordChangeRequired ? 'Set password' : 'Change password'}</button>
+        {!passwordChangeRequired ? <a className="manage-button" href={dashboard.profile.publicUrl}><QrCode size={14} />Open card</a> : null}
       </section>
 
-      {passwordOpen ? (
+      {(passwordOpen || passwordChangeRequired) ? (
         <form
           className="student-password-panel manage-card"
           onSubmit={(event) => {
@@ -263,7 +266,7 @@ export function StudentOwnerDashboard() {
             action({ action: 'change_password', ...passwords })
           }}
         >
-          <h2>Change password</h2>
+          <h2>{passwordChangeRequired ? 'Set your password' : 'Change password'}</h2>
           <div className="form-grid is-three">
             <Field label="Current password"><TextInput type="password" value={passwords.currentPassword} onChange={(event) => setPasswords((current) => ({ ...current, currentPassword: event.target.value }))} required /></Field>
             <Field label="New password"><TextInput type="password" value={passwords.newPassword} onChange={(event) => setPasswords((current) => ({ ...current, newPassword: event.target.value }))} required /></Field>

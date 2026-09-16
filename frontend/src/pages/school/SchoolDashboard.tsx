@@ -44,11 +44,20 @@ type SchoolSummary = {
   slogan: string
   address: string
   logo: string
+  coverPhoto: string
   principalName: string
   principalSignature: string
   website: string
   email: string
   phone: string
+  mapUrl: string
+  facebook: string
+  instagram: string
+  linkedin: string
+  twitter: string
+  clubDistrict: string
+  charteredOn: string
+  sponsoringClub: string
   usernamePrefix: string
   effectiveUsernamePrefix: string
   themePrimary: string
@@ -611,6 +620,7 @@ export function SchoolSettingsPage() {
   const [school, setSchool] = useState<SchoolSummary | null>(null)
   const [values, setValues] = useState<Record<string, string>>({})
   const [logo, setLogo] = useState<File | null>(null)
+  const [coverPhoto, setCoverPhoto] = useState<File | null>(null)
   const [signature, setSignature] = useState<File | null>(null)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -631,6 +641,14 @@ export function SchoolSettingsPage() {
           website: payload.school.website,
           email: payload.school.email,
           phone: payload.school.phone,
+          mapUrl: payload.school.mapUrl,
+          facebook: payload.school.facebook,
+          instagram: payload.school.instagram,
+          linkedin: payload.school.linkedin,
+          twitter: payload.school.twitter,
+          clubDistrict: payload.school.clubDistrict,
+          charteredOn: payload.school.charteredOn,
+          sponsoringClub: payload.school.sponsoringClub,
           usernamePrefix: payload.school.usernamePrefix,
           themePrimary: payload.school.themePrimary,
           themeLightPrimary: payload.school.themeLightPrimary,
@@ -653,6 +671,7 @@ export function SchoolSettingsPage() {
     const body = new FormData()
     Object.entries(values).forEach(([key, value]) => body.append(key, value))
     if (logo) body.append('logo', logo)
+    if (coverPhoto) body.append('cover_photo', coverPhoto)
     if (signature) body.append('principal_signature', signature)
     try {
       const response = await apiFetch<{ school: SchoolSummary }>(`/api/dashboard/settings/${queryString({ school: school.id })}`, { method: 'POST', body })
@@ -689,9 +708,28 @@ export function SchoolSettingsPage() {
           </div>
           <div className="professional-file-grid">
             <FileInput label="Organization logo" currentUrl={school.logo} accept="image/*" onChange={setLogo} />
+            {values.organizationType === 'club' ? <FileInput label="Club cover image" currentUrl={school.coverPhoto} accept="image/*" onChange={setCoverPhoto} /> : null}
             <FileInput label={shell.isSuperAdmin ? 'Authorized signature' : 'Principal signature'} currentUrl={school.principalSignature} accept="image/*" onChange={setSignature} />
           </div>
         </FormSection>
+        {values.organizationType === 'club' ? <>
+          <FormSection title="Club profile">
+            <div className="form-grid">
+              <Field label="District"><TextInput value={values.clubDistrict ?? ''} onChange={(event) => update('clubDistrict', event.target.value)} /></Field>
+              <Field label="Chartered on"><TextInput type="date" value={values.charteredOn ?? ''} onChange={(event) => update('charteredOn', event.target.value)} /></Field>
+              <Field label="Sponsoring club"><TextInput value={values.sponsoringClub ?? ''} onChange={(event) => update('sponsoringClub', event.target.value)} /></Field>
+              <Field label="Map link" wide><TextInput type="url" value={values.mapUrl ?? ''} onChange={(event) => update('mapUrl', event.target.value)} /></Field>
+            </div>
+          </FormSection>
+          <FormSection title="Club social links">
+            <div className="form-grid is-three">
+              <Field label="Instagram"><TextInput type="url" value={values.instagram ?? ''} onChange={(event) => update('instagram', event.target.value)} /></Field>
+              <Field label="LinkedIn"><TextInput type="url" value={values.linkedin ?? ''} onChange={(event) => update('linkedin', event.target.value)} /></Field>
+              <Field label="Facebook"><TextInput type="url" value={values.facebook ?? ''} onChange={(event) => update('facebook', event.target.value)} /></Field>
+              <Field label="X"><TextInput type="url" value={values.twitter ?? ''} onChange={(event) => update('twitter', event.target.value)} /></Field>
+            </div>
+          </FormSection>
+        </> : null}
         <FormSection title="Card theme">
           <div className="form-grid is-three">
             {[
@@ -719,14 +757,18 @@ export function BulkUploadPage() {
   const schoolId = selectedSchoolId()
   const [shell, setShell] = useState<DashboardShellData | null>(null)
   const [file, setFile] = useState<File | null>(null)
-  const [memberType, setMemberType] = useState('student')
+  const [memberType, setMemberType] = useState('')
   const [summary, setSummary] = useState<{ createdCount: number; skippedRows: number[]; filename: string; credentials: Array<{ name: string; username: string; password: string }> } | null>(null)
   const [error, setError] = useState('')
   const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
-    apiFetch<{ shell: DashboardShellData }>(`/api/dashboard/members/${queryString({ school: schoolId, type: 'student' })}`)
-      .then((payload) => setShell(payload.shell))
+    apiFetch<{ shell: DashboardShellData }>(`/api/dashboard/members/${queryString({ school: schoolId, type: 'all' })}`)
+      .then((payload) => {
+        setShell(payload.shell)
+        const firstType = payload.shell.currentSchool?.module.memberTypes[0]?.value || 'student'
+        setMemberType((current) => current || firstType)
+      })
       .catch((reason) => setError(displayError(reason)))
   }, [schoolId])
 

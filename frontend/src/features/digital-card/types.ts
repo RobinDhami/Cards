@@ -7,9 +7,17 @@ export type PublicStudent = {
     name: string
     website: string
     websiteUrl: string
+    email: string
     phone: string
     address: string
     logo: string
+    coverPhoto: string
+    mapUrl: string
+    slogan: string
+    clubDistrict: string
+    charteredOn: string
+    sponsoringClub: string
+    organizationType: string
   }
   profilePhoto: string
   coverPhoto: string
@@ -21,6 +29,7 @@ export type PublicStudent = {
   identifierLabel: string
   role: string
   organization: string
+  memberSummary: string
   address: string
   guardianLabel: string
   guardianName: string

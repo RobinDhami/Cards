@@ -7,6 +7,7 @@ import logoAsset from '../../../../theme/static/branding/tap2connect-logo-optimi
 import './LoginPage.css'
 
 type LoginSurface = 'normal' | 'platform'
+type WorkspaceChoice = { key: string; label: string; description: string }
 
 function LoginForm({ surface }: { surface: LoginSurface }) {
   const [username, setUsername] = useState('')
@@ -134,4 +135,63 @@ export function LoginPage() {
 
 export function PlatformLoginPage() {
   return <LoginForm surface="platform" />
+}
+
+export function WorkspaceChooser() {
+  const [choices, setChoices] = useState<WorkspaceChoice[]>([])
+  const [error, setError] = useState('')
+  const [selecting, setSelecting] = useState('')
+
+  useEffect(() => {
+    document.title = 'Choose workspace | Tap2Connect'
+    apiFetch<{ authenticated: boolean; redirectPath: string; workspaceChoices: WorkspaceChoice[] }>('/api/session/')
+      .then((session) => {
+        if (!session.authenticated) {
+          window.location.replace('/login/')
+          return
+        }
+        if (!session.workspaceChoices?.length && session.redirectPath) {
+          window.location.replace(session.redirectPath)
+          return
+        }
+        setChoices(session.workspaceChoices || [])
+      })
+      .catch(() => setError('Unable to load your available workspaces.'))
+  }, [])
+
+  async function choose(workspace: string) {
+    setSelecting(workspace)
+    setError('')
+    try {
+      const response = await apiFetch<{ redirectPath: string }>('/api/session/workspace/', {
+        method: 'POST',
+        body: jsonBody({ workspace }),
+      })
+      window.location.assign(response.redirectPath)
+    } catch (reason) {
+      setError(displayError(reason))
+      setSelecting('')
+    }
+  }
+
+  return (
+    <main className="auth-page">
+      <section className="auth-card workspace-chooser" aria-labelledby="workspace-title">
+        <h1 id="workspace-title">Choose workspace</h1>
+        <p className="auth-copy">Select the workspace you want to open.</p>
+        {error ? <div className="manage-alert">{error}</div> : null}
+        {choices.length ? (
+          <div className="workspace-choice-list">
+            {choices.map((choice) => (
+              <button key={choice.key} type="button" className="workspace-choice" onClick={() => choose(choice.key)} disabled={Boolean(selecting)}>
+                <strong>{choice.label}</strong>
+                <span>{choice.description}</span>
+                {selecting === choice.key ? <em>Opening…</em> : null}
+              </button>
+            ))}
+          </div>
+        ) : <div className="manage-alert">This account has no available workspaces.</div>}
+      </section>
+    </main>
+  )
 }
