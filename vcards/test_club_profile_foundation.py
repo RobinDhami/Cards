@@ -36,7 +36,7 @@ class ClubProfileFoundationTests(TestCase):
 
     def test_settings_are_one_to_one_and_organization_data_stays_on_college(self):
         settings = ClubProfileSettings.objects.create(organization=self.club_a, about='Shared about text')
-        with self.assertRaises(IntegrityError):
+        with self.assertRaises(ValidationError):
             ClubProfileSettings.objects.create(organization=self.club_a)
         self.assertEqual(settings.organization.club_district, 'District A')
         self.assertFalse(hasattr(settings, 'district'))

@@ -20,6 +20,11 @@ const StudentEditLogin = lazy(() => import('./pages/students/StudentWorkspace').
 const StudentEditor = lazy(() => import('./pages/students/StudentWorkspace').then((module) => ({ default: module.StudentEditor })))
 const StudentOwnerDashboard = lazy(() => import('./pages/students/StudentWorkspace').then((module) => ({ default: module.StudentOwnerDashboard })))
 const SchoolDashboardRouter = lazy(() => import('./pages/school/SchoolDashboard').then((module) => ({ default: module.SchoolDashboardRouter })))
+const ClubOverviewPage = lazy(() => import('./pages/school/ClubWorkspace').then((module) => ({ default: module.ClubOverviewPage })))
+const ClubMembersPage = lazy(() => import('./pages/school/ClubWorkspace').then((module) => ({ default: module.ClubMembersPage })))
+const ClubProfileDesignPage = lazy(() => import('./pages/school/ClubWorkspace').then((module) => ({ default: module.ClubProfileDesignPage })))
+const ClubInformationPage = lazy(() => import('./pages/school/ClubWorkspace').then((module) => ({ default: module.ClubInformationPage })))
+const ClubMemberProfilePage = lazy(() => import('./pages/school/ClubWorkspace').then((module) => ({ default: module.ClubMemberProfilePage })))
 const MigrationNeededPage = lazy(() => import('./pages/migration/MigrationNeededPage').then((module) => ({ default: module.MigrationNeededPage })))
 
 const CardEditorPage = lazy(() =>
@@ -152,6 +157,13 @@ function AppRoutes() {
   if (path === '/dashboard/card-operations/' || path === '/dashboard/card-operations') {
     return <CardOperations />
   }
+
+  if (/^\/dashboard\/organizations\/\d+\/club\/?$/.test(path)) return <ClubOverviewPage />
+  if (/^\/dashboard\/organizations\/\d+\/club\/members\/?$/.test(path)) return <ClubMembersPage />
+  if (/^\/dashboard\/organizations\/\d+\/club\/profile-design\/?$/.test(path)) return <ClubProfileDesignPage />
+  if (/^\/dashboard\/organizations\/\d+\/club\/club-information\/?$/.test(path)) return <ClubInformationPage />
+  if (/^\/dashboard\/organizations\/\d+\/club\/members\/\d+\/?$/.test(path)) return <ClubMemberProfilePage />
+  if (/^\/dashboard\/organizations\/\d+\/club\/settings\/?$/.test(path)) return <ClubInformationPage />
 
   if (routeMatches(path, schoolDashboardRoutes)) {
     return <SchoolDashboardRouter />

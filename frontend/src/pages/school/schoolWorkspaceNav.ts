@@ -9,6 +9,8 @@ import QrCode from 'lucide-react/dist/esm/icons/qr-code.js'
 import Settings from 'lucide-react/dist/esm/icons/settings.js'
 import Upload from 'lucide-react/dist/esm/icons/upload.js'
 import Users from 'lucide-react/dist/esm/icons/users.js'
+import Palette from 'lucide-react/dist/esm/icons/palette.js'
+import Info from 'lucide-react/dist/esm/icons/info.js'
 import { queryString } from '../../lib/api'
 import { platformNavigation } from '../../components/manage/platformNavigation'
 import { workspaceMemberNavigation } from './organizationModuleConfig'
@@ -23,6 +25,17 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
 
   if (schoolId && path.startsWith('/dashboard/organizations/')) {
     const workspaceRoot = `/dashboard/organizations/${schoolId}`
+    if (organizationType === 'club') {
+      const clubRoot = `${workspaceRoot}/club`
+      return [
+        ...(isSuperAdmin ? [{ label: 'All Organizations', href: '/dashboard/schools/', icon: Building2, active: false }] : []),
+        { label: 'Overview', href: `${clubRoot}/`, icon: LayoutDashboard, active: path === clubRoot || path === `${clubRoot}/` },
+        { label: 'Members', href: `${clubRoot}/members/`, icon: Users, active: path.includes('/club/members/') },
+        { label: 'Profile Design', href: `${clubRoot}/profile-design/`, icon: Palette, active: path.includes('/club/profile-design/') },
+        { label: 'Club Information', href: `${clubRoot}/club-information/`, icon: Info, active: path.includes('/club/club-information/') },
+        { label: 'Settings', href: `${clubRoot}/settings/`, icon: Settings, active: path.includes('/club/settings/') },
+      ]
+    }
     return [
       ...(isSuperAdmin ? [{ label: 'All Organizations', href: '/dashboard/schools/', icon: Building2, active: false }] : []),
       ...(isSuperAdmin ? [{ label: 'Card Operations', href: '/dashboard/card-operations/', icon: Boxes, active: false }] : []),

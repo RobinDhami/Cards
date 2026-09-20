@@ -1991,6 +1991,31 @@ def club_member_public_profile_api(request, student_id):
     }})
 
 
+@require_http_methods(['GET'])
+def club_workspace_overview_api(request):
+    school, error = _club_dashboard_school(request)
+    if error:
+        return error
+    members = school.students.filter(member_type='member').select_related('club_public_profile').order_by('-created_at')
+    rows = []
+    for member in members[:8]:
+        profile = getattr(member, 'club_public_profile', None)
+        rows.append({
+            'id': member.id, 'name': member.name, 'photo': _file_url(member.profile_photo),
+            'role': member.role or '', 'identifier': member.unique_identifier or '',
+            'committee': member.committee, 'membershipTerm': member.membership_term,
+            'published': bool(profile and profile.is_published), 'isActive': member.show_contact_card,
+            'publicUrl': reverse('student_contact_card', args=[member.id]),
+        })
+    return JsonResponse({'ok': True, 'overview': {
+        'totalMembers': members.count(),
+        'publishedProfiles': ClubMemberProfile.objects.filter(member__college=school, is_published=True).count(),
+        'activeMembers': members.filter(show_contact_card=True).count(),
+        'socialLinks': ClubSocialLink.objects.filter(organization=school, is_visible=True).count(),
+        'recentMembers': rows,
+    }})
+
+
 def _school_payload(school, with_stats=False):
     module = organization_module(school)
     payload = {
@@ -2257,10 +2282,19 @@ def dashboard_members_api(request):
                 query = query.exclude(committee='')
             elif group_filter == 'general':
                 query = query.filter(member_type='member', committee='').exclude(role__iregex='|'.join(executive_roles))
+        if school.organization_type == 'club':
+            query = query.select_related('club_public_profile')
+        member_rows = []
+        for member in query:
+            row = _member_row(member)
+            if school.organization_type == 'club':
+                profile = getattr(member, 'club_public_profile', None)
+                row['clubPublished'] = bool(profile and profile.is_published)
+            member_rows.append(row)
         return JsonResponse({
             'ok': True,
             'shell': _dashboard_shell(request, 'members' if member_type == 'all' else ('teachers' if member_type == 'teacher' else 'students'), school),
-            'members': [_member_row(member) for member in query],
+            'members': member_rows,
             'filters': {
                 'sections': _unique_sections_for_school(school),
                 'academicLevels': _choice_list(ACADEMIC_LEVEL_CHOICES),
