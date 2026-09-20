@@ -42,7 +42,15 @@ from professional_cards.views import (
     can_manage_professional_profile,
     platform_admin_required,
 )
-from vcards.models import CardBatch, CardBatchCard, College, ProfileActivity, Skill, StudentCard, StudentProfile
+from vcards.models import (
+    CardBatch, CardBatchCard, ClubMemberProfile, ClubMemberSocialLink,
+    ClubProfileSettings, ClubSocialLink, College, ProfileActivity, Skill,
+    StudentCard, StudentProfile,
+)
+from vcards.club_serializers import (
+    ClubMemberProfileSerializer, ClubMemberSocialLinkSerializer,
+    ClubProfileSettingsSerializer, ClubSocialLinkSerializer,
+)
 from vcards.organization_modules import IMPORT_COLUMN_LABELS, identifier_label, normalize_import_column, organization_module
 from vcards.usernames import create_organization_member, validate_member_username
 from vcards.platform_access import (
@@ -1794,6 +1802,193 @@ def _dashboard_school(request, required=True):
         if requested_school_id and (not school or requested_school_id != school.id):
             return None, 'forbidden'
     return school, role
+
+
+def _club_dashboard_school(request):
+    """Resolve a manager's club with the same tenant rules as organization APIs."""
+    permission_error = _require_login(request)
+    if permission_error:
+        return None, permission_error
+    school, role = _dashboard_school(request)
+    if role not in {'super_admin', 'school_admin'}:
+        return None, _json_error('You do not have access to club profile settings.', status=403)
+    if not school:
+        return None, _json_error('Select a club organization first.', status=404)
+    if school.organization_type != 'club':
+        return None, _json_error('Club profile settings are available only to club organizations.', status=400)
+    return school, None
+
+
+def _club_member_for_school(school, student_id):
+    """Fetch a club member inside the already-authorized organization boundary."""
+    return get_object_or_404(
+        StudentProfile.objects.select_related('college'),
+        pk=student_id,
+        college=school,
+        member_type='member',
+    )
+
+
+def _serializer_error(serializer):
+    return _json_error('Please correct the club profile details.', errors=serializer.errors)
+
+
+def _save_club_serializer(serializer):
+    if not serializer.is_valid():
+        return None, _serializer_error(serializer)
+    instance = serializer.instance or serializer.Meta.model()
+    for field, value in serializer.validated_data.items():
+        setattr(instance, field, value)
+    try:
+        instance.full_clean()
+        instance.save()
+    except (ValidationError, IntegrityError) as exc:
+        return None, _json_error(str(exc))
+    return instance, None
+
+
+@require_http_methods(['GET', 'PUT', 'PATCH'])
+def club_profile_settings_api(request):
+    school, error = _club_dashboard_school(request)
+    if error:
+        return error
+    settings, _ = ClubProfileSettings.objects.get_or_create(organization=school)
+    if request.method == 'GET':
+        return JsonResponse({'ok': True, 'settings': ClubProfileSettingsSerializer(settings).data})
+    serializer = ClubProfileSettingsSerializer(settings, data=_json_body(request), partial=True)
+    settings, error = _save_club_serializer(serializer)
+    if error:
+        return error
+    return JsonResponse({'ok': True, 'settings': ClubProfileSettingsSerializer(settings).data})
+
+
+@require_http_methods(['GET', 'POST'])
+def club_social_links_api(request):
+    school, error = _club_dashboard_school(request)
+    if error:
+        return error
+    if request.method == 'GET':
+        links = school.club_social_links.all()
+        return JsonResponse({'ok': True, 'socialLinks': ClubSocialLinkSerializer(links, many=True).data})
+    serializer = ClubSocialLinkSerializer(data=_json_body(request))
+    if not serializer.is_valid():
+        return _serializer_error(serializer)
+    link = ClubSocialLink(organization=school, **serializer.validated_data)
+    try:
+        link.full_clean()
+        link.save()
+    except (ValidationError, IntegrityError) as exc:
+        return _json_error(str(exc))
+    return JsonResponse({'ok': True, 'socialLink': ClubSocialLinkSerializer(link).data}, status=201)
+
+
+@require_http_methods(['PATCH', 'DELETE'])
+def club_social_link_detail_api(request, link_id):
+    school, error = _club_dashboard_school(request)
+    if error:
+        return error
+    link = get_object_or_404(ClubSocialLink, pk=link_id, organization=school)
+    if request.method == 'DELETE':
+        link.delete()
+        return JsonResponse({'ok': True})
+    serializer = ClubSocialLinkSerializer(link, data=_json_body(request), partial=True)
+    link, error = _save_club_serializer(serializer)
+    if error:
+        return error
+    return JsonResponse({'ok': True, 'socialLink': ClubSocialLinkSerializer(link).data})
+
+
+@require_http_methods(['GET', 'PUT', 'PATCH'])
+def club_member_profile_api(request, student_id):
+    school, error = _club_dashboard_school(request)
+    if error:
+        return error
+    member = _club_member_for_school(school, student_id)
+    profile, _ = ClubMemberProfile.objects.get_or_create(member=member)
+    if request.method == 'GET':
+        return JsonResponse({'ok': True, 'profile': ClubMemberProfileSerializer(profile).data})
+    serializer = ClubMemberProfileSerializer(profile, data=_json_body(request), partial=True)
+    profile, error = _save_club_serializer(serializer)
+    if error:
+        return error
+    return JsonResponse({'ok': True, 'profile': ClubMemberProfileSerializer(profile).data})
+
+
+@require_http_methods(['GET', 'POST'])
+def club_member_social_links_api(request, student_id):
+    school, error = _club_dashboard_school(request)
+    if error:
+        return error
+    member = _club_member_for_school(school, student_id)
+    if request.method == 'GET':
+        return JsonResponse({'ok': True, 'socialLinks': ClubMemberSocialLinkSerializer(member.club_social_links.all(), many=True).data})
+    serializer = ClubMemberSocialLinkSerializer(data=_json_body(request))
+    if not serializer.is_valid():
+        return _serializer_error(serializer)
+    link = ClubMemberSocialLink(member=member, **serializer.validated_data)
+    try:
+        link.full_clean()
+        link.save()
+    except (ValidationError, IntegrityError) as exc:
+        return _json_error(str(exc))
+    return JsonResponse({'ok': True, 'socialLink': ClubMemberSocialLinkSerializer(link).data}, status=201)
+
+
+@require_http_methods(['PATCH', 'DELETE'])
+def club_member_social_link_detail_api(request, student_id, link_id):
+    school, error = _club_dashboard_school(request)
+    if error:
+        return error
+    member = _club_member_for_school(school, student_id)
+    link = get_object_or_404(ClubMemberSocialLink, pk=link_id, member=member)
+    if request.method == 'DELETE':
+        link.delete()
+        return JsonResponse({'ok': True})
+    serializer = ClubMemberSocialLinkSerializer(link, data=_json_body(request), partial=True)
+    link, error = _save_club_serializer(serializer)
+    if error:
+        return error
+    return JsonResponse({'ok': True, 'socialLink': ClubMemberSocialLinkSerializer(link).data})
+
+
+@require_http_methods(['GET'])
+def club_member_public_profile_api(request, student_id):
+    member = get_object_or_404(StudentProfile.objects.select_related('college'), pk=student_id, member_type='member')
+    organization = member.college
+    if not organization or organization.organization_type != 'club':
+        return _json_error('This club member profile is unavailable.', status=404)
+    settings = get_object_or_404(ClubProfileSettings, organization=organization, is_public=True)
+    profile = get_object_or_404(ClubMemberProfile, member=member, is_published=True)
+    organization_links = organization.club_social_links.filter(is_visible=True)
+    member_links = member.club_social_links.filter(is_visible=True) if profile.show_social_media else ClubMemberSocialLink.objects.none()
+    return JsonResponse({'ok': True, 'profile': {
+        'organization': {
+            'name': organization.name,
+            'logo': _file_url(organization.logo),
+            'cover': _file_url(organization.cover_photo),
+            'theme': {'primary': organization.theme_primary, 'secondary': organization.theme_secondary, 'accent': organization.theme_ternary},
+            'district': organization.club_district,
+            'chartered_on': organization.chartered_on.isoformat() if organization.chartered_on else '',
+            'sponsoring_club': organization.sponsoring_club,
+            'email': organization.email or '', 'phone': organization.phone or '',
+            'website': organization.website or '', 'address': organization.address or '', 'map_url': organization.map_url or '',
+            'about': settings.about or organization.description or '',
+            'hero_left_text': settings.hero_left_text, 'hero_right_text': settings.hero_right_text, 'hero_quote': settings.hero_quote,
+            'cta': {'title': settings.cta_title, 'subtitle': settings.cta_subtitle, 'button_label': settings.cta_button_label},
+            'social_links': ClubSocialLinkSerializer(organization_links, many=True).data,
+        },
+        'member': {
+            'name': member.name, 'photo': _file_url(member.profile_photo), 'role': member.role or '',
+            'member_id': member.unique_identifier or '', 'committee': member.committee, 'membership_term': member.membership_term,
+            'join_date': member.join_date.isoformat() if member.join_date else '',
+            'bio': member.bio or member.about_intro or '', 'quote': profile.quote,
+            'email': member.email if profile.show_email else '',
+            'phone': member.phone if profile.show_phone else '',
+            'address': member.address if profile.show_address else '',
+            'social_links': ClubMemberSocialLinkSerializer(member_links, many=True).data,
+            'enable_connect': profile.enable_connect, 'enable_save_contact': profile.enable_save_contact,
+        },
+    }})
 
 
 def _school_payload(school, with_stats=False):

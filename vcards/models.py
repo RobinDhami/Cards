@@ -1,6 +1,7 @@
 from decimal import Decimal
 import re
 
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models.functions import Lower
@@ -325,6 +326,119 @@ class StudentProfile(BaseProfile):
         if self.organization_name:
             return f"{self.name} - {self.organization_name}"
         return self.name
+
+
+class ClubProfileSettings(models.Model):
+    """Presentation and publication controls for a club organization.
+
+    Core organization identity/contact fields remain on ``College`` so they are
+    not asked for or stored twice here.
+    """
+
+    organization = models.OneToOneField(College, on_delete=models.CASCADE, related_name='club_profile_settings')
+    about = models.TextField(blank=True, default='')
+    hero_left_text = models.CharField(max_length=100, blank=True, default='')
+    hero_right_text = models.CharField(max_length=100, blank=True, default='')
+    hero_quote = models.CharField(max_length=180, blank=True, default='')
+    cta_title = models.CharField(max_length=120, blank=True, default='')
+    cta_subtitle = models.CharField(max_length=180, blank=True, default='')
+    cta_button_label = models.CharField(max_length=60, blank=True, default='')
+    is_public = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        super().clean()
+        if self.organization_id and self.organization.organization_type != 'club':
+            raise ValidationError({'organization': 'Club profile settings require a club organization.'})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.organization.name} club profile settings'
+
+
+class ClubSocialLink(models.Model):
+    PLATFORM_CHOICES = [
+        ('facebook', 'Facebook'), ('instagram', 'Instagram'), ('linkedin', 'LinkedIn'),
+        ('youtube', 'YouTube'), ('x', 'X'), ('tiktok', 'TikTok'),
+        ('whatsapp', 'WhatsApp'), ('other', 'Other'),
+    ]
+
+    organization = models.ForeignKey(College, on_delete=models.CASCADE, related_name='club_social_links')
+    platform = models.CharField(max_length=30, choices=PLATFORM_CHOICES)
+    url = models.URLField()
+    label = models.CharField(max_length=60, blank=True, default='')
+    is_visible = models.BooleanField(default=True)
+    sort_order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('sort_order', 'id')
+        constraints = [models.UniqueConstraint(fields=('organization', 'platform', 'url'), name='club_social_link_unique')]
+
+    def clean(self):
+        super().clean()
+        if self.organization_id and self.organization.organization_type != 'club':
+            raise ValidationError({'organization': 'Club social links require a club organization.'})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+
+class ClubMemberProfile(models.Model):
+    """Public-card settings only; identity and contact fields stay on the member."""
+
+    member = models.OneToOneField(StudentProfile, on_delete=models.CASCADE, related_name='club_public_profile')
+    quote = models.CharField(max_length=180, blank=True, default='')
+    show_email = models.BooleanField(default=True)
+    show_phone = models.BooleanField(default=True)
+    show_address = models.BooleanField(default=False)
+    show_social_media = models.BooleanField(default=True)
+    enable_connect = models.BooleanField(default=True)
+    enable_save_contact = models.BooleanField(default=True)
+    is_published = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        super().clean()
+        if not self.member_id:
+            return
+        if not self.member.college_id or self.member.college.organization_type != 'club':
+            raise ValidationError({'member': 'Club public profiles require a member of a club organization.'})
+        if self.member.member_type != 'member':
+            raise ValidationError({'member': 'Club public profiles require the Member category.'})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+
+class ClubMemberSocialLink(models.Model):
+    member = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='club_social_links')
+    platform = models.CharField(max_length=30)
+    url = models.URLField()
+    label = models.CharField(max_length=60, blank=True, default='')
+    is_visible = models.BooleanField(default=True)
+    sort_order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('sort_order', 'id')
+        constraints = [models.UniqueConstraint(fields=('member', 'platform', 'url'), name='club_member_social_link_unique')]
+
+    def clean(self):
+        super().clean()
+        if not self.member_id or not self.member.college_id or self.member.college.organization_type != 'club':
+            raise ValidationError({'member': 'Club social links require a member of a club organization.'})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 
 class ProfileActivity(models.Model):
