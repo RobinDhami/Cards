@@ -16,6 +16,7 @@ const ProfessionalProfileEditor = lazy(() => import('./pages/professional/Profes
 const ProfessionalProfileList = lazy(() => import('./pages/professional/ProfessionalWorkspace').then((module) => ({ default: module.ProfessionalProfileList })))
 const ProfessionalConnections = lazy(() => import('./pages/professional/ProfessionalConnections').then((module) => ({ default: module.ProfessionalConnections })))
 const PublicStudentCard = lazy(() => import('./pages/students/StudentWorkspace').then((module) => ({ default: module.PublicStudentCard })))
+const PublicClubMemberCard = lazy(() => import('./pages/students/StudentWorkspace').then((module) => ({ default: module.PublicClubMemberCard })))
 const StudentEditLogin = lazy(() => import('./pages/students/StudentWorkspace').then((module) => ({ default: module.StudentEditLogin })))
 const StudentEditor = lazy(() => import('./pages/students/StudentWorkspace').then((module) => ({ default: module.StudentEditor })))
 const StudentOwnerDashboard = lazy(() => import('./pages/students/StudentWorkspace').then((module) => ({ default: module.StudentOwnerDashboard })))
@@ -132,6 +133,10 @@ function AppRoutes() {
 
   if (/^\/student\/edit\/\d+\/?$/.test(path) || /^\/dashboard\/edit\/\d+\/?$/.test(path)) {
     return <StudentEditor />
+  }
+
+  if (/^\/club-members\/\d+\/?$/.test(path)) {
+    return <PublicClubMemberCard />
   }
 
   if (/^\/student\/\d+(?:\/contact-card)?\/?$/.test(path)) {

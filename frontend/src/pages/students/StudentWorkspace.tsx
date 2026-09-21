@@ -94,6 +94,14 @@ function studentIdFromPath() {
   return Number(window.location.pathname.match(/(?:student(?:\/edit)?|dashboard\/edit)\/(\d+)/)?.[1] ?? 0)
 }
 
+function clubMemberIdFromPath() {
+  return Number(window.location.pathname.match(/club-members\/(\d+)/)?.[1] ?? 0)
+}
+
+export function PublicClubMemberCard() {
+  return <ClubMemberPublicProfile studentId={clubMemberIdFromPath()} />
+}
+
 export function PublicStudentCard() {
   const studentId = studentIdFromPath()
   const [profile, setProfile] = useState<PublicStudent | null>(null)

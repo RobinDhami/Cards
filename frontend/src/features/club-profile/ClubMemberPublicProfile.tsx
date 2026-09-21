@@ -69,7 +69,7 @@ type ClubProfile = {
 
 type Props = {
   studentId: number
-  actions: PublicStudent['actions']
+  actions?: Pick<PublicStudent['actions'], 'vcard' | 'qr'>
 }
 
 const SOCIAL_ICONS = {
@@ -123,6 +123,10 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
   if (!profile) return <main className="club-public-state"><p>Loading club profile…</p></main>
 
   const { organization, member } = profile
+  const cardActions = actions || {
+    vcard: `/student/${studentId}/download-vcard/`,
+    qr: `/student/${studentId}/print-qr.png`,
+  }
   const publicUrl = window.location.href
   const connectHref = member.email ? `mailto:${member.email}` : member.phone ? `tel:${member.phone}` : organization.website
   const websiteHref = organization.website ? (organization.website.startsWith('http') ? organization.website : `https://${organization.website}`) : ''
@@ -153,7 +157,7 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
           </div>
           <nav aria-label="Profile actions">
             <button type="button" onClick={shareProfile} aria-label="Share profile"><Share2 /></button>
-            {actions.qr ? <a href={backendHref(actions.qr)} target="_blank" rel="noreferrer" aria-label="Open QR code"><QrCode /></a> : null}
+            {cardActions.qr ? <a href={backendHref(cardActions.qr)} target="_blank" rel="noreferrer" aria-label="Open QR code"><QrCode /></a> : null}
           </nav>
         </header>
 
@@ -183,7 +187,7 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
 
         {(member.enable_connect || member.enable_save_contact) ? <nav className="club-profile-primary-actions" aria-label="Member actions">
           {member.enable_connect && connectHref ? <a href={connectHref}><MessageCircle />Let&apos;s Connect</a> : null}
-          {member.enable_save_contact && actions.vcard ? <a href={backendHref(actions.vcard)}><UserPlus />Save Contact</a> : null}
+          {member.enable_save_contact && cardActions.vcard ? <a href={backendHref(cardActions.vcard)}><UserPlus />Save Contact</a> : null}
         </nav> : null}
 
         {(member.bio || member.quote) ? <section className="club-about-panel">

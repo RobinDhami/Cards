@@ -2007,7 +2007,7 @@ def club_workspace_overview_api(request):
             'role': member.role or '', 'identifier': member.unique_identifier or '',
             'committee': member.committee, 'membershipTerm': member.membership_term,
             'published': bool(profile and profile.is_published), 'isActive': member.show_contact_card,
-            'publicUrl': reverse('student_contact_card', args=[member.id]),
+            'publicUrl': f'/club-members/{member.id}/',
         })
     return JsonResponse({'ok': True, 'overview': {
         'totalMembers': members.count(),
@@ -2292,6 +2292,7 @@ def dashboard_members_api(request):
             if school.organization_type == 'club':
                 profile = getattr(member, 'club_public_profile', None)
                 row['clubPublished'] = bool(profile and profile.is_published)
+                row['publicUrl'] = f'/club-members/{member.id}/'
             member_rows.append(row)
         return JsonResponse({
             'ok': True,
