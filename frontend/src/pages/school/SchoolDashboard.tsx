@@ -210,6 +210,8 @@ export function SchoolsPage() {
     organizationCode: '',
     organizationType: 'other',
     address: '',
+    website: '',
+    mapUrl: '',
     phone: '',
     email: '',
     adminUsername: '',
@@ -239,7 +241,7 @@ export function SchoolsPage() {
         body: jsonBody(newSchool),
       })
       setCreateOpen(false)
-      setNewSchool({ name: '', organizationCode: '', organizationType: 'other', address: '', phone: '', email: '', adminUsername: '', adminPassword: '' })
+      setNewSchool({ name: '', organizationCode: '', organizationType: 'other', address: '', website: '', mapUrl: '', phone: '', email: '', adminUsername: '', adminPassword: '' })
       await load()
     } catch (reason) {
       setError(displayError(reason))
@@ -289,6 +291,8 @@ export function SchoolsPage() {
             <Field label="Organization code" hint="Unique uppercase code, e.g. VIS"><TextInput value={newSchool.organizationCode} onChange={(event) => setNewSchool((current) => ({ ...current, organizationCode: event.target.value.toUpperCase() }))} maxLength={12} required /></Field>
             <Field label="Organization type"><SelectInput value={newSchool.organizationType} onChange={(event) => setNewSchool((current) => ({ ...current, organizationType: event.target.value }))}><option value="education">Education</option><option value="club">Club</option><option value="business">Business</option><option value="other">Other</option></SelectInput></Field>
             <Field label="Address"><TextInput value={newSchool.address} onChange={(event) => setNewSchool((current) => ({ ...current, address: event.target.value }))} /></Field>
+            <Field label="Website"><TextInput type="url" value={newSchool.website} onChange={(event) => setNewSchool((current) => ({ ...current, website: event.target.value }))} /></Field>
+            <Field label="Map link"><TextInput type="url" value={newSchool.mapUrl} onChange={(event) => setNewSchool((current) => ({ ...current, mapUrl: event.target.value }))} /></Field>
             <Field label="Phone"><TextInput value={newSchool.phone} onChange={(event) => setNewSchool((current) => ({ ...current, phone: event.target.value }))} /></Field>
             <Field label="Email"><TextInput type="email" value={newSchool.email} onChange={(event) => setNewSchool((current) => ({ ...current, email: event.target.value }))} /></Field>
             <Field label="Admin username"><TextInput value={newSchool.adminUsername} onChange={(event) => setNewSchool((current) => ({ ...current, adminUsername: event.target.value }))} required /></Field>
@@ -314,7 +318,7 @@ export function SchoolsPage() {
             <footer>
               <span>{school.adminUsername ? `Admin: ${school.adminUsername}` : 'No admin assigned'}</span>
               <a className="manage-button" href={`/dashboard/organizations/${school.id}/`}>Open workspace</a>
-              <a className="manage-button" href={`/dashboard/organizations/${school.id}/settings/`}><Settings size={13} />Settings</a>
+              <a className="manage-button" href={`/dashboard/organizations/${school.id}/settings/`}><Settings size={13} />Edit organization</a>
             </footer>
           </article>
         ))}
