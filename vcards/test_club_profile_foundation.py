@@ -107,6 +107,16 @@ class ClubProfileFoundationTests(TestCase):
         self.assertTrue(payload['member']['is_active'])
         self.assertEqual(len(payload['organization']['social_links']), 1)
 
+    def test_active_legacy_club_member_gets_default_public_profile_records(self):
+        ClubMemberProfile.objects.filter(member=self.member_a).delete()
+        ClubProfileSettings.objects.filter(organization=self.club_a).delete()
+
+        response = self.client.get(reverse('club_member_public_profile_api', args=[self.member_a.id]))
+
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertTrue(ClubProfileSettings.objects.filter(organization=self.club_a, is_public=True).exists())
+        self.assertTrue(ClubMemberProfile.objects.filter(member=self.member_a, is_published=True).exists())
+
     def test_public_profile_hides_unpublished_member_and_invisible_social_links(self):
         ClubProfileSettings.objects.create(organization=self.club_a)
         ClubMemberProfile.objects.create(member=self.member_a, is_published=False)

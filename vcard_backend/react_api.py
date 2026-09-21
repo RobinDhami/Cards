@@ -1957,8 +1957,15 @@ def club_member_public_profile_api(request, student_id):
     organization = member.college
     if not organization or organization.organization_type != 'club':
         return _json_error('This club member profile is unavailable.', status=404)
-    settings = get_object_or_404(ClubProfileSettings, organization=organization, is_public=True)
-    profile = get_object_or_404(ClubMemberProfile, member=member, is_published=True)
+    # Existing active Club cards predate the Club profile tables. Provision their
+    # default presentation records on first use, but never override a manager's
+    # explicit publication choices.
+    if not member.show_contact_card:
+        return _json_error('This club member profile is unavailable.', status=404)
+    settings, _ = ClubProfileSettings.objects.get_or_create(organization=organization)
+    profile, _ = ClubMemberProfile.objects.get_or_create(member=member)
+    if not settings.is_public or not profile.is_published:
+        return _json_error('This club member profile is unavailable.', status=404)
     organization_links = organization.club_social_links.filter(is_visible=True)
     member_links = member.club_social_links.filter(is_visible=True) if profile.show_social_media else ClubMemberSocialLink.objects.none()
     return JsonResponse({'ok': True, 'profile': {
@@ -2340,6 +2347,9 @@ def dashboard_members_api(request):
         with transaction.atomic():
             student = create_organization_member(raw_password, **member_fields)
             _update_student_from_request(request, student, True)
+            if school.organization_type == 'club' and student.member_type == 'member' and student.show_contact_card:
+                ClubProfileSettings.objects.get_or_create(organization=school)
+                ClubMemberProfile.objects.get_or_create(member=student)
     except (ValidationError, IntegrityError) as exc:
         return _json_error(str(exc))
     return JsonResponse({
