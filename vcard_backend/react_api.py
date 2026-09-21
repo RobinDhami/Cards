@@ -1966,6 +1966,7 @@ def club_member_public_profile_api(request, student_id):
             'name': organization.name,
             'logo': _file_url(organization.logo),
             'cover': _file_url(organization.cover_photo),
+            'slogan': organization.slogan or '',
             'theme': {'primary': organization.theme_primary, 'secondary': organization.theme_secondary, 'accent': organization.theme_ternary},
             'district': organization.club_district,
             'chartered_on': organization.chartered_on.isoformat() if organization.chartered_on else '',
@@ -1987,6 +1988,7 @@ def club_member_public_profile_api(request, student_id):
             'address': member.address if profile.show_address else '',
             'social_links': ClubMemberSocialLinkSerializer(member_links, many=True).data,
             'enable_connect': profile.enable_connect, 'enable_save_contact': profile.enable_save_contact,
+            'is_active': member.show_contact_card,
         },
     }})
 

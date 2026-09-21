@@ -36,6 +36,7 @@ import { Feedback } from '../../design-system/Feedback'
 import { DigitalContactCard } from '../../features/digital-card/DigitalContactCard'
 import { fetchPublicStudent } from '../../features/digital-card/api'
 import type { PublicStudent } from '../../features/digital-card/types'
+import { ClubMemberPublicProfile } from '../../features/club-profile/ClubMemberPublicProfile'
 import { apiFetch, displayError, jsonBody } from '../../lib/api'
 import './StudentWorkspace.css'
 
@@ -116,6 +117,10 @@ export function PublicStudentCard() {
 
   if (error) return <Feedback title="Digital identity unavailable" message={error} />
   if (!profile) return <Feedback loading message="Loading digital identity…" />
+
+  if (profile.school.organizationType === 'club' && profile.memberType === 'Member') {
+    return <ClubMemberPublicProfile studentId={studentId} actions={profile.actions} />
+  }
 
   return <DigitalContactCard profile={profile} />
 }

@@ -96,6 +96,7 @@ class ClubProfileFoundationTests(TestCase):
         self.assertEqual(hidden.status_code, 200, hidden.content)
         payload = hidden.json()['profile']
         self.assertEqual(payload['organization']['name'], 'Club A')
+        self.assertEqual(payload['organization']['slogan'], '')
         self.assertEqual(payload['member']['member_id'], 'CLBA-001')
         self.assertEqual(payload['member']['role'], 'Secretary')
         self.assertEqual(payload['member']['committee'], 'Board')
@@ -103,6 +104,7 @@ class ClubProfileFoundationTests(TestCase):
         self.assertEqual(payload['member']['email'], '')
         self.assertEqual(payload['member']['phone'], '')
         self.assertEqual(payload['member']['address'], '')
+        self.assertTrue(payload['member']['is_active'])
         self.assertEqual(len(payload['organization']['social_links']), 1)
 
     def test_public_profile_hides_unpublished_member_and_invisible_social_links(self):
