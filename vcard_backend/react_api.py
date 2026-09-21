@@ -1451,7 +1451,7 @@ def _student_manage_payload(request, student):
         'organizationType': student.college.organization_type if student.college else '',
         'uniqueIdentifier': student.unique_identifier or '',
         'profilePhoto': _file_url(student.profile_photo),
-        'coverPhoto': _file_url(student.cover_photo),
+        'coverPhoto': _file_url(student.college.cover_photo) if student.college and student.college.organization_type == 'club' else _file_url(student.cover_photo),
         'cv': _file_url(student.cv),
         'birthCertificate': (
             reverse('view_birth_certificate', args=[student.id])
@@ -1645,6 +1645,9 @@ def _update_student_from_request(request, student, allow_school_fields):
         college_id = _int(source.get('college'))
         student.college = College.objects.filter(pk=college_id).first() if college_id else None
     is_club_member = student.college and student.college.organization_type == 'club'
+    if is_club_member and allow_school_fields and request.FILES.get('cover_photo'):
+        student.college.cover_photo = request.FILES['cover_photo']
+        student.college.save(update_fields=['cover_photo'])
     for field in ['profile_photo', 'cover_photo', 'cv', 'birth_certificate']:
         if is_club_member and field in {'cover_photo', 'birth_certificate'}:
             continue

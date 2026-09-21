@@ -494,6 +494,7 @@ export function StudentEditor() {
 
   const selectedSocials = new Set(fieldString(fields, 'social_stack').split(',').map((item) => item.trim()).filter(Boolean))
   const isClubProfile = profile.organizationType === 'club'
+  const canEditCover = !isClubProfile || profile.canManageSchoolFields
   const profilePhoto = previews.profile_photo || profile.profilePhoto
   const coverPhoto = previews.cover_photo || profile.coverPhoto
   const profileInputId = `student-profile-photo-${studentId}`
@@ -515,11 +516,15 @@ export function StudentEditor() {
         {success ? <div className="manage-alert is-success student-owner-message">{success}</div> : null}
 
         <section className="student-edit-preview">
-          {isClubProfile ? null : (
+          {canEditCover ? (
             <button className="student-edit-cover" type="button" onClick={() => document.getElementById(coverInputId)?.click()}>
               {coverPhoto ? <img src={coverPhoto} alt={`${fieldString(fields, 'name')} cover photo`} /> : null}
-              <span><ImagePlus size={16} aria-hidden="true" />Change cover</span>
+              <span><ImagePlus size={16} aria-hidden="true" />{isClubProfile ? 'Change club cover' : 'Change cover'}</span>
             </button>
+          ) : (
+            <div className="student-edit-cover">
+              {coverPhoto ? <img src={coverPhoto} alt={`${profile.collegeName} cover photo`} /> : null}
+            </div>
           )}
           <div className="student-edit-avatar-row">
             <button className="student-edit-avatar" type="button" onClick={() => document.getElementById(profileInputId)?.click()}>
@@ -534,7 +539,7 @@ export function StudentEditor() {
             </div>
           </div>
           <input id={profileInputId} type="file" accept="image/*" hidden onChange={(event) => updateFile('profile_photo', event.target.files?.[0] ?? null)} />
-          {isClubProfile ? null : <input id={coverInputId} type="file" accept="image/*" hidden onChange={(event) => updateFile('cover_photo', event.target.files?.[0] ?? null)} />}
+          {canEditCover ? <input id={coverInputId} type="file" accept="image/*" hidden onChange={(event) => updateFile('cover_photo', event.target.files?.[0] ?? null)} /> : null}
         </section>
 
         <EditSection icon={<User size={16} />} title="Profile Basics" delay={0.4}>
