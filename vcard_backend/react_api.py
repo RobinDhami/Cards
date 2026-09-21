@@ -1972,7 +1972,25 @@ def club_member_public_profile_api(request, student_id):
     profile, _ = ClubMemberProfile.objects.get_or_create(member=member)
     if not settings.is_public or not profile.is_published:
         return _json_error('This club member profile is unavailable.', status=404)
-    organization_links = organization.club_social_links.filter(is_visible=True)
+    organization_links = list(ClubSocialLinkSerializer(organization.club_social_links.filter(is_visible=True), many=True).data)
+    linked_platforms = {link['platform'].lower() for link in organization_links}
+    for index, (platform, field_name, label) in enumerate((
+        ('instagram', 'instagram', 'Instagram'),
+        ('linkedin', 'linkedin', 'LinkedIn'),
+        ('facebook', 'facebook', 'Facebook'),
+        ('x', 'twitter', 'X (Twitter)'),
+    ), start=1):
+        url = getattr(organization, field_name, '')
+        if url and platform not in linked_platforms:
+            organization_links.append({
+                'id': -index,
+                'platform': platform,
+                'url': url,
+                'label': label,
+                'is_visible': True,
+                'sort_order': len(organization_links),
+                'created_at': None,
+            })
     member_links = member.club_social_links.filter(is_visible=True) if profile.show_social_media else ClubMemberSocialLink.objects.none()
     return JsonResponse({'ok': True, 'profile': {
         'organization': {
@@ -1989,7 +2007,7 @@ def club_member_public_profile_api(request, student_id):
             'about': settings.about or organization.description or '',
             'hero_left_text': settings.hero_left_text, 'hero_right_text': settings.hero_right_text, 'hero_quote': settings.hero_quote,
             'cta': {'title': settings.cta_title, 'subtitle': settings.cta_subtitle, 'button_label': settings.cta_button_label},
-            'social_links': ClubSocialLinkSerializer(organization_links, many=True).data,
+            'social_links': organization_links,
         },
         'member': {
             'name': member.name, 'photo': _file_url(member.profile_photo), 'role': member.role or '',

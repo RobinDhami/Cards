@@ -88,6 +88,9 @@ class ClubProfileFoundationTests(TestCase):
         self.assertEqual(member.status_code, 403)
 
     def test_public_profile_obeys_contact_visibility_and_reuses_member_data(self):
+        self.club_a.instagram = 'https://instagram.example.test/club-a-settings'
+        self.club_a.facebook = 'https://facebook.example.test/club-a-settings'
+        self.club_a.save(update_fields=['instagram', 'facebook'])
         ClubProfileSettings.objects.create(organization=self.club_a, about='Club A exists to serve.')
         ClubMemberProfile.objects.create(
             member=self.member_a, quote='Lead with service', show_email=False, show_phone=False, show_address=False,
@@ -106,7 +109,11 @@ class ClubProfileFoundationTests(TestCase):
         self.assertEqual(payload['member']['phone'], '')
         self.assertEqual(payload['member']['address'], '')
         self.assertTrue(payload['member']['is_active'])
-        self.assertEqual(len(payload['organization']['social_links']), 1)
+        self.assertEqual(len(payload['organization']['social_links']), 2)
+        self.assertEqual(
+            {link['platform'] for link in payload['organization']['social_links']},
+            {'instagram', 'facebook'},
+        )
 
     def test_active_legacy_club_member_gets_default_public_profile_records(self):
         ClubMemberProfile.objects.filter(member=self.member_a).delete()
