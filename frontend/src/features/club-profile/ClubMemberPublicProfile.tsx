@@ -130,6 +130,7 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
   const publicUrl = window.location.href
   const connectHref = member.email ? `mailto:${member.email}` : member.phone ? `tel:${member.phone}` : organization.website
   const websiteHref = organization.website ? (organization.website.startsWith('http') ? organization.website : `https://${organization.website}`) : ''
+  const mapEmbedUrl = organization.address ? `https://www.google.com/maps?q=${encodeURIComponent(organization.address)}&output=embed` : ''
   const theme = {
     '--club-primary': organization.theme.primary || '#00777c',
     '--club-navy': organization.theme.secondary || '#082b58',
@@ -223,7 +224,10 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
               {organization.phone ? <div><dt><Phone />Club Phone</dt><dd>{organization.phone}</dd></div> : null}
               {organization.website ? <div><dt><Globe2 />Club Website</dt><dd>{organization.website.replace(/^https?:\/\//, '')}</dd></div> : null}
             </dl>
-            {(organization.map_url || organization.address) ? <div className="club-map-card"><div><MapPin /><strong>{organization.address || organization.name}</strong></div><a href={organization.map_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(organization.address)}`} target="_blank" rel="noreferrer"><MapPin />View on Map</a></div> : null}
+            {(organization.map_url || organization.address) ? <div className="club-map-card">
+              {mapEmbedUrl ? <iframe title={`${organization.name} location`} src={mapEmbedUrl} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <div><MapPin /><strong>{organization.name}</strong></div>}
+              <a href={organization.map_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(organization.address)}`} target="_blank" rel="noreferrer"><MapPin />View on Map</a>
+            </div> : null}
           </div>
         </section>
 
