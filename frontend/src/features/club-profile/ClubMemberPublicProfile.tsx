@@ -196,6 +196,11 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
           {member.quote ? <blockquote>{member.quote}</blockquote> : null}
         </section> : null}
 
+        {organization.about ? <section className="club-about-panel club-about-panel--organization">
+          <Quote aria-hidden="true" />
+          <div><h2>About {organization.name}</h2><p>{organization.about}</p></div>
+        </section> : null}
+
         <section className="club-profile-section">
           <h2>Contact Information</h2>
           <div className="club-contact-grid">
@@ -215,6 +220,8 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
               {organization.chartered_on ? <div><dt><CalendarDays />Chartered On</dt><dd>{displayDate(organization.chartered_on)}</dd></div> : null}
               {organization.sponsoring_club ? <div><dt><Users />Sponsoring Club</dt><dd>{organization.sponsoring_club}</dd></div> : null}
               {organization.email ? <div><dt><Mail />Club Email</dt><dd>{organization.email}</dd></div> : null}
+              {organization.phone ? <div><dt><Phone />Club Phone</dt><dd>{organization.phone}</dd></div> : null}
+              {organization.website ? <div><dt><Globe2 />Club Website</dt><dd>{organization.website.replace(/^https?:\/\//, '')}</dd></div> : null}
             </dl>
             {(organization.map_url || organization.address) ? <div className="club-map-card"><div><MapPin /><strong>{organization.address || organization.name}</strong></div><a href={organization.map_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(organization.address)}`} target="_blank" rel="noreferrer"><MapPin />View on Map</a></div> : null}
           </div>

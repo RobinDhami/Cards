@@ -16,7 +16,8 @@ class ClubProfileFoundationTests(TestCase):
         self.manager_b = User.objects.create_user('club.b.manager', password='ManagerPass123!')
         self.club_a = College.objects.create(
             name='Club A', organization_type='club', organization_code='CLBA', admin_user=self.manager_a,
-            email='club-a@example.test', phone='9800000001', address='Kathmandu', club_district='District A',
+            email='club-a@example.test', phone='9800000001', address='Kathmandu', website='https://club-a.example.test',
+            club_district='District A',
         )
         self.club_b = College.objects.create(
             name='Club B', organization_type='club', organization_code='CLBB', admin_user=self.manager_b,
@@ -101,6 +102,9 @@ class ClubProfileFoundationTests(TestCase):
         payload = hidden.json()['profile']
         self.assertEqual(payload['organization']['name'], 'Club A')
         self.assertEqual(payload['organization']['slogan'], '')
+        self.assertEqual(payload['organization']['about'], 'Club A exists to serve.')
+        self.assertEqual(payload['organization']['website'], 'https://club-a.example.test')
+        self.assertEqual(payload['organization']['phone'], '9800000001')
         self.assertEqual(payload['member']['member_id'], 'CLBA-001')
         self.assertEqual(payload['member']['role'], 'Secretary')
         self.assertEqual(payload['member']['committee'], 'Board')
