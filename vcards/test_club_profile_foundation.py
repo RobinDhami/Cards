@@ -1,6 +1,7 @@
 import json
 
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import TestCase
@@ -116,6 +117,20 @@ class ClubProfileFoundationTests(TestCase):
         self.assertEqual(response.status_code, 200, response.content)
         self.assertTrue(ClubProfileSettings.objects.filter(organization=self.club_a, is_public=True).exists())
         self.assertTrue(ClubMemberProfile.objects.filter(member=self.member_a, is_published=True).exists())
+
+    def test_club_member_updates_ignore_personal_cover_and_birth_certificate(self):
+        response = self.client.post(
+            reverse('react_student_manage_api', args=[self.member_a.id]),
+            data={
+                'cover_photo': SimpleUploadedFile('member-cover.jpg', b'not-used', content_type='image/jpeg'),
+                'birth_certificate': SimpleUploadedFile('birth.pdf', b'not-used', content_type='application/pdf'),
+            },
+        )
+
+        self.assertEqual(response.status_code, 200, response.content)
+        self.member_a.refresh_from_db()
+        self.assertFalse(self.member_a.cover_photo)
+        self.assertFalse(self.member_a.birth_certificate)
 
     def test_public_profile_hides_unpublished_member_and_invisible_social_links(self):
         ClubProfileSettings.objects.create(organization=self.club_a)

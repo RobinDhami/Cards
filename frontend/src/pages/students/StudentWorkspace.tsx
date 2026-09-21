@@ -493,6 +493,7 @@ export function StudentEditor() {
   if (!profile) return <div className="manage-state">{error || 'Loading profile editor...'}</div>
 
   const selectedSocials = new Set(fieldString(fields, 'social_stack').split(',').map((item) => item.trim()).filter(Boolean))
+  const isClubProfile = profile.organizationType === 'club'
   const profilePhoto = previews.profile_photo || profile.profilePhoto
   const coverPhoto = previews.cover_photo || profile.coverPhoto
   const profileInputId = `student-profile-photo-${studentId}`
@@ -514,10 +515,12 @@ export function StudentEditor() {
         {success ? <div className="manage-alert is-success student-owner-message">{success}</div> : null}
 
         <section className="student-edit-preview">
-          <button className="student-edit-cover" type="button" onClick={() => document.getElementById(coverInputId)?.click()}>
-            {coverPhoto ? <img src={coverPhoto} alt={`${fieldString(fields, 'name')} cover photo`} /> : null}
-            <span><ImagePlus size={16} aria-hidden="true" />Change cover</span>
-          </button>
+          {isClubProfile ? null : (
+            <button className="student-edit-cover" type="button" onClick={() => document.getElementById(coverInputId)?.click()}>
+              {coverPhoto ? <img src={coverPhoto} alt={`${fieldString(fields, 'name')} cover photo`} /> : null}
+              <span><ImagePlus size={16} aria-hidden="true" />Change cover</span>
+            </button>
+          )}
           <div className="student-edit-avatar-row">
             <button className="student-edit-avatar" type="button" onClick={() => document.getElementById(profileInputId)?.click()}>
               {profilePhoto ? <img src={profilePhoto} alt={`${fieldString(fields, 'name')} profile photo`} /> : <span>{fieldString(fields, 'name').slice(0, 1).toUpperCase() || 'S'}</span>}
@@ -531,7 +534,7 @@ export function StudentEditor() {
             </div>
           </div>
           <input id={profileInputId} type="file" accept="image/*" hidden onChange={(event) => updateFile('profile_photo', event.target.files?.[0] ?? null)} />
-          <input id={coverInputId} type="file" accept="image/*" hidden onChange={(event) => updateFile('cover_photo', event.target.files?.[0] ?? null)} />
+          {isClubProfile ? null : <input id={coverInputId} type="file" accept="image/*" hidden onChange={(event) => updateFile('cover_photo', event.target.files?.[0] ?? null)} />}
         </section>
 
         <EditSection icon={<User size={16} />} title="Profile Basics" delay={0.4}>
@@ -653,14 +656,16 @@ export function StudentEditor() {
           </div>
         </EditSection>
 
-        <EditSection icon={<UploadIcon size={16} />} title="Uploads" delay={0.7}>
-          <div className="student-edit-upload-grid">
-            <UploadZone label="Profile Photo" icon={<Camera size={24} />} currentUrl={profile.profilePhoto} file={files.profile_photo} emptyText="Tap preview above or here" onPick={() => document.getElementById(profileInputId)?.click()} />
-            <UploadZone label="Cover Photo" icon={<ImageIcon size={24} />} currentUrl={profile.coverPhoto} file={files.cover_photo} emptyText="Tap preview above or here" onPick={() => document.getElementById(coverInputId)?.click()} />
-            <UploadZone label="DOB Certificate" icon={<FileBadge size={24} />} currentUrl={profile.birthCertificate} file={files.birth_certificate} emptyText="Upload birth / DOB certificate" onPick={() => document.getElementById(birthInputId)?.click()} />
-            <input id={birthInputId} type="file" accept=".pdf,image/*" hidden onChange={(event) => updateFile('birth_certificate', event.target.files?.[0] ?? null)} />
-          </div>
-        </EditSection>
+        {isClubProfile ? null : (
+          <EditSection icon={<UploadIcon size={16} />} title="Uploads" delay={0.7}>
+            <div className="student-edit-upload-grid">
+              <UploadZone label="Profile Photo" icon={<Camera size={24} />} currentUrl={profile.profilePhoto} file={files.profile_photo} emptyText="Tap preview above or here" onPick={() => document.getElementById(profileInputId)?.click()} />
+              <UploadZone label="Cover Photo" icon={<ImageIcon size={24} />} currentUrl={profile.coverPhoto} file={files.cover_photo} emptyText="Tap preview above or here" onPick={() => document.getElementById(coverInputId)?.click()} />
+              <UploadZone label="DOB Certificate" icon={<FileBadge size={24} />} currentUrl={profile.birthCertificate} file={files.birth_certificate} emptyText="Upload birth / DOB certificate" onPick={() => document.getElementById(birthInputId)?.click()} />
+              <input id={birthInputId} type="file" accept=".pdf,image/*" hidden onChange={(event) => updateFile('birth_certificate', event.target.files?.[0] ?? null)} />
+            </div>
+          </EditSection>
+        )}
 
         <div className="student-edit-actions">
           <button type="submit" disabled={saving}><CheckCircle size={16} aria-hidden="true" />{saving ? 'Saving...' : 'Save Changes'}</button>
@@ -730,6 +735,7 @@ export function LegacyStudentEditor() {
   }
 
   if (!profile) return <div className="manage-state">{error || 'Loading profile editor…'}</div>
+  const isClubProfile = profile.organizationType === 'club'
 
   return (
     <ManageShell
@@ -762,7 +768,7 @@ export function LegacyStudentEditor() {
           </div>
           <div className="professional-file-grid">
             <FileInput label="Profile photo" currentUrl={profile.profilePhoto} accept="image/*" onChange={(file) => setFiles((current) => ({ ...current, profile_photo: file }))} />
-            <FileInput label="Cover photo" currentUrl={profile.coverPhoto} accept="image/*" onChange={(file) => setFiles((current) => ({ ...current, cover_photo: file }))} />
+            {isClubProfile ? null : <FileInput label="Cover photo" currentUrl={profile.coverPhoto} accept="image/*" onChange={(file) => setFiles((current) => ({ ...current, cover_photo: file }))} />}
           </div>
         </FormSection>
 
@@ -799,7 +805,7 @@ export function LegacyStudentEditor() {
           </div>
           <div className="professional-file-grid">
             <FileInput label="CV / resume" currentUrl={profile.cv} onChange={(file) => setFiles((current) => ({ ...current, cv: file }))} />
-            <FileInput label="Birth certificate" currentUrl={profile.birthCertificate} onChange={(file) => setFiles((current) => ({ ...current, birth_certificate: file }))} />
+            {isClubProfile ? null : <FileInput label="Birth certificate" currentUrl={profile.birthCertificate} onChange={(file) => setFiles((current) => ({ ...current, birth_certificate: file }))} />}
           </div>
         </FormSection>
 

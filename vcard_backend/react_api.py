@@ -1644,7 +1644,10 @@ def _update_student_from_request(request, student, allow_school_fields):
     if allow_school_fields and 'college' in source:
         college_id = _int(source.get('college'))
         student.college = College.objects.filter(pk=college_id).first() if college_id else None
+    is_club_member = student.college and student.college.organization_type == 'club'
     for field in ['profile_photo', 'cover_photo', 'cv', 'birth_certificate']:
+        if is_club_member and field in {'cover_photo', 'birth_certificate'}:
+            continue
         if request.FILES.get(field):
             setattr(student, field, request.FILES[field])
 
