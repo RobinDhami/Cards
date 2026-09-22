@@ -6,3 +6,4 @@
 
 .club-map-card{position:relative;overflow:hidden;padding:0;justify-content:end}.club-map-card iframe{position:absolute;inset:0;width:100%;height:100%;border:0}.club-map-card>a{position:relative;z-index:1;margin:10px;background:#e3f5f3ef}
 .club-events-grid{display:grid;gap:10px}.club-events-grid article{display:grid;gap:4px;padding:13px 15px;border:1px solid #dce4eb;border-radius:11px;background:#f8fbfc}.club-events-grid strong{color:var(--club-navy);font-size:14px}.club-events-grid time,.club-events-grid span,.club-events-grid p{color:#526781;font-size:12px}.club-events-grid p{margin:3px 0 0;line-height:1.45}
+.club-contact-grid svg{color:#111}.club-contact-grid strong{color:#111}.club-contact-grid span{color:#405064}.club-social-grid .club-social-link-instagram svg{color:#e1306c}.club-social-grid .club-social-link-facebook svg{color:#1877f2}.club-social-grid .club-social-link-website svg{color:#1683dc}.club-social-grid .club-social-link-email svg{color:#111}

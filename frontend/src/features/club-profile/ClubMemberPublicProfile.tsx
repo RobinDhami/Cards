@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import BadgeCheck from 'lucide-react/dist/esm/icons/badge-check.js'
 import Building2 from 'lucide-react/dist/esm/icons/building-2.js'
 import CalendarDays from 'lucide-react/dist/esm/icons/calendar-days.js'
 import Facebook from 'lucide-react/dist/esm/icons/facebook.js'
 import Globe2 from 'lucide-react/dist/esm/icons/globe-2.js'
 import IdCard from 'lucide-react/dist/esm/icons/id-card.js'
 import Instagram from 'lucide-react/dist/esm/icons/instagram.js'
-import Linkedin from 'lucide-react/dist/esm/icons/linkedin.js'
 import Mail from 'lucide-react/dist/esm/icons/mail.js'
 import MapPin from 'lucide-react/dist/esm/icons/map-pin.js'
 import MessageCircle from 'lucide-react/dist/esm/icons/message-circle.js'
@@ -16,7 +14,6 @@ import Quote from 'lucide-react/dist/esm/icons/quote.js'
 import Send from 'lucide-react/dist/esm/icons/send.js'
 import Share2 from 'lucide-react/dist/esm/icons/share-2.js'
 import Star from 'lucide-react/dist/esm/icons/star.js'
-import Twitter from 'lucide-react/dist/esm/icons/twitter.js'
 import UserPlus from 'lucide-react/dist/esm/icons/user-plus.js'
 import Users from 'lucide-react/dist/esm/icons/users.js'
 import { apiFetch, backendHref } from '../../lib/api'
@@ -77,11 +74,10 @@ type Props = {
 }
 
 const SOCIAL_ICONS = {
+  email: Mail,
   instagram: Instagram,
-  linkedin: Linkedin,
   facebook: Facebook,
-  x: Twitter,
-  twitter: Twitter,
+  website: Globe2,
 } as const
 
 function displayDate(value: string) {
@@ -91,7 +87,7 @@ function displayDate(value: string) {
 
 function clubSocialLabel(link: SocialLink) {
   if (link.label) return link.label
-  return link.platform === 'x' ? 'X (Twitter)' : link.platform.charAt(0).toUpperCase() + link.platform.slice(1)
+  return link.platform.charAt(0).toUpperCase() + link.platform.slice(1)
 }
 
 function ContactTile({ href, icon, label, value }: { href?: string; icon: React.ReactNode; label: string; value: string }) {
@@ -118,11 +114,13 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
 
   const socialLinks = useMemo(() => {
     if (!profile) return []
-    const links = [...profile.organization.social_links]
+    const allowed = new Set(['email', 'website', 'facebook', 'instagram'])
+    const links = profile.organization.social_links.filter((link) => allowed.has(link.platform.toLowerCase()))
     const organizationPlatforms = new Set(links.map((link) => link.platform.toLowerCase()))
     profile.member.social_links.forEach((link) => {
-      if (!organizationPlatforms.has(link.platform.toLowerCase())) links.push(link)
+      if (allowed.has(link.platform.toLowerCase()) && !organizationPlatforms.has(link.platform.toLowerCase())) links.push(link)
     })
+    if (profile.member.email && !organizationPlatforms.has('email')) links.unshift({ id: -1, platform: 'email', url: `mailto:${profile.member.email}`, label: 'Email' })
     return links
   }, [profile])
 
@@ -195,7 +193,7 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
         </section>
 
         {(member.enable_connect || member.enable_save_contact) ? <nav className="club-profile-primary-actions" aria-label="Member actions">
-          {member.enable_connect && connectHref ? <a href={connectHref}><MessageCircle />Let&apos;s Connect</a> : null}
+          {member.enable_connect && connectHref ? <a href={connectHref}><MessageCircle />Contact Me</a> : null}
           {member.enable_save_contact && cardActions.vcard ? <a href={backendHref(cardActions.vcard)}><UserPlus />Save Contact</a> : null}
         </nav> : null}
 
@@ -224,9 +222,6 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
           <h2>Club Information</h2>
           <div className="club-information-panel">
             <dl>
-              <div><dt><Users />Club Name</dt><dd>{organization.name}</dd></div>
-              {organization.district ? <div><dt><BadgeCheck />District</dt><dd>{organization.district}</dd></div> : null}
-              {organization.zone ? <div><dt><BadgeCheck />Zone</dt><dd>{organization.zone}</dd></div> : null}
               {organization.chartered_on ? <div><dt><CalendarDays />Chartered On</dt><dd>{displayDate(organization.chartered_on)}</dd></div> : null}
               {organization.sponsoring_club ? <div><dt><Users />Sponsoring Club</dt><dd>{organization.sponsoring_club}</dd></div> : null}
               {organization.email ? <div><dt><Mail />Club Email</dt><dd>{organization.email}</dd></div> : null}
@@ -248,7 +243,8 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
           <h2>Personal Links</h2>
           <div className="club-social-grid">{socialLinks.map((link) => {
             const Icon = SOCIAL_ICONS[link.platform.toLowerCase() as keyof typeof SOCIAL_ICONS] || Globe2
-            return <a href={link.url} target="_blank" rel="noreferrer" key={link.id}><Icon /><span>{clubSocialLabel(link)}</span></a>
+            const href = link.platform.toLowerCase() === 'email' && !link.url.startsWith('mailto:') ? `mailto:${link.url}` : link.url
+            return <a className={`club-social-link-${link.platform.toLowerCase()}`} href={href} target={href.startsWith('http') ? '_blank' : undefined} rel={href.startsWith('http') ? 'noreferrer' : undefined} key={link.id}><Icon /><span>{clubSocialLabel(link)}</span></a>
           })}</div>
         </section> : null}
 
