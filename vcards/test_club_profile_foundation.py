@@ -137,6 +137,7 @@ class ClubProfileFoundationTests(TestCase):
             data={
                 'cover_photo': SimpleUploadedFile('member-cover.jpg', b'not-used', content_type='image/jpeg'),
                 'birth_certificate': SimpleUploadedFile('birth.pdf', b'not-used', content_type='application/pdf'),
+                'quote': 'Ordinary people create extraordinary change',
             },
         )
 
@@ -146,6 +147,7 @@ class ClubProfileFoundationTests(TestCase):
         self.assertTrue(self.club_a.cover_photo)
         self.assertFalse(self.member_a.cover_photo)
         self.assertFalse(self.member_a.birth_certificate)
+        self.assertEqual(ClubMemberProfile.objects.get(member=self.member_a).quote, 'Ordinary people create extraordinary change')
 
     def test_public_profile_hides_unpublished_member_and_invisible_social_links(self):
         ClubProfileSettings.objects.create(organization=self.club_a)

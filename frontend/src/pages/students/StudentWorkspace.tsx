@@ -65,6 +65,7 @@ type StudentManageProfile = {
   uniqueIdentifier: string
   profilePhoto: string
   coverPhoto: string
+  quote: string
   cv: string
   birthCertificate: string
   skills: string[]
@@ -465,6 +466,7 @@ export function StudentEditor() {
     Object.entries(fields).forEach(([key, value]) => body.append(key, value === null ? '' : String(value)))
     body.set('college', String(fields.college ?? profile.collegeId ?? ''))
     body.append('skills', JSON.stringify(skills.split(',').map((item) => item.trim()).filter(Boolean)))
+    if (profile.organizationType === 'club') body.append('quote', profile.quote)
     Object.entries(files).forEach(([key, file]) => {
       if (file) body.append(key, file)
     })
@@ -626,7 +628,7 @@ export function StudentEditor() {
             <EditField label="Short Introduction" wide help="Who they are, what they do, and what matters to them.">
               <textarea className="student-edit-input" rows={3} name="about_intro" maxLength={500} value={fieldString(fields, 'about_intro') || fieldString(fields, 'bio')} placeholder="A concise public introduction" onChange={(event) => update('about_intro', event.target.value)} />
             </EditField>
-            {isClubProfile ? null : <>
+            {isClubProfile ? <EditField label="Quote" wide help="A short quote shown beside About Me on the Club profile."><textarea className="student-edit-input" rows={2} name="quote" maxLength={300} value={profile.quote} placeholder="Ordinary people can create extraordinary change" onChange={(event) => setProfile((current) => current ? { ...current, quote: event.target.value } : current)} /></EditField> : <>
               <EditField label="Featured Strength or Achievement"><textarea className="student-edit-input" rows={3} name="about_featured" maxLength={300} value={fieldString(fields, 'about_featured')} placeholder="Example: Science fair finalist and robotics club member" onChange={(event) => update('about_featured', event.target.value)} /></EditField>
               <EditField label="Current Focus / Availability"><textarea className="student-edit-input" rows={3} name="about_current" maxLength={300} value={fieldString(fields, 'about_current')} placeholder="Example: Currently learning Python and open to student projects" onChange={(event) => update('about_current', event.target.value)} /></EditField>
               <EditField label="Skills & Interests" wide help="Separate each skill or interest with a comma."><input className="student-edit-input" name="custom_skills" value={skills} placeholder="Python, public speaking, football, graphic design" onChange={(event) => setSkills(event.target.value)} /></EditField>
@@ -721,6 +723,7 @@ export function LegacyStudentEditor() {
     Object.entries(fields).forEach(([key, value]) => body.append(key, value === null ? '' : String(value)))
     body.append('college', String(profile.collegeId ?? ''))
     body.append('skills', JSON.stringify(skills.split(',').map((item) => item.trim()).filter(Boolean)))
+    if (profile.organizationType === 'club') body.append('quote', profile.quote)
     Object.entries(files).forEach(([key, file]) => {
       if (file) body.append(key, file)
     })
@@ -795,7 +798,7 @@ export function LegacyStudentEditor() {
         <FormSection title={isClubProfile ? 'About Me' : 'About and focus'}>
           <div className="form-grid">
             <Field label="Short introduction" wide><TextArea value={String(fields.about_intro ?? fields.bio ?? '')} onChange={(event) => update('about_intro', event.target.value)} /></Field>
-            {isClubProfile ? null : <>
+            {isClubProfile ? <Field label="Quote" wide><TextArea value={profile.quote} onChange={(event) => setProfile((current) => current ? { ...current, quote: event.target.value } : current)} /></Field> : <>
               <Field label="Featured interest" wide><TextArea value={String(fields.about_featured ?? '')} onChange={(event) => update('about_featured', event.target.value)} /></Field>
               <Field label="Current focus" wide><TextArea value={String(fields.about_current ?? '')} onChange={(event) => update('about_current', event.target.value)} /></Field>
               <Field label="Skills" hint="Separate skills with commas" wide><TextInput value={skills} onChange={(event) => setSkills(event.target.value)} /></Field>

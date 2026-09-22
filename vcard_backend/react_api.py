@@ -1452,6 +1452,10 @@ def _student_manage_payload(request, student):
         'uniqueIdentifier': student.unique_identifier or '',
         'profilePhoto': _file_url(student.profile_photo),
         'coverPhoto': _file_url(student.college.cover_photo) if student.college and student.college.organization_type == 'club' else _file_url(student.cover_photo),
+        'quote': (
+            ClubMemberProfile.objects.filter(member=student).values_list('quote', flat=True).first() or ''
+            if student.college and student.college.organization_type == 'club' else ''
+        ),
         'cv': _file_url(student.cv),
         'birthCertificate': (
             reverse('view_birth_certificate', args=[student.id])
@@ -1648,6 +1652,10 @@ def _update_student_from_request(request, student, allow_school_fields):
     if is_club_member and allow_school_fields and request.FILES.get('cover_photo'):
         student.college.cover_photo = request.FILES['cover_photo']
         student.college.save(update_fields=['cover_photo'])
+    if is_club_member and 'quote' in source:
+        club_profile, _ = ClubMemberProfile.objects.get_or_create(member=student)
+        club_profile.quote = str(source.get('quote') or '')
+        club_profile.save(update_fields=['quote', 'updated_at'])
     for field in ['profile_photo', 'cover_photo', 'cv', 'birth_certificate']:
         if is_club_member and field in {'cover_photo', 'birth_certificate'}:
             continue
@@ -1972,7 +1980,10 @@ def club_member_public_profile_api(request, student_id):
     profile, _ = ClubMemberProfile.objects.get_or_create(member=member)
     if not settings.is_public or not profile.is_published:
         return _json_error('This club member profile is unavailable.', status=404)
-    organization_links = list(ClubSocialLinkSerializer(organization.club_social_links.filter(is_visible=True), many=True).data)
+    organization_links = [
+        link for link in ClubSocialLinkSerializer(organization.club_social_links.filter(is_visible=True), many=True).data
+        if link['platform'].lower() != 'website'
+    ]
     linked_platforms = {link['platform'].lower() for link in organization_links}
     for index, (platform, field_name, label) in enumerate((
         ('instagram', 'instagram', 'Instagram'),
@@ -2005,7 +2016,6 @@ def club_member_public_profile_api(request, student_id):
             ('youtube', 'youtube', 'YouTube'),
             ('tiktok', 'tiktok', 'TikTok'),
             ('github', 'github', 'GitHub'),
-            ('website', 'website', 'Website'),
         ), start=101):
             url = getattr(member, field_name, '')
             if url and platform not in linked_member_platforms:

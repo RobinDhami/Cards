@@ -227,7 +227,6 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
               {organization.sponsoring_club ? <div><dt><Users />Sponsoring Club</dt><dd>{organization.sponsoring_club}</dd></div> : null}
               {organization.email ? <div><dt><Mail />Club Email</dt><dd>{organization.email}</dd></div> : null}
               {organization.phone ? <div><dt><Phone />Club Phone</dt><dd>{organization.phone}</dd></div> : null}
-              {organization.website ? <div><dt><Globe2 />Club Website</dt><dd>{organization.website.replace(/^https?:\/\//, '')}</dd></div> : null}
             </dl>
             {(organization.map_url || organization.address) ? <div className="club-map-card">
               {mapEmbedUrl ? <iframe title={`${organization.name} location`} src={mapEmbedUrl} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <div><MapPin /><strong>{organization.name}</strong></div>}
@@ -237,7 +236,7 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
         </section>
 
         {socialLinks.length > 0 ? <section className="club-profile-section">
-          <h2>Social Media</h2>
+          <h2>Personal Links</h2>
           <div className="club-social-grid">{socialLinks.map((link) => {
             const Icon = SOCIAL_ICONS[link.platform.toLowerCase() as keyof typeof SOCIAL_ICONS] || Globe2
             return <a href={link.url} target="_blank" rel="noreferrer" key={link.id}><Icon /><span>{clubSocialLabel(link)}</span></a>
