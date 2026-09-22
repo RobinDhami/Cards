@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import Building2 from 'lucide-react/dist/esm/icons/building-2.js'
 import CalendarDays from 'lucide-react/dist/esm/icons/calendar-days.js'
 import Facebook from 'lucide-react/dist/esm/icons/facebook.js'
 import Globe2 from 'lucide-react/dist/esm/icons/globe-2.js'
