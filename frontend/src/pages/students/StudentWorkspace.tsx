@@ -618,17 +618,19 @@ export function StudentEditor() {
 
         <EditSection
           icon={<UserRound size={16} />}
-          title="About & Availability"
-          description="Public information that helps visitors understand the person, their strengths, and their current focus."
+          title="About Me"
+          description={isClubProfile ? 'A short introduction shown on the Club member profile.' : 'Public information that helps visitors understand the person, their strengths, and their current focus.'}
           delay={0.63}
         >
           <div className="student-edit-grid is-two">
-            <EditField label="Short Introduction" wide help="Who they are, what they study or teach, and what matters to them.">
+            <EditField label="Short Introduction" wide help="Who they are, what they do, and what matters to them.">
               <textarea className="student-edit-input" rows={3} name="about_intro" maxLength={500} value={fieldString(fields, 'about_intro') || fieldString(fields, 'bio')} placeholder="A concise public introduction" onChange={(event) => update('about_intro', event.target.value)} />
             </EditField>
-            <EditField label="Featured Strength or Achievement"><textarea className="student-edit-input" rows={3} name="about_featured" maxLength={300} value={fieldString(fields, 'about_featured')} placeholder="Example: Science fair finalist and robotics club member" onChange={(event) => update('about_featured', event.target.value)} /></EditField>
-            <EditField label="Current Focus / Availability"><textarea className="student-edit-input" rows={3} name="about_current" maxLength={300} value={fieldString(fields, 'about_current')} placeholder="Example: Currently learning Python and open to student projects" onChange={(event) => update('about_current', event.target.value)} /></EditField>
-            <EditField label="Skills & Interests" wide help="Separate each skill or interest with a comma."><input className="student-edit-input" name="custom_skills" value={skills} placeholder="Python, public speaking, football, graphic design" onChange={(event) => setSkills(event.target.value)} /></EditField>
+            {isClubProfile ? null : <>
+              <EditField label="Featured Strength or Achievement"><textarea className="student-edit-input" rows={3} name="about_featured" maxLength={300} value={fieldString(fields, 'about_featured')} placeholder="Example: Science fair finalist and robotics club member" onChange={(event) => update('about_featured', event.target.value)} /></EditField>
+              <EditField label="Current Focus / Availability"><textarea className="student-edit-input" rows={3} name="about_current" maxLength={300} value={fieldString(fields, 'about_current')} placeholder="Example: Currently learning Python and open to student projects" onChange={(event) => update('about_current', event.target.value)} /></EditField>
+              <EditField label="Skills & Interests" wide help="Separate each skill or interest with a comma."><input className="student-edit-input" name="custom_skills" value={skills} placeholder="Python, public speaking, football, graphic design" onChange={(event) => setSkills(event.target.value)} /></EditField>
+            </>}
           </div>
         </EditSection>
 
@@ -790,12 +792,14 @@ export function LegacyStudentEditor() {
           </FormSection>
         ) : null}
 
-        <FormSection title="About and focus">
+        <FormSection title={isClubProfile ? 'About Me' : 'About and focus'}>
           <div className="form-grid">
             <Field label="Short introduction" wide><TextArea value={String(fields.about_intro ?? fields.bio ?? '')} onChange={(event) => update('about_intro', event.target.value)} /></Field>
-            <Field label="Featured interest" wide><TextArea value={String(fields.about_featured ?? '')} onChange={(event) => update('about_featured', event.target.value)} /></Field>
-            <Field label="Current focus" wide><TextArea value={String(fields.about_current ?? '')} onChange={(event) => update('about_current', event.target.value)} /></Field>
-            <Field label="Skills" hint="Separate skills with commas" wide><TextInput value={skills} onChange={(event) => setSkills(event.target.value)} /></Field>
+            {isClubProfile ? null : <>
+              <Field label="Featured interest" wide><TextArea value={String(fields.about_featured ?? '')} onChange={(event) => update('about_featured', event.target.value)} /></Field>
+              <Field label="Current focus" wide><TextArea value={String(fields.about_current ?? '')} onChange={(event) => update('about_current', event.target.value)} /></Field>
+              <Field label="Skills" hint="Separate skills with commas" wide><TextInput value={skills} onChange={(event) => setSkills(event.target.value)} /></Field>
+            </>}
           </div>
         </FormSection>
 
