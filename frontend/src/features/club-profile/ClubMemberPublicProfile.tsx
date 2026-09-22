@@ -4,10 +4,13 @@ import Facebook from 'lucide-react/dist/esm/icons/facebook.js'
 import Globe2 from 'lucide-react/dist/esm/icons/globe-2.js'
 import IdCard from 'lucide-react/dist/esm/icons/id-card.js'
 import Instagram from 'lucide-react/dist/esm/icons/instagram.js'
+import Linkedin from 'lucide-react/dist/esm/icons/linkedin.js'
 import Mail from 'lucide-react/dist/esm/icons/mail.js'
 import MapPin from 'lucide-react/dist/esm/icons/map-pin.js'
 import MessageCircle from 'lucide-react/dist/esm/icons/message-circle.js'
 import Music2 from 'lucide-react/dist/esm/icons/music-2.js'
+import Youtube from 'lucide-react/dist/esm/icons/youtube.js'
+import Twitter from 'lucide-react/dist/esm/icons/twitter.js'
 import Phone from 'lucide-react/dist/esm/icons/phone.js'
 import QrCode from 'lucide-react/dist/esm/icons/qr-code.js'
 import Quote from 'lucide-react/dist/esm/icons/quote.js'
@@ -79,6 +82,10 @@ const SOCIAL_ICONS = {
   facebook: Facebook,
   website: Globe2,
   tiktok: Music2,
+  linkedin: Linkedin,
+  youtube: Youtube,
+  x: Twitter,
+  twitter: Twitter,
 } as const
 
 function displayDate(value: string) {
@@ -108,17 +115,11 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
     return () => { current = false }
   }, [studentId])
 
-  const socialLinks = useMemo(() => {
+  const clubSocialLinks = useMemo(() => {
     if (!profile) return []
-    const allowed = new Set(['email', 'website', 'facebook', 'instagram', 'tiktok'])
-    const links = profile.organization.social_links.filter((link) => allowed.has(link.platform.toLowerCase()))
-    const organizationPlatforms = new Set(links.map((link) => link.platform.toLowerCase()))
-    profile.member.social_links.forEach((link) => {
-      if (allowed.has(link.platform.toLowerCase()) && !organizationPlatforms.has(link.platform.toLowerCase())) links.push(link)
-    })
-    if (profile.member.email && !organizationPlatforms.has('email')) links.unshift({ id: -1, platform: 'email', url: `mailto:${profile.member.email}`, label: 'Email' })
-    return links
+    return profile.organization.social_links.filter((link) => ['website', 'facebook', 'instagram', 'tiktok'].includes(link.platform.toLowerCase()))
   }, [profile])
+  const personalSocialLinks = useMemo(() => profile?.member.social_links.filter((link) => ['facebook', 'instagram', 'tiktok', 'linkedin', 'youtube', 'x', 'twitter', 'other'].includes(link.platform.toLowerCase())) || [], [profile])
 
   if (error) return <main className="club-public-state"><h1>Profile unavailable</h1><p>{error}</p></main>
   if (!profile) return <main className="club-public-state"><p>Loading club profile…</p></main>
@@ -193,12 +194,20 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
           <div><h2>About {organization.name}</h2><p>{organization.about}</p></div>
         </section> : null}
 
-        {socialLinks.filter((link) => ['instagram', 'facebook', 'website', 'tiktok'].includes(link.platform.toLowerCase())).length > 0 ? <section className="club-profile-section">
-          <h2>Social Media Links</h2>
-          <div className="club-social-grid club-social-grid--compact">{socialLinks.filter((link) => ['instagram', 'facebook', 'website', 'tiktok'].includes(link.platform.toLowerCase())).map((link) => {
+        {clubSocialLinks.length > 0 ? <section className="club-profile-section">
+          <h2>Club Social Media Links</h2>
+          <div className="club-social-grid club-social-grid--compact">{clubSocialLinks.map((link) => {
             const Icon = SOCIAL_ICONS[link.platform.toLowerCase() as keyof typeof SOCIAL_ICONS] || Globe2
             const href = link.url
             return <a className={`club-social-link-${link.platform.toLowerCase()}`} href={href} target={href.startsWith('http') ? '_blank' : undefined} rel={href.startsWith('http') ? 'noreferrer' : undefined} key={link.id}><Icon /><span>{clubSocialLabel(link)}</span></a>
+          })}</div>
+        </section> : null}
+
+        {personalSocialLinks.length > 0 ? <section className="club-profile-section">
+          <h2>Personal Social Media Links</h2>
+          <div className="club-social-grid club-social-grid--compact">{personalSocialLinks.map((link) => {
+            const Icon = SOCIAL_ICONS[link.platform.toLowerCase() as keyof typeof SOCIAL_ICONS] || Globe2
+            return <a className={`club-social-link-${link.platform.toLowerCase()}`} href={link.url} target={link.url.startsWith('http') ? '_blank' : undefined} rel={link.url.startsWith('http') ? 'noreferrer' : undefined} key={link.id}><Icon /><span>{clubSocialLabel(link)}</span></a>
           })}</div>
         </section> : null}
 
