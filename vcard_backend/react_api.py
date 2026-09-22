@@ -1991,7 +1991,33 @@ def club_member_public_profile_api(request, student_id):
                 'sort_order': len(organization_links),
                 'created_at': None,
             })
-    member_links = member.club_social_links.filter(is_visible=True) if profile.show_social_media else ClubMemberSocialLink.objects.none()
+    member_links = list(ClubMemberSocialLinkSerializer(
+        member.club_social_links.filter(is_visible=True) if profile.show_social_media else ClubMemberSocialLink.objects.none(),
+        many=True,
+    ).data)
+    if profile.show_social_media:
+        linked_member_platforms = {link['platform'].lower() for link in member_links}
+        for index, (platform, field_name, label) in enumerate((
+            ('instagram', 'instagram', 'Instagram'),
+            ('linkedin', 'linkedin', 'LinkedIn'),
+            ('facebook', 'facebook', 'Facebook'),
+            ('x', 'twitter', 'X (Twitter)'),
+            ('youtube', 'youtube', 'YouTube'),
+            ('tiktok', 'tiktok', 'TikTok'),
+            ('github', 'github', 'GitHub'),
+            ('website', 'website', 'Website'),
+        ), start=101):
+            url = getattr(member, field_name, '')
+            if url and platform not in linked_member_platforms:
+                member_links.append({
+                    'id': -index,
+                    'platform': platform,
+                    'url': url,
+                    'label': label,
+                    'is_visible': True,
+                    'sort_order': len(member_links),
+                    'created_at': None,
+                })
     return JsonResponse({'ok': True, 'profile': {
         'organization': {
             'name': organization.name,
@@ -2017,7 +2043,8 @@ def club_member_public_profile_api(request, student_id):
             'email': member.email if profile.show_email else '',
             'phone': member.phone if profile.show_phone else '',
             'address': member.address if profile.show_address else '',
-            'social_links': ClubMemberSocialLinkSerializer(member_links, many=True).data,
+            'website': member.website or '',
+            'social_links': member_links,
             'enable_connect': profile.enable_connect, 'enable_save_contact': profile.enable_save_contact,
             'is_active': member.show_contact_card,
         },

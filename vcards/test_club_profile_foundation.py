@@ -26,6 +26,7 @@ class ClubProfileFoundationTests(TestCase):
             college=self.club_a, name='Member A', username='member.a', password='MemberPass123!',
             phone='9800000002', email='member-a@example.test', address='Private address', member_type='member',
             role='Secretary', committee='Board', membership_term='2024-2025', unique_identifier='CLBA-001',
+            linkedin='https://linkedin.example.test/member-a',
         )
         self.member_b = StudentProfile.objects.create(
             college=self.club_b, name='Member B', username='member.b', password='MemberPass123!',
@@ -112,6 +113,7 @@ class ClubProfileFoundationTests(TestCase):
         self.assertEqual(payload['member']['email'], '')
         self.assertEqual(payload['member']['phone'], '')
         self.assertEqual(payload['member']['address'], '')
+        self.assertEqual(payload['member']['social_links'][0]['platform'], 'linkedin')
         self.assertTrue(payload['member']['is_active'])
         self.assertEqual(len(payload['organization']['social_links']), 2)
         self.assertEqual(

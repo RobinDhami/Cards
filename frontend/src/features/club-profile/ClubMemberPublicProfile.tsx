@@ -60,6 +60,7 @@ type ClubProfile = {
     email: string
     phone: string
     address: string
+    website: string
     social_links: SocialLink[]
     enable_connect: boolean
     enable_save_contact: boolean
@@ -114,9 +115,12 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
 
   const socialLinks = useMemo(() => {
     if (!profile) return []
-    return profile.organization.social_links.length > 0
-      ? profile.organization.social_links
-      : profile.member.social_links
+    const links = [...profile.organization.social_links]
+    const organizationPlatforms = new Set(links.map((link) => link.platform.toLowerCase()))
+    profile.member.social_links.forEach((link) => {
+      if (!organizationPlatforms.has(link.platform.toLowerCase())) links.push(link)
+    })
+    return links
   }, [profile])
 
   if (error) return <main className="club-public-state"><h1>Profile unavailable</h1><p>{error}</p></main>
@@ -129,7 +133,8 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
   }
   const publicUrl = window.location.href
   const connectHref = member.email ? `mailto:${member.email}` : member.phone ? `tel:${member.phone}` : organization.website
-  const websiteHref = organization.website ? (organization.website.startsWith('http') ? organization.website : `https://${organization.website}`) : ''
+  const displayedWebsite = organization.website || member.website
+  const websiteHref = displayedWebsite ? (displayedWebsite.startsWith('http') ? displayedWebsite : `https://${displayedWebsite}`) : ''
   const mapEmbedUrl = organization.address ? `https://www.google.com/maps?q=${encodeURIComponent(organization.address)}&output=embed` : ''
   const theme = {
     '--club-primary': organization.theme.primary || '#00777c',
@@ -208,7 +213,7 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
             {member.email ? <ContactTile href={`mailto:${member.email}`} icon={<Mail />} label="Email" value={member.email} /> : null}
             {member.phone ? <ContactTile href={`tel:${member.phone}`} icon={<Phone />} label="Phone" value={member.phone} /> : null}
             {member.address ? <ContactTile icon={<MapPin />} label="Address" value={member.address} /> : null}
-            {organization.website ? <ContactTile href={websiteHref} icon={<Globe2 />} label="Website" value={organization.website.replace(/^https?:\/\//, '')} /> : null}
+            {displayedWebsite ? <ContactTile href={websiteHref} icon={<Globe2 />} label="Website" value={displayedWebsite.replace(/^https?:\/\//, '')} /> : null}
           </div>
         </section>
 
