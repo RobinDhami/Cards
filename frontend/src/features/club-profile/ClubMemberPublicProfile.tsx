@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import CalendarDays from 'lucide-react/dist/esm/icons/calendar-days.js'
 import Facebook from 'lucide-react/dist/esm/icons/facebook.js'
+import Edit3 from 'lucide-react/dist/esm/icons/edit-3.js'
 import Globe2 from 'lucide-react/dist/esm/icons/globe-2.js'
 import IdCard from 'lucide-react/dist/esm/icons/id-card.js'
 import Instagram from 'lucide-react/dist/esm/icons/instagram.js'
@@ -39,6 +40,7 @@ type ClubProfile = {
     sponsoring_club: string
     email: string
     phone: string
+    whatsapp: string
     website: string
     address: string
     map_url: string
@@ -73,7 +75,7 @@ type ClubProfile = {
 
 type Props = {
   studentId: number
-  actions?: Pick<PublicStudent['actions'], 'vcard' | 'qr'>
+  actions?: Pick<PublicStudent['actions'], 'vcard' | 'qr' | 'edit'>
 }
 
 const SOCIAL_ICONS = {
@@ -132,10 +134,12 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
   const cardActions = actions || {
     vcard: `/student/${studentId}/download-vcard/`,
     qr: `/student/${studentId}/print-qr.png`,
+    edit: `/student/edit/${studentId}`,
   }
   const publicUrl = window.location.href
   const connectHref = member.email ? `mailto:${member.email}` : member.phone ? `tel:${member.phone}` : organization.website
   const mapEmbedUrl = organization.address ? `https://www.google.com/maps?q=${encodeURIComponent(organization.address)}&output=embed` : ''
+  const whatsappHref = member.whatsapp ? `https://wa.me/${member.whatsapp.replace(/\D/g, '')}` : ''
   const theme = {
     '--club-primary': organization.theme.primary || '#00777c',
     '--club-navy': organization.theme.secondary || '#082b58',
@@ -162,6 +166,7 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
             <div><strong>{organization.name}</strong><small>{organization.slogan || 'Leadership · Service · Impact'}</small></div>
           </div>
           <nav aria-label="Profile actions">
+            {cardActions.edit ? <a href={cardActions.edit} aria-label="Edit profile" title="Edit profile"><Edit3 /></a> : null}
             <button type="button" onClick={shareProfile} aria-label="Share profile"><Share2 /></button>
             {cardActions.qr ? <a href={backendHref(cardActions.qr)} target="_blank" rel="noreferrer" aria-label="Open QR code"><QrCode /></a> : null}
           </nav>
@@ -242,6 +247,10 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
           {connectHref ? <a href={connectHref}><Send />{organization.cta.button_label || 'Connect with me'}</a> : null}
         </footer>
       </article>
+      {(member.email || whatsappHref) ? <aside className="club-floating-contact" aria-label="Quick contact">
+        {member.email ? <a className="club-floating-contact__email" href={`mailto:${member.email}`} aria-label="Email member"><Mail /></a> : null}
+        {whatsappHref ? <a className="club-floating-contact__whatsapp" href={whatsappHref} target="_blank" rel="noreferrer" aria-label="Message on WhatsApp"><MessageCircle /></a> : null}
+      </aside> : null}
     </main>
   )
 }

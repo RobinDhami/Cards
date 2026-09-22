@@ -2109,6 +2109,7 @@ def club_member_public_profile_api(request, student_id):
             'bio': member.bio or member.about_intro or '', 'quote': profile.quote,
             'email': member.email if profile.show_email else '',
             'phone': member.phone if profile.show_phone else '',
+            'whatsapp': member.whatsapp if profile.show_phone else '',
             'address': member.address if profile.show_address else '',
             'website': member.website or '',
             'social_links': member_links,
