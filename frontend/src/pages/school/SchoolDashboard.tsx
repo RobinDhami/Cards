@@ -56,6 +56,7 @@ type SchoolSummary = {
   linkedin: string
   twitter: string
   clubDistrict: string
+  clubZone: string
   charteredOn: string
   sponsoringClub: string
   usernamePrefix: string
@@ -651,6 +652,7 @@ export function SchoolSettingsPage() {
           linkedin: payload.school.linkedin,
           twitter: payload.school.twitter,
           clubDistrict: payload.school.clubDistrict,
+          clubZone: payload.school.clubZone,
           charteredOn: payload.school.charteredOn,
           sponsoringClub: payload.school.sponsoringClub,
           usernamePrefix: payload.school.usernamePrefix,
@@ -719,6 +721,7 @@ export function SchoolSettingsPage() {
         {values.organizationType === 'club' ? <>
           <FormSection title="Club profile">
             <div className="form-grid">
+              <Field label="Zone"><TextInput value={values.clubZone ?? ''} onChange={(event) => update('clubZone', event.target.value)} /></Field>
               <Field label="District"><TextInput value={values.clubDistrict ?? ''} onChange={(event) => update('clubDistrict', event.target.value)} /></Field>
               <Field label="Chartered on"><TextInput type="date" value={values.charteredOn ?? ''} onChange={(event) => update('charteredOn', event.target.value)} /></Field>
               <Field label="Sponsoring club"><TextInput value={values.sponsoringClub ?? ''} onChange={(event) => update('sponsoringClub', event.target.value)} /></Field>

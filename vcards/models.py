@@ -140,6 +140,7 @@ class College(models.Model):
     # These are intentionally club-specific. Generic organization fields above
     # remain available to every module without duplicating member data.
     club_district = models.CharField(max_length=160, blank=True, default='')
+    club_zone = models.CharField(max_length=160, blank=True, default='')
     chartered_on = models.DateField(blank=True, null=True)
     sponsoring_club = models.CharField(max_length=255, blank=True, default='')
     student_username_prefix = models.CharField(max_length=80, blank=True, default='')
@@ -169,6 +170,24 @@ class College(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ClubEvent(models.Model):
+    organization = models.ForeignKey(College, on_delete=models.CASCADE, related_name='club_events')
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True, default='')
+    starts_at = models.DateTimeField()
+    ends_at = models.DateTimeField(blank=True, null=True)
+    location = models.CharField(max_length=255, blank=True, default='')
+    is_published = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['starts_at', 'id']
+
+    def __str__(self):
+        return f'{self.organization.name} — {self.title}'
 
 # Abstract Base Profile
 class BaseProfile(models.Model):

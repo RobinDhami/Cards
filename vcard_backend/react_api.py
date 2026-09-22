@@ -1,5 +1,5 @@
 import json
-from datetime import timedelta
+from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
 
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
@@ -44,7 +44,7 @@ from professional_cards.views import (
 )
 from vcards.models import (
     CardBatch, CardBatchCard, ClubMemberProfile, ClubMemberSocialLink,
-    ClubProfileSettings, ClubSocialLink, College, ProfileActivity, Skill,
+    ClubProfileSettings, ClubSocialLink, ClubEvent, College, ProfileActivity, Skill,
     StudentCard, StudentProfile,
 )
 from vcards.club_serializers import (
@@ -1912,6 +1912,61 @@ def club_social_link_detail_api(request, link_id):
     return JsonResponse({'ok': True, 'socialLink': ClubSocialLinkSerializer(link).data})
 
 
+def _club_event_payload(event):
+    return {
+        'id': event.id,
+        'title': event.title,
+        'description': event.description,
+        'startsAt': event.starts_at.isoformat(),
+        'endsAt': event.ends_at.isoformat() if event.ends_at else '',
+        'location': event.location,
+        'isPublished': event.is_published,
+    }
+
+
+@require_http_methods(['GET', 'POST'])
+def club_events_api(request):
+    school, error = _club_dashboard_school(request)
+    if error:
+        return error
+    if request.method == 'GET':
+        return JsonResponse({'ok': True, 'events': [_club_event_payload(event) for event in school.club_events.all()]})
+    source = _json_body(request)
+    try:
+        starts_at = datetime.fromisoformat(str(source.get('startsAt') or source.get('starts_at')).replace('Z', '+00:00'))
+        ends_value = source.get('endsAt') or source.get('ends_at')
+        ends_at = datetime.fromisoformat(str(ends_value).replace('Z', '+00:00')) if ends_value else None
+        if timezone.is_naive(starts_at):
+            starts_at = timezone.make_aware(starts_at)
+        if ends_at and timezone.is_naive(ends_at):
+            ends_at = timezone.make_aware(ends_at)
+        title = str(source.get('title') or '').strip()
+        if not title:
+            raise ValidationError('Event title is required.')
+        event = ClubEvent.objects.create(
+            organization=school,
+            title=title,
+            description=str(source.get('description') or '').strip(),
+            starts_at=starts_at,
+            ends_at=ends_at,
+            location=str(source.get('location') or '').strip(),
+            is_published=_bool(source.get('isPublished'), True),
+        )
+    except (TypeError, ValueError, ValidationError) as exc:
+        return _json_error(str(exc))
+    return JsonResponse({'ok': True, 'event': _club_event_payload(event)}, status=201)
+
+
+@require_http_methods(['DELETE'])
+def club_event_detail_api(request, event_id):
+    school, error = _club_dashboard_school(request)
+    if error:
+        return error
+    event = get_object_or_404(ClubEvent, pk=event_id, organization=school)
+    event.delete()
+    return JsonResponse({'ok': True})
+
+
 @require_http_methods(['GET', 'PUT', 'PATCH'])
 def club_member_profile_api(request, student_id):
     school, error = _club_dashboard_school(request)
@@ -2035,6 +2090,7 @@ def club_member_public_profile_api(request, student_id):
             'cover': _file_url(organization.cover_photo),
             'slogan': organization.slogan or '',
             'theme': {'primary': organization.theme_primary, 'secondary': organization.theme_secondary, 'accent': organization.theme_ternary},
+            'zone': organization.club_zone,
             'district': organization.club_district,
             'chartered_on': organization.chartered_on.isoformat() if organization.chartered_on else '',
             'sponsoring_club': organization.sponsoring_club,
@@ -2044,6 +2100,7 @@ def club_member_public_profile_api(request, student_id):
             'hero_left_text': settings.hero_left_text, 'hero_right_text': settings.hero_right_text, 'hero_quote': settings.hero_quote,
             'cta': {'title': settings.cta_title, 'subtitle': settings.cta_subtitle, 'button_label': settings.cta_button_label},
             'social_links': organization_links,
+            'events': [_club_event_payload(event) for event in organization.club_events.filter(is_published=True) if event.starts_at >= timezone.now()],
         },
         'member': {
             'name': member.name, 'photo': _file_url(member.profile_photo), 'role': member.role or '',
@@ -2113,6 +2170,7 @@ def _school_payload(school, with_stats=False):
         'instagram': school.instagram or '',
         'linkedin': school.linkedin or '',
         'twitter': school.twitter or '',
+        'clubZone': school.club_zone or '',
         'clubDistrict': school.club_district or '',
         'charteredOn': school.chartered_on.isoformat() if school.chartered_on else '',
         'sponsoringClub': school.sponsoring_club or '',
@@ -2220,6 +2278,8 @@ def _apply_school_fields(request, school, source):
         'twitter': 'twitter',
         'clubDistrict': 'club_district',
         'club_district': 'club_district',
+        'clubZone': 'club_zone',
+        'club_zone': 'club_zone',
         'sponsoringClub': 'sponsoring_club',
         'sponsoring_club': 'sponsoring_club',
         'usernamePrefix': 'student_username_prefix',

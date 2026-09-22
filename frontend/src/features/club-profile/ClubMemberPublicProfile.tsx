@@ -24,6 +24,7 @@ import type { PublicStudent } from '../digital-card/types'
 import './ClubMemberPublicProfile.css'
 
 type SocialLink = { id: number; platform: string; url: string; label: string }
+type ClubEvent = { id: number; title: string; description: string; startsAt: string; endsAt: string; location: string; isPublished: boolean }
 
 type ClubProfile = {
   organization: {
@@ -33,6 +34,7 @@ type ClubProfile = {
     slogan: string
     theme: { primary: string; secondary: string; accent: string }
     district: string
+    zone: string
     chartered_on: string
     sponsoring_club: string
     email: string
@@ -46,6 +48,7 @@ type ClubProfile = {
     hero_quote: string
     cta: { title: string; subtitle: string; button_label: string }
     social_links: SocialLink[]
+    events: ClubEvent[]
   }
   member: {
     name: string
@@ -223,6 +226,7 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
             <dl>
               <div><dt><Users />Club Name</dt><dd>{organization.name}</dd></div>
               {organization.district ? <div><dt><BadgeCheck />District</dt><dd>{organization.district}</dd></div> : null}
+              {organization.zone ? <div><dt><BadgeCheck />Zone</dt><dd>{organization.zone}</dd></div> : null}
               {organization.chartered_on ? <div><dt><CalendarDays />Chartered On</dt><dd>{displayDate(organization.chartered_on)}</dd></div> : null}
               {organization.sponsoring_club ? <div><dt><Users />Sponsoring Club</dt><dd>{organization.sponsoring_club}</dd></div> : null}
               {organization.email ? <div><dt><Mail />Club Email</dt><dd>{organization.email}</dd></div> : null}
@@ -234,6 +238,11 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
             </div> : null}
           </div>
         </section>
+
+        {organization.events.length > 0 ? <section className="club-profile-section">
+          <h2>Upcoming Events</h2>
+          <div className="club-events-grid">{organization.events.map((event) => <article key={event.id}><strong>{event.title}</strong><time>{new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(event.startsAt))}</time>{event.location ? <span>{event.location}</span> : null}{event.description ? <p>{event.description}</p> : null}</article>)}</div>
+        </section> : null}
 
         {socialLinks.length > 0 ? <section className="club-profile-section">
           <h2>Personal Links</h2>
