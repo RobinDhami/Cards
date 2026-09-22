@@ -169,15 +169,6 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
 
         <section className="club-profile-hero">
           {organization.cover ? <img src={backendHref(organization.cover)} alt="" /> : null}
-          <div className="club-profile-hero__shade" />
-          <p className="club-profile-hero__left">{organization.hero_left_text || 'LEAD\nSERVE\nGROW'}</p>
-          <div className="club-profile-hero__center">
-            {organization.logo ? <img src={backendHref(organization.logo)} alt="" /> : null}
-            <strong>{organization.name}</strong>
-            <span>{organization.district}</span>
-          </div>
-          <p className="club-profile-hero__right">{organization.hero_right_text || 'YOUTH\nFOR A\nBETTER\nTOMORROW'}</p>
-          <em>{organization.hero_quote || 'Together We Serve'}</em>
         </section>
 
         <section className="club-member-intro">
