@@ -7,6 +7,7 @@ import Instagram from 'lucide-react/dist/esm/icons/instagram.js'
 import Mail from 'lucide-react/dist/esm/icons/mail.js'
 import MapPin from 'lucide-react/dist/esm/icons/map-pin.js'
 import MessageCircle from 'lucide-react/dist/esm/icons/message-circle.js'
+import Music2 from 'lucide-react/dist/esm/icons/music-2.js'
 import Phone from 'lucide-react/dist/esm/icons/phone.js'
 import QrCode from 'lucide-react/dist/esm/icons/qr-code.js'
 import Quote from 'lucide-react/dist/esm/icons/quote.js'
@@ -77,6 +78,7 @@ const SOCIAL_ICONS = {
   instagram: Instagram,
   facebook: Facebook,
   website: Globe2,
+  tiktok: Music2,
 } as const
 
 function displayDate(value: string) {
@@ -87,11 +89,6 @@ function displayDate(value: string) {
 function clubSocialLabel(link: SocialLink) {
   if (link.label) return link.label
   return link.platform.charAt(0).toUpperCase() + link.platform.slice(1)
-}
-
-function ContactTile({ href, icon, label, value }: { href?: string; icon: React.ReactNode; label: string; value: string }) {
-  const body = <>{icon}<strong>{label}</strong><span>{value}</span></>
-  return href ? <a href={href} target={href.startsWith('http') ? '_blank' : undefined} rel={href.startsWith('http') ? 'noreferrer' : undefined}>{body}</a> : <div>{body}</div>
 }
 
 export function ClubMemberPublicProfile({ studentId, actions }: Props) {
@@ -113,7 +110,7 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
 
   const socialLinks = useMemo(() => {
     if (!profile) return []
-    const allowed = new Set(['email', 'website', 'facebook', 'instagram'])
+    const allowed = new Set(['email', 'website', 'facebook', 'instagram', 'tiktok'])
     const links = profile.organization.social_links.filter((link) => allowed.has(link.platform.toLowerCase()))
     const organizationPlatforms = new Set(links.map((link) => link.platform.toLowerCase()))
     profile.member.social_links.forEach((link) => {
@@ -133,8 +130,6 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
   }
   const publicUrl = window.location.href
   const connectHref = member.email ? `mailto:${member.email}` : member.phone ? `tel:${member.phone}` : organization.website
-  const displayedWebsite = organization.website || member.website
-  const websiteHref = displayedWebsite ? (displayedWebsite.startsWith('http') ? displayedWebsite : `https://${displayedWebsite}`) : ''
   const mapEmbedUrl = organization.address ? `https://www.google.com/maps?q=${encodeURIComponent(organization.address)}&output=embed` : ''
   const theme = {
     '--club-primary': organization.theme.primary || '#00777c',
@@ -198,14 +193,14 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
           <div><h2>About {organization.name}</h2><p>{organization.about}</p></div>
         </section> : null}
 
-        <section className="club-profile-section">
-          <h2>Contact Information</h2>
-          <div className="club-contact-grid">
-            {member.email ? <ContactTile href={`mailto:${member.email}`} icon={<Mail />} label="Email" value={member.email} /> : null}
-            {member.address ? <ContactTile icon={<MapPin />} label="Address" value={member.address} /> : null}
-            {displayedWebsite ? <ContactTile href={websiteHref} icon={<Globe2 />} label="Website" value={displayedWebsite.replace(/^https?:\/\//, '')} /> : null}
-          </div>
-        </section>
+        {socialLinks.filter((link) => ['instagram', 'facebook', 'website', 'tiktok'].includes(link.platform.toLowerCase())).length > 0 ? <section className="club-profile-section">
+          <h2>Social Media Links</h2>
+          <div className="club-social-grid club-social-grid--compact">{socialLinks.filter((link) => ['instagram', 'facebook', 'website', 'tiktok'].includes(link.platform.toLowerCase())).map((link) => {
+            const Icon = SOCIAL_ICONS[link.platform.toLowerCase() as keyof typeof SOCIAL_ICONS] || Globe2
+            const href = link.url
+            return <a className={`club-social-link-${link.platform.toLowerCase()}`} href={href} target={href.startsWith('http') ? '_blank' : undefined} rel={href.startsWith('http') ? 'noreferrer' : undefined} key={link.id}><Icon /><span>{clubSocialLabel(link)}</span></a>
+          })}</div>
+        </section> : null}
 
         <section className="club-profile-section">
           <h2>Club Information</h2>
@@ -226,15 +221,6 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
         {organization.events.length > 0 ? <section className="club-profile-section">
           <h2>Upcoming Events</h2>
           <div className="club-events-grid">{organization.events.map((event) => <article key={event.id}><strong>{event.title}</strong><time>{new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(event.startsAt))}</time>{event.location ? <span>{event.location}</span> : null}{event.description ? <p>{event.description}</p> : null}</article>)}</div>
-        </section> : null}
-
-        {socialLinks.length > 0 ? <section className="club-profile-section">
-          <h2>Personal Links</h2>
-          <div className="club-social-grid">{socialLinks.map((link) => {
-            const Icon = SOCIAL_ICONS[link.platform.toLowerCase() as keyof typeof SOCIAL_ICONS] || Globe2
-            const href = link.platform.toLowerCase() === 'email' && !link.url.startsWith('mailto:') ? `mailto:${link.url}` : link.url
-            return <a className={`club-social-link-${link.platform.toLowerCase()}`} href={href} target={href.startsWith('http') ? '_blank' : undefined} rel={href.startsWith('http') ? 'noreferrer' : undefined} key={link.id}><Icon /><span>{clubSocialLabel(link)}</span></a>
-          })}</div>
         </section> : null}
 
         <footer className="club-profile-cta">
