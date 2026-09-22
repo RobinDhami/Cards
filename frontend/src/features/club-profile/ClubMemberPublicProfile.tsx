@@ -159,7 +159,7 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
       <article className="club-profile-card">
         <header className="club-profile-header">
           <div className="club-profile-brand">
-            <span>{organization.logo ? <img src={backendHref(organization.logo)} alt={`${organization.name} logo`} /> : <Building2 size={25} />}</span>
+            <span>{organization.logo ? <img src={backendHref(organization.logo)} alt={`${organization.name} logo`} /> : <strong className="club-profile-brand__fallback">{organization.name.slice(0, 1)}</strong>}</span>
             <div><strong>{organization.name}</strong><small>{organization.slogan || 'Leadership · Service · Impact'}</small></div>
           </div>
           <nav aria-label="Profile actions">
