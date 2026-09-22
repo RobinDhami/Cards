@@ -34,3 +34,5 @@
   .club-social-grid svg{width:21px;height:21px}
 }
 @media(max-width:560px){.club-member-heading h2{font-size:13px;font-weight:500}.club-contact-grid>a,.club-contact-grid>div{min-height:68px}.club-contact-grid strong{font-size:10px}.club-contact-grid span{font-size:8px}.club-social-grid a{min-height:54px;font-size:8px}.club-social-grid svg{width:18px;height:18px}}
+.club-contact-grid svg{width:18px;height:18px;stroke-width:1.8}.club-social-grid svg{width:19px;height:19px;stroke-width:1.8}.club-contact-grid>a,.club-contact-grid>div{min-height:70px}.club-social-grid a{min-height:56px}
+@media(max-width:560px){.club-contact-grid svg{width:16px;height:16px}.club-social-grid svg{width:16px;height:16px}.club-contact-grid>a,.club-contact-grid>div{min-height:62px}.club-social-grid a{min-height:48px}}

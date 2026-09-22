@@ -202,7 +202,6 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
           <h2>Contact Information</h2>
           <div className="club-contact-grid">
             {member.email ? <ContactTile href={`mailto:${member.email}`} icon={<Mail />} label="Email" value={member.email} /> : null}
-            {member.phone ? <ContactTile href={`tel:${member.phone}`} icon={<Phone />} label="Phone" value={member.phone} /> : null}
             {member.address ? <ContactTile icon={<MapPin />} label="Address" value={member.address} /> : null}
             {displayedWebsite ? <ContactTile href={websiteHref} icon={<Globe2 />} label="Website" value={displayedWebsite.replace(/^https?:\/\//, '')} /> : null}
           </div>
