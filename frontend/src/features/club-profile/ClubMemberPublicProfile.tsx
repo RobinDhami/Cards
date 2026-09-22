@@ -40,7 +40,6 @@ type ClubProfile = {
     sponsoring_club: string
     email: string
     phone: string
-    whatsapp: string
     website: string
     address: string
     map_url: string
@@ -64,6 +63,7 @@ type ClubProfile = {
     quote: string
     email: string
     phone: string
+    whatsapp: string
     address: string
     website: string
     social_links: SocialLink[]
