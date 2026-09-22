@@ -117,7 +117,11 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
 
   const clubSocialLinks = useMemo(() => {
     if (!profile) return []
-    return profile.organization.social_links.filter((link) => ['website', 'facebook', 'instagram', 'tiktok'].includes(link.platform.toLowerCase()))
+    const links = profile.organization.social_links.filter((link) => ['website', 'facebook', 'instagram', 'tiktok'].includes(link.platform.toLowerCase()))
+    if (profile.organization.website && !links.some((link) => link.platform.toLowerCase() === 'website')) {
+      links.unshift({ id: -1, platform: 'website', url: profile.organization.website, label: 'Website' })
+    }
+    return links
   }, [profile])
   const personalSocialLinks = useMemo(() => profile?.member.social_links.filter((link) => ['facebook', 'instagram', 'tiktok', 'linkedin', 'youtube', 'x', 'twitter', 'other'].includes(link.platform.toLowerCase())) || [], [profile])
 
@@ -198,7 +202,7 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
           <h2>Club Social Media Links</h2>
           <div className="club-social-grid club-social-grid--compact">{clubSocialLinks.map((link) => {
             const Icon = SOCIAL_ICONS[link.platform.toLowerCase() as keyof typeof SOCIAL_ICONS] || Globe2
-            const href = link.url
+            const href = link.platform.toLowerCase() === 'website' && !link.url.startsWith('http') ? `https://${link.url}` : link.url
             return <a className={`club-social-link-${link.platform.toLowerCase()}`} href={href} target={href.startsWith('http') ? '_blank' : undefined} rel={href.startsWith('http') ? 'noreferrer' : undefined} key={link.id}><Icon /><span>{clubSocialLabel(link)}</span></a>
           })}</div>
         </section> : null}
