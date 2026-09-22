@@ -8,6 +8,7 @@
 .club-events-grid{display:grid;gap:10px}.club-events-grid article{display:grid;gap:4px;padding:13px 15px;border:1px solid #dce4eb;border-radius:11px;background:#f8fbfc}.club-events-grid strong{color:var(--club-navy);font-size:14px}.club-events-grid time,.club-events-grid span,.club-events-grid p{color:#526781;font-size:12px}.club-events-grid p{margin:3px 0 0;line-height:1.45}
 .club-contact-grid svg{color:#111}.club-contact-grid strong{color:#111}.club-contact-grid span{color:#405064}.club-social-grid .club-social-link-instagram svg{color:#e1306c}.club-social-grid .club-social-link-facebook svg{color:#1877f2}.club-social-grid .club-social-link-website svg{color:#1683dc}.club-social-grid .club-social-link-email svg{color:#111}
 .club-profile-brand__fallback{font-size:25px}
+.club-member-heading h2{font-size:16px;font-weight:500;color:#4f687e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.club-member-heading h2 i{font-style:normal;color:#9aabb9}.club-member-heading>div>span{font-weight:500;color:#526781}.club-contact-grid>a,.club-contact-grid>div{min-height:78px;padding:9px 6px}.club-contact-grid svg{width:22px}.club-contact-grid strong{margin-top:4px;font-size:11px;font-weight:600}.club-contact-grid span{font-size:9px}.club-social-grid a{min-height:62px;gap:4px;font-size:10px}.club-social-grid svg{width:23px;height:23px}
 .club-profile-brand img{border-radius:50%}
 @media(max-width:560px){
   .club-profile-header{padding:9px 12px;gap:8px}
@@ -32,3 +33,4 @@
   .club-social-grid a{min-height:62px;font-size:9px}
   .club-social-grid svg{width:21px;height:21px}
 }
+@media(max-width:560px){.club-member-heading h2{font-size:13px;font-weight:500}.club-contact-grid>a,.club-contact-grid>div{min-height:68px}.club-contact-grid strong{font-size:10px}.club-contact-grid span{font-size:8px}.club-social-grid a{min-height:54px;font-size:8px}.club-social-grid svg{width:18px;height:18px}}

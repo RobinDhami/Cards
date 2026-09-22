@@ -177,7 +177,7 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
             {member.is_active ? <i aria-label="Active member" /> : null}
           </div>
           <div className="club-member-heading">
-            <div><h1>{member.name}</h1><h2>{member.role || 'Club Member'}</h2><p>{organization.name}</p>{member.member_id ? <span><IdCard />Member ID: {member.member_id}</span> : null}</div>
+            <div><h1>{member.name}</h1><h2>{member.role || 'Club Member'} <i>·</i> {organization.name}</h2>{member.member_id ? <span><IdCard />Member ID: {member.member_id}</span> : null}</div>
             <aside><Star /><strong>{member.committee || 'Club Member'}</strong>{member.membership_term ? <span>{member.membership_term}</span> : null}</aside>
           </div>
         </section>
