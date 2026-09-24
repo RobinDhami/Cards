@@ -79,7 +79,7 @@ type Props = {
 }
 
 function GmailIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285f4" d="M3 6.8v10.7c0 .8.7 1.5 1.5 1.5H7V10.2z"/><path fill="#34a853" d="M17 10.2V19h2.5c.8 0 1.5-.7 1.5-1.5V6.8z"/><path fill="#fbbc04" d="M3.8 5.6 7 8v2.2L3 7.2v-.4c0-.5.3-1 .8-1.2"/><path fill="#ea4335" d="M20.2 5.6 12 11.8 3.8 5.6A1.5 1.5 0 0 1 5.6 5L12 9.8 18.4 5a1.5 1.5 0 0 1 1.8.6"/><path fill="#c5221f" d="M21 6.8v.4l-4 3V8z"/></svg>
+  return <img src="https://cdn.simpleicons.org/gmail/EA4335" alt="" aria-hidden="true" />
 }
 
 const SOCIAL_ICONS = {
