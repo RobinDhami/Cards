@@ -78,8 +78,12 @@ type Props = {
   actions?: Pick<PublicStudent['actions'], 'vcard' | 'qr' | 'edit'>
 }
 
+function GmailIcon() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5A2.5 2.5 0 0 1 6 4h12a2.5 2.5 0 0 1 2.5 2.5v11A2.5 2.5 0 0 1 18 20H6a2.5 2.5 0 0 1-2.5-2.5z" fill="none" stroke="currentColor" strokeWidth="1.6"/><path d="m4.2 6 7.8 6 7.8-6" fill="none" stroke="#d93025" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M4 18V7.2M20 18V7.2" fill="none" stroke="#d93025" strokeWidth="1.8" strokeLinecap="round"/></svg>
+}
+
 const SOCIAL_ICONS = {
-  email: Mail,
+  email: GmailIcon,
   instagram: Instagram,
   facebook: Facebook,
   website: Globe2,
