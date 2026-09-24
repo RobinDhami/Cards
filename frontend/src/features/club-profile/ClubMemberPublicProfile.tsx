@@ -119,9 +119,12 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
 
   const clubSocialLinks = useMemo(() => {
     if (!profile) return []
-    const links = profile.organization.social_links.filter((link) => ['website', 'facebook', 'instagram', 'tiktok'].includes(link.platform.toLowerCase()))
+    const links = profile.organization.social_links.filter((link) => ['email', 'website', 'facebook', 'instagram', 'tiktok'].includes(link.platform.toLowerCase()))
     if (profile.organization.website && !links.some((link) => link.platform.toLowerCase() === 'website')) {
       links.unshift({ id: -1, platform: 'website', url: profile.organization.website, label: 'Website' })
+    }
+    if (profile.organization.email && !links.some((link) => link.platform.toLowerCase() === 'email')) {
+      links.unshift({ id: -2, platform: 'email', url: `mailto:${profile.organization.email}`, label: 'Email' })
     }
     return links
   }, [profile])
@@ -226,7 +229,6 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
             <dl>
               {organization.chartered_on ? <div><dt><CalendarDays />Chartered On</dt><dd>{displayDate(organization.chartered_on)}</dd></div> : null}
               {organization.sponsoring_club ? <div><dt><Users />Sponsoring Club</dt><dd>{organization.sponsoring_club}</dd></div> : null}
-              {organization.email ? <div><dt><Mail />Club Email</dt><dd>{organization.email}</dd></div> : null}
               {organization.phone ? <div><dt><Phone />Club Phone</dt><dd>{organization.phone}</dd></div> : null}
             </dl>
             {(organization.map_url || organization.address) ? <div className="club-map-card">
