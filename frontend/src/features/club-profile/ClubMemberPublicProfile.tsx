@@ -211,7 +211,7 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
         </section> : null}
 
         {clubSocialLinks.length > 0 ? <section className="club-profile-section">
-          <h2>Club Social Links</h2>
+          <h2>Club Social Media Links</h2>
           <div className="club-social-grid club-social-grid--compact">{clubSocialLinks.map((link) => {
             const Icon = SOCIAL_ICONS[link.platform.toLowerCase() as keyof typeof SOCIAL_ICONS] || Globe2
             const href = link.platform.toLowerCase() === 'website' && !link.url.startsWith('http') ? `https://${link.url}` : link.url
