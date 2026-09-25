@@ -143,6 +143,16 @@ class ClubProfileFoundationTests(TestCase):
 
         self.assertEqual(response.status_code, 200, response.content)
 
+    def test_club_member_can_sign_in_to_edit_their_own_profile(self):
+        response = self.client.post(
+            reverse('react_student_login_api', args=[self.member_a.id]),
+            data=json.dumps({'username': 'member.a', 'password': 'MemberPass123!'}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json()['redirectPath'], f'/student/{self.member_a.id}/manage/')
+
     def test_club_member_updates_store_the_shared_cover_and_ignore_birth_certificate(self):
         response = self.client.post(
             reverse('react_student_manage_api', args=[self.member_a.id]),

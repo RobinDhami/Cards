@@ -244,7 +244,9 @@ def _student_edit_session_key(student_id):
 
 
 def _profile_supports_self_service(student):
-    return bool(student and student.member_type in {'student', 'teacher'})
+    # Club Members manage only their own personal card information. Their
+    # organization-controlled content remains protected in the editor/API.
+    return bool(student and student.member_type in {'student', 'teacher', 'member'})
 
 
 def _is_student_edit_authorized(request, student_id):

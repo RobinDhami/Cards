@@ -1573,7 +1573,12 @@ def _public_student_payload(request, student):
             'website': context['school_website_url'] if module_key == 'club' else context['website_url'],
             'vcard': context['download_vcard_url'],
             'qr': context['qr_code_url'],
-            'edit': '' if module_key == 'club' else context['edit_profile_url'],
+            # Editing a Club card always starts with the member's own login;
+            # a public card link never grants access by itself.
+            'edit': (
+                f'/student/{student.id}/login/?next=/student/edit/{student.id}'
+                if module_key == 'club' else context['edit_profile_url']
+            ),
             'birthCertificate': context['birth_certificate_url'] if context['has_birth_certificate'] else '',
         },
         'canViewPrivateDetails': context['can_view_private_details'],

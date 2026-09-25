@@ -141,7 +141,7 @@ export function ClubMemberPublicProfile({ studentId, actions }: Props) {
   const cardActions = actions || {
     vcard: `/student/${studentId}/download-vcard/`,
     qr: `/student/${studentId}/print-qr.png`,
-    edit: `/student/edit/${studentId}`,
+    edit: `/student/${studentId}/login/?next=/student/edit/${studentId}`,
   }
   const publicUrl = window.location.href
   const connectHref = member.email ? `mailto:${member.email}` : member.phone ? `tel:${member.phone}` : organization.website
