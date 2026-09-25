@@ -43,8 +43,10 @@ ORGANIZATION_MODULES = {
         'bulk_columns': ('name', 'email', 'phone', 'member_type', 'academic_level', 'section', 'roll_number', 'academic_year', 'faculty_program', 'department', 'role', 'identifier'),
     },
     'club': {
-        'key': 'club', 'member_types': ('member', 'other'),
-        'member_labels': {'member': 'General Members', 'other': 'Other Members'},
+        # A club has one member category. General versus executive is determined
+        # by the flexible role/position field, not by a second member type.
+        'key': 'club', 'member_types': ('member',),
+        'member_labels': {'member': 'Members'},
         'filters': ('executive', 'committee', 'general'),
         'bulk_columns': ('name', 'email', 'phone', 'role', 'membership_id', 'committee', 'membership_term', 'join_date'),
     },

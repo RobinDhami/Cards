@@ -429,8 +429,6 @@ class ClubMemberProfile(models.Model):
             return
         if not self.member.college_id or self.member.college.organization_type != 'club':
             raise ValidationError({'member': 'Club public profiles require a member of a club organization.'})
-        if self.member.member_type != 'member':
-            raise ValidationError({'member': 'Club public profiles require the Member category.'})
 
     def save(self, *args, **kwargs):
         self.full_clean()

@@ -549,7 +549,7 @@ export function StudentEditor() {
             <EditField label="Full Name"><input className="student-edit-input" name="name" value={fieldString(fields, 'name')} placeholder="Full name" onChange={(event) => update('name', event.target.value)} /></EditField>
             <EditField label="Username"><input className="student-edit-input" name="username" value={fieldString(fields, 'username')} placeholder="Username" onChange={(event) => update('username', event.target.value)} /></EditField>
             <EditField label={profile.organizationType === 'club' ? 'Membership ID' : profile.organizationType === 'education' && fieldString(fields, 'member_type') !== 'student' ? 'Employee ID' : 'Student ID'}><input className="student-edit-input" value={profile.uniqueIdentifier} readOnly /></EditField>
-            {profile.canManageSchoolFields ? (
+            {profile.canManageSchoolFields && profile.organizationType !== 'club' ? (
               <EditField label="Member Type">
                 <select className="student-edit-input" value={fieldString(fields, 'member_type')} onChange={(event) => update('member_type', event.target.value)}>
                   {profile.options.memberTypes.map((choice) => <option key={choice.value} value={choice.value}>{choice.label}</option>)}
@@ -786,7 +786,7 @@ export function LegacyStudentEditor() {
           <FormSection title="School identity" description="School-managed academic and member details.">
             <div className="form-grid is-three">
               <Field label="Profile category"><SelectInput value={String(fields.profile_category ?? '')} onChange={(event) => update('profile_category', event.target.value)}>{profile.options.profileCategories.map((choice) => <option key={choice.value} value={choice.value}>{choice.label}</option>)}</SelectInput></Field>
-              <Field label="Member type"><SelectInput value={String(fields.member_type ?? '')} onChange={(event) => update('member_type', event.target.value)}>{profile.options.memberTypes.map((choice) => <option key={choice.value} value={choice.value}>{choice.label}</option>)}</SelectInput></Field>
+              {profile.organizationType !== 'club' ? <Field label="Member type"><SelectInput value={String(fields.member_type ?? '')} onChange={(event) => update('member_type', event.target.value)}>{profile.options.memberTypes.map((choice) => <option key={choice.value} value={choice.value}>{choice.label}</option>)}</SelectInput></Field> : null}
               <Field label="Academic level"><SelectInput value={String(fields.academic_level ?? '')} onChange={(event) => update('academic_level', event.target.value)}><option value="">Not set</option>{profile.options.academicLevels.map((choice) => <option key={choice.value} value={choice.value}>{choice.label}</option>)}</SelectInput></Field>
               <Field label="Section"><TextInput value={String(fields.section ?? '')} onChange={(event) => update('section', event.target.value)} /></Field>
               <Field label="Roll number"><TextInput value={String(fields.roll_number ?? '')} onChange={(event) => update('roll_number', event.target.value)} /></Field>

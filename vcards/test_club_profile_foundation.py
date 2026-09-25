@@ -131,6 +131,18 @@ class ClubProfileFoundationTests(TestCase):
         self.assertTrue(ClubProfileSettings.objects.filter(organization=self.club_a, is_public=True).exists())
         self.assertTrue(ClubMemberProfile.objects.filter(member=self.member_a, is_published=True).exists())
 
+    def test_legacy_club_member_category_cannot_hide_a_public_profile(self):
+        # Old rows may have a former category, but role—not category—defines
+        # whether a Club member is executive or general.
+        self.member_a.member_type = 'other'
+        self.member_a.save(update_fields=['member_type'])
+        ClubProfileSettings.objects.create(organization=self.club_a)
+        ClubMemberProfile.objects.create(member=self.member_a)
+
+        response = self.client.get(reverse('club_member_public_profile_api', args=[self.member_a.id]))
+
+        self.assertEqual(response.status_code, 200, response.content)
+
     def test_club_member_updates_store_the_shared_cover_and_ignore_birth_certificate(self):
         response = self.client.post(
             reverse('react_student_manage_api', args=[self.member_a.id]),

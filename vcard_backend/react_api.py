@@ -1649,6 +1649,11 @@ def _update_student_from_request(request, student, allow_school_fields):
         college_id = _int(source.get('college'))
         student.college = College.objects.filter(pk=college_id).first() if college_id else None
     is_club_member = student.college and student.college.organization_type == 'club'
+    # Club roles (for example President or General Member) are positions, not
+    # separate member categories. Keep the shared model normalized so an edit
+    # can never make a Club public profile disappear.
+    if is_club_member:
+        student.member_type = 'member'
     if is_club_member and allow_school_fields and request.FILES.get('cover_photo'):
         student.college.cover_photo = request.FILES['cover_photo']
         student.college.save(update_fields=['cover_photo'])
@@ -2022,7 +2027,7 @@ def club_member_social_link_detail_api(request, student_id, link_id):
 
 @require_http_methods(['GET'])
 def club_member_public_profile_api(request, student_id):
-    member = get_object_or_404(StudentProfile.objects.select_related('college'), pk=student_id, member_type='member')
+    member = get_object_or_404(StudentProfile.objects.select_related('college'), pk=student_id)
     organization = member.college
     if not organization or organization.organization_type != 'club':
         return _json_error('This club member profile is unavailable.', status=404)
