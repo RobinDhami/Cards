@@ -8,11 +8,12 @@ import Settings from 'lucide-react/dist/esm/icons/settings.js'
 import UserRound from 'lucide-react/dist/esm/icons/user-round.js'
 import type { ShellNavItem } from './ManageShell'
 
-export type PlatformModule = 'overview' | 'organizations' | 'members' | 'professionals' | 'templates' | 'cards' | 'card_operations' | 'activity' | 'reports' | 'settings'
+export type PlatformModule = 'overview' | 'organizations' | 'members' | 'professionals' | 'templates' | 'hotels' | 'cards' | 'card_operations' | 'activity' | 'reports' | 'settings'
 
 const platformItems: Array<Omit<ShellNavItem, 'active'> & { module: PlatformModule }> = [
   { module: 'overview', label: 'Overview', href: '/dashboard/', icon: LayoutDashboard },
   { module: 'organizations', label: 'Organizations', href: '/dashboard/schools/', icon: Building2 },
+  { module: 'hotels', label: 'Hotels', href: '/dashboard/hotels/', icon: Building2 },
   { module: 'professionals', label: 'Profiles', href: '/dashboard/professional-cards/', icon: UserRound },
   { module: 'templates', label: 'Templates', href: '/dashboard/templates/', icon: LayoutTemplate },
   { module: 'card_operations', label: 'Card Operations', href: '/dashboard/card-operations/', icon: Boxes },

@@ -55,7 +55,7 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
   if (isSuperAdmin) {
     return platformNavigation([
       'overview', 'organizations', 'members', 'professionals', 'templates',
-      'cards', 'card_operations', 'activity', 'reports', 'settings',
+      'hotels', 'cards', 'card_operations', 'activity', 'reports', 'settings',
     ], path)
   }
 

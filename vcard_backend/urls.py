@@ -6,6 +6,8 @@ from django.contrib import admin
 from vcards.views import *
 from vcards.views import dashboard_qr_export, dashboard_qr_export_download
 from vcard_backend import react_api
+from hotels import api as hotel_api
+from hotels import admin_api as hotel_admin_api
 from vcard_backend.health import health_check
 from vcard_backend.react_views import react_app
 
@@ -25,6 +27,8 @@ urlpatterns = [
     path('dashboard/', react_app, name='admin_dashboard'),
     path('dashboard/templates/', react_app, name='dashboard_template_studio'),
     path('dashboard/schools/', react_app, name='dashboard_schools'),
+    path('dashboard/hotels/', react_app, name='dashboard_hotels'),
+    path('dashboard/hotels/<int:hotel_id>/', react_app, name='dashboard_hotel_workspace'),
     path('dashboard/organizations/<int:organization_id>/', react_app, name='dashboard_organization_workspace'),
     path('dashboard/organizations/<int:organization_id>/members/', react_app, name='dashboard_organization_members'),
     path('dashboard/organizations/<int:organization_id>/members/<int:student_id>/credentials/', react_app, name='dashboard_organization_member_credentials'),
@@ -109,6 +113,15 @@ urlpatterns = [
     path('api/manage/students/<int:student_id>/dashboard/', react_api.student_owner_dashboard_api, name='react_student_dashboard_api'),
     path('api/dashboard/schools/', react_api.dashboard_schools_api, name='react_dashboard_schools_api'),
     path('api/dashboard/schools/<int:school_id>/', react_api.dashboard_school_api, name='react_dashboard_school_api'),
+    path('api/dashboard/hotels/', hotel_admin_api.hotel_directory_api, name='hotel_directory_api'),
+    path('api/dashboard/hotels/metrics/', hotel_admin_api.hotel_metrics_api, name='hotel_metrics_api'),
+    path('api/dashboard/hotels/<int:hotel_id>/modules/', hotel_admin_api.hotel_modules_api, name='hotel_modules_api'),
+    path('api/dashboard/hotels/<int:hotel_id>/package/', hotel_admin_api.hotel_package_api, name='hotel_package_api'),
+    path('api/dashboard/hotels/<int:hotel_id>/', hotel_admin_api.hotel_detail_api, name='hotel_detail_api'),
+    path('api/dashboard/hotels/<int:hotel_id>/rooms/', hotel_admin_api.hotel_rooms_api, name='hotel_rooms_api'),
+    path('api/dashboard/hotels/<int:hotel_id>/menu/', hotel_admin_api.hotel_menu_api, name='hotel_menu_api'),
+    path('api/dashboard/hotels/<int:hotel_id>/services/', hotel_admin_api.hotel_services_api, name='hotel_services_api'),
+    path('api/dashboard/hotels/<int:hotel_id>/touchpoints/', hotel_admin_api.hotel_touchpoint_api, name='hotel_touchpoint_api'),
     path('api/dashboard/members/', react_api.dashboard_members_api, name='react_dashboard_members_api'),
     path('api/dashboard/reports/', react_api.dashboard_reports_api, name='react_dashboard_reports_api'),
     path('api/dashboard/settings/', react_api.dashboard_settings_api, name='react_dashboard_settings_api'),
@@ -126,6 +139,18 @@ urlpatterns = [
     path('api/dashboard/bulk-upload/', react_api.dashboard_bulk_upload_api, name='react_dashboard_bulk_upload_api'),
     path('api/dashboard/bulk-upload/template/', react_api.dashboard_bulk_upload_template_api, name='react_dashboard_bulk_upload_template_api'),
     path('api/dashboard/print-controls/', react_api.dashboard_print_controls_api, name='react_dashboard_print_controls_api'),
+    path('api/hotels/guest/<str:public_identifier>/', hotel_api.resolve_guest_experience, name='hotel_guest_experience_api'),
+    path('api/hotels/guest/<str:public_identifier>/services/', hotel_api.guest_services, name='hotel_guest_services_api'),
+    path('api/hotels/guest/<str:public_identifier>/menu/', hotel_api.guest_menu, name='hotel_guest_menu_api'),
+    path('api/hotels/guest/<str:public_identifier>/access/activate/', hotel_api.activate_guest_access, name='hotel_guest_access_activate_api'),
+    path('api/hotels/guest/<str:public_identifier>/access/status/', hotel_api.guest_access_status, name='hotel_guest_access_status_api'),
+    path('api/hotels/guest/<str:public_identifier>/access/logout/', hotel_api.logout_guest_access, name='hotel_guest_access_logout_api'),
+    path('api/hotels/guest/<str:public_identifier>/offers/', hotel_api.guest_offers, name='hotel_guest_offers_api'),
+    path('api/hotels/guest/<str:public_identifier>/service-requests/', hotel_api.create_guest_service_request, name='hotel_guest_service_request_api'),
+    path('api/hotels/guest/<str:public_identifier>/orders/', hotel_api.create_guest_order, name='hotel_guest_order_api'),
+    path('api/hotels/guest/<str:public_identifier>/reviews/', hotel_api.create_guest_review, name='hotel_guest_review_api'),
+    path('api/hotels/guest/<str:public_identifier>/reviews/google-click/', hotel_api.record_google_review_click, name='hotel_guest_google_review_click_api'),
+    path('api/hotels/guest/<str:public_identifier>/analytics/', hotel_api.record_guest_analytics, name='hotel_guest_analytics_api'),
 ]
 
 if settings.DEBUG:

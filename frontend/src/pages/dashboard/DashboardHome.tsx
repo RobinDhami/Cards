@@ -10,6 +10,7 @@ import { ManageShell } from '../../components/manage/ManageShell'
 import { apiHref } from '../../lib/api'
 import { brandLogo } from '../../lib/assets'
 import { schoolWorkspaceNav } from '../school/schoolWorkspaceNav'
+import { platformNavigation } from '../../components/manage/platformNavigation'
 import './DashboardHome.css'
 
 type LucideIcon = ComponentType<SVGProps<SVGSVGElement> & { size?: number }>
@@ -66,6 +67,7 @@ type DashboardData = {
     professionalProfiles: string
     publishedTemplates: string
   }
+  platformAccess?: { allowedModules: string[] }
 }
 
 const numberFormatter = new Intl.NumberFormat('en-US')
@@ -349,12 +351,13 @@ export function DashboardHome() {
   }
 
   const school = data.currentSchool
+  const platformNav = data.platformAccess?.allowedModules?.length ? platformNavigation(data.platformAccess.allowedModules) : schoolWorkspaceNav(school?.id, data.isSuperAdmin)
   return (
     <ManageShell
       brand={school?.name || 'Tap2Connect'}
       brandDetail={school ? 'School administration' : 'Platform administration'}
       logo={school?.logoUrl || brandLogo}
-      nav={schoolWorkspaceNav(school?.id, data.isSuperAdmin)}
+      nav={platformNav}
       title="Overview"
       subtitle="Platform organizations, members, profiles, templates, and assigned cards"
       userName={data.user.displayName}

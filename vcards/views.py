@@ -2131,6 +2131,7 @@ def dashboard_overview_api(request):
     ]
     if is_super_admin:
         nav_items.append({'key': 'schools', 'label': 'Schools', 'href': reverse('dashboard_schools'), 'icon': 'school'})
+        nav_items.append({'key': 'hotels', 'label': 'Hotels', 'href': reverse('dashboard_hotels'), 'icon': 'hotel'})
     nav_items.extend([
         {'key': 'students', 'label': 'Students', 'href': f"{reverse('dashboard_students')}{nav_school_query}", 'icon': 'users'},
         {'key': 'print', 'label': 'ID Card Studio', 'href': f"{reverse('dashboard_print')}{nav_school_query}", 'icon': 'credit-card'},
@@ -2160,6 +2161,7 @@ def dashboard_overview_api(request):
         'navSchoolQuery': nav_school_query,
         'navItems': nav_items,
         'logoutUrl': reverse('dashboard_logout'),
+        'platformAccess': platform_access_payload(request.user),
         'schoolsUrl': reverse('dashboard_schools'),
         'analytics': _dashboard_analytics_payload(school, analytics, is_platform=is_super_admin),
         **platform_overview,
