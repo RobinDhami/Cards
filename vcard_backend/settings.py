@@ -102,7 +102,7 @@ INSTALLED_APPS = [
     'cloudinary_storage',
     'cloudinary',
     'vcards',
-    'hotels',
+    'hospitality',
     'professional_cards',
     'card_designer',
     'rest_framework',

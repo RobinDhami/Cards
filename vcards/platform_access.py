@@ -4,7 +4,6 @@ from collections import OrderedDict
 PLATFORM_MODULES = OrderedDict([
     ('overview', {'label': 'Overview', 'destination': '/dashboard/'}),
     ('organizations', {'label': 'Organizations', 'destination': '/dashboard/schools/'}),
-    ('hotels', {'label': 'Hotels', 'destination': '/dashboard/hotels/'}),
     ('members', {'label': 'Members', 'destination': '/dashboard/students/'}),
     ('professionals', {'label': 'Profiles', 'destination': '/dashboard/professional-cards/'}),
     ('templates', {'label': 'Templates', 'destination': '/dashboard/templates/'}),
@@ -62,8 +61,6 @@ def required_platform_module_for_path(path):
         return 'overview'
     if normalized == '/dashboard/schools':
         return 'organizations'
-    if normalized.startswith('/dashboard/hotels'):
-        return 'hotels'
     if normalized.startswith('/dashboard/organizations/'):
         if '/members' in normalized:
             return 'members'

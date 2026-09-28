@@ -18,7 +18,6 @@ class PlatformAccess(User):
         permissions = [
             ('access_platform_overview', 'Can access platform overview'),
             ('access_platform_organizations', 'Can access platform organizations'),
-            ('access_platform_hotels', 'Can access platform hotels'),
             ('access_platform_members', 'Can access platform members'),
             ('access_platform_professionals', 'Can access platform professional profiles'),
             ('access_platform_templates', 'Can access platform Template Studio'),
@@ -113,6 +112,7 @@ class College(models.Model):
         ('education', 'Education'),
         ('club', 'Club'),
         ('business', 'Business'),
+        ('hospitality', 'Hospitality'),
         ('other', 'Other'),
     ]
 

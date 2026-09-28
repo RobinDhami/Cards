@@ -1,5 +1,4 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { GuestCartProvider } from './features/hotel-guest/GuestCartContext'
 
 const HomePage = lazy(() => import('./pages/home/HomePage').then((module) => ({ default: module.HomePage })))
 const DashboardHome = lazy(() => import('./pages/dashboard/DashboardHome').then((module) => ({ default: module.DashboardHome })))
@@ -7,7 +6,6 @@ const PlatformSettings = lazy(() => import('./pages/dashboard/PlatformSettings')
 const PlatformActivity = lazy(() => import('./pages/dashboard/PlatformInsights').then((module) => ({ default: module.PlatformActivity })))
 const PlatformReports = lazy(() => import('./pages/dashboard/PlatformInsights').then((module) => ({ default: module.PlatformReports })))
 const CardOperations = lazy(() => import('./pages/dashboard/CardOperations').then((module) => ({ default: module.CardOperations })))
-const HotelDashboard = lazy(() => import('./pages/hotel-admin/HotelDashboard').then((module) => ({ default: module.HotelDashboard })))
 const PublicProfessionalProfile = lazy(() => import('./pages/profiles/PublicProfessionalProfile').then((module) => ({ default: module.PublicProfessionalProfile })))
 const LoginPage = lazy(() => import('./pages/auth/LoginPage').then((module) => ({ default: module.LoginPage })))
 const PlatformLoginPage = lazy(() => import('./pages/auth/LoginPage').then((module) => ({ default: module.PlatformLoginPage })))
@@ -29,9 +27,6 @@ const ClubProfileDesignPage = lazy(() => import('./pages/school/ClubWorkspace').
 const ClubInformationPage = lazy(() => import('./pages/school/ClubWorkspace').then((module) => ({ default: module.ClubInformationPage })))
 const ClubMemberProfilePage = lazy(() => import('./pages/school/ClubWorkspace').then((module) => ({ default: module.ClubMemberProfilePage })))
 const MigrationNeededPage = lazy(() => import('./pages/migration/MigrationNeededPage').then((module) => ({ default: module.MigrationNeededPage })))
-const GuestHomePage = lazy(() => import('./pages/guest/GuestHomePage').then((module) => ({ default: module.GuestHomePage })))
-const GuestServicesPage = lazy(() => import('./pages/guest/GuestServicesPage').then((module) => ({ default: module.GuestServicesPage })))
-const GuestMenuPage = lazy(() => import('./pages/guest/GuestMenuPage').then((module) => ({ default: module.GuestMenuPage })))
 
 const CardEditorPage = lazy(() =>
   import('./features/card-editor/CardEditorPage').then((module) => ({
@@ -91,19 +86,6 @@ function AppRoutes() {
     return <WorkspaceChooser />
   }
 
-  const guestMatch = path.match(/^\/guest\/([^/]+)\/?$/)
-  if (guestMatch) {
-    return <GuestHomePage publicIdentifier={decodeURIComponent(guestMatch[1])} />
-  }
-
-  const guestServicesMatch = path.match(/^\/guest\/([^/]+)\/services\/?$/)
-  if (guestServicesMatch) {
-    return <GuestServicesPage publicIdentifier={decodeURIComponent(guestServicesMatch[1])} />
-  }
-  const guestMenuMatch = path.match(/^\/guest\/([^/]+)\/menu\/?$/)
-  if (guestMenuMatch) {
-    return <GuestMenuPage publicIdentifier={decodeURIComponent(guestMenuMatch[1])} />
-  }
 
   if (
     path === '/card-editor/'
@@ -182,9 +164,6 @@ function AppRoutes() {
     return <CardOperations />
   }
 
-  if (/^\/dashboard\/hotels\/?$/.test(path) || /^\/dashboard\/hotels\/\d+\/?$/.test(path)) {
-    return <HotelDashboard />
-  }
 
   if (/^\/dashboard\/organizations\/\d+\/club\/?$/.test(path)) return <ClubOverviewPage />
   if (/^\/dashboard\/organizations\/\d+\/club\/members\/?$/.test(path)) return <ClubMembersPage />
@@ -217,7 +196,7 @@ function App() {
   const [, rerender] = useState(0)
   useEffect(() => { const onPopState = () => rerender((value) => value + 1); window.addEventListener('popstate', onPopState); return () => window.removeEventListener('popstate', onPopState) }, [])
   return (
-    <GuestCartProvider><Suspense fallback={<div className="route-loading-screen">Loading…</div>}><AppRoutes /></Suspense></GuestCartProvider>
+    <Suspense fallback={<div className="route-loading-screen">Loading…</div>}><AppRoutes /></Suspense>
   )
 }
 
