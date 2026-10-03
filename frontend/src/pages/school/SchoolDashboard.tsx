@@ -268,7 +268,7 @@ export function SchoolsPage() {
     && `${school.name} ${school.address} ${school.adminUsername}`.toLowerCase().includes(search.trim().toLowerCase())
   ))
   const typeTabs = [
-    ['all', 'All Organizations'], ['education', 'Education'], ['club', 'Clubs'], ['business', 'Business'], ['hotel', 'Hotels'], ['cafe', 'Cafés'], ['other', 'Other'], ['generic', 'Generic / Unclassified'],
+    ['all', 'All Organizations'], ['education', 'Education'], ['club', 'Clubs'], ['business', 'Business'], ['hospitality', 'Hospitality'], ['other', 'Other'], ['generic', 'Generic / Unclassified'],
   ] as const
 
   return (
@@ -291,7 +291,7 @@ export function SchoolsPage() {
           <div className="form-grid is-three">
             <Field label="Organization name"><TextInput value={newSchool.name} onChange={(event) => setNewSchool((current) => ({ ...current, name: event.target.value }))} required /></Field>
             <Field label="Organization code" hint="Unique uppercase code, e.g. VIS"><TextInput value={newSchool.organizationCode} onChange={(event) => setNewSchool((current) => ({ ...current, organizationCode: event.target.value.toUpperCase() }))} maxLength={12} required /></Field>
-            <Field label="Organization type"><SelectInput value={newSchool.organizationType} onChange={(event) => setNewSchool((current) => ({ ...current, organizationType: event.target.value }))}><option value="education">Education</option><option value="club">Club</option><option value="business">Business</option><option value="hotel">Hotel</option><option value="cafe">Café</option><option value="other">Other</option></SelectInput></Field>
+            <Field label="Organization type"><SelectInput value={newSchool.organizationType} onChange={(event) => setNewSchool((current) => ({ ...current, organizationType: event.target.value }))}><option value="education">Education</option><option value="club">Club</option><option value="business">Business</option><option value="hospitality">Hospitality</option><option value="other">Other</option></SelectInput></Field>
             <Field label="Address"><TextInput value={newSchool.address} onChange={(event) => setNewSchool((current) => ({ ...current, address: event.target.value }))} /></Field>
             <Field label="Website"><TextInput type="url" value={newSchool.website} onChange={(event) => setNewSchool((current) => ({ ...current, website: event.target.value }))} /></Field>
             <Field label="Map link"><TextInput type="url" value={newSchool.mapUrl} onChange={(event) => setNewSchool((current) => ({ ...current, mapUrl: event.target.value }))} /></Field>
@@ -374,7 +374,7 @@ export function OrganizationWorkspaceOverview() {
         <div><h2>Manage this organization</h2><p>These actions stay scoped to {organization?.name} while you remain signed in.</p></div>
         <div>
           <a className="manage-button is-primary" href={`${workspaceRoot}/members/`}><UserRound size={14} />Members</a>
-          {['hotel', 'cafe', 'hospitality'].includes(organization?.organizationType || '') ? <a className="manage-button is-primary" href={`${workspaceRoot}/hospitality/`}><Building2 size={14} />Profile & Menu</a> : null}
+          {organization?.organizationType === 'hospitality' ? <a className="manage-button is-primary" href={`${workspaceRoot}/hospitality/`}><Building2 size={14} />Profile & Menu</a> : null}
           <a className="manage-button" href={`${workspaceRoot}/bulk-upload/`}><Upload size={14} />Bulk Upload</a>
           <a className="manage-button" href={`${workspaceRoot}/settings/`}><Settings size={14} />Organization Settings</a>
         </div>
@@ -705,7 +705,7 @@ export function SchoolSettingsPage() {
           <div className="form-grid">
             <Field label="Organization name"><TextInput value={values.name ?? ''} onChange={(event) => update('name', event.target.value)} required /></Field>
             <Field label="Organization code" hint="Unique uppercase code; changing it does not rewrite member usernames."><TextInput value={values.organizationCode ?? ''} onChange={(event) => update('organizationCode', event.target.value.toUpperCase())} maxLength={12} /></Field>
-            <Field label="Organization type"><SelectInput value={values.organizationType ?? 'other'} onChange={(event) => update('organizationType', event.target.value)}><option value="education">Education</option><option value="club">Club</option><option value="business">Business</option><option value="hotel">Hotel</option><option value="cafe">Café</option><option value="other">Other</option></SelectInput></Field>
+            <Field label="Organization type"><SelectInput value={values.organizationType ?? 'other'} onChange={(event) => update('organizationType', event.target.value)}><option value="education">Education</option><option value="club">Club</option><option value="business">Business</option><option value="hospitality">Hospitality</option><option value="other">Other</option></SelectInput></Field>
             <Field label="Slogan"><TextInput value={values.slogan ?? ''} onChange={(event) => update('slogan', event.target.value)} /></Field>
             <Field label="Address" wide><TextArea value={values.address ?? ''} onChange={(event) => update('address', event.target.value)} /></Field>
             <Field label={shell.isSuperAdmin ? 'Primary contact name' : 'Principal name'}><TextInput value={values.principalName ?? ''} onChange={(event) => update('principalName', event.target.value)} /></Field>

@@ -2157,7 +2157,7 @@ def club_workspace_overview_api(request):
 def _school_payload(school, with_stats=False):
     module = organization_module(school)
     venue_identifier = ''
-    if school.organization_type in {'hotel', 'cafe', 'hospitality'}:
+    if school.organization_type == 'hospitality':
         from hospitality.models import VenueProfile
         venue_identifier = VenueProfile.objects.filter(organization=school).values_list('public_identifier', flat=True).first() or ''
     payload = {
@@ -2243,7 +2243,7 @@ def dashboard_schools_api(request):
         return _json_error('Only platform administrators can manage organizations.', status=403)
     if request.method == 'GET':
         schools = College.objects.select_related('admin_user').order_by('name')
-        organization_type_counts = {'all': schools.count(), 'generic': 0, 'education': 0, 'club': 0, 'business': 0, 'hotel': 0, 'cafe': 0, 'hospitality': 0, 'other': 0}
+        organization_type_counts = {'all': schools.count(), 'generic': 0, 'education': 0, 'club': 0, 'business': 0, 'hospitality': 0, 'other': 0}
         for row in schools.values('organization_type').annotate(total=Count('id')):
             organization_type_counts[row['organization_type'] or 'generic'] = row['total']
         return JsonResponse({
@@ -2325,16 +2325,13 @@ def _apply_school_fields(request, school, source):
 
 
 def _ensure_hospitality_profile(school):
-    if school.organization_type not in {'hotel', 'cafe', 'hospitality'}:
+    if school.organization_type != 'hospitality':
         return None
     from hospitality.models import VenueProfile
     venue, _ = VenueProfile.objects.get_or_create(
         organization=school,
-        defaults={'venue_type': 'hotel' if school.organization_type == 'hotel' else 'cafe'},
+        defaults={'venue_type': 'restaurant'},
     )
-    if school.organization_type in {'hotel', 'cafe'} and venue.venue_type == 'other':
-        venue.venue_type = school.organization_type
-        venue.save(update_fields=['venue_type', 'updated_at'])
     return venue
 
 

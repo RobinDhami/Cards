@@ -51,8 +51,6 @@ ORGANIZATION_MODULES = {
         'bulk_columns': ('name', 'email', 'phone', 'role', 'membership_id', 'committee', 'membership_term', 'join_date'),
     },
     'business': GENERIC_MODULE,
-    'hotel': GENERIC_MODULE,
-    'cafe': GENERIC_MODULE,
     # Kept for organizations created before Hotel/Café became first-class types.
     'hospitality': GENERIC_MODULE,
     'other': GENERIC_MODULE,

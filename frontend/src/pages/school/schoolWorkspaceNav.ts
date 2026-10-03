@@ -25,7 +25,7 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
 
   if (schoolId && path.startsWith('/dashboard/organizations/')) {
     const workspaceRoot = `/dashboard/organizations/${schoolId}`
-    if (['hotel', 'cafe', 'hospitality'].includes(organizationType)) {
+    if (organizationType === 'hospitality') {
       const hospitalityRoot = `${workspaceRoot}/hospitality`
       return [
         ...(isSuperAdmin ? [{ label: 'All Organizations', href: '/dashboard/schools/', icon: Building2, active: false }] : []),

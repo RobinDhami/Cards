@@ -5,6 +5,7 @@ from urllib.parse import urlparse
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Avg
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_http_methods
@@ -53,8 +54,8 @@ def _payload(request, venue):
         items = [{
             'id': str(item.public_identifier), 'name': item.name,
             'description': item.description, 'image': _file_url(request, item.image),
-            'price': str(item.price), 'dietaryInfo': item.dietary_info,
-            'isVegetarian': item.is_vegetarian, 'isTodaySpecial': item.is_today_special,
+            'price': str(item.price), 'originalPrice': str(item.original_price) if item.original_price is not None else '', 'offerLabel': item.offer_label, 'dietaryInfo': item.dietary_info,
+            'isVegetarian': item.is_vegetarian, 'isTodaySpecial': item.is_today_special, 'isOffer': item.is_offer,
         } for item in category.items.filter(is_available=True)]
         categories.append({'name': category.name, 'slug': category.slug, 'items': items})
     return {
@@ -66,6 +67,7 @@ def _payload(request, venue):
                   'website': venue.website, 'address': venue.address, 'mapUrl': venue.map_url,
                   'googleReviewUrl': venue.google_review_url},
         'links': list(venue.links.filter(is_active=True).values('link_type', 'label', 'value', 'display_order')),
+        'rating': {'average': venue.feedback.filter(status__in=['new', 'reviewed', 'resolved']).aggregate(average=Avg('rating'))['average'] or 0, 'count': venue.feedback.filter(status__in=['new', 'reviewed', 'resolved']).count()},
         'categories': categories, 'feedbackEnabled': venue.feedback_enabled,
     }
 
@@ -142,10 +144,10 @@ def venue_menu_items_api(request, organization_id):
     if not venue:
         return JsonResponse({'error': 'Not authorized.'}, status=403)
     if request.method == 'GET':
-        return JsonResponse({'items': list(venue.menu_items.values('id', 'category_id', 'name', 'description', 'price', 'dietary_info', 'is_vegetarian', 'is_available', 'is_today_special', 'display_order'))})
+        return JsonResponse({'items': list(venue.menu_items.values('id', 'category_id', 'name', 'description', 'price', 'original_price', 'offer_label', 'dietary_info', 'is_vegetarian', 'is_available', 'is_today_special', 'is_offer', 'display_order'))})
     data = _body(request) or {}
     item = get_object_or_404(VenueMenuItem, pk=data.get('id'), venue=venue) if request.method == 'PATCH' else VenueMenuItem(venue=venue)
-    for key in ('category_id', 'name', 'description', 'price', 'dietary_info', 'is_vegetarian', 'is_available', 'is_today_special', 'display_order'):
+    for key in ('category_id', 'name', 'description', 'price', 'original_price', 'offer_label', 'dietary_info', 'is_vegetarian', 'is_available', 'is_today_special', 'is_offer', 'display_order'):
         if key in data: setattr(item, key, data[key])
     item.full_clean(); item.save()
     return JsonResponse({'id': item.pk, 'name': item.name}, status=201 if request.method == 'POST' else 200)
