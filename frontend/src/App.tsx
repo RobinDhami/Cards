@@ -26,6 +26,8 @@ const ClubMembersPage = lazy(() => import('./pages/school/ClubWorkspace').then((
 const ClubProfileDesignPage = lazy(() => import('./pages/school/ClubWorkspace').then((module) => ({ default: module.ClubProfileDesignPage })))
 const ClubInformationPage = lazy(() => import('./pages/school/ClubWorkspace').then((module) => ({ default: module.ClubInformationPage })))
 const ClubMemberProfilePage = lazy(() => import('./pages/school/ClubWorkspace').then((module) => ({ default: module.ClubMemberProfilePage })))
+const HospitalityWorkspace = lazy(() => import('./pages/hospitality/HospitalityWorkspace').then((module) => ({ default: module.HospitalityWorkspace })))
+const PublicHospitalityProfile = lazy(() => import('./pages/hospitality/HospitalityWorkspace').then((module) => ({ default: module.PublicHospitalityProfile })))
 const MigrationNeededPage = lazy(() => import('./pages/migration/MigrationNeededPage').then((module) => ({ default: module.MigrationNeededPage })))
 
 const CardEditorPage = lazy(() =>
@@ -140,6 +142,10 @@ function AppRoutes() {
     return <PublicClubMemberCard />
   }
 
+  if (/^\/venue\/[^/]+\/?$/.test(path)) {
+    return <PublicHospitalityProfile />
+  }
+
   if (/^\/student\/\d+(?:\/contact-card)?\/?$/.test(path)) {
     return <PublicStudentCard />
   }
@@ -171,6 +177,7 @@ function AppRoutes() {
   if (/^\/dashboard\/organizations\/\d+\/club\/club-information\/?$/.test(path)) return <ClubInformationPage />
   if (/^\/dashboard\/organizations\/\d+\/club\/members\/\d+\/?$/.test(path)) return <ClubMemberProfilePage />
   if (/^\/dashboard\/organizations\/\d+\/club\/settings\/?$/.test(path)) return <ClubInformationPage />
+  if (/^\/dashboard\/organizations\/\d+\/hospitality\/?$/.test(path)) return <HospitalityWorkspace />
 
   if (routeMatches(path, schoolDashboardRoutes)) {
     return <SchoolDashboardRouter />

@@ -1,4 +1,4 @@
-export type OrganizationModuleKey = 'education' | 'club' | 'business' | 'other' | 'generic'
+export type OrganizationModuleKey = 'education' | 'club' | 'business' | 'hotel' | 'cafe' | 'hospitality' | 'other' | 'generic'
 
 const genericConfig = {
   title: 'Members', memberTypes: [{ value: 'student', label: 'Students' }, { value: 'teacher', label: 'Teachers & Staff' }, { value: 'other', label: 'Other Members' }],
@@ -24,6 +24,9 @@ export const organizationModuleConfig = {
     dashboardMetrics: [['memberCount', 'Total Members'], ['executiveCount', 'Executive / Board'], ['committeeCount', 'Committee'], ['generalMemberCount', 'General Members'], ['liveProfileCount', 'Active Profiles'], ['activeCardCount', 'Assigned Cards']] as const,
   },
   business: genericConfig,
+  hotel: genericConfig,
+  cafe: genericConfig,
+  hospitality: genericConfig,
   other: genericConfig,
 } as const
 

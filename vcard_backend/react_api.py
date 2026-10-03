@@ -2156,6 +2156,10 @@ def club_workspace_overview_api(request):
 
 def _school_payload(school, with_stats=False):
     module = organization_module(school)
+    venue_identifier = ''
+    if school.organization_type in {'hotel', 'cafe', 'hospitality'}:
+        from hospitality.models import VenueProfile
+        venue_identifier = VenueProfile.objects.filter(organization=school).values_list('public_identifier', flat=True).first() or ''
     payload = {
         'id': school.id,
         'name': school.name,
@@ -2193,6 +2197,7 @@ def _school_payload(school, with_stats=False):
         'themeTernary': school.theme_ternary,
         'description': school.description or '',
         'adminUsername': school.admin_user.username if school.admin_user else '',
+        'venuePublicIdentifier': venue_identifier,
     }
     if with_stats:
         members = school.students.filter(profile_category='school')
@@ -2238,7 +2243,7 @@ def dashboard_schools_api(request):
         return _json_error('Only platform administrators can manage organizations.', status=403)
     if request.method == 'GET':
         schools = College.objects.select_related('admin_user').order_by('name')
-        organization_type_counts = {'all': schools.count(), 'generic': 0, 'education': 0, 'club': 0, 'business': 0, 'other': 0}
+        organization_type_counts = {'all': schools.count(), 'generic': 0, 'education': 0, 'club': 0, 'business': 0, 'hotel': 0, 'cafe': 0, 'hospitality': 0, 'other': 0}
         for row in schools.values('organization_type').annotate(total=Count('id')):
             organization_type_counts[row['organization_type'] or 'generic'] = row['total']
         return JsonResponse({
@@ -2262,6 +2267,7 @@ def dashboard_schools_api(request):
             if not school.organization_code:
                 return _json_error('Organization code is required.')
             school.save()
+            _ensure_hospitality_profile(school)
             _sync_school_admin_user(school, username, password)
             school.save()
     except (ValidationError, IntegrityError) as exc:
@@ -2318,6 +2324,20 @@ def _apply_school_fields(request, school, source):
     school.full_clean(exclude=['admin_user'])
 
 
+def _ensure_hospitality_profile(school):
+    if school.organization_type not in {'hotel', 'cafe', 'hospitality'}:
+        return None
+    from hospitality.models import VenueProfile
+    venue, _ = VenueProfile.objects.get_or_create(
+        organization=school,
+        defaults={'venue_type': 'hotel' if school.organization_type == 'hotel' else 'cafe'},
+    )
+    if school.organization_type in {'hotel', 'cafe'} and venue.venue_type == 'other':
+        venue.venue_type = school.organization_type
+        venue.save(update_fields=['venue_type', 'updated_at'])
+    return venue
+
+
 @require_http_methods(['GET', 'POST', 'DELETE'])
 def dashboard_school_api(request, school_id):
     permission_error = _require_login(request)
@@ -2344,6 +2364,7 @@ def dashboard_school_api(request, school_id):
             if username:
                 _sync_school_admin_user(school, username, password)
             school.save()
+            _ensure_hospitality_profile(school)
             StudentProfile.objects.filter(
                 college=school,
                 profile_category='school',

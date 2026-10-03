@@ -112,6 +112,8 @@ class College(models.Model):
         ('education', 'Education'),
         ('club', 'Club'),
         ('business', 'Business'),
+        ('hotel', 'Hotel'),
+        ('cafe', 'Café'),
         ('hospitality', 'Hospitality'),
         ('other', 'Other'),
     ]

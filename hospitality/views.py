@@ -59,7 +59,7 @@ def _payload(request, venue):
         categories.append({'name': category.name, 'slug': category.slug, 'items': items})
     return {
         'organization': {'id': venue.organization_id, 'name': venue.organization.name},
-        'venue': {'type': venue.venue_type, 'description': venue.description,
+        'venue': {'publicIdentifier': venue.public_identifier, 'type': venue.venue_type, 'description': venue.description,
                   'logo': _file_url(request, venue.logo), 'coverImage': _file_url(request, venue.cover_image),
                   'primaryColor': venue.primary_color, 'secondaryColor': venue.secondary_color,
                   'phone': venue.phone, 'whatsapp': venue.whatsapp, 'email': venue.email,

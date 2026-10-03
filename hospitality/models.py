@@ -13,7 +13,7 @@ def public_identifier():
 
 
 class VenueProfile(models.Model):
-    VENUE_TYPES = [('restaurant', 'Restaurant'), ('cafe', 'Café'), ('bar', 'Bar'), ('other', 'Other venue')]
+    VENUE_TYPES = [('hotel', 'Hotel'), ('restaurant', 'Restaurant'), ('cafe', 'Café'), ('bar', 'Bar'), ('other', 'Other venue')]
     organization = models.OneToOneField('vcards.College', on_delete=models.CASCADE, related_name='venue_profile')
     venue_type = models.CharField(max_length=20, choices=VENUE_TYPES, default='restaurant')
     public_identifier = models.CharField(max_length=64, unique=True, default=public_identifier, editable=False)

@@ -69,6 +69,7 @@ urlpatterns = [
     path('bulk-upload/', react_app, name='bulk_upload'),
     path('dashboard/college/<int:college_id>/add_student/', react_app, name='add_student_to_college'),
     path('club-members/<int:student_id>/', react_app, name='club_member_public_card'),
+    path('venue/<str:public_identifier>/', react_app, name='venue_public_profile'),
     path('student/<int:student_id>/', react_app, name='contact_card'),
     path('student/<int:student_id>/contact-card/', react_app, name='student_contact_card'),
     path('student/<int:student_id>/action/<slug:action>/', track_contact_action, name='track_contact_action'),

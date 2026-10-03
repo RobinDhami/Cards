@@ -25,6 +25,14 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
 
   if (schoolId && path.startsWith('/dashboard/organizations/')) {
     const workspaceRoot = `/dashboard/organizations/${schoolId}`
+    if (['hotel', 'cafe', 'hospitality'].includes(organizationType)) {
+      const hospitalityRoot = `${workspaceRoot}/hospitality`
+      return [
+        ...(isSuperAdmin ? [{ label: 'All Organizations', href: '/dashboard/schools/', icon: Building2, active: false }] : []),
+        { label: 'Profile & Menu', href: `${hospitalityRoot}/`, icon: Palette, active: path === hospitalityRoot || path === `${hospitalityRoot}/` },
+        { label: 'Organization settings', href: `${workspaceRoot}/settings/`, icon: Settings, active: path.includes('/settings') },
+      ]
+    }
     if (organizationType === 'club') {
       const clubRoot = `${workspaceRoot}/club`
       return [
