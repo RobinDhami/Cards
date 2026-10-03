@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import Building2 from 'lucide-react/dist/esm/icons/building-2.js'
+import MessageSquare from 'lucide-react/dist/esm/icons/message-square.js'
 import Plus from 'lucide-react/dist/esm/icons/plus.js'
 import Save from 'lucide-react/dist/esm/icons/save.js'
-import { Field, FormSection, TextInput, TextArea } from '../../components/manage/FormControls'
+import Utensils from 'lucide-react/dist/esm/icons/utensils.js'
+import UserRound from 'lucide-react/dist/esm/icons/user-round.js'
+import { Field, FileInput, FormSection, SelectInput, TextInput, TextArea } from '../../components/manage/FormControls'
 import { ManageShell } from '../../components/manage/ManageShell'
 import { apiFetch, displayError, jsonBody } from '../../lib/api'
 import './HospitalityWorkspace.css'
@@ -12,67 +15,89 @@ type Venue = { organization: { id: number; name: string }; venue: { publicIdenti
 type Category = { id?: number; name: string; slug: string; display_order?: number; is_active?: boolean; items?: Item[] }
 type Item = { id?: number; category_id?: number; name: string; description: string; price: string; original_price?: string; offer_label?: string; dietary_info?: string; is_vegetarian?: boolean; is_available?: boolean; is_today_special?: boolean; is_offer?: boolean; image?: string; display_order?: number }
 type Link = { id: number; link_type: string; label: string; value: string }
+type Feedback = { id: number; rating: number; comment: string; status: string; created_at: string }
+type DraftItem = { category_id: string; name: string; description: string; price: string; original_price: string; offer_label: string; is_offer: boolean; is_today_special: boolean; image: File | null }
 
 function organizationId() { return Number(window.location.pathname.match(/organizations\/(\d+)/)?.[1] || 0) }
 
 function VenueShell({ name, children }: { name: string; children: ReactNode }) {
   const id = organizationId()
-  return <ManageShell brand={name || 'Hospitality'} brandDetail="Hospitality organization" logo={undefined} nav={[{ label: 'Organization settings', href: `/dashboard/organizations/${id}/settings/`, icon: Building2, active: false }, { label: 'Menu', href: `/dashboard/organizations/${id}/hospitality/`, icon: Plus, active: true }]} title="Menu" subtitle="Manage categories and menu items." userName="" userRole="Organization administrator">{children}</ManageShell>
+  return <ManageShell brand={name || 'Hospitality'} brandDetail="Hospitality organization" logo={undefined} nav={[{ label: 'Organization settings', href: `/dashboard/organizations/${id}/settings/`, icon: Building2, active: false }, { label: 'Hospitality workspace', href: `/dashboard/organizations/${id}/hospitality/`, icon: Utensils, active: true }]} title="Hospitality workspace" subtitle="Shape your public profile, menu, and customer feedback." userName="" userRole="Organization administrator">{children}</ManageShell>
 }
 
-export function HospitalityWorkspace() {
-  const [venue, setVenue] = useState<Venue | null>(null)
-  const [error, setError] = useState('')
-  const [categoryName, setCategoryName] = useState('')
-  const [item, setItem] = useState<{ category_id: string; name: string; description: string; price: string; original_price: string; offer_label: string; is_offer: boolean; is_today_special: boolean; image: File | null }>({ category_id: '', name: '', description: '', price: '', original_price: '', offer_label: '', is_offer: false, is_today_special: false, image: null })
-  const [activeTab] = useState<'home' | 'menu'>('menu')
+const emptyItem: DraftItem = { category_id: '', name: '', description: '', price: '', original_price: '', offer_label: '', is_offer: false, is_today_special: false, image: null }
+
+function HospitalityAdminPanel() {
   const id = organizationId()
+  const [venue, setVenue] = useState<Venue | null>(null)
+  const [feedback, setFeedback] = useState<Feedback[]>([])
+  const [activeTab, setActiveTab] = useState<'profile' | 'menu' | 'feedback'>('menu')
+  const [categoryName, setCategoryName] = useState('')
+  const [item, setItem] = useState<DraftItem>(emptyItem)
+  const [link, setLink] = useState({ link_type: 'instagram', label: 'Instagram', value: '' })
+  const [error, setError] = useState('')
 
   async function load() {
     try {
-      const payload = await apiFetch<Venue>(`/api/organizations/${id}/venue/`)
-      const categories = await apiFetch<{ categories: Category[] }>(`/api/organizations/${id}/venue/menu/categories/`)
-      const items = await apiFetch<{ items: Item[] }>(`/api/organizations/${id}/venue/menu/items/`)
+      const [payload, categories, items, feedbackPayload] = await Promise.all([
+        apiFetch<Venue>(`/api/organizations/${id}/venue/`),
+        apiFetch<{ categories: Category[] }>(`/api/organizations/${id}/venue/menu/categories/`),
+        apiFetch<{ items: Item[] }>(`/api/organizations/${id}/venue/menu/items/`),
+        apiFetch<{ feedback: Feedback[] }>(`/api/organizations/${id}/venue/feedback/`),
+      ])
       const byCategory = new Map<number, Item[]>()
       items.items.forEach((entry) => { if (entry.category_id) byCategory.set(entry.category_id, [...(byCategory.get(entry.category_id) || []), entry]) })
       setVenue({ ...payload, categories: categories.categories.map((entry) => ({ ...entry, items: byCategory.get(entry.id || 0) || [] })) })
+      setFeedback(feedbackPayload.feedback)
     } catch (reason) { setError(displayError(reason)) }
   }
 
   useEffect(() => { void load() }, [id])
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (!venue) return
+    event.preventDefault(); if (!venue) return
     try {
-      const response = await apiFetch<{ venue: Venue['venue'] }>(`/api/organizations/${id}/venue/`, { method: 'PATCH', body: jsonBody(venue.venue) })
+      const response = await apiFetch<{ venue: Venue['venue'] }>(`/api/organizations/${id}/venue/`, { method: 'PATCH', body: jsonBody({ ...venue.venue, feedback_enabled: venue.feedbackEnabled }) })
       setVenue((current) => current ? { ...current, venue: response.venue } : current)
     } catch (reason) { setError(displayError(reason)) }
   }
 
   async function addCategory(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (!categoryName.trim()) return
-    await apiFetch(`/api/organizations/${id}/venue/menu/categories/`, { method: 'POST', body: jsonBody({ name: categoryName, slug: categoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') }) })
-    setCategoryName(''); await load()
+    event.preventDefault(); if (!categoryName.trim()) return
+    try { await apiFetch(`/api/organizations/${id}/venue/menu/categories/`, { method: 'POST', body: jsonBody({ name: categoryName, slug: categoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') }) }); setCategoryName(''); await load() } catch (reason) { setError(displayError(reason)) }
   }
 
   async function addItem(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (!item.category_id || !item.name || !item.price) return
-    const body = new FormData()
-    Object.entries({ ...item, category_id: Number(item.category_id), image: undefined }).forEach(([key, value]) => { if (value !== undefined && value !== null) body.append(key, String(value)) })
-    if (item.image) body.append('image', item.image)
-    await apiFetch(`/api/organizations/${id}/venue/menu/items/`, { method: 'POST', body })
-    setItem({ category_id: item.category_id, name: '', description: '', price: '', original_price: '', offer_label: '', is_offer: false, is_today_special: false, image: null }); await load()
+    event.preventDefault(); if (!item.category_id || !item.name.trim() || !item.price.trim()) return
+    try {
+      const body = new FormData()
+      Object.entries({ ...item, category_id: Number(item.category_id), image: undefined }).forEach(([key, value]) => { if (value !== undefined && value !== null) body.append(key, String(value)) })
+      if (item.image) body.append('image', item.image)
+      await apiFetch(`/api/organizations/${id}/venue/menu/items/`, { method: 'POST', body })
+      setItem({ ...emptyItem, category_id: item.category_id }); await load()
+    } catch (reason) { setError(displayError(reason)) }
+  }
+
+  async function addLink(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); if (!link.value.trim()) return
+    try { await apiFetch(`/api/organizations/${id}/venue/links/`, { method: 'POST', body: jsonBody(link) }); setLink({ ...link, value: '' }); await load() } catch (reason) { setError(displayError(reason)) }
+  }
+
+  async function updateFeedbackStatus(feedbackId: number, status: string) {
+    try { await apiFetch(`/api/organizations/${id}/venue/feedback/`, { method: 'PATCH', body: jsonBody({ id: feedbackId, status }) }); setFeedback((rows) => rows.map((row) => row.id === feedbackId ? { ...row, status } : row)) } catch (reason) { setError(displayError(reason)) }
   }
 
   if (!venue) return <div className="manage-state">{error || 'Loading hospitality profile…'}</div>
+  const updateVenue = (field: keyof Venue['venue'], value: string) => setVenue({ ...venue, venue: { ...venue.venue, [field]: value } })
   return <VenueShell name={venue.organization.name}>
     {error ? <div className="manage-alert">{error}</div> : null}
-    {activeTab === 'home' ? <section className="manage-card"><form onSubmit={saveProfile}><FormSection title="Home profile" description="Save the organization identity, contact details, social links, rating settings, and anonymous feedback configuration here."><div className="form-grid"><Field label="Venue type"><select value={venue.venue.type} onChange={(e) => setVenue({ ...venue, venue: { ...venue.venue, type: e.target.value } })}><option value="hotel">Hotel</option><option value="cafe">Café</option><option value="restaurant">Restaurant</option><option value="bar">Bar</option><option value="other">Other</option></select></Field><Field label="Description" wide><TextArea value={venue.venue.description} onChange={(e) => setVenue({ ...venue, venue: { ...venue.venue, description: e.target.value } })} /></Field><Field label="Phone"><TextInput value={venue.venue.phone} onChange={(e) => setVenue({ ...venue, venue: { ...venue.venue, phone: e.target.value } })} /></Field><Field label="Email"><TextInput value={venue.venue.email} onChange={(e) => setVenue({ ...venue, venue: { ...venue.venue, email: e.target.value } })} /></Field><Field label="Website"><TextInput value={venue.venue.website} onChange={(e) => setVenue({ ...venue, venue: { ...venue.venue, website: e.target.value } })} /></Field><Field label="Address" wide><TextInput value={venue.venue.address} onChange={(e) => setVenue({ ...venue, venue: { ...venue.venue, address: e.target.value } })} /></Field></div></FormSection><div className="hospitality-profile-link"><span>Public Home profile</span><a href={`/venue/${venue.venue.publicIdentifier}/`} target="_blank" rel="noreferrer">Open digital profile</a></div><button className="manage-button is-primary"><Save size={14} />Save Home</button></form></section> : <div className="hospitality-layout"><section className="manage-card"><FormSection title="Menu categories"><form onSubmit={addCategory} className="hospitality-inline-form"><TextInput value={categoryName} onChange={(e) => setCategoryName(e.target.value)} placeholder="Breakfast, Rooms, Drinks…" /><button className="manage-button"><Plus size={14} />Add</button></form><div className="hospitality-category-list">{venue.categories.map((category) => <div key={category.id} className="hospitality-category"><strong>{category.name}</strong><small>{category.items?.length || 0} items</small></div>)}</div></FormSection></section><section className="manage-card"><FormSection title="Menu items, offers & today’s specials"><form onSubmit={addItem} className="form-grid"><Field label="Category"><select value={item.category_id} onChange={(e) => setItem({ ...item, category_id: e.target.value })}><option value="">Choose category</option>{venue.categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></Field><Field label="Item name"><TextInput value={item.name} onChange={(e) => setItem({ ...item, name: e.target.value })} /></Field><Field label="Picture"><input type="file" accept="image/*" onChange={(e) => setItem({ ...item, image: e.target.files?.[0] || null })} /></Field><Field label="Price"><TextInput value={item.price} onChange={(e) => setItem({ ...item, price: e.target.value })} /></Field><Field label="Description" wide><TextArea value={item.description} onChange={(e) => setItem({ ...item, description: e.target.value })} /></Field><button className="manage-button is-primary"><Plus size={14} />Add menu item</button></form></FormSection></section></div>}
+    <div className="hospitality-workspace-hero"><div><span className="hospitality-eyebrow">Digital profile</span><h1>{venue.organization.name}</h1><p>Keep your home profile welcoming, your menu current, and your customer voice visible.</p></div><a className="manage-button is-primary" href={`/venue/${venue.venue.publicIdentifier}/`} target="_blank" rel="noreferrer">View public profile</a></div>
+    <div className="hospitality-admin-tabs" role="tablist"><button type="button" className={activeTab === 'profile' ? 'is-active' : ''} onClick={() => setActiveTab('profile')}><UserRound size={16} />Profile</button><button type="button" className={activeTab === 'menu' ? 'is-active' : ''} onClick={() => setActiveTab('menu')}><Utensils size={16} />Menu</button><button type="button" className={activeTab === 'feedback' ? 'is-active' : ''} onClick={() => setActiveTab('feedback')}><MessageSquare size={16} />Feedback <span>{feedback.length}</span></button></div>
+    {activeTab === 'profile' ? <div className="hospitality-profile-grid"><form onSubmit={saveProfile}><FormSection title="Home profile" description="This information appears on the public Home tab."><div className="form-grid"><Field label="Venue type"><SelectInput value={venue.venue.type} onChange={(e) => updateVenue('type', e.target.value)}><option value="hotel">Hotel</option><option value="cafe">Café</option><option value="restaurant">Restaurant</option><option value="bar">Bar</option><option value="other">Other</option></SelectInput></Field><Field label="Description" wide><TextArea value={venue.venue.description} onChange={(e) => updateVenue('description', e.target.value)} placeholder="Tell visitors what makes this place special" /></Field><Field label="Phone"><TextInput value={venue.venue.phone} onChange={(e) => updateVenue('phone', e.target.value)} /></Field><Field label="Email"><TextInput type="email" value={venue.venue.email} onChange={(e) => updateVenue('email', e.target.value)} /></Field><Field label="Website"><TextInput value={venue.venue.website} onChange={(e) => updateVenue('website', e.target.value)} /></Field><Field label="Address" wide><TextInput value={venue.venue.address} onChange={(e) => updateVenue('address', e.target.value)} /></Field></div><label className="hospitality-check-row"><input type="checkbox" checked={venue.feedbackEnabled} onChange={(e) => setVenue({ ...venue, feedbackEnabled: e.target.checked })} />Allow anonymous customer feedback</label><button className="manage-button is-primary"><Save size={14} />Save profile</button></FormSection></form><FormSection title="Social links" description="Add the channels customers use to find you."><form onSubmit={addLink} className="hospitality-link-form"><SelectInput value={link.link_type} onChange={(e) => setLink({ ...link, link_type: e.target.value, label: e.target.options[e.target.selectedIndex].text })}><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="tiktok">TikTok</option><option value="website">Website</option><option value="phone">Phone</option></SelectInput><TextInput value={link.value} onChange={(e) => setLink({ ...link, value: e.target.value })} placeholder="https://…" /><button className="manage-button"><Plus size={14} />Add link</button></form><div className="hospitality-links-admin">{venue.links.map((entry) => <div key={entry.id}><strong>{entry.label || entry.link_type}</strong><span>{entry.value}</span></div>)}</div></FormSection></div> : activeTab === 'menu' ? <div className="hospitality-menu-admin"><section className="manage-card"><FormSection title="Menu categories" description="Create categories first, then choose one when adding an item."><form onSubmit={addCategory} className="hospitality-inline-form"><TextInput value={categoryName} onChange={(e) => setCategoryName(e.target.value)} placeholder="Breakfast, Rooms, Drinks…" /><button className="manage-button"><Plus size={14} />Add category</button></form><div className="hospitality-category-list">{venue.categories.map((category) => <div key={category.id} className="hospitality-category"><strong>{category.name}</strong><small>{category.items?.length || 0} items</small></div>)}</div></FormSection></section><FormSection title="Add a menu item" description="Add a picture, description, price, offer, or today’s special label."><form onSubmit={addItem} className="form-grid"><Field label="Choose category" wide><div className="hospitality-category-picker">{venue.categories.map((category) => <button type="button" key={category.id} className={item.category_id === String(category.id) ? 'is-selected' : ''} onClick={() => setItem({ ...item, category_id: String(category.id) })}>{category.name}</button>)}</div><SelectInput required value={item.category_id} onChange={(e) => setItem({ ...item, category_id: e.target.value })}><option value="">Select a category</option>{venue.categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</SelectInput></Field><Field label="Item name"><TextInput required value={item.name} onChange={(e) => setItem({ ...item, name: e.target.value })} placeholder="e.g. Newari Khaja Set" /></Field><Field label="Price"><TextInput required value={item.price} onChange={(e) => setItem({ ...item, price: e.target.value })} placeholder="e.g. NPR 450" /></Field><Field label="Picture"><FileInput label={item.image?.name || 'Choose item picture'} accept="image/*" onChange={(file) => setItem({ ...item, image: file })} /></Field><Field label="Original price"><TextInput value={item.original_price} onChange={(e) => setItem({ ...item, original_price: e.target.value })} placeholder="Optional" /></Field><Field label="Offer label"><TextInput value={item.offer_label} onChange={(e) => setItem({ ...item, offer_label: e.target.value })} placeholder="10% off" /></Field><Field label="Description" wide><TextArea value={item.description} onChange={(e) => setItem({ ...item, description: e.target.value })} placeholder="Ingredients, room details, or what customers should know" /></Field><div className="hospitality-checks"><label><input type="checkbox" checked={item.is_offer} onChange={(e) => setItem({ ...item, is_offer: e.target.checked })} />Show as offer</label><label><input type="checkbox" checked={item.is_today_special} onChange={(e) => setItem({ ...item, is_today_special: e.target.checked })} />Today’s special</label></div><button className="manage-button is-primary"><Plus size={14} />Add menu item</button></form></FormSection><div className="hospitality-item-grid">{venue.categories.flatMap((category) => (category.items || []).map((entry) => <article className="hospitality-item-card" key={entry.id}><div>{entry.image ? <img src={entry.image} alt="" /> : <div className="hospitality-item-placeholder"><Utensils size={20} /></div>}<span>{category.name}</span></div><section><strong>{entry.name}</strong><b>{entry.price}</b><p>{entry.description || 'No description added yet.'}</p>{entry.is_offer || entry.is_today_special ? <small>{entry.is_offer ? entry.offer_label || 'Offer' : 'Today’s special'}</small> : null}</section></article>))}</div></div> : <section className="hospitality-feedback-admin"><div className="hospitality-feedback-summary"><strong>{venue.rating.average.toFixed(1)}</strong><span>out of 5 · {venue.rating.count} public ratings</span></div>{feedback.length ? feedback.map((entry) => <article className="hospitality-feedback-card" key={entry.id}><div><strong>{'★'.repeat(entry.rating)}<span className="muted-stars">{'★'.repeat(5 - entry.rating)}</span></strong><small>{new Date(entry.created_at).toLocaleString()}</small></div><p>{entry.comment || 'No written comment.'}</p><SelectInput value={entry.status} onChange={(e) => void updateFeedbackStatus(entry.id, e.target.value)}><option value="new">New</option><option value="reviewed">Reviewed</option><option value="archived">Archived</option></SelectInput></article>) : <div className="manage-card hospitality-empty"><MessageSquare size={24} /><h3>No feedback yet</h3><p>Customer submissions will appear here when they use the feedback form on your public profile.</p></div>}</section>}
   </VenueShell>
 }
+
+export function HospitalityWorkspace() { return <HospitalityAdminPanel /> }
 
 export function PublicHospitalityProfile() {
   const identifier = window.location.pathname.match(/^\/venue\/([^/]+)/)?.[1] || ''
@@ -83,5 +108,5 @@ export function PublicHospitalityProfile() {
   useEffect(() => { apiFetch<Venue>(`/api/venue/${identifier}/`).then(setVenue).catch(() => setVenue(null)) }, [identifier])
   if (!venue) return <main className="hospitality-public-state">Loading venue profile…</main>
   async function submitFeedback(event: FormEvent<HTMLFormElement>) { event.preventDefault(); try { await apiFetch(`/api/venue/${identifier}/feedback/`, { method: 'POST', body: jsonBody(feedback) }); setFeedbackMessage('Thank you for your feedback.'); setFeedback({ rating: 5, comment: '' }) } catch (reason) { setFeedbackMessage(displayError(reason)) } }
-  return <main className="hospitality-public"><header style={{ background: venue.venue.primaryColor }}><h1>{venue.organization.name}</h1><p>{venue.venue.description}</p></header><nav className="hospitality-public-tabs"><button className={activeTab === 'home' ? 'is-active' : ''} onClick={() => setActiveTab('home')}>Home</button><button className={activeTab === 'menu' ? 'is-active' : ''} onClick={() => setActiveTab('menu')}>Menu</button></nav>{activeTab === 'home' ? <section><h2>Home</h2><p>{venue.venue.address}</p><p>{venue.venue.phone} · {venue.venue.email}</p><div className="hospitality-links">{venue.links.map((link) => <a href={link.value} key={link.id}>{link.label || link.link_type}</a>)}</div><p className="hospitality-rating">Rating: {venue.rating.average.toFixed(1)} / 5 ({venue.rating.count})</p>{venue.feedbackEnabled ? <form onSubmit={submitFeedback} className="hospitality-feedback"><h3>Leave anonymous feedback</h3><select value={feedback.rating} onChange={(e) => setFeedback({ ...feedback, rating: Number(e.target.value) })}><option value="5">5 — Excellent</option><option value="4">4 — Good</option><option value="3">3 — Average</option><option value="2">2 — Needs improvement</option><option value="1">1 — Poor</option></select><TextArea value={feedback.comment} onChange={(e) => setFeedback({ ...feedback, comment: e.target.value })} placeholder="Your feedback" /><button className="manage-button is-primary">Send feedback</button>{feedbackMessage ? <small>{feedbackMessage}</small> : null}</form> : null}</section> : <section><h2>Menu</h2>{venue.categories.map((category) => <article key={category.id}><h3>{category.name}</h3>{category.items?.map((entry) => <div className="hospitality-menu-item" key={entry.id}>{entry.image ? <img className="hospitality-menu-image" src={entry.image} alt="" /> : null}<div><strong>{entry.name}</strong>{entry.is_offer ? <small className="hospitality-badge">{entry.offer_label || "Offer"}</small> : null}{entry.is_today_special ? <small className="hospitality-badge">Today’s special</small> : null}<p>{entry.description}</p></div><b>{entry.price}</b></div>)}</article>)}</section>}</main>
+  return <main className="hospitality-public"><header style={{ background: venue.venue.primaryColor }}><h1>{venue.organization.name}</h1><p>{venue.venue.description}</p></header><nav className="hospitality-public-tabs"><button className={activeTab === 'home' ? 'is-active' : ''} onClick={() => setActiveTab('home')}>Home</button><button className={activeTab === 'menu' ? 'is-active' : ''} onClick={() => setActiveTab('menu')}>Menu</button></nav>{activeTab === 'home' ? <section><h2>Home</h2><p>{venue.venue.address}</p><p>{venue.venue.phone} · {venue.venue.email}</p><div className="hospitality-links">{venue.links.map((link) => <a href={link.value} key={link.id}>{link.label || link.link_type}</a>)}</div><p className="hospitality-rating">Rating: {venue.rating.average.toFixed(1)} / 5 ({venue.rating.count})</p>{venue.feedbackEnabled ? <form onSubmit={submitFeedback} className="hospitality-feedback"><h3>Leave anonymous feedback</h3><select value={feedback.rating} onChange={(e) => setFeedback({ ...feedback, rating: Number(e.target.value) })}><option value="5">5 — Excellent</option><option value="4">4 — Good</option><option value="3">3 — Average</option><option value="2">2 — Needs improvement</option><option value="1">1 — Poor</option></select><TextArea value={feedback.comment} onChange={(e) => setFeedback({ ...feedback, comment: e.target.value })} placeholder="Your feedback" /><button className="manage-button is-primary">Send feedback</button>{feedbackMessage ? <small>{feedbackMessage}</small> : null}</form> : null}</section> : <section><h2>Menu</h2>{venue.categories.map((category) => <article key={category.id}><h3>{category.name}</h3>{category.items?.map((entry) => <div className="hospitality-menu-item" key={entry.id}>{entry.image ? <img className="hospitality-menu-image" src={entry.image} alt="" /> : null}<div><strong>{entry.name}</strong>{entry.is_offer ? <small className="hospitality-badge">{entry.offer_label || 'Offer'}</small> : null}{entry.is_today_special ? <small className="hospitality-badge">Today’s special</small> : null}<p>{entry.description}</p></div><b>{entry.price}</b></div>)}</article>)}</section>}</main>
 }
