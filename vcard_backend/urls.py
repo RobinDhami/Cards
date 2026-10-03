@@ -40,6 +40,7 @@ urlpatterns = [
     path('dashboard/organizations/<int:organization_id>/club/club-information/', react_app, name='dashboard_club_information'),
     path('dashboard/organizations/<int:organization_id>/club/settings/', react_app, name='dashboard_club_settings'),
     path('dashboard/organizations/<int:organization_id>/club/members/<int:student_id>/', react_app, name='dashboard_club_member_profile'),
+    path('dashboard/organizations/<int:organization_id>/hospitality/', react_app, name='dashboard_hospitality_workspace'),
     path('dashboard/students/', react_app, name='dashboard_students'),
     path('dashboard/teachers/', react_app, name='dashboard_teachers'),
     path('dashboard/reports/', react_app, name='dashboard_reports'),
