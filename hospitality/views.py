@@ -144,11 +144,17 @@ def venue_menu_items_api(request, organization_id):
     if not venue:
         return JsonResponse({'error': 'Not authorized.'}, status=403)
     if request.method == 'GET':
-        return JsonResponse({'items': list(venue.menu_items.values('id', 'category_id', 'name', 'description', 'price', 'original_price', 'offer_label', 'dietary_info', 'is_vegetarian', 'is_available', 'is_today_special', 'is_offer', 'display_order'))})
-    data = _body(request) or {}
+        items = []
+        for menu_item in venue.menu_items.all():
+            items.append({'id': menu_item.id, 'category_id': menu_item.category_id, 'name': menu_item.name, 'description': menu_item.description, 'price': str(menu_item.price), 'original_price': str(menu_item.original_price) if menu_item.original_price is not None else '', 'offer_label': menu_item.offer_label, 'dietary_info': menu_item.dietary_info, 'is_vegetarian': menu_item.is_vegetarian, 'is_available': menu_item.is_available, 'is_today_special': menu_item.is_today_special, 'is_offer': menu_item.is_offer, 'image': _file_url(request, menu_item.image), 'display_order': menu_item.display_order})
+        return JsonResponse({'items': items})
+    data = _body(request) if request.content_type.startswith('application/json') else request.POST
+    data = data or {}
     item = get_object_or_404(VenueMenuItem, pk=data.get('id'), venue=venue) if request.method == 'PATCH' else VenueMenuItem(venue=venue)
     for key in ('category_id', 'name', 'description', 'price', 'original_price', 'offer_label', 'dietary_info', 'is_vegetarian', 'is_available', 'is_today_special', 'is_offer', 'display_order'):
         if key in data: setattr(item, key, data[key])
+    if request.FILES.get('image'):
+        item.image = request.FILES['image']
     item.full_clean(); item.save()
     return JsonResponse({'id': item.pk, 'name': item.name}, status=201 if request.method == 'POST' else 200)
 
