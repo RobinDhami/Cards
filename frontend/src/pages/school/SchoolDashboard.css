@@ -462,6 +462,89 @@
   font-weight: 750;
 }
 
+.school-activity-summary > .school-engagement-chart {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  align-items: center;
+  gap: 22px;
+  margin-top: 14px;
+}
+
+.school-engagement-donut {
+  position: relative;
+  display: grid;
+  width: 142px;
+  height: 142px;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.school-engagement-donut::after {
+  position: absolute;
+  inset: 25px;
+  border-radius: 50%;
+  background: #fff;
+  content: "";
+}
+
+.school-engagement-donut > span {
+  position: relative;
+  z-index: 1;
+  display: block;
+  border: 0;
+  padding: 0;
+  text-align: center;
+}
+
+.school-engagement-donut strong,
+.school-engagement-donut small {
+  display: block;
+}
+
+.school-engagement-donut strong {
+  font-size: 22px;
+}
+
+.school-engagement-donut small {
+  font-size: 7px;
+}
+
+.school-engagement-legend {
+  display: grid;
+  gap: 9px;
+}
+
+.school-engagement-legend > div {
+  display: grid;
+  grid-template-columns: 9px 1fr auto;
+  align-items: center;
+  gap: 7px;
+  color: #64748b;
+  font-size: 8px;
+}
+
+.school-engagement-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 3px;
+}
+
+.school-engagement-legend strong {
+  color: #0f172a;
+  font-size: 10px;
+}
+
+@media (max-width: 560px) {
+  .school-activity-summary > .school-engagement-chart {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .school-engagement-legend {
+    width: 100%;
+  }
+}
+
 .school-upload-grid {
   display: grid;
   grid-template-columns: minmax(300px, 0.7fr) minmax(0, 1.3fr);

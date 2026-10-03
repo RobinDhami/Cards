@@ -39,6 +39,7 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
         { label: 'Members', href: `${clubRoot}/members/`, icon: Users, active: path.includes('/club/members/') },
         { label: 'Profile Design', href: `${clubRoot}/profile-design/`, icon: Palette, active: path.includes('/club/profile-design/') },
         { label: 'Club Information', href: `${clubRoot}/club-information/`, icon: Info, active: path.includes('/club/club-information/') },
+        { label: 'Analytics', href: `${workspaceRoot}/reports/`, icon: BarChart3, active: path.includes('/reports') },
         { label: 'Settings', href: `${clubRoot}/settings/`, icon: Settings, active: path.includes('/club/settings/') },
       ]
     }
@@ -51,7 +52,7 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
       { label: 'Bulk Upload', href: `${workspaceRoot}/bulk-upload/`, icon: Upload, active: path.includes('/bulk-upload') },
       { label: 'Print Studio', href: `${workspaceRoot}/print/`, icon: Printer, active: path.includes('/print') },
       { label: 'QR & Export', href: `${workspaceRoot}/exports/`, icon: QrCode, active: path.includes('/exports') },
-      { label: 'Reports', href: `${workspaceRoot}/reports/`, icon: BarChart3, active: path.includes('/reports') },
+      { label: 'Analytics', href: `${workspaceRoot}/reports/`, icon: BarChart3, active: path.includes('/reports') },
       { label: 'Settings', href: `${workspaceRoot}/settings/`, icon: Settings, active: path.includes('/settings') },
     ]
   }
@@ -67,7 +68,7 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
     { label: 'Overview', href: withSchool('/dashboard/', schoolId), icon: LayoutDashboard, active: path === '/dashboard/' || path === '/dashboard' },
     { label: 'Students', href: withSchool('/dashboard/students/', schoolId), icon: GraduationCap, active: path.includes('/students') || path.includes('/credentials') },
     { label: 'Teachers & Staff', href: withSchool('/dashboard/teachers/', schoolId), icon: Users, active: path.includes('/teachers') },
-    { label: 'Reports', href: withSchool('/dashboard/reports/', schoolId), icon: BarChart3, active: path.includes('/reports') },
+    { label: 'Analytics', href: withSchool('/dashboard/reports/', schoolId), icon: BarChart3, active: path.includes('/reports') },
     { label: 'Bulk Upload', href: withSchool('/dashboard/bulk-upload/', schoolId), icon: Upload, active: path.includes('/bulk-upload') },
     { label: 'ID Card Studio', href: withSchool('/dashboard/print/', schoolId), icon: Printer, active: path.includes('/print') },
     { label: 'QR & Data Export', href: withSchool('/dashboard/qr-export/', schoolId), icon: QrCode, active: path.includes('/qr-export') },

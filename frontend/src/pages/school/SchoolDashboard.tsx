@@ -11,7 +11,6 @@ import FileSpreadsheet from 'lucide-react/dist/esm/icons/file-spreadsheet.js'
 import IdCard from 'lucide-react/dist/esm/icons/id-card.js'
 import KeyRound from 'lucide-react/dist/esm/icons/key-round.js'
 import Plus from 'lucide-react/dist/esm/icons/plus.js'
-import Phone from 'lucide-react/dist/esm/icons/phone.js'
 import Printer from 'lucide-react/dist/esm/icons/printer.js'
 import Save from 'lucide-react/dist/esm/icons/save.js'
 import Search from 'lucide-react/dist/esm/icons/search.js'
@@ -570,6 +569,18 @@ export function MembersPage({ memberType }: { memberType: string }) {
   )
 }
 
+function EngagementDonut({ report }: { report: ReportPayload }) {
+  const rows = [
+    { label: 'Profile views', value: report.profileViews, color: '#2563eb' },
+    { label: 'Contact actions', value: report.contactActions, color: '#0f766e' },
+    { label: 'vCard downloads', value: report.vcardDownloads, color: '#e59f18' },
+  ]
+  const total = rows.reduce((sum, row) => sum + row.value, 0)
+  let cursor = 0
+  const background = total ? `conic-gradient(${rows.map((row) => { const start = cursor; cursor += (row.value / total) * 100; return `${row.color} ${start}% ${cursor}%` }).join(',')})` : '#e7eef1'
+  return <div className="school-engagement-chart"><div className="school-engagement-donut" style={{ background }}><span><strong>{total}</strong><small>interactions</small></span></div><div className="school-engagement-legend">{rows.map((row) => <div key={row.label}><i style={{ background: row.color }} /><span>{row.label}</span><strong>{row.value}</strong></div>)}</div></div>
+}
+
 export function SchoolReportsPage() {
   const schoolId = selectedSchoolId()
   const [shell, setShell] = useState<DashboardShellData | null>(null)
@@ -588,7 +599,7 @@ export function SchoolReportsPage() {
   if (!shell || !report) return <div className="manage-state">{error || 'Loading reports…'}</div>
 
   return (
-    <SchoolShell shell={shell} title="Reports" subtitle="Thirty-day organization member activity">
+    <SchoolShell shell={shell} title="Analytics" subtitle="Dynamic organization engagement and member insights">
       <section className="school-report-metrics">
         <SchoolMetric label="Members" value={report.memberCount} icon={<UserRound size={17} />} />
         <SchoolMetric label="Live profiles" value={report.liveProfileCount} icon={<BadgeCheck size={17} />} />
@@ -597,7 +608,7 @@ export function SchoolReportsPage() {
       </section>
       <section className="school-report-grid">
         <article className="manage-card school-class-report">
-          <header><h2>Students by class</h2><p>Current academic distribution</p></header>
+          <header><h2>Member distribution</h2><p>Current organization breakdown</p></header>
           <div>
             {report.classRows.length === 0 ? <div className="school-empty">Assign academic levels to see this report.</div> : report.classRows.map((row) => (
               <span key={row.key}><strong>{row.label}</strong><i><b style={{ width: `${row.percentage}%` }} /></i><em>{row.total}</em></span>
@@ -606,7 +617,7 @@ export function SchoolReportsPage() {
         </article>
         <article className="manage-card school-activity-summary">
           <header><h2>Engagement mix</h2><p>Last 30 days</p></header>
-          <div><span><Eye size={15} /><strong>{report.profileViews}<small>Profile views</small></strong></span><span><Phone size={15} /><strong>{report.contactActions}<small>Contact actions</small></strong></span><span><Download size={15} /><strong>{report.vcardDownloads}<small>vCard downloads</small></strong></span></div>
+          <EngagementDonut report={report} />
         </article>
         <article className="manage-card school-top-profiles">
           <header><h2>Top card users</h2><p>Highest tracked interaction</p></header>
