@@ -1,16 +1,15 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3.js'
-import Building2 from 'lucide-react/dist/esm/icons/building-2.js'
 import MessageSquare from 'lucide-react/dist/esm/icons/message-square.js'
 import Plus from 'lucide-react/dist/esm/icons/plus.js'
 import Save from 'lucide-react/dist/esm/icons/save.js'
 import Utensils from 'lucide-react/dist/esm/icons/utensils.js'
 import UserRound from 'lucide-react/dist/esm/icons/user-round.js'
-import Users from 'lucide-react/dist/esm/icons/users.js'
 import { Field, FileInput, FormSection, SelectInput, TextInput, TextArea } from '../../components/manage/FormControls'
 import { ManageShell } from '../../components/manage/ManageShell'
-import { apiFetch, displayError, jsonBody } from '../../lib/api'
+import { apiFetch, displayError, jsonBody, queryString } from '../../lib/api'
+import { schoolWorkspaceNav } from '../school/schoolWorkspaceNav'
 import './HospitalityWorkspace.css'
 
 type Venue = { organization: { id: number; name: string }; venue: { publicIdentifier: string; type: string; description: string; logo: string; coverImage: string; primaryColor: string; secondaryColor: string; phone: string; whatsapp: string; email: string; website: string; address: string; mapUrl: string; googleReviewUrl: string }; categories: Category[]; links: Link[]; rating: { average: number; count: number }; feedbackEnabled: boolean }
@@ -20,13 +19,13 @@ type Link = { id: number; link_type: string; label: string; value: string }
 type Feedback = { id: number; rating: number; comment: string; status: string; created_at: string }
 type DraftItem = { category_id: string; name: string; description: string; price: string; original_price: string; offer_label: string; is_offer: boolean; is_today_special: boolean; image: File | null }
 type Analytics = { totals: { profile_view: number; menu_open: number; menu_item_click: number; rating_click: number; feedback_submit: number; social_click: number }; feedback: { count: number; average: number; ratingBreakdown: Record<string, number> }; daily: Array<{ date: string; count: number }>; socialClicks: Array<{ target: string; count: number }>; menuItems: Array<{ target: string; count: number }> }
+type HospitalityShell = { isSuperAdmin: boolean; currentSchool: { id: number; name: string; logo: string; organizationType: string; themePrimary: string } | null; schools: Array<{ id: number; name: string }>; user: { displayName: string } }
 
 function organizationId() { return Number(window.location.pathname.match(/organizations\/(\d+)/)?.[1] || 0) }
 
-function VenueShell({ name, children }: { name: string; children: ReactNode }) {
-  const id = organizationId()
-  const analyticsActive = new URLSearchParams(window.location.search).get('tab') === 'analytics'
-  return <ManageShell brand={name || 'Hospitality'} brandDetail="Hospitality organization" logo={undefined} nav={[{ label: 'Profile & Menu', href: `/dashboard/organizations/${id}/hospitality/`, icon: Utensils, active: !analyticsActive }, { label: 'Member Profiles', href: `/dashboard/organizations/${id}/members/`, icon: Users, active: false }, { label: 'Analytics', href: `/dashboard/organizations/${id}/hospitality/?tab=analytics`, icon: BarChart3, active: analyticsActive }, { label: 'Organization settings', href: `/dashboard/organizations/${id}/settings/`, icon: Building2, active: false }]} title="Hospitality workspace" subtitle="Shape your public profile, menu, members, and customer engagement." userName="" userRole="Organization administrator">{children}</ManageShell>
+function VenueShell({ shell, publicIdentifier, children }: { shell: HospitalityShell; publicIdentifier: string; children: ReactNode }) {
+  const school = shell.currentSchool
+  return <ManageShell brand={school?.name || 'Hospitality'} brandDetail={shell.isSuperAdmin ? 'Super Admin · Organization workspace' : 'Organization administration'} logo={school?.logo} nav={schoolWorkspaceNav(school?.id, shell.isSuperAdmin, 'hospitality')} title="Profile & Menu" subtitle="Manage the public café or hotel profile and its menu." userName={shell.user.displayName} userRole={shell.isSuperAdmin ? 'Platform administrator' : 'Organization administrator'} accent={school?.themePrimary || '#0b4bcb'} schoolOptions={shell.isSuperAdmin ? shell.schools : undefined} selectedSchool={school?.id ?? null} onSchoolChange={(schoolId) => { window.location.href = `/dashboard/organizations/${schoolId}/hospitality/` }} actions={<><span className="hospitality-admin-context">{shell.isSuperAdmin ? 'Viewing as Super Admin' : school?.name}</span><a className="manage-button is-primary" href={`/venue/${publicIdentifier}/`} target="_blank" rel="noreferrer">View public profile</a></>}>{children}</ManageShell>
 }
 
 const emptyItem: DraftItem = { category_id: '', name: '', description: '', price: '', original_price: '', offer_label: '', is_offer: false, is_today_special: false, image: null }
@@ -40,6 +39,7 @@ function AnalyticsPanel({ analytics }: { analytics: Analytics }) {
 
 function HospitalityAdminPanel() {
   const id = organizationId()
+  const [shell, setShell] = useState<HospitalityShell | null>(null)
   const [venue, setVenue] = useState<Venue | null>(null)
   const [feedback, setFeedback] = useState<Feedback[]>([])
   const [analytics, setAnalytics] = useState<Analytics>(emptyAnalytics)
@@ -51,18 +51,21 @@ function HospitalityAdminPanel() {
 
   async function load() {
     try {
-      const [payload, categories, items, feedbackPayload, analyticsPayload] = await Promise.all([
+      const [payload, categories, items, feedbackPayload, analyticsPayload, shellPayload] = await Promise.all([
         apiFetch<Venue>(`/api/organizations/${id}/venue/`),
         apiFetch<{ categories: Category[] }>(`/api/organizations/${id}/venue/menu/categories/`),
         apiFetch<{ items: Item[] }>(`/api/organizations/${id}/venue/menu/items/`),
         apiFetch<{ feedback: Feedback[] }>(`/api/organizations/${id}/venue/feedback/`),
         apiFetch<{ analytics: Analytics }>(`/api/organizations/${id}/venue/analytics/`),
+        apiFetch<{ shell: HospitalityShell }>(`/api/dashboard/settings/${queryString({ school: id })}`),
       ])
       const byCategory = new Map<number, Item[]>()
       items.items.forEach((entry) => { if (entry.category_id) byCategory.set(entry.category_id, [...(byCategory.get(entry.category_id) || []), entry]) })
       setVenue({ ...payload, categories: categories.categories.map((entry) => ({ ...entry, items: byCategory.get(entry.id || 0) || [] })) })
+      setItem((current) => current.category_id || !categories.categories[0]?.id ? current : { ...current, category_id: String(categories.categories[0].id) })
       setFeedback(feedbackPayload.feedback)
       setAnalytics(analyticsPayload.analytics)
+      setShell(shellPayload.shell)
     } catch (reason) { setError(displayError(reason)) }
   }
 
@@ -101,9 +104,9 @@ function HospitalityAdminPanel() {
     try { await apiFetch(`/api/organizations/${id}/venue/feedback/`, { method: 'PATCH', body: jsonBody({ id: feedbackId, status }) }); setFeedback((rows) => rows.map((row) => row.id === feedbackId ? { ...row, status } : row)) } catch (reason) { setError(displayError(reason)) }
   }
 
-  if (!venue) return <div className="manage-state">{error || 'Loading hospitality profile…'}</div>
+  if (!venue || !shell) return <div className="manage-state">{error || 'Loading hospitality profile…'}</div>
   const updateVenue = (field: keyof Venue['venue'], value: string) => setVenue({ ...venue, venue: { ...venue.venue, [field]: value } })
-  return <VenueShell name={venue.organization.name}>
+  return <VenueShell shell={shell} publicIdentifier={venue.venue.publicIdentifier}>
     {error ? <div className="manage-alert">{error}</div> : null}
     <div className="hospitality-workspace-hero"><div><span className="hospitality-eyebrow">Digital profile</span><h1>{venue.organization.name}</h1><p>Keep your home profile welcoming, your menu current, and your customer voice visible.</p></div><a className="manage-button is-primary" href={`/venue/${venue.venue.publicIdentifier}/`} target="_blank" rel="noreferrer">View public profile</a></div>
     <div className="hospitality-admin-tabs" role="tablist"><button type="button" className={activeTab === 'profile' ? 'is-active' : ''} onClick={() => setActiveTab('profile')}><UserRound size={16} />Profile</button><button type="button" className={activeTab === 'menu' ? 'is-active' : ''} onClick={() => setActiveTab('menu')}><Utensils size={16} />Menu</button><button type="button" className={activeTab === 'feedback' ? 'is-active' : ''} onClick={() => setActiveTab('feedback')}><MessageSquare size={16} />Feedback <span>{feedback.length}</span></button><button type="button" className={activeTab === 'analytics' ? 'is-active' : ''} onClick={() => setActiveTab('analytics')}><BarChart3 size={16} />Analytics</button></div>

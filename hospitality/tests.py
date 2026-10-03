@@ -34,6 +34,17 @@ class HospitalityWorkspaceTests(TestCase):
         self.client.force_login(self.user)
         self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/').status_code, 200)
 
+    def test_empty_cafe_receives_useful_default_categories(self):
+        self.venue.menu_items.all().delete()
+        self.category.delete()
+        self.venue.venue_type = 'cafe'
+        self.venue.save(update_fields=['venue_type'])
+        self.client.force_login(self.user)
+        response = self.client.get(f'/api/organizations/{self.org.pk}/venue/menu/categories/')
+        names = [category['name'] for category in response.json()['categories']]
+        self.assertIn('Beverages', names)
+        self.assertIn('Offers', names)
+
     def test_anonymous_feedback_is_created(self):
         response = self.client.post(f'/api/venue/{self.venue.public_identifier}/feedback/', {'rating': 5, 'comment': 'Lovely'}, content_type='application/json')
         self.assertEqual(response.status_code, 201)

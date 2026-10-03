@@ -12,6 +12,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
+from django.utils.text import slugify
 
 from .models import VenueAnalyticsEvent, VenueFeedback, VenueLink, VenueMenuCategory, VenueMenuItem, VenueProfile
 from vcards.models import College
@@ -138,6 +139,21 @@ def _venue_for(request, organization_id):
     return venue
 
 
+def _ensure_default_categories(venue):
+    if venue.menu_categories.exists():
+        return
+    if venue.venue_type == 'hotel':
+        names = ['Rooms', 'Dining', 'Services', "Today's Special", 'Offers']
+    elif venue.venue_type in {'cafe', 'restaurant', 'bar'}:
+        names = ['Breakfast', 'Main Course', 'Snacks', 'Beverages', 'Desserts', "Today's Special", 'Offers']
+    else:
+        names = ['Menu', "Today's Special", 'Offers']
+    VenueMenuCategory.objects.bulk_create([
+        VenueMenuCategory(venue=venue, name=name, slug=f'default-{index}-{slugify(name)}', display_order=index)
+        for index, name in enumerate(names)
+    ])
+
+
 @require_http_methods(['GET', 'PATCH'])
 def venue_profile_manage_api(request, organization_id):
     venue = _venue_for(request, organization_id)
@@ -161,6 +177,7 @@ def venue_menu_categories_api(request, organization_id):
     if not venue:
         return JsonResponse({'error': 'Not authorized.'}, status=403)
     if request.method == 'GET':
+        _ensure_default_categories(venue)
         return JsonResponse({'categories': list(venue.menu_categories.values('id', 'name', 'slug', 'display_order', 'is_active'))})
     data = _body(request) or {}
     category = get_object_or_404(VenueMenuCategory, pk=data.get('id'), venue=venue) if request.method == 'PATCH' else VenueMenuCategory(venue=venue)
