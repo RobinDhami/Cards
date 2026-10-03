@@ -36,6 +36,12 @@ GENERIC_MODULE = {
     'bulk_columns': ('name', 'phone', 'email', 'member_type', 'role', 'roll_number', 'academic_level', 'section'),
 }
 
+HOSPITALITY_MODULE = {
+    'key': 'hospitality', 'member_types': ('staff', 'other'),
+    'member_labels': {'staff': 'Staff Members', 'other': 'Other Members'},
+    'bulk_columns': ('name', 'email', 'phone', 'member_type', 'department', 'role', 'identifier'),
+}
+
 ORGANIZATION_MODULES = {
     'education': {
         'key': 'education', 'member_types': ('student', 'teacher', 'staff', 'other'),
@@ -51,8 +57,7 @@ ORGANIZATION_MODULES = {
         'bulk_columns': ('name', 'email', 'phone', 'role', 'membership_id', 'committee', 'membership_term', 'join_date'),
     },
     'business': GENERIC_MODULE,
-    # Kept for organizations created before Hotel/Café became first-class types.
-    'hospitality': GENERIC_MODULE,
+    'hospitality': HOSPITALITY_MODULE,
     'other': GENERIC_MODULE,
 }
 
@@ -65,6 +70,8 @@ def identifier_label(organization, member):
     module = organization_module(organization)['key']
     if module == 'education':
         return 'Student ID' if member.member_type == 'student' else 'Employee ID'
+    if module == 'hospitality' and member.member_type == 'staff':
+        return 'Employee ID'
     if module == 'club':
         return 'Membership ID'
     return 'Member ID'

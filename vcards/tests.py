@@ -1414,6 +1414,25 @@ class OrganizationModuleTests(TestCase):
         self.assertEqual(staff.role, 'Registrar')
         self.assertEqual(staff.unique_identifier, 'EMP-01')
 
+    def test_hospitality_staff_uses_the_normal_individual_profile_flow(self):
+        venue = College.objects.create(name='Hospitality Module', organization_type='hospitality', organization_code='HOT1')
+        response = self.client.post(
+            f"{reverse('react_dashboard_members_api')}?school={venue.id}",
+            data=json.dumps({
+                'name': 'Front Desk Staff', 'phone': '9800000016', 'member_type': 'staff',
+                'employee_id': 'HOT-01', 'role': 'Front Desk Manager', 'department': 'Guest Services',
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 201)
+        staff = StudentProfile.objects.get(name='Front Desk Staff')
+        self.assertEqual(staff.member_type, 'staff')
+        self.assertEqual(response.json()['member']['publicUrl'], reverse('student_contact_card', args=[staff.id]))
+        profile = self.client.get(reverse('react_student_public_api', args=[staff.id])).json()['profile']
+        self.assertEqual(profile['identifierLabel'], 'Employee ID')
+        shell = self.client.get(reverse('react_dashboard_members_api'), {'school': venue.id, 'type': 'all'}).json()['shell']
+        self.assertEqual(shell['currentSchool']['module']['memberTypes'][0], {'value': 'staff', 'label': 'Staff Members'})
+
     def test_legacy_studentprofile_member_types_remain_valid(self):
         legacy = StudentProfile.objects.create(
             name='Legacy Teacher', username='legacy.teacher', password='LegacyPass123!', phone='9800000015', member_type='teacher',

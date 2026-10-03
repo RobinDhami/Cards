@@ -27,7 +27,7 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
       const hospitalityRoot = `${workspaceRoot}/hospitality`
       return [
         { label: 'Profile & Menu', href: `${hospitalityRoot}/`, icon: Palette, active: (path === hospitalityRoot || path === `${hospitalityRoot}/`) && !new URLSearchParams(search).get('tab') },
-        { label: 'Member Profiles', href: `${workspaceRoot}/members/`, icon: Users, active: path.includes('/members') },
+        { label: 'Staff Profiles', href: `${workspaceRoot}/members/`, icon: Users, active: path.includes('/members') },
         { label: 'Analytics', href: `${hospitalityRoot}/?tab=analytics`, icon: BarChart3, active: path.startsWith(hospitalityRoot) && new URLSearchParams(search).get('tab') === 'analytics' },
         { label: 'Organization settings', href: `${workspaceRoot}/settings/`, icon: Settings, active: path.includes('/settings') },
       ]

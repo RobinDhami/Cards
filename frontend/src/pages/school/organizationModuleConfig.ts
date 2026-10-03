@@ -6,6 +6,12 @@ const genericConfig = {
   dashboardMetrics: [['memberCount', 'Members'], ['liveProfileCount', 'Active profiles'], ['activeCardCount', 'Assigned cards']] as const,
 } as const
 
+const hospitalityConfig = {
+  title: 'Staff Profiles', memberTypes: [{ value: 'staff', label: 'Staff Members' }, { value: 'other', label: 'Other Members' }],
+  bulkHint: 'Optional hospitality staff columns include email, username, designation, department, employee ID, address, emergency contact, blood group, and gender.',
+  dashboardMetrics: [['memberCount', 'Staff Profiles'], ['liveProfileCount', 'Active Profiles'], ['activeCardCount', 'Assigned Cards']] as const,
+} as const
+
 export const organizationModuleConfig = {
   generic: {
     title: 'Members', memberTypes: [{ value: 'student', label: 'Students' }, { value: 'teacher', label: 'Teachers & Staff' }, { value: 'other', label: 'Other Members' }],
@@ -24,7 +30,7 @@ export const organizationModuleConfig = {
     dashboardMetrics: [['memberCount', 'Total Members'], ['executiveCount', 'Executive / Board'], ['committeeCount', 'Committee'], ['generalMemberCount', 'General Members'], ['liveProfileCount', 'Active Profiles'], ['activeCardCount', 'Assigned Cards']] as const,
   },
   business: genericConfig,
-  hospitality: genericConfig,
+  hospitality: hospitalityConfig,
   other: genericConfig,
 } as const
 
