@@ -1,6 +1,4 @@
 import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3.js'
-import Boxes from 'lucide-react/dist/esm/icons/boxes.js'
-import Building2 from 'lucide-react/dist/esm/icons/building-2.js'
 import GraduationCap from 'lucide-react/dist/esm/icons/graduation-cap.js'
 import LayoutList from 'lucide-react/dist/esm/icons/layout-list.js'
 import LayoutDashboard from 'lucide-react/dist/esm/icons/layout-dashboard.js'
@@ -28,7 +26,6 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
     if (organizationType === 'hospitality') {
       const hospitalityRoot = `${workspaceRoot}/hospitality`
       return [
-        ...(isSuperAdmin ? [{ label: 'All Organizations', href: '/dashboard/schools/', icon: Building2, active: false }] : []),
         { label: 'Profile & Menu', href: `${hospitalityRoot}/`, icon: Palette, active: (path === hospitalityRoot || path === `${hospitalityRoot}/`) && !new URLSearchParams(search).get('tab') },
         { label: 'Member Profiles', href: `${workspaceRoot}/members/`, icon: Users, active: path.includes('/members') },
         { label: 'Analytics', href: `${hospitalityRoot}/?tab=analytics`, icon: BarChart3, active: path.startsWith(hospitalityRoot) && new URLSearchParams(search).get('tab') === 'analytics' },
@@ -38,7 +35,6 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
     if (organizationType === 'club') {
       const clubRoot = `${workspaceRoot}/club`
       return [
-        ...(isSuperAdmin ? [{ label: 'All Organizations', href: '/dashboard/schools/', icon: Building2, active: false }] : []),
         { label: 'Overview', href: `${clubRoot}/`, icon: LayoutDashboard, active: path === clubRoot || path === `${clubRoot}/` },
         { label: 'Members', href: `${clubRoot}/members/`, icon: Users, active: path.includes('/club/members/') },
         { label: 'Profile Design', href: `${clubRoot}/profile-design/`, icon: Palette, active: path.includes('/club/profile-design/') },
@@ -47,8 +43,6 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
       ]
     }
     return [
-      ...(isSuperAdmin ? [{ label: 'All Organizations', href: '/dashboard/schools/', icon: Building2, active: false }] : []),
-      ...(isSuperAdmin ? [{ label: 'Card Operations', href: '/dashboard/card-operations/', icon: Boxes, active: false }] : []),
       { label: 'Overview', href: `${workspaceRoot}/`, icon: LayoutDashboard, active: path === workspaceRoot || path === `${workspaceRoot}/` },
       ...workspaceMemberNavigation(organizationType).map((item) => ({
         label: item.label, href: `${workspaceRoot}/members/${item.query}`, icon: LayoutList,
