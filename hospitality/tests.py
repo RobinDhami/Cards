@@ -1,13 +1,15 @@
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.test import Client, TestCase
 
 from vcards.models import College
-from .models import VenueMenuCategory, VenueMenuItem, VenueProfile
+from .models import VenueAnalyticsEvent, VenueMenuCategory, VenueMenuItem, VenueProfile
 
 
 class HospitalityWorkspaceTests(TestCase):
     def setUp(self):
+        cache.clear()
         self.user = get_user_model().objects.create_user(username='venue-admin', password='pass')
         self.org = College.objects.create(name='Aurora Cafe', organization_code='AURORA', organization_type='hospitality', admin_user=self.user)
         self.venue = VenueProfile.objects.create(organization=self.org)
@@ -36,3 +38,21 @@ class HospitalityWorkspaceTests(TestCase):
         response = self.client.post(f'/api/venue/{self.venue.public_identifier}/feedback/', {'rating': 5, 'comment': 'Lovely'}, content_type='application/json')
         self.assertEqual(response.status_code, 201)
         self.assertEqual(self.venue.feedback.count(), 1)
+
+    def test_public_activity_is_tracked_and_visible_to_admin(self):
+        self.client.get(f'/api/venue/{self.venue.public_identifier}/')
+        self.client.post(
+            f'/api/venue/{self.venue.public_identifier}/track/',
+            {'eventType': 'social_click', 'target': 'instagram'},
+            content_type='application/json',
+        )
+        self.assertEqual(VenueAnalyticsEvent.objects.filter(venue=self.venue).count(), 2)
+        self.client.force_login(self.user)
+        response = self.client.get(f'/api/organizations/{self.org.pk}/venue/analytics/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['analytics']['totals']['profile_view'], 1)
+        self.assertEqual(response.json()['analytics']['socialClicks'][0]['target'], 'instagram')
+
+    def test_analytics_requires_organization_membership(self):
+        response = self.client.get(f'/api/organizations/{self.org.pk}/venue/analytics/')
+        self.assertEqual(response.status_code, 403)

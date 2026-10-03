@@ -131,11 +131,13 @@ urlpatterns = [
     path('api/dashboard/print-controls/', react_api.dashboard_print_controls_api, name='react_dashboard_print_controls_api'),
     path('api/venue/<str:public_identifier>/', hospitality_views.venue_public_api, name='venue_public_api'),
     path('api/venue/<str:public_identifier>/feedback/', hospitality_views.venue_feedback_api, name='venue_feedback_api'),
+    path('api/venue/<str:public_identifier>/track/', hospitality_views.venue_track_api, name='venue_track_api'),
     path('api/organizations/<int:organization_id>/venue/', hospitality_views.venue_profile_manage_api, name='venue_profile_manage_api'),
     path('api/organizations/<int:organization_id>/venue/menu/categories/', hospitality_views.venue_menu_categories_api, name='venue_menu_categories_api'),
     path('api/organizations/<int:organization_id>/venue/menu/items/', hospitality_views.venue_menu_items_api, name='venue_menu_items_api'),
     path('api/organizations/<int:organization_id>/venue/links/', hospitality_views.venue_links_api, name='venue_links_api'),
     path('api/organizations/<int:organization_id>/venue/feedback/', hospitality_views.venue_feedback_manage_api, name='venue_feedback_manage_api'),
+    path('api/organizations/<int:organization_id>/venue/analytics/', hospitality_views.venue_analytics_api, name='venue_analytics_api'),
 ]
 
 if settings.DEBUG:

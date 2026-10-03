@@ -1,16 +1,19 @@
 import hashlib
 import json
+from datetime import timedelta
 from urllib.parse import urlparse
 
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Avg
+from django.db.models import Avg, Count
+from django.db.models.functions import TruncDate
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_http_methods
+from django.utils import timezone
 
-from .models import VenueFeedback, VenueLink, VenueMenuCategory, VenueMenuItem, VenueProfile
+from .models import VenueAnalyticsEvent, VenueFeedback, VenueLink, VenueMenuCategory, VenueMenuItem, VenueProfile
 from vcards.models import College
 
 
@@ -48,6 +51,20 @@ def _file_url(request, field):
     return request.build_absolute_uri(url) if request else url
 
 
+def _record_event(request, venue, event_type, target=''):
+    if event_type not in dict(VenueAnalyticsEvent.EVENT_TYPES):
+        return False
+    safe_target = str(target or '').strip()[:160]
+    if event_type == 'profile_view':
+        fingerprint = hashlib.sha256(
+            f'{venue.pk}:{request.META.get("REMOTE_ADDR", "")}:{request.META.get("HTTP_USER_AGENT", "")}'.encode()
+        ).hexdigest()
+        if not cache.add(f'venue-view:{fingerprint}', True, 30):
+            return False
+    VenueAnalyticsEvent.objects.create(venue=venue, event_type=event_type, target=safe_target)
+    return True
+
+
 def _payload(request, venue):
     categories = []
     for category in venue.menu_categories.filter(is_active=True):
@@ -75,7 +92,21 @@ def _payload(request, venue):
 @require_http_methods(['GET'])
 def venue_public_api(request, public_identifier):
     venue = get_object_or_404(VenueProfile.objects.select_related('organization'), public_identifier=public_identifier, is_active=True)
+    _record_event(request, venue, 'profile_view')
     return JsonResponse(_payload(request, venue))
+
+
+@require_http_methods(['POST'])
+def venue_track_api(request, public_identifier):
+    venue = get_object_or_404(VenueProfile, public_identifier=public_identifier, is_active=True)
+    data = _body(request)
+    if not isinstance(data, dict):
+        return JsonResponse({'error': 'Invalid JSON.'}, status=400)
+    event_type = str(data.get('eventType') or '')
+    if event_type not in dict(VenueAnalyticsEvent.EVENT_TYPES) or event_type in {'profile_view', 'feedback_submit'}:
+        return JsonResponse({'error': 'Invalid event type.'}, status=400)
+    _record_event(request, venue, event_type, data.get('target'))
+    return JsonResponse({'ok': True}, status=201)
 
 
 @require_http_methods(['POST'])
@@ -95,6 +126,7 @@ def venue_feedback_api(request, public_identifier):
     if not cache.add(f'venue-feedback:{fingerprint}', True, 300):
         return JsonResponse({'error': 'Please wait before sending another feedback message.'}, status=429)
     VenueFeedback.objects.create(venue=venue, rating=rating, comment=comment, rate_limit_hash=fingerprint)
+    VenueAnalyticsEvent.objects.create(venue=venue, event_type='feedback_submit', target=str(rating))
     return JsonResponse({'ok': True}, status=201)
 
 
@@ -183,3 +215,29 @@ def venue_feedback_manage_api(request, organization_id):
         if data.get('status') not in dict(VenueFeedback.STATUS_CHOICES): return JsonResponse({'error': 'Invalid status.'}, status=400)
         feedback.status = data['status']; feedback.save(update_fields=['status'])
     return JsonResponse({'feedback': list(venue.feedback.order_by('-created_at').values('id', 'rating', 'comment', 'status', 'created_at'))})
+
+
+@require_http_methods(['GET'])
+def venue_analytics_api(request, organization_id):
+    venue = _venue_for(request, organization_id)
+    if not venue:
+        return JsonResponse({'error': 'Not authorized.'}, status=403)
+    events = venue.analytics_events.all()
+    totals = {event_type: 0 for event_type, _ in VenueAnalyticsEvent.EVENT_TYPES}
+    for row in events.values('event_type').annotate(count=Count('id')):
+        totals[row['event_type']] = row['count']
+    feedback_summary = venue.feedback.aggregate(count=Count('id'), average=Avg('rating'))
+    rating_breakdown = {str(value): 0 for value in range(1, 6)}
+    for row in venue.feedback.values('rating').annotate(count=Count('id')):
+        rating_breakdown[str(row['rating'])] = row['count']
+    since = timezone.now() - timedelta(days=13)
+    daily = list(events.filter(created_at__gte=since).annotate(day=TruncDate('created_at')).values('day').annotate(count=Count('id')).order_by('day'))
+    social = list(events.filter(event_type='social_click').values('target').annotate(count=Count('id')).order_by('-count', 'target')[:10])
+    menu_items = list(events.filter(event_type='menu_item_click').values('target').annotate(count=Count('id')).order_by('-count', 'target')[:10])
+    return JsonResponse({'analytics': {
+        'totals': totals,
+        'feedback': {'count': feedback_summary['count'], 'average': feedback_summary['average'] or 0, 'ratingBreakdown': rating_breakdown},
+        'daily': [{'date': row['day'], 'count': row['count']} for row in daily],
+        'socialClicks': social,
+        'menuItems': menu_items,
+    }})

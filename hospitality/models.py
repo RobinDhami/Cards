@@ -104,3 +104,26 @@ class VenueFeedback(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new')
     rate_limit_hash = models.CharField(max_length=64, blank=True, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class VenueAnalyticsEvent(models.Model):
+    EVENT_TYPES = [
+        ('profile_view', 'Profile view'),
+        ('menu_open', 'Menu opened'),
+        ('menu_item_click', 'Menu item clicked'),
+        ('rating_click', 'Rating clicked'),
+        ('feedback_submit', 'Feedback submitted'),
+        ('social_click', 'Social link clicked'),
+    ]
+
+    venue = models.ForeignKey(VenueProfile, on_delete=models.CASCADE, related_name='analytics_events')
+    event_type = models.CharField(max_length=32, choices=EVENT_TYPES)
+    target = models.CharField(max_length=160, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['venue', 'event_type', 'created_at']),
+            models.Index(fields=['venue', 'created_at']),
+        ]
