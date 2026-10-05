@@ -50,6 +50,26 @@ class HospitalityWorkspaceTests(TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(self.venue.feedback.count(), 1)
 
+    def test_menu_item_accepts_multipart_boolean_values(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            f'/api/organizations/{self.org.pk}/venue/menu/items/',
+            {
+                'category_id': self.category.pk,
+                'name': 'Masala Tea',
+                'price': '85',
+                'original_price': '',
+                'is_available': 'true',
+                'is_today_special': 'false',
+                'is_offer': 'false',
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+        item = VenueMenuItem.objects.get(name='Masala Tea')
+        self.assertTrue(item.is_available)
+        self.assertFalse(item.is_today_special)
+        self.assertFalse(item.is_offer)
+
     def test_public_activity_is_tracked_and_visible_to_admin(self):
         self.client.get(f'/api/venue/{self.venue.public_identifier}/')
         self.client.post(

@@ -200,8 +200,15 @@ def venue_menu_items_api(request, organization_id):
     data = _body(request) if request.content_type.startswith('application/json') else request.POST
     data = data or {}
     item = get_object_or_404(VenueMenuItem, pk=data.get('id'), venue=venue) if request.method == 'PATCH' else VenueMenuItem(venue=venue)
+    boolean_fields = {'is_vegetarian', 'is_available', 'is_today_special', 'is_offer'}
     for key in ('category_id', 'name', 'description', 'price', 'original_price', 'offer_label', 'dietary_info', 'is_vegetarian', 'is_available', 'is_today_special', 'is_offer', 'display_order'):
-        if key in data: setattr(item, key, data[key])
+        if key in data:
+            value = data[key]
+            if key in boolean_fields and isinstance(value, str):
+                value = value.strip().lower() in {'1', 'true', 'yes', 'on'}
+            if key == 'original_price' and value == '':
+                value = None
+            setattr(item, key, value)
     if request.FILES.get('image'):
         item.image = request.FILES['image']
     item.full_clean(); item.save()
