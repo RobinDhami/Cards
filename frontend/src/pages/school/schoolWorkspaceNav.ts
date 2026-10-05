@@ -2,10 +2,13 @@ import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3.js'
 import GraduationCap from 'lucide-react/dist/esm/icons/graduation-cap.js'
 import LayoutList from 'lucide-react/dist/esm/icons/layout-list.js'
 import LayoutDashboard from 'lucide-react/dist/esm/icons/layout-dashboard.js'
+import MessageSquare from 'lucide-react/dist/esm/icons/message-square.js'
 import Printer from 'lucide-react/dist/esm/icons/printer.js'
 import QrCode from 'lucide-react/dist/esm/icons/qr-code.js'
 import Settings from 'lucide-react/dist/esm/icons/settings.js'
 import Upload from 'lucide-react/dist/esm/icons/upload.js'
+import Utensils from 'lucide-react/dist/esm/icons/utensils.js'
+import UserRound from 'lucide-react/dist/esm/icons/user-round.js'
 import Users from 'lucide-react/dist/esm/icons/users.js'
 import Palette from 'lucide-react/dist/esm/icons/palette.js'
 import Info from 'lucide-react/dist/esm/icons/info.js'
@@ -25,10 +28,13 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
     const workspaceRoot = `/dashboard/organizations/${schoolId}`
     if (organizationType === 'hospitality') {
       const hospitalityRoot = `${workspaceRoot}/hospitality`
+      const section = new URLSearchParams(search).get('tab') || 'profile'
       return [
-        { label: 'Profile & Menu', href: `${hospitalityRoot}/`, icon: Palette, active: (path === hospitalityRoot || path === `${hospitalityRoot}/`) && !new URLSearchParams(search).get('tab') },
+        { label: 'Profile', href: `${hospitalityRoot}/?tab=profile`, icon: UserRound, active: path.startsWith(hospitalityRoot) && section === 'profile' },
+        { label: 'Menu', href: `${hospitalityRoot}/?tab=menu`, icon: Utensils, active: path.startsWith(hospitalityRoot) && section === 'menu' },
+        { label: 'Feedback', href: `${hospitalityRoot}/?tab=feedback`, icon: MessageSquare, active: path.startsWith(hospitalityRoot) && section === 'feedback' },
         { label: 'Staff Profiles', href: `${workspaceRoot}/members/`, icon: Users, active: path.includes('/members') },
-        { label: 'Analytics', href: `${hospitalityRoot}/?tab=analytics`, icon: BarChart3, active: path.startsWith(hospitalityRoot) && new URLSearchParams(search).get('tab') === 'analytics' },
+        { label: 'Analytics', href: `${hospitalityRoot}/?tab=analytics`, icon: BarChart3, active: path.startsWith(hospitalityRoot) && section === 'analytics' },
         { label: 'Organization settings', href: `${workspaceRoot}/settings/`, icon: Settings, active: path.includes('/settings') },
       ]
     }
