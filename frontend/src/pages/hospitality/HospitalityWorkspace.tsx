@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3.js'
-import ExternalLink from 'lucide-react/dist/esm/icons/external-link.js'
 import MessageSquare from 'lucide-react/dist/esm/icons/message-square.js'
 import Plus from 'lucide-react/dist/esm/icons/plus.js'
 import Save from 'lucide-react/dist/esm/icons/save.js'
@@ -26,10 +25,7 @@ function organizationId() { return Number(window.location.pathname.match(/organi
 
 function VenueShell({ shell, publicIdentifier, children }: { shell: HospitalityShell; publicIdentifier: string; children: ReactNode }) {
   const school = shell.currentSchool
-  const workspaceNav = schoolWorkspaceNav(school?.id, shell.isSuperAdmin, 'hospitality')
-  const profileLink = { label: 'View Digital Profile', href: `/venue/${publicIdentifier}/`, icon: ExternalLink, active: false }
-  const venueNav = [workspaceNav[0], profileLink, ...workspaceNav.slice(1)]
-  return <ManageShell brand={school?.name || 'Hospitality'} brandDetail={shell.isSuperAdmin ? 'Super Admin · Organization workspace' : 'Organization administration'} logo={school?.logo} nav={venueNav} title="Profile & Menu" subtitle="Manage the public café or hotel profile and its menu." userName={shell.user.displayName} userRole={shell.isSuperAdmin ? 'Platform administrator' : 'Organization administrator'} accent={school?.themePrimary || '#0b4bcb'} schoolOptions={shell.isSuperAdmin ? shell.schools : undefined} selectedSchool={school?.id ?? null} onSchoolChange={(schoolId) => { window.location.href = `/dashboard/organizations/${schoolId}/hospitality/` }} actions={<><span className="hospitality-admin-context">{shell.isSuperAdmin ? 'Viewing as Super Admin' : school?.name}</span><a className="manage-button is-primary" href={`/venue/${publicIdentifier}/`} target="_blank" rel="noreferrer">Preview Digital Profile</a></>}>{children}</ManageShell>
+  return <ManageShell brand={school?.name || 'Hospitality'} brandDetail={shell.isSuperAdmin ? 'Super Admin · Organization workspace' : 'Organization administration'} logo={school?.logo} nav={schoolWorkspaceNav(school?.id, shell.isSuperAdmin, 'hospitality')} title="Profile & Menu" subtitle="Manage the public café or hotel profile and its menu." userName={shell.user.displayName} userRole={shell.isSuperAdmin ? 'Platform administrator' : 'Organization administrator'} accent={school?.themePrimary || '#0b4bcb'} schoolOptions={shell.isSuperAdmin ? shell.schools : undefined} selectedSchool={school?.id ?? null} onSchoolChange={(schoolId) => { window.location.href = `/dashboard/organizations/${schoolId}/hospitality/` }} actions={<><span className="hospitality-admin-context">{shell.isSuperAdmin ? 'Viewing as Super Admin' : school?.name}</span><a className="manage-button is-primary" href={`/venue/${publicIdentifier}/`} target="_blank" rel="noreferrer">Preview Digital Profile</a></>}>{children}</ManageShell>
 }
 
 const emptyItem: DraftItem = { category_id: '', name: '', description: '', price: '', original_price: '', offer_label: '', is_offer: false, is_today_special: false, image: null }
