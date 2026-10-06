@@ -375,7 +375,7 @@ export function OrganizationWorkspaceOverview() {
           <a className="manage-button is-primary" href={`${workspaceRoot}/members/`}><UserRound size={14} />Members</a>
           {organization?.organizationType === 'hospitality' ? <a className="manage-button is-primary" href={`${workspaceRoot}/hospitality/`}><Building2 size={14} />Profile & Menu</a> : null}
           <a className="manage-button" href={`${workspaceRoot}/bulk-upload/`}><Upload size={14} />Bulk Upload</a>
-          <a className="manage-button" href={`${workspaceRoot}/settings/`}><Settings size={14} />Organization Settings</a>
+          <a className="manage-button" href={`${workspaceRoot}/settings/`}><Settings size={14} />Settings</a>
         </div>
       </section>
     </SchoolShell>

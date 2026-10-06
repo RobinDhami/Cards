@@ -35,7 +35,7 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
         { label: 'Feedback', href: `${hospitalityRoot}/?tab=feedback`, icon: MessageSquare, active: path.startsWith(hospitalityRoot) && section === 'feedback' },
         { label: 'Staff Profiles', href: `${workspaceRoot}/members/`, icon: Users, active: path.includes('/members') },
         { label: 'Analytics', href: `${hospitalityRoot}/?tab=analytics`, icon: BarChart3, active: path.startsWith(hospitalityRoot) && section === 'analytics' },
-        { label: 'Organization settings', href: `${workspaceRoot}/settings/`, icon: Settings, active: path.includes('/settings') },
+        { label: 'Settings', href: `${workspaceRoot}/settings/`, icon: Settings, active: path.includes('/settings') },
       ]
     }
     if (organizationType === 'club') {
