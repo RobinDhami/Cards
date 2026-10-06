@@ -123,7 +123,7 @@ class College(models.Model):
     member_username_sequence = models.PositiveBigIntegerField(default=0, editable=False)
     admin_user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='managed_schools', blank=True, null=True)
     slogan = models.CharField(max_length=255, blank=True, null=True)
-    address = models.CharField(max_length=255, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
     logo = models.ImageField(upload_to='college_logos/', blank=True, null=True)
     # Shared organization brand content. Member profiles deliberately do not own
     # these values, so every club card stays consistent.

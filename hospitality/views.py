@@ -81,10 +81,11 @@ def _payload(request, venue):
         'venue': {'publicIdentifier': venue.public_identifier, 'type': venue.venue_type, 'description': venue.description,
                   'logo': _file_url(request, venue.logo), 'coverImage': _file_url(request, venue.cover_image),
                   'primaryColor': venue.primary_color, 'secondaryColor': venue.secondary_color,
-                  'phone': venue.phone, 'whatsapp': venue.whatsapp, 'email': venue.email,
-                  'website': venue.website, 'address': venue.address, 'mapUrl': venue.map_url,
-                  'googleReviewUrl': venue.google_review_url},
-        'links': list(venue.links.filter(is_active=True).values('link_type', 'label', 'value', 'display_order')),
+                  'phone': venue.organization.phone or '', 'whatsapp': venue.whatsapp, 'email': venue.organization.email or '',
+                  'website': venue.organization.website or '', 'address': venue.organization.address or '',
+                  'mapUrl': venue.organization.map_url or '', 'googleReviewUrl': venue.google_review_url,
+                  'reservationUrl': venue.reservation_url, 'openingHours': venue.opening_hours},
+        'links': list(venue.links.filter(is_active=True).values('id', 'link_type', 'label', 'value', 'display_order')),
         'rating': {'average': venue.feedback.filter(status__in=['new', 'reviewed', 'resolved']).aggregate(average=Avg('rating'))['average'] or 0, 'count': venue.feedback.filter(status__in=['new', 'reviewed', 'resolved']).count()},
         'categories': categories, 'feedbackEnabled': venue.feedback_enabled,
     }
@@ -160,13 +161,19 @@ def venue_profile_manage_api(request, organization_id):
     if not venue:
         return JsonResponse({'error': 'Not authorized.'}, status=403)
     if request.method == 'PATCH':
-        data = _body(request) or {}
-        allowed = {'venue_type', 'description', 'primary_color', 'secondary_color', 'phone', 'whatsapp', 'email', 'website', 'address', 'map_url', 'google_review_url', 'feedback_enabled', 'is_active'}
+        data = (_body(request) if request.content_type.startswith('application/json') else request.POST) or {}
+        allowed = {'venue_type', 'description', 'primary_color', 'secondary_color', 'whatsapp', 'google_review_url', 'reservation_url', 'opening_hours', 'feedback_enabled', 'is_active'}
         for key, value in data.items():
             if key in allowed:
-                if key.endswith('_url') or key == 'website':
+                if key.endswith('_url'):
                     _safe_url(value)
+                if key in {'feedback_enabled', 'is_active'} and isinstance(value, str):
+                    value = value.strip().lower() in {'1', 'true', 'yes', 'on'}
                 setattr(venue, key, value)
+        if request.FILES.get('logo'):
+            venue.logo = request.FILES['logo']
+        if request.FILES.get('cover_image'):
+            venue.cover_image = request.FILES['cover_image']
         venue.full_clean(); venue.save()
     return JsonResponse(_payload(request, venue))
 
@@ -215,16 +222,19 @@ def venue_menu_items_api(request, organization_id):
     return JsonResponse({'id': item.pk, 'name': item.name}, status=201 if request.method == 'POST' else 200)
 
 
-@require_http_methods(['GET', 'POST', 'PATCH'])
+@require_http_methods(['GET', 'POST', 'PATCH', 'DELETE'])
 def venue_links_api(request, organization_id):
     venue = _venue_for(request, organization_id)
     if not venue: return JsonResponse({'error': 'Not authorized.'}, status=403)
     if request.method == 'GET': return JsonResponse({'links': list(venue.links.values('id', 'link_type', 'label', 'value', 'display_order', 'is_active'))})
     data = _body(request) or {}
+    if request.method == 'DELETE':
+        get_object_or_404(VenueLink, pk=data.get('id'), venue=venue).delete()
+        return JsonResponse({'ok': True})
     link = get_object_or_404(VenueLink, pk=data.get('id'), venue=venue) if request.method == 'PATCH' else VenueLink(venue=venue)
     for key in ('link_type', 'label', 'value', 'display_order', 'is_active'):
         if key in data: setattr(link, key, data[key])
-    _safe_url(link.value) if link.link_type in {'website', 'instagram', 'facebook', 'google_review', 'map'} else None
+    _safe_url(link.value)
     link.full_clean(); link.save()
     return JsonResponse({'id': link.pk}, status=201 if request.method == 'POST' else 200)
 

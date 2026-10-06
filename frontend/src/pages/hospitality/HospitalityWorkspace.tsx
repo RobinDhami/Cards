@@ -2,13 +2,16 @@ import { useCallback, useEffect, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import MessageSquare from "lucide-react/dist/esm/icons/message-square.js";
 import Eye from "lucide-react/dist/esm/icons/eye.js";
+import ExternalLink from "lucide-react/dist/esm/icons/external-link.js";
 import ImageIcon from "lucide-react/dist/esm/icons/image.js";
 import MoreHorizontal from "lucide-react/dist/esm/icons/more-horizontal.js";
+import Pencil from "lucide-react/dist/esm/icons/pencil.js";
 import Plus from "lucide-react/dist/esm/icons/plus.js";
 import Save from "lucide-react/dist/esm/icons/save.js";
 import Search from "lucide-react/dist/esm/icons/search.js";
 import Star from "lucide-react/dist/esm/icons/star.js";
 import Tag from "lucide-react/dist/esm/icons/tag.js";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2.js";
 import Utensils from "lucide-react/dist/esm/icons/utensils.js";
 import X from "lucide-react/dist/esm/icons/x.js";
 import {
@@ -41,6 +44,8 @@ type Venue = {
     address: string;
     mapUrl: string;
     googleReviewUrl: string;
+    reservationUrl: string;
+    openingHours: string;
   };
   categories: Category[];
   links: Link[];
@@ -72,6 +77,7 @@ type Item = {
   display_order?: number;
 };
 type Link = { id: number; link_type: string; label: string; value: string };
+type OrganizationContact = { address: string; phone: string; email: string; website: string; mapUrl: string };
 type Feedback = {
   id: number;
   rating: number;
@@ -990,10 +996,13 @@ function HospitalityAdminPanel() {
   const [venue, setVenue] = useState<Venue | null>(null);
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [analytics, setAnalytics] = useState<Analytics>(emptyAnalytics);
+  const [organizationContact, setOrganizationContact] = useState<OrganizationContact>({ address: "", phone: "", email: "", website: "", mapUrl: "" });
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
   const activeTab = hospitalityAdminSection();
   const [categoryName, setCategoryName] = useState("");
   const [item, setItem] = useState<DraftItem>(emptyItem);
-  const [link, setLink] = useState({
+  const [link, setLink] = useState<{ id?: number; link_type: string; label: string; value: string }>({
     link_type: "instagram",
     label: "Instagram",
     value: "",
@@ -1008,7 +1017,7 @@ function HospitalityAdminPanel() {
         items,
         feedbackPayload,
         analyticsPayload,
-        shellPayload,
+        settingsPayload,
       ] = await Promise.all([
         apiFetch<Venue>(`/api/organizations/${id}/venue/`),
         apiFetch<{ categories: Category[] }>(
@@ -1023,7 +1032,7 @@ function HospitalityAdminPanel() {
         apiFetch<{ analytics: Analytics }>(
           `/api/organizations/${id}/venue/analytics/`,
         ),
-        apiFetch<{ shell: HospitalityShell }>(
+        apiFetch<{ shell: HospitalityShell; school: OrganizationContact & { logo: string } }>(
           `/api/dashboard/settings/${queryString({ school: id })}`,
         ),
       ]);
@@ -1049,7 +1058,8 @@ function HospitalityAdminPanel() {
       );
       setFeedback(feedbackPayload.feedback);
       setAnalytics(analyticsPayload.analytics);
-      setShell(shellPayload.shell);
+      setOrganizationContact(settingsPayload.school);
+      setShell(settingsPayload.shell);
     } catch (reason) {
       setError(displayError(reason));
     }
@@ -1063,19 +1073,32 @@ function HospitalityAdminPanel() {
     event.preventDefault();
     if (!venue) return;
     try {
-      const response = await apiFetch<{ venue: Venue["venue"] }>(
+      const body = new FormData();
+      const { phone: _phone, email: _email, website: _website, address: _address, mapUrl: _mapUrl, ...venueFields } = venue.venue;
+      const apiFields: Record<string, unknown> = {
+        venue_type: venueFields.type,
+        description: venueFields.description,
+        primary_color: venueFields.primaryColor,
+        secondary_color: venueFields.secondaryColor,
+        whatsapp: venueFields.whatsapp,
+        google_review_url: venueFields.googleReviewUrl,
+        reservation_url: venueFields.reservationUrl,
+        opening_hours: venueFields.openingHours,
+        feedback_enabled: venue.feedbackEnabled,
+      };
+      Object.entries(apiFields).forEach(([key, value]) => body.append(key, String(value ?? "")));
+      if (logoFile) body.append("logo", logoFile);
+      if (coverFile) body.append("cover_image", coverFile);
+      await apiFetch(
         `/api/organizations/${id}/venue/`,
         {
           method: "PATCH",
-          body: jsonBody({
-            ...venue.venue,
-            feedback_enabled: venue.feedbackEnabled,
-          }),
+          body,
         },
       );
-      setVenue((current) =>
-        current ? { ...current, venue: response.venue } : current,
-      );
+      setLogoFile(null);
+      setCoverFile(null);
+      await load();
     } catch (reason) {
       setError(displayError(reason));
     }
@@ -1151,10 +1174,22 @@ function HospitalityAdminPanel() {
     if (!link.value.trim()) return;
     try {
       await apiFetch(`/api/organizations/${id}/venue/links/`, {
-        method: "POST",
+        method: link.id ? "PATCH" : "POST",
         body: jsonBody(link),
       });
-      setLink({ ...link, value: "" });
+      setLink({ link_type: "instagram", label: "Instagram", value: "" });
+      await load();
+    } catch (reason) {
+      setError(displayError(reason));
+    }
+  }
+
+  async function deleteLink(linkId: number) {
+    try {
+      await apiFetch(`/api/organizations/${id}/venue/links/`, {
+        method: "DELETE",
+        body: jsonBody({ id: linkId }),
+      });
       await load();
     } catch (reason) {
       setError(displayError(reason));
@@ -1250,37 +1285,45 @@ function HospitalityAdminPanel() {
                   <Field label="Description" wide>
                     <TextArea
                       value={venue.venue.description}
-                      onChange={(e) =>
-                        updateVenue("description", e.target.value)
-                      }
+                      onChange={(e) => updateVenue("description", e.target.value)}
                       placeholder="Tell visitors what makes this place special"
                     />
                   </Field>
-                  <Field label="Phone">
-                    <TextInput
-                      value={venue.venue.phone}
-                      onChange={(e) => updateVenue("phone", e.target.value)}
-                    />
+                  <Field label="WhatsApp">
+                    <TextInput value={venue.venue.whatsapp} onChange={(e) => updateVenue("whatsapp", e.target.value)} placeholder="+977 98XXXXXXXX" />
                   </Field>
-                  <Field label="Email">
-                    <TextInput
-                      type="email"
-                      value={venue.venue.email}
-                      onChange={(e) => updateVenue("email", e.target.value)}
-                    />
+                  <Field label="Google review link">
+                    <TextInput type="url" value={venue.venue.googleReviewUrl} onChange={(e) => updateVenue("googleReviewUrl", e.target.value)} placeholder="https://..." />
                   </Field>
-                  <Field label="Website">
-                    <TextInput
-                      value={venue.venue.website}
-                      onChange={(e) => updateVenue("website", e.target.value)}
-                    />
+                  <Field label="Reservation link">
+                    <TextInput type="url" value={venue.venue.reservationUrl} onChange={(e) => updateVenue("reservationUrl", e.target.value)} placeholder="Booking or reservation page" />
                   </Field>
-                  <Field label="Address" wide>
-                    <TextInput
-                      value={venue.venue.address}
-                      onChange={(e) => updateVenue("address", e.target.value)}
-                    />
+                  <Field label="Opening hours" wide hint="For example: Sun–Fri, 8:00 AM–8:00 PM · Saturday, 10:00 AM–6:00 PM">
+                    <TextArea value={venue.venue.openingHours} onChange={(e) => updateVenue("openingHours", e.target.value)} placeholder="Add opening hours customers can see" />
                   </Field>
+                  <Field label="About photo / logo">
+                    <FileInput label="Upload profile logo" currentUrl={venue.venue.logo || undefined} accept="image/*" onChange={setLogoFile} />
+                  </Field>
+                  <Field label="Cover photo">
+                    <FileInput label="Upload cover photo" currentUrl={venue.venue.coverImage || undefined} accept="image/*" onChange={setCoverFile} />
+                  </Field>
+                  <Field label="Profile color">
+                    <TextInput type="color" value={venue.venue.primaryColor} onChange={(e) => updateVenue("primaryColor", e.target.value)} />
+                  </Field>
+                  <Field label="Accent color">
+                    <TextInput type="color" value={venue.venue.secondaryColor} onChange={(e) => updateVenue("secondaryColor", e.target.value)} />
+                  </Field>
+                </div>
+                <div className="hospitality-contact-source">
+                  <div><strong>Organization contact details</strong><span>These are shared with the organization and used on the public profile.</span></div>
+                  <dl>
+                    <div><dt>Phone</dt><dd>{organizationContact.phone || "Not added"}</dd></div>
+                    <div><dt>Email</dt><dd>{organizationContact.email || "Not added"}</dd></div>
+                    <div><dt>Website</dt><dd>{organizationContact.website || "Not added"}</dd></div>
+                    <div><dt>Address</dt><dd>{organizationContact.address || "Not added"}</dd></div>
+                    <div><dt>Directions</dt><dd>{organizationContact.mapUrl ? <a href={organizationContact.mapUrl} target="_blank" rel="noreferrer">Open map <ExternalLink size={12} /></a> : "Add a map link in Settings"}</dd></div>
+                  </dl>
+                  <a href={`/dashboard/organizations/${id}/settings/`}>Edit shared details in Settings</a>
                 </div>
                 <label className="hospitality-check-row">
                   <input
@@ -1316,24 +1359,30 @@ function HospitalityAdminPanel() {
                   <option value="instagram">Instagram</option>
                   <option value="facebook">Facebook</option>
                   <option value="tiktok">TikTok</option>
-                  <option value="website">Website</option>
-                  <option value="phone">Phone</option>
+                  <option value="youtube">YouTube</option>
+                  <option value="tripadvisor">Tripadvisor</option>
+                  <option value="x">X</option>
                 </SelectInput>
                 <TextInput
                   value={link.value}
                   onChange={(e) => setLink({ ...link, value: e.target.value })}
-                  placeholder="https://…"
+                  placeholder="Paste the full profile URL"
                 />
                 <button className="manage-button">
                   <Plus size={14} />
-                  Add link
+                  {link.id ? "Save link" : "Add link"}
                 </button>
+                {link.id ? <button type="button" className="manage-button" onClick={() => setLink({ link_type: "instagram", label: "Instagram", value: "" })}>Cancel</button> : null}
               </form>
               <div className="hospitality-links-admin">
                 {venue.links.map((entry) => (
                   <div key={entry.id}>
                     <strong>{entry.label || entry.link_type}</strong>
                     <span>{entry.value}</span>
+                    <span className="hospitality-link-actions">
+                      <button type="button" aria-label={`Edit ${entry.label}`} onClick={() => setLink(entry)}><Pencil size={14} /> Edit</button>
+                      <button type="button" aria-label={`Remove ${entry.label}`} onClick={() => void deleteLink(entry.id)}><Trash2 size={14} /> Remove</button>
+                    </span>
                   </div>
                 ))}
               </div>
@@ -1601,7 +1650,9 @@ export function PublicHospitalityProfile() {
         ".hospitality-public-tabs button",
       );
       if (tab?.textContent?.trim() === "Menu") track("menu_open");
-      const social = element.closest<HTMLAnchorElement>(".hospitality-links a");
+      const social = element.closest<HTMLAnchorElement>(
+        ".hospitality-links a, .hospitality-public-contact a",
+      );
       if (social) track("social_click", social.textContent?.trim() || "link");
       const menuItem = element.closest<HTMLElement>(".hospitality-menu-item");
       if (menuItem)
@@ -1636,7 +1687,14 @@ export function PublicHospitalityProfile() {
   }
   return (
     <main className="hospitality-public">
-      <header style={{ background: venue.venue.primaryColor }}>
+      <header
+        style={{
+          background: venue.venue.coverImage
+            ? `linear-gradient(0deg, ${venue.venue.primaryColor}dd, ${venue.venue.primaryColor}55), url(${venue.venue.coverImage}) center/cover`
+            : venue.venue.primaryColor,
+        }}
+      >
+        {venue.venue.logo ? <img className="hospitality-public-logo" src={venue.venue.logo} alt="" /> : null}
         <h1>{venue.organization.name}</h1>
         <p>{venue.venue.description}</p>
       </header>
@@ -1657,13 +1715,19 @@ export function PublicHospitalityProfile() {
       {activeTab === "home" ? (
         <section>
           <h2>Home</h2>
-          <p>{venue.venue.address}</p>
-          <p>
-            {venue.venue.phone} · {venue.venue.email}
-          </p>
+          <div className="hospitality-public-contact">
+            {venue.venue.address ? <p>{venue.venue.address}</p> : null}
+            <p>{[venue.venue.phone, venue.venue.email].filter(Boolean).join(" · ")}</p>
+            {venue.venue.website ? <a href={venue.venue.website} target="_blank" rel="noreferrer">Website</a> : null}
+            {venue.venue.whatsapp ? <a href={`https://wa.me/${venue.venue.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">WhatsApp</a> : null}
+            {venue.venue.mapUrl ? <a href={venue.venue.mapUrl} target="_blank" rel="noreferrer">Directions</a> : null}
+            {venue.venue.reservationUrl ? <a href={venue.venue.reservationUrl} target="_blank" rel="noreferrer">Reserve / Book</a> : null}
+            {venue.venue.googleReviewUrl ? <a href={venue.venue.googleReviewUrl} target="_blank" rel="noreferrer">Review us on Google</a> : null}
+          </div>
+          {venue.venue.openingHours ? <article className="hospitality-public-hours"><h3>Opening hours</h3><p>{venue.venue.openingHours}</p></article> : null}
           <div className="hospitality-links">
             {venue.links.map((link) => (
-              <a href={link.value} key={link.id}>
+              <a href={link.value} key={link.id} target="_blank" rel="noreferrer">
                 {link.label || link.link_type}
               </a>
             ))}

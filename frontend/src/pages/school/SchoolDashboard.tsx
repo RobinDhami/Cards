@@ -731,6 +731,7 @@ export function SchoolSettingsPage() {
             <FileInput label={shell.isSuperAdmin ? 'Authorized signature' : 'Principal signature'} currentUrl={school.principalSignature} accept="image/*" onChange={setSignature} />
           </div>
         </FormSection>
+        {values.organizationType === 'hospitality' ? <FormSection title="Location"><div className="form-grid"><Field label="Map / directions link" wide><TextInput type="url" value={values.mapUrl ?? ''} onChange={(event) => update('mapUrl', event.target.value)} placeholder="Paste a Google Maps link" /></Field></div></FormSection> : null}
         {values.organizationType === 'club' ? <>
           <FormSection title="Club profile">
             <div className="form-grid">
