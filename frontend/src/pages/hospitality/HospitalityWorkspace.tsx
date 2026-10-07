@@ -999,6 +999,8 @@ function HospitalityAdminPanel() {
   const [organizationContact, setOrganizationContact] = useState<OrganizationContact>({ address: "", phone: "", email: "", website: "", mapUrl: "" });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSaved, setProfileSaved] = useState(false);
   const activeTab = hospitalityAdminSection();
   const [categoryName, setCategoryName] = useState("");
   const [item, setItem] = useState<DraftItem>(emptyItem);
@@ -1072,6 +1074,9 @@ function HospitalityAdminPanel() {
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!venue) return;
+    setProfileSaving(true);
+    setProfileSaved(false);
+    setError("");
     try {
       const body = new FormData();
       const { phone: _phone, email: _email, website: _website, address: _address, mapUrl: _mapUrl, ...venueFields } = venue.venue;
@@ -1092,15 +1097,18 @@ function HospitalityAdminPanel() {
       await apiFetch(
         `/api/organizations/${id}/venue/`,
         {
-          method: "PATCH",
+          method: "POST",
           body,
         },
       );
       setLogoFile(null);
       setCoverFile(null);
       await load();
+      setProfileSaved(true);
     } catch (reason) {
       setError(displayError(reason));
+    } finally {
+      setProfileSaving(false);
     }
   }
 
@@ -1335,10 +1343,11 @@ function HospitalityAdminPanel() {
                   />
                   Allow anonymous customer feedback
                 </label>
-                <button className="manage-button is-primary">
+                <button className="manage-button is-primary" disabled={profileSaving}>
                   <Save size={14} />
-                  Save profile
+                  {profileSaving ? "Saving…" : "Save profile"}
                 </button>
+                {profileSaved ? <small className="hospitality-profile-saved" role="status">Profile saved successfully.</small> : null}
               </FormSection>
             </form>
             <FormSection

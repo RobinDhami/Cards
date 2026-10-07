@@ -155,12 +155,12 @@ def _ensure_default_categories(venue):
     ])
 
 
-@require_http_methods(['GET', 'PATCH'])
+@require_http_methods(['GET', 'POST', 'PATCH'])
 def venue_profile_manage_api(request, organization_id):
     venue = _venue_for(request, organization_id)
     if not venue:
         return JsonResponse({'error': 'Not authorized.'}, status=403)
-    if request.method == 'PATCH':
+    if request.method in {'POST', 'PATCH'}:
         data = (_body(request) if request.content_type.startswith('application/json') else request.POST) or {}
         allowed = {'venue_type', 'description', 'primary_color', 'secondary_color', 'whatsapp', 'google_review_url', 'reservation_url', 'opening_hours', 'feedback_enabled', 'is_active'}
         for key, value in data.items():
