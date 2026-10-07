@@ -163,18 +163,22 @@ def venue_profile_manage_api(request, organization_id):
     if request.method in {'POST', 'PATCH'}:
         data = (_body(request) if request.content_type.startswith('application/json') else request.POST) or {}
         allowed = {'venue_type', 'description', 'primary_color', 'secondary_color', 'whatsapp', 'google_review_url', 'reservation_url', 'opening_hours', 'feedback_enabled', 'is_active'}
-        for key, value in data.items():
-            if key in allowed:
-                if key.endswith('_url'):
-                    _safe_url(value)
-                if key in {'feedback_enabled', 'is_active'} and isinstance(value, str):
-                    value = value.strip().lower() in {'1', 'true', 'yes', 'on'}
-                setattr(venue, key, value)
-        if request.FILES.get('logo'):
-            venue.logo = request.FILES['logo']
-        if request.FILES.get('cover_image'):
-            venue.cover_image = request.FILES['cover_image']
-        venue.full_clean(); venue.save()
+        try:
+            for key, value in data.items():
+                if key in allowed:
+                    if key.endswith('_url'):
+                        _safe_url(value)
+                    if key in {'feedback_enabled', 'is_active'} and isinstance(value, str):
+                        value = value.strip().lower() in {'1', 'true', 'yes', 'on'}
+                    setattr(venue, key, value)
+            if request.FILES.get('logo'):
+                venue.logo = request.FILES['logo']
+            if request.FILES.get('cover_image'):
+                venue.cover_image = request.FILES['cover_image']
+            venue.full_clean()
+        except ValidationError as exc:
+            return JsonResponse({'message': '; '.join(exc.messages)}, status=400)
+        venue.save()
     return JsonResponse(_payload(request, venue))
 
 
