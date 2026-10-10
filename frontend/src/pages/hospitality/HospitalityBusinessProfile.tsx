@@ -206,7 +206,7 @@ export function HospitalityBusinessProfile({
         </section>
         <aside className="business-profile-preview-panel"><div><h2>Live preview</h2><p>Changes remain private until you save.</p></div>{preview}</aside>
       </div>
-      <footer className={`business-profile-savebar is-${status}`}><div><strong>{status === 'saving' ? 'Saving changes…' : status === 'error' ? 'Could not save' : changed ? 'Unsaved changes' : status === 'saved' ? 'Saved' : 'Everything is up to date'}</strong>{message && !changed ? <span role={status === 'error' ? 'alert' : 'status'}>{message}</span> : changed ? <span>Your public profile has not changed yet.</span> : null}</div><button type="submit" className="manage-button is-primary" disabled={!changed || status === 'saving'}><Save size={14} />{status === 'saving' ? 'Saving…' : 'Save profile'}</button></footer>
+      <footer className={`business-profile-savebar is-${status}`}><div><strong>{status === 'saving' ? 'Saving changes…' : status === 'error' ? 'Could not save' : changed ? 'Unsaved changes' : status === 'saved' ? 'Saved' : 'Everything is up to date'}</strong>{message && !changed ? <span role={status === 'error' ? 'alert' : 'status'}>{message}</span> : changed ? <span>Select Save profile to publish these changes.</span> : null}</div><button type="submit" className="manage-button is-primary" disabled={!changed || status === 'saving'}><Save size={14} />{status === 'saving' ? 'Saving…' : 'Save profile'}</button></footer>
       {mobilePreview ? <div className="business-profile-preview-modal" role="dialog" aria-modal="true" aria-label="Customer profile preview"><button type="button" aria-label="Close preview" onClick={() => setMobilePreview(false)}><X /></button>{preview}</div> : null}
     </form>
   )
