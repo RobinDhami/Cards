@@ -2275,7 +2275,7 @@ def dashboard_schools_api(request):
     return JsonResponse({'ok': True, 'school': _school_payload(school, True)}, status=201)
 
 
-def _apply_school_fields(request, school, source):
+def _apply_school_fields(request, school, source, public_profile_fields_allowed=True):
     mapping = {
         'name': 'name',
         'organizationCode': 'organization_code',
@@ -2309,12 +2309,15 @@ def _apply_school_fields(request, school, source):
         'organizationType': 'organization_type',
         'organization_type': 'organization_type',
     }
+    if school.organization_type == 'hospitality' and not public_profile_fields_allowed:
+        allowed = {'organizationCode', 'organization_code', 'organizationType', 'organization_type'}
+        mapping = {key: value for key, value in mapping.items() if key in allowed}
     for key, field in mapping.items():
         if key in source:
             setattr(school, field, source.get(key) or '')
-    if request.FILES.get('logo'):
+    if public_profile_fields_allowed and request.FILES.get('logo'):
         school.logo = request.FILES['logo']
-    if request.FILES.get('cover_photo'):
+    if public_profile_fields_allowed and request.FILES.get('cover_photo'):
         school.cover_photo = request.FILES['cover_photo']
     if request.FILES.get('principal_signature'):
         school.principal_signature = request.FILES['principal_signature']
@@ -2355,7 +2358,15 @@ def dashboard_school_api(request, school_id):
     source = payload.get('fields', payload) if isinstance(payload, dict) else payload
     try:
         with transaction.atomic():
-            _apply_school_fields(request, school, source)
+            _apply_school_fields(
+                request,
+                school,
+                source,
+                public_profile_fields_allowed=(
+                    school.organization_type != 'hospitality'
+                    or (_is_super_admin(request.user) and not getattr(request, '_hospitality_settings_limited', False))
+                ),
+            )
             username = str(source.get('adminUsername') or source.get('admin_username') or '').strip()
             password = str(source.get('adminPassword') or source.get('admin_password') or '').strip()
             if username:
@@ -2585,6 +2596,7 @@ def dashboard_settings_api(request):
             'shell': _dashboard_shell(request, 'settings', school),
             'school': _school_payload(school, True),
         })
+    request._hospitality_settings_limited = school.organization_type == 'hospitality'
     return dashboard_school_api(request, school.id)
 
 

@@ -71,6 +71,8 @@ urlpatterns = [
     path('dashboard/college/<int:college_id>/add_student/', react_app, name='add_student_to_college'),
     path('club-members/<int:student_id>/', react_app, name='club_member_public_card'),
     path('venue/<str:public_identifier>/', react_app, name='venue_public_profile'),
+    path('venue/<str:public_identifier>/staff/<str:staff_identifier>/', react_app, name='venue_staff_public_profile'),
+    path('venue/card/<str:public_identifier>/', react_app, name='venue_card_public'),
     path('student/<int:student_id>/', react_app, name='contact_card'),
     path('student/<int:student_id>/contact-card/', react_app, name='student_contact_card'),
     path('student/<int:student_id>/action/<slug:action>/', track_contact_action, name='track_contact_action'),
@@ -132,12 +134,17 @@ urlpatterns = [
     path('api/venue/<str:public_identifier>/', hospitality_views.venue_public_api, name='venue_public_api'),
     path('api/venue/<str:public_identifier>/feedback/', hospitality_views.venue_feedback_api, name='venue_feedback_api'),
     path('api/venue/<str:public_identifier>/track/', hospitality_views.venue_track_api, name='venue_track_api'),
+    path('api/venue/<str:public_identifier>/staff/<str:staff_identifier>/', hospitality_views.venue_staff_public_api, name='venue_staff_public_api'),
+    path('api/venue/card/<str:public_identifier>/', hospitality_views.venue_card_public_api, name='venue_card_public_api'),
     path('api/organizations/<int:organization_id>/venue/', hospitality_views.venue_profile_manage_api, name='venue_profile_manage_api'),
+    path('api/organizations/<int:organization_id>/venue/settings/', hospitality_views.venue_settings_api, name='venue_settings_api'),
     path('api/organizations/<int:organization_id>/venue/menu/categories/', hospitality_views.venue_menu_categories_api, name='venue_menu_categories_api'),
     path('api/organizations/<int:organization_id>/venue/menu/items/', hospitality_views.venue_menu_items_api, name='venue_menu_items_api'),
     path('api/organizations/<int:organization_id>/venue/links/', hospitality_views.venue_links_api, name='venue_links_api'),
     path('api/organizations/<int:organization_id>/venue/feedback/', hospitality_views.venue_feedback_manage_api, name='venue_feedback_manage_api'),
     path('api/organizations/<int:organization_id>/venue/analytics/', hospitality_views.venue_analytics_api, name='venue_analytics_api'),
+    path('api/organizations/<int:organization_id>/venue/overview/', hospitality_views.venue_overview_api, name='venue_overview_api'),
+    path('api/organizations/<int:organization_id>/venue/staff-cards/', hospitality_views.venue_staff_cards_manage_api, name='venue_staff_cards_manage_api'),
 ]
 
 if settings.DEBUG:

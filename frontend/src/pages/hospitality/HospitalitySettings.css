@@ -1,0 +1,37 @@
+.manage-app--hospitality { overflow-x: hidden; }
+.hospitality-settings { display: grid; min-width: 0; gap: 1.25rem; }
+.hospitality-settings-tabs { display:flex; gap:.35rem; overflow-x:auto; border-bottom:1px solid #dbe4f0; }
+.hospitality-settings-tabs button { appearance:none; border:0; background:transparent; color:#52647e; font:inherit; font-weight:700; padding:.8rem 1rem; border-bottom:3px solid transparent; white-space:nowrap; cursor:pointer; }
+.hospitality-settings-tabs button.is-active { color:#145fe2; border-color:#145fe2; }
+.hospitality-settings-card { padding:1.4rem; }
+.hospitality-settings-heading,.hospitality-section-title { display:flex; gap:.75rem; align-items:flex-start; margin-bottom:1.2rem; }
+.hospitality-settings-heading h2,.hospitality-section-title h2,.hospitality-settings-card h2 { margin:0; color:#10244b; font-size:1.12rem; }
+.hospitality-settings-heading p,.hospitality-section-title p,.hospitality-muted,.hospitality-role-grid p,.hospitality-role-permissions p,.hospitality-unavailable p,.hospitality-advanced-form p { color:#62738f; margin:.25rem 0 0; line-height:1.45; }
+.hospitality-settings-callout { display:grid; gap:.6rem; padding:1rem; border:1px solid #bfdbfe; background:#eff6ff; border-radius:.8rem; color:#31537c; }
+.hospitality-settings-callout .manage-button { justify-self:start; }
+.hospitality-role-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.75rem; margin-top:1rem; }
+.hospitality-role-grid article { border:1px solid #dbe4f0; border-radius:.7rem; padding:.85rem; }
+.hospitality-role-grid article.is-current { border-color:#7db0ff; background:#eff6ff; }
+.hospitality-role-grid small,.hospitality-team-table small { color:#145fe2; display:block; margin-top:.35rem; }
+.hospitality-settings-layout { display:grid; grid-template-columns:minmax(0,1fr) 18rem; gap:1rem; }
+.hospitality-invite { display:grid; grid-template-columns:minmax(12rem,1fr) 10rem auto; align-items:end; gap:.7rem; }
+.hospitality-invite label,.hospitality-advanced-form label { display:grid; gap:.35rem; color:#1c3158; font-weight:700; font-size:.88rem; }
+.hospitality-invite input,.hospitality-invite select,.hospitality-advanced-form input,.hospitality-team-table select { border:1px solid #cbd8ea; min-height:2.6rem; border-radius:.5rem; background:#fff; color:#12264d; padding:.45rem .65rem; font:inherit; }
+.hospitality-muted { font-size:.82rem; }
+.hospitality-team-table { margin-top:1rem; border:1px solid #dbe4f0; border-radius:.7rem; overflow:auto; }
+.hospitality-team-table > div { min-width:700px; display:grid; grid-template-columns:1.1fr 1.25fr .8fr .6fr .7fr; align-items:center; gap:.6rem; padding:.72rem .85rem; border-bottom:1px solid #edf1f7; }
+.hospitality-team-table > div:last-child { border-bottom:0; }
+.hospitality-team-head { color:#59708f; font-size:.78rem; font-weight:800; text-transform:uppercase; letter-spacing:.03em; background:#f8fafc; }
+.hospitality-team-table em { color:#a56509; background:#fff4d8; padding:.24rem .45rem; border-radius:999px; font-style:normal; font-weight:700; width:max-content; font-size:.78rem; }
+.hospitality-team-table em.is-active { color:#087443; background:#ddf8ea; }
+.hospitality-role-permissions { display:grid; align-content:start; gap:.6rem; }
+.hospitality-role-permissions > div { border-top:1px solid #e4eaf3; padding-top:.7rem; }
+.hospitality-preference-list { display:grid; }
+.hospitality-preference-list label { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:1rem 0; border-top:1px solid #e4eaf3; cursor:pointer; }
+.hospitality-preference-list span { display:flex; align-items:flex-start; gap:.7rem; color:#145fe2; }
+.hospitality-preference-list strong { color:#12264d; }.hospitality-preference-list small { display:block; font-weight:400; color:#62738f; margin-top:.2rem; }
+.hospitality-preference-list input { width:1.15rem; height:1.15rem; accent-color:#145fe2; }
+.hospitality-unavailable { padding:1rem; border-radius:.7rem; border:1px solid #e2e8f0; background:#f8fafc; }.hospitality-unavailable strong { color:#172c54; }
+.hospitality-advanced-form { display:grid; max-width:32rem; gap:.7rem; }.hospitality-advanced-form .manage-button { justify-self:start; }.is-spinning { animation:hospitality-spin .75s linear infinite; }@keyframes hospitality-spin { to { transform:rotate(360deg); } }
+@media (max-width: 900px) { .hospitality-settings-layout { grid-template-columns:1fr; }.hospitality-role-grid { grid-template-columns:1fr; }.hospitality-invite { grid-template-columns:1fr; }.hospitality-invite .manage-button { justify-content:center; } }
+@media (max-width: 620px) { .hospitality-settings-card { padding:1rem; }.hospitality-settings-tabs { margin:0 -1rem; padding:0 1rem; }.hospitality-settings-tabs button { padding:.75rem .7rem; }.hospitality-settings-callout .manage-button { width:100%; justify-content:center; } }

@@ -1,6 +1,10 @@
 from django.contrib import admin
 
-from .models import VenueAnalyticsEvent, VenueFeedback, VenueLink, VenueMenuCategory, VenueMenuItem, VenueProfile
+from .models import (
+    VenueAnalyticsEvent, VenueCardAssignment, VenueFeedback, VenueLink,
+    VenueMenuCategory, VenueMenuItem, VenueProfile, VenueStaffLink,
+    VenueStaffProfile, VenueTouchpoint,
+)
 
 
 @admin.register(VenueProfile)
@@ -32,9 +36,9 @@ class VenueLinkAdmin(admin.ModelAdmin):
 
 @admin.register(VenueFeedback)
 class VenueFeedbackAdmin(admin.ModelAdmin):
-    list_display = ('venue', 'rating', 'status', 'created_at')
+    list_display = ('venue', 'rating', 'status', 'touchpoint_source', 'created_at')
     list_filter = ('status', 'rating')
-    readonly_fields = ('rate_limit_hash', 'created_at')
+    readonly_fields = ('rate_limit_hash', 'created_at', 'updated_at')
 
 
 @admin.register(VenueAnalyticsEvent)
@@ -43,3 +47,9 @@ class VenueAnalyticsEventAdmin(admin.ModelAdmin):
     list_filter = ('event_type', 'created_at')
     search_fields = ('venue__organization__name', 'target')
     readonly_fields = ('venue', 'event_type', 'target', 'created_at')
+
+
+admin.site.register(VenueStaffProfile)
+admin.site.register(VenueStaffLink)
+admin.site.register(VenueTouchpoint)
+admin.site.register(VenueCardAssignment)

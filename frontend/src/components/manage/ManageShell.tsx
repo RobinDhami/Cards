@@ -30,10 +30,13 @@ type ManageShellProps = {
   userRole?: string
   actions?: ReactNode
   notificationsHref?: string
+  showNotifications?: boolean
+  className?: string
   children: ReactNode
   accent?: string
   schoolOptions?: Array<{ id: number; name: string }>
   selectedSchool?: number | null
+  workspaceSelectorLabel?: string
   onSchoolChange?: (schoolId: number) => void
   sidebarMode?: 'default' | 'compact' | 'hidden'
   onSidebarModeChange?: (mode: 'default' | 'compact') => void
@@ -50,10 +53,13 @@ export function ManageShell({
   userRole = 'Workspace',
   actions,
   notificationsHref,
+  showNotifications = true,
+  className = '',
   children,
   accent = '#0b4bcb',
   schoolOptions,
   selectedSchool,
+  workspaceSelectorLabel = 'School workspace',
   onSchoolChange,
   sidebarMode = 'default',
   onSidebarModeChange,
@@ -129,7 +135,7 @@ export function ManageShell({
   )
 
   return (
-    <div className={`manage-app manage-app--sidebar-${sidebarMode}`} style={{ '--manage-accent': accent } as React.CSSProperties}>
+    <div className={`manage-app manage-app--sidebar-${sidebarMode} ${className}`.trim()} style={{ '--manage-accent': accent } as React.CSSProperties}>
       {sidebarMode !== 'hidden' ? sidebar : null}
       <div
         className={`manage-overlay${menuOpen ? ' is-open' : ''}`}
@@ -165,7 +171,7 @@ export function ManageShell({
           <div className="manage-header-actions">
             {schoolOptions && schoolOptions.length > 0 ? (
               <label className="manage-school-select">
-                <span className="sr-only">School workspace</span>
+                <span className="sr-only">{workspaceSelectorLabel}</span>
                 <select
                   value={selectedSchool ?? ''}
                   onChange={(event) => onSchoolChange?.(Number(event.target.value))}
@@ -178,7 +184,7 @@ export function ManageShell({
               </label>
             ) : null}
             {actions}
-            {notificationsHref ? (
+            {!showNotifications ? null : notificationsHref ? (
               <a className="manage-icon-button" href={notificationsHref} title="Notifications" aria-label="Notifications">
                 <Bell size={17} />
               </a>

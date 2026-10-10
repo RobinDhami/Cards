@@ -28,6 +28,8 @@ const ClubInformationPage = lazy(() => import('./pages/school/ClubWorkspace').th
 const ClubMemberProfilePage = lazy(() => import('./pages/school/ClubWorkspace').then((module) => ({ default: module.ClubMemberProfilePage })))
 const HospitalityWorkspace = lazy(() => import('./pages/hospitality/HospitalityWorkspace').then((module) => ({ default: module.HospitalityWorkspace })))
 const PublicHospitalityProfile = lazy(() => import('./pages/hospitality/HospitalityWorkspace').then((module) => ({ default: module.PublicHospitalityProfile })))
+const PublicHospitalityStaffProfile = lazy(() => import('./pages/hospitality/HospitalityStaffCards').then((module) => ({ default: module.PublicHospitalityStaffProfile })))
+const PublicVenueCard = lazy(() => import('./pages/hospitality/HospitalityStaffCards').then((module) => ({ default: module.PublicVenueCard })))
 const MigrationNeededPage = lazy(() => import('./pages/migration/MigrationNeededPage').then((module) => ({ default: module.MigrationNeededPage })))
 
 const CardEditorPage = lazy(() =>
@@ -142,6 +144,8 @@ function AppRoutes() {
     return <PublicClubMemberCard />
   }
 
+  if (/^\/venue\/card\/[^/]+\/?$/.test(path)) return <PublicVenueCard />
+  if (/^\/venue\/[^/]+\/staff\/[^/]+\/?$/.test(path)) return <PublicHospitalityStaffProfile />
   if (/^\/venue\/[^/]+\/?$/.test(path)) {
     return <PublicHospitalityProfile />
   }

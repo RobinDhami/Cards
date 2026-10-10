@@ -8,10 +8,10 @@ import QrCode from 'lucide-react/dist/esm/icons/qr-code.js'
 import Settings from 'lucide-react/dist/esm/icons/settings.js'
 import Upload from 'lucide-react/dist/esm/icons/upload.js'
 import Utensils from 'lucide-react/dist/esm/icons/utensils.js'
-import UserRound from 'lucide-react/dist/esm/icons/user-round.js'
 import Users from 'lucide-react/dist/esm/icons/users.js'
 import Palette from 'lucide-react/dist/esm/icons/palette.js'
 import Info from 'lucide-react/dist/esm/icons/info.js'
+import Store from 'lucide-react/dist/esm/icons/store.js'
 import { queryString } from '../../lib/api'
 import { platformNavigation } from '../../components/manage/platformNavigation'
 import { workspaceMemberNavigation } from './organizationModuleConfig'
@@ -20,7 +20,7 @@ export function withSchool(path: string, schoolId?: number | null) {
   return `${path}${schoolId ? queryString({ school: schoolId }) : ''}`
 }
 
-export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = false, organizationType = '') {
+export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = false, organizationType = '', capabilities?: string[]) {
   const path = window.location.pathname
   const search = window.location.search
 
@@ -28,15 +28,21 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
     const workspaceRoot = `/dashboard/organizations/${schoolId}`
     if (organizationType === 'hospitality') {
       const hospitalityRoot = `${workspaceRoot}/hospitality`
-      const section = new URLSearchParams(search).get('tab') || 'profile'
-      return [
-        { label: 'Profile', href: `${hospitalityRoot}/?tab=profile`, icon: UserRound, active: path.startsWith(hospitalityRoot) && section === 'profile' },
+      const section = new URLSearchParams(search).get('tab') || 'overview'
+      const items = [
+        { label: 'Overview', href: `${hospitalityRoot}/?tab=overview`, icon: LayoutDashboard, active: path.startsWith(hospitalityRoot) && section === 'overview' },
+        { label: 'Business Profile', href: `${hospitalityRoot}/?tab=profile`, icon: Store, active: path.startsWith(hospitalityRoot) && section === 'profile' },
         { label: 'Menu', href: `${hospitalityRoot}/?tab=menu`, icon: Utensils, active: path.startsWith(hospitalityRoot) && section === 'menu' },
         { label: 'Feedback', href: `${hospitalityRoot}/?tab=feedback`, icon: MessageSquare, active: path.startsWith(hospitalityRoot) && section === 'feedback' },
-        { label: 'Staff Profiles', href: `${workspaceRoot}/members/`, icon: Users, active: path.includes('/members') },
+        { label: 'Staff & Cards', href: `${hospitalityRoot}/?tab=staff`, icon: Users, active: path.startsWith(hospitalityRoot) && section === 'staff' },
         { label: 'Analytics', href: `${hospitalityRoot}/?tab=analytics`, icon: BarChart3, active: path.startsWith(hospitalityRoot) && section === 'analytics' },
         { label: 'Settings', href: `${workspaceRoot}/settings/`, icon: Settings, active: path.includes('/settings') },
       ]
+      const capabilityFor: Record<string, string> = {
+        Overview: 'overview', 'Business Profile': 'profile', Menu: 'menu', Feedback: 'feedback',
+        'Staff & Cards': 'staff', Analytics: 'analytics', Settings: 'settings',
+      }
+      return capabilities ? items.filter((item) => capabilities.includes(capabilityFor[item.label])) : items
     }
     if (organizationType === 'club') {
       const clubRoot = `${workspaceRoot}/club`

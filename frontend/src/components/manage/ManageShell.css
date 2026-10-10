@@ -408,3 +408,31 @@
     padding: 12px;
   }
 }
+
+@media (max-width: 640px) {
+  .manage-app--hospitality .manage-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .manage-app--hospitality .manage-header-actions {
+    display: grid;
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 7px;
+  }
+
+  .manage-app--hospitality .manage-school-select {
+    display: block;
+    min-width: 0;
+  }
+
+  .manage-app--hospitality .manage-school-select select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .manage-app--hospitality .manage-header-actions > .manage-icon-button {
+    display: none;
+  }
+}

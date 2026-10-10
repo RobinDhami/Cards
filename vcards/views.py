@@ -287,15 +287,22 @@ def _get_owned_professional_profile(user):
 
 
 def _workspace_contexts(user):
-    """Return only workspaces explicitly owned by this authenticated user."""
+    """Return only workspaces explicitly assigned to this authenticated user."""
     contexts = []
-    for organization in College.objects.filter(admin_user=user).order_by('id'):
+    from .organization_access import accessible_organizations, organization_role
+    for organization in accessible_organizations(user).order_by('id'):
+        role = organization_role(user, organization)
+        if not role:
+            continue
+        destination = reverse('dashboard_organization_workspace', args=[organization.id])
+        if organization.organization_type == 'hospitality':
+            destination = f'/dashboard/organizations/{organization.id}/hospitality/?tab=overview'
         contexts.append({
             'key': f'organization:{organization.id}',
-            'role': 'school_admin',
+            'role': role,
             'label': organization.name,
             'description': 'Organization Workspace',
-            'destination': reverse('dashboard_organization_workspace', args=[organization.id]),
+            'destination': destination,
         })
     for profile in StudentProfile.objects.filter(auth_user=user).order_by('id'):
         contexts.append({

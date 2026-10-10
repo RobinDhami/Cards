@@ -30,6 +30,7 @@ import { ManageShell } from '../../components/manage/ManageShell'
 import { apiFetch, backendHref, displayError, jsonBody, queryString } from '../../lib/api'
 import { schoolWorkspaceNav, withSchool } from './schoolWorkspaceNav'
 import { dashboardMetrics, moduleConfig } from './organizationModuleConfig'
+import { HospitalitySettingsPage } from '../hospitality/HospitalitySettings'
 import './SchoolDashboard.css'
 
 type Choice = { value: string; label: string }
@@ -634,6 +635,7 @@ export function SchoolReportsPage() {
 
 export function SchoolSettingsPage() {
   const schoolId = selectedSchoolId()
+  const [isHospitality, setIsHospitality] = useState<boolean | null>(null)
   const [shell, setShell] = useState<DashboardShellData | null>(null)
   const [school, setSchool] = useState<SchoolSummary | null>(null)
   const [values, setValues] = useState<Record<string, string>>({})
@@ -645,6 +647,13 @@ export function SchoolSettingsPage() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
+    apiFetch<{ shell: { currentSchool: { organizationType: string } } }>(`/api/organizations/${schoolId}/venue/settings/`)
+      .then((payload) => setIsHospitality(payload.shell.currentSchool.organizationType === 'hospitality'))
+      .catch(() => setIsHospitality(false))
+  }, [schoolId])
+
+  useEffect(() => {
+    if (isHospitality !== false) return
     apiFetch<{ shell: DashboardShellData; school: SchoolSummary }>(`/api/dashboard/settings/${queryString({ school: schoolId })}`)
       .then((payload) => {
         setShell(payload.shell)
@@ -679,7 +688,9 @@ export function SchoolSettingsPage() {
         })
       })
       .catch((reason) => setError(displayError(reason)))
-  }, [schoolId])
+  }, [schoolId, isHospitality])
+
+  if (isHospitality) return <HospitalitySettingsPage />
 
   async function save(event: FormEvent) {
     event.preventDefault()
@@ -707,6 +718,45 @@ export function SchoolSettingsPage() {
   if (!shell || !school) return <div className="manage-state">{error || 'Loading settings…'}</div>
 
   const update = (key: string, value: string) => setValues((current) => ({ ...current, [key]: value }))
+  if (school.organizationType === 'hospitality') {
+    const saveHospitalitySettings = async (event: FormEvent) => {
+      event.preventDefault()
+      setSaving(true); setError(''); setSuccess('')
+      const body = new FormData()
+      ;['organizationCode', 'organizationType', 'adminUsername', 'adminPassword'].forEach((key) => body.append(key, values[key] ?? ''))
+      try {
+        await apiFetch(`/api/dashboard/settings/${queryString({ school: school.id })}`, { method: 'POST', body })
+        setValues((current) => ({ ...current, adminPassword: '' }))
+        setSuccess('Settings saved.')
+      } catch (reason) { setError(displayError(reason)) } finally { setSaving(false) }
+    }
+    return (
+      <SchoolShell shell={shell} title="Settings" subtitle={`Account and workspace settings for ${school.name}`}>
+        <div className="manage-alert is-success school-message">
+          <strong>Public business information has one home.</strong>
+          <span>Name, contact details, location, images, links, hours, and colours are now managed in Business Profile.</span>
+          <a className="manage-button" href={`/dashboard/organizations/${school.id}/hospitality/?tab=profile`}>Open Business Profile</a>
+        </div>
+        <form onSubmit={saveHospitalitySettings}>
+          {error ? <div className="manage-alert school-message">{error}</div> : null}
+          {success ? <div className="manage-alert is-success school-message">{success}</div> : null}
+          <FormSection title="Workspace">
+            <div className="form-grid">
+              <Field label="Organization code" hint="Used for organization administration and member identifiers."><TextInput value={values.organizationCode ?? ''} onChange={(event) => update('organizationCode', event.target.value.toUpperCase())} maxLength={12} /></Field>
+              {shell.isSuperAdmin ? <Field label="Organization type"><SelectInput value={values.organizationType ?? 'hospitality'} onChange={(event) => update('organizationType', event.target.value)}><option value="hospitality">Hospitality</option><option value="business">Business</option><option value="other">Other</option></SelectInput></Field> : null}
+            </div>
+          </FormSection>
+          <FormSection title="Team access" description="Dashboard credentials are managed here and stay separate from public staff profiles.">
+            <div className="form-grid">
+              <Field label="Admin username"><TextInput value={values.adminUsername ?? ''} onChange={(event) => update('adminUsername', event.target.value)} /></Field>
+              <Field label="New password" hint="Leave blank to keep the current password."><TextInput type="password" value={values.adminPassword ?? ''} onChange={(event) => update('adminPassword', event.target.value)} /></Field>
+            </div>
+          </FormSection>
+          <div className="form-actions"><button className="manage-button is-primary" type="submit" disabled={saving}><Save size={14} />{saving ? 'Saving…' : 'Save settings'}</button></div>
+        </form>
+      </SchoolShell>
+    )
+  }
   return (
     <SchoolShell shell={shell} title="Settings" subtitle={`Branding and identity defaults for ${school.name}`}>
       <form onSubmit={save}>

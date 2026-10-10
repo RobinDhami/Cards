@@ -81,6 +81,7 @@ class CardBatchCard(models.Model):
     sale_price = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), validators=[MinValueValidator(Decimal('0.00'))])
     student_profile = models.ForeignKey('StudentProfile', on_delete=models.SET_NULL, related_name='physical_card_entries', blank=True, null=True)
     professional_profile = models.ForeignKey('professional_cards.ProfessionalProfile', on_delete=models.SET_NULL, related_name='physical_card_entries', blank=True, null=True)
+    organization = models.ForeignKey('College', on_delete=models.SET_NULL, related_name='physical_cards', blank=True, null=True)
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -133,7 +134,7 @@ class College(models.Model):
     website = models.URLField(blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
-    map_url = models.URLField(blank=True, null=True)
+    map_url = models.URLField(blank=True, null=True, max_length=1000)
     facebook = models.URLField(blank=True, null=True)
     instagram = models.URLField(blank=True, null=True)
     linkedin = models.URLField(blank=True, null=True)
@@ -171,6 +172,42 @@ class College(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class OrganizationTeamMember(models.Model):
+    ROLE_CHOICES = [
+        ('owner', 'Owner'),
+        ('manager', 'Manager'),
+        ('menu_editor', 'Menu editor'),
+    ]
+    STATUS_CHOICES = [('active', 'Active'), ('invited', 'Invited')]
+    organization = models.ForeignKey(College, on_delete=models.CASCADE, related_name='team_members')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='organization_team_memberships', blank=True, null=True)
+    invite_email = models.EmailField(blank=True)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='manager')
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default='active')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['organization', 'user'], name='organization_team_member_unique_user'),
+        ]
+        ordering = ['role', 'id']
+
+
+class OrganizationNotificationPreference(models.Model):
+    organization = models.ForeignKey(College, on_delete=models.CASCADE, related_name='notification_preferences')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='organization_notification_preferences')
+    new_feedback_email = models.BooleanField(default=True)
+    low_rating_feedback_email = models.BooleanField(default=True)
+    weekly_summary_email = models.BooleanField(default=False)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['organization', 'user'], name='organization_notification_preference_unique_user'),
+        ]
 
 
 class ClubEvent(models.Model):
