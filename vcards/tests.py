@@ -4,6 +4,7 @@ from io import BytesIO
 from zipfile import ZipFile
 
 from django.contrib.auth.models import Group, Permission, User
+from django.contrib.auth.hashers import check_password
 from django.test import Client, RequestFactory, TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -1001,46 +1002,58 @@ class SchoolDashboardScopeTests(TestCase):
         self.assertEqual(payload['shell']['currentSchool']['id'], self.school_a.id)
         self.assertEqual({member['id'] for member in payload['members']}, {self.student_a.id, teacher.id})
 
-    def test_school_username_format_only_updates_assigned_school(self):
+    def test_credential_username_update_is_school_scoped(self):
         self.client.force_login(self.school_admin_a)
         original_school_b_username = self.student_b.username
+        payload = {'username': 'school.a.student'}
+
+        denied = self.client.post(
+            reverse('react_dashboard_credentials_api', args=[self.student_b.id]),
+            data=json.dumps(payload), content_type='application/json',
+        )
+        self.assertEqual(denied.status_code, 403)
 
         response = self.client.post(
-            reverse('assign_school_usernames'),
-            {'school': self.school_b.id},
+            reverse('react_dashboard_credentials_api', args=[self.student_a.id]),
+            data=json.dumps(payload), content_type='application/json',
         )
-
-        self.assertRedirects(
-            response,
-            f"{reverse('dashboard_students')}?school={self.school_a.id}",
-            fetch_redirect_response=False,
-        )
+        self.assertEqual(response.status_code, 200, response.content)
         self.student_a.refresh_from_db()
         self.student_b.refresh_from_db()
-        self.assertTrue(self.student_a.username.startswith('school.a.'))
+        self.assertEqual(self.student_a.username, 'SCHOOL.A.STUDENT')
+        self.assertEqual(self.student_a.auth_user.username, 'SCHOOL.A.STUDENT')
         self.assertEqual(self.student_b.username, original_school_b_username)
 
-    def test_password_reset_is_post_only_and_school_scoped(self):
+    def test_password_update_requires_post_and_is_school_scoped(self):
         self.client.force_login(self.school_admin_a)
         old_password = self.student_a.password
+        other_password = self.student_b.password
+        url = reverse('react_dashboard_credentials_api', args=[self.student_a.id])
 
-        get_response = self.client.get(
-            reverse('reset_student_password', args=[self.student_a.id])
-        )
-        self.assertEqual(get_response.status_code, 405)
-
-        post_response = self.client.post(
-            reverse('reset_student_password', args=[self.student_a.id]),
-            {'next': reverse('dashboard_students')},
-        )
-        self.assertRedirects(
-            post_response,
-            reverse('dashboard_students'),
-            fetch_redirect_response=False,
-        )
+        get_response = self.client.get(url)
+        self.assertEqual(get_response.status_code, 200)
+        self.assertNotIn('password', get_response.json()['credentials'])
         self.student_a.refresh_from_db()
+        self.assertEqual(self.student_a.password, old_password)
+        self.assertEqual(self.client.put(url).status_code, 405)
+
+        payload = {'username': self.student_a.username, 'newPassword': 'UpdatedStudentPass123!'}
+        denied = self.client.post(
+            reverse('react_dashboard_credentials_api', args=[self.student_b.id]),
+            data=json.dumps(payload), content_type='application/json',
+        )
+        self.assertEqual(denied.status_code, 403)
+        response = self.client.post(
+            url, data=json.dumps(payload), content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        self.student_a.refresh_from_db()
+        self.student_b.refresh_from_db()
         self.assertNotEqual(self.student_a.password, old_password)
-        self.assertTrue(self.student_a.password.startswith('pbkdf2_'))
+        self.assertTrue(check_password(payload['newPassword'], self.student_a.password))
+        self.assertTrue(self.student_a.auth_user.check_password(payload['newPassword']))
+        self.assertTrue(self.student_a.password_change_required)
+        self.assertEqual(self.student_b.password, other_password)
 
 
 class SuperAdminOverviewV1Tests(TestCase):
@@ -1270,7 +1283,7 @@ class ReactMigrationApiTests(TestCase):
             username='react.admin',
             password='ReactAdminPass123!',
         )
-        self.school = College.objects.create(name='React Test School')
+        self.school = College.objects.create(name='React Test School', organization_code='RTS')
         self.client.force_login(self.admin)
 
     def test_vite_origin_can_complete_csrf_platform_login(self):
@@ -1300,6 +1313,7 @@ class ReactMigrationApiTests(TestCase):
                 'profile_type': 'professional',
                 'full_name': 'React Professional',
                 'slug': 'react-professional',
+                'primary_cta_type': 'contact',
                 'header_identity': 'organization',
                 'work_role': 'Chief Executive Officer',
                 'work_organization': 'React International School',
@@ -1495,7 +1509,10 @@ class OrganizationModuleTests(TestCase):
         self.assertEqual(profile['school']['sponsoringClub'], 'Lions Club Kathmandu')
         self.assertEqual(profile['school']['mapUrl'], 'https://maps.example.test/leo')
         self.assertEqual(profile['socials'], [{'key': 'instagram', 'url': 'https://instagram.example.test/leo', 'label': 'Instagram'}])
-        self.assertEqual(profile['actions']['edit'], '')
+        self.assertEqual(
+            profile['actions']['edit'],
+            f'/student/{member.id}/login/?next=/student/edit/{member.id}',
+        )
 
     def test_public_organization_name_comes_from_college_not_member_copy(self):
         school = College.objects.create(name='Canonical School', organization_type='education')
