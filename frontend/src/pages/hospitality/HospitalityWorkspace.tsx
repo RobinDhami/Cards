@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import type { FormEvent, ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { CSSProperties, FormEvent, ReactNode } from "react";
 import MessageSquare from "lucide-react/dist/esm/icons/message-square.js";
 import Eye from "lucide-react/dist/esm/icons/eye.js";
 import ExternalLink from "lucide-react/dist/esm/icons/external-link.js";
@@ -9,6 +9,12 @@ import Pencil from "lucide-react/dist/esm/icons/pencil.js";
 import Plus from "lucide-react/dist/esm/icons/plus.js";
 import Save from "lucide-react/dist/esm/icons/save.js";
 import Search from "lucide-react/dist/esm/icons/search.js";
+import ArrowRight from "lucide-react/dist/esm/icons/arrow-right.js";
+import MapPin from "lucide-react/dist/esm/icons/map-pin.js";
+import Phone from "lucide-react/dist/esm/icons/phone.js";
+import Clock from "lucide-react/dist/esm/icons/clock.js";
+import Globe from "lucide-react/dist/esm/icons/globe.js";
+import Instagram from "lucide-react/dist/esm/icons/instagram.js";
 import Star from "lucide-react/dist/esm/icons/star.js";
 import Tag from "lucide-react/dist/esm/icons/tag.js";
 import Trash2 from "lucide-react/dist/esm/icons/trash-2.js";
@@ -33,6 +39,7 @@ import { HospitalityFeedback } from "./HospitalityFeedback";
 import { HospitalityStaffCards } from "./HospitalityStaffCards";
 import { HospitalityAnalytics } from "./HospitalityAnalytics";
 import "./HospitalityWorkspace.css";
+import "./PublicCafeProfile.css";
 
 export type Venue = {
   organization: { id: number; name: string };
@@ -1684,8 +1691,25 @@ export function PublicHospitalityProfile() {
     company_website: "",
     source: feedbackSource,
   });
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const [sendingFeedback, setSendingFeedback] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [selectedMenuItem, setSelectedMenuItem] = useState<Item | null>(null);
+  const detailRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!selectedMenuItem) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    detailRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSelectedMenuItem(null);
+      if (event.key === "Tab") { event.preventDefault(); detailRef.current?.querySelector<HTMLButtonElement>("button")?.focus(); }
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => { document.removeEventListener("keydown", handleKey); document.body.style.overflow = previousOverflow; previousFocus?.focus(); };
+  }, [selectedMenuItem]);
   const track = useCallback((eventType: string, destination: string, detail = "") => {
     void apiFetch(`/api/venue/${identifier}/track/`, {
       method: "POST",
@@ -1695,14 +1719,16 @@ export function PublicHospitalityProfile() {
   useEffect(() => {
     apiFetch<Venue>(`/api/venue/${identifier}/${queryString({ source: touchpointSource, entry: entryChannel, preview: dashboardPreview })}`)
       .then(setVenue)
-      .catch(() => setVenue(null));
+      .catch(() => setLoadError(true));
   }, [dashboardPreview, entryChannel, identifier, touchpointSource]);
   if (!venue)
     return (
-      <main className="hospitality-public-state">Loading venue profile…</main>
+      <main className="hospitality-public-state">{loadError ? "This café profile could not be loaded. Please refresh to try again." : "Loading café profile…"}</main>
     );
   async function submitFeedback(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (sendingFeedback) return;
+    setSendingFeedback(true);
     try {
       await apiFetch(`/api/venue/${identifier}/feedback/`, {
         method: "POST",
@@ -1712,66 +1738,74 @@ export function PublicHospitalityProfile() {
       setFeedback({ rating: 5, comment: "", shareContact: false, contactName: "", contactEmail: "", contactPhone: "", company_website: "", source: feedbackSource });
     } catch (reason) {
       setFeedbackMessage(displayError(reason));
+    } finally {
+      setSendingFeedback(false);
     }
   }
+  const menuCategories = venue.categories.filter((category) => selectedCategory === null || category.slug === selectedCategory);
+  const menuPhoto = venue.categories.flatMap((category) => category.items || []).find((item) => item.image)?.image;
+  const initials = venue.organization.name.split(/\s+/).slice(0, 2).map((word) => word[0]).join("");
+  const openMenu = () => { setActiveTab("menu"); track("menu_open", "menu"); };
   return (
-    <main className="hospitality-public">
-      <header
-        style={{
-          background: venue.venue.coverImage
-            ? `linear-gradient(0deg, ${venue.venue.primaryColor}dd, ${venue.venue.primaryColor}55), url(${venue.venue.coverImage}) center/cover`
-            : venue.venue.primaryColor,
-        }}
-      >
-        {venue.venue.logo ? <img className="hospitality-public-logo" src={venue.venue.logo} alt="" /> : null}
-        <h1>{venue.organization.name}</h1>
-        <p>{venue.venue.description}</p>
+    <main className={`hospitality-public cafe-public ${activeTab === "menu" ? "is-menu" : ""}`} style={{ "--cafe-brand": /^#[0-9a-f]{6}$/i.test(venue.venue.primaryColor) ? venue.venue.primaryColor : "#3e5948" } as CSSProperties}>
+      <header className="cafe-header">
+        {activeTab === "home" && venue.venue.coverImage ? <img className="cafe-cover" src={venue.venue.coverImage} alt={`${venue.organization.name} café`} fetchPriority="high" /> : null}
+        <div className="cafe-identity">
+          {venue.venue.logo ? <img className="hospitality-public-logo" src={venue.venue.logo} alt="" /> : <span className="cafe-monogram" aria-hidden="true">{initials}</span>}
+          <div><h1>{venue.organization.name}</h1>
+          {activeTab === "home" && venue.venue.description ? <p className="cafe-description">{venue.venue.description}</p> : null}
+          {venue.venue.address ? <p className="cafe-location"><MapPin size={17} />{venue.venue.address}</p> : null}</div>
+        </div>
+        {activeTab === "home" ? <div className="cafe-entry-actions">
+          <button className="cafe-primary" type="button" onClick={openMenu}>Explore the menu <ArrowRight size={18} /></button>
+          <div className="cafe-quick-actions">
+            {venue.venue.mapUrl ? <a href={venue.venue.mapUrl} onClick={() => track("social_click", "directions")} target="_blank" rel="noreferrer"><MapPin size={18} />Directions</a> : null}
+            {venue.venue.phone ? <a href={`tel:${venue.venue.phone}`} onClick={() => track("social_click", "call")}><Phone size={17} />Call</a> : null}
+          </div>
+        </div> : null}
       </header>
       <nav className="hospitality-public-tabs">
         <button
+          aria-pressed={activeTab === "home"}
           className={activeTab === "home" ? "is-active" : ""}
           onClick={() => setActiveTab("home")}
         >
-          Home
+          Profile
         </button>
         <button
+          aria-pressed={activeTab === "menu"}
           className={activeTab === "menu" ? "is-active" : ""}
-          onClick={() => { setActiveTab("menu"); track("menu_open", "menu"); }}
+          onClick={openMenu}
         >
           Menu
         </button>
       </nav>
       {activeTab === "home" ? (
         <section>
-          <h2>Home</h2>
+          {venue.venue.description ? <article className="cafe-about"><h2>About</h2><p>{venue.venue.description}</p></article> : null}
           <div className="hospitality-public-contact">
-            {venue.venue.address ? <p>{venue.venue.address}</p> : null}
-            <p>{[venue.venue.phone, venue.venue.email].filter(Boolean).join(" · ")}</p>
-            {venue.venue.website ? <a href={venue.venue.website} onClick={() => track("social_click", "website")} target="_blank" rel="noreferrer">Website</a> : null}
-            {venue.venue.whatsapp ? <a href={`https://wa.me/${venue.venue.whatsapp.replace(/\D/g, "")}`} onClick={() => track("social_click", "whatsapp")} target="_blank" rel="noreferrer">WhatsApp</a> : null}
-            {venue.venue.mapUrl ? <a href={venue.venue.mapUrl} onClick={() => track("social_click", "directions")} target="_blank" rel="noreferrer">Directions</a> : null}
-            {venue.venue.reservationUrl ? <a href={venue.venue.reservationUrl} onClick={() => track("social_click", "reservation")} target="_blank" rel="noreferrer">Reserve / Book</a> : null}
-            {venue.venue.googleReviewUrl ? <a href={venue.venue.googleReviewUrl} onClick={() => track("google_review_click", "google_review")} target="_blank" rel="noreferrer">Review us on Google</a> : null}
+            {venue.venue.email ? <a href={`mailto:${venue.venue.email}`}>{venue.venue.email}</a> : null}
+            {venue.venue.reservationUrl ? <a href={venue.venue.reservationUrl} onClick={() => track("social_click", "reservation")} target="_blank" rel="noreferrer">Reserve / Book <ExternalLink size={15} /></a> : null}
           </div>
-          {Object.keys(venue.venue.openingSchedule || {}).length ? <article className="hospitality-public-hours"><h3>Opening hours</h3><dl>{openingScheduleRows(venue.venue.openingSchedule).map((row) => <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl></article> : venue.venue.openingHours ? <article className="hospitality-public-hours"><h3>Opening hours</h3><p>{venue.venue.openingHours}</p></article> : null}
-          <div className="hospitality-links">
+          {Object.keys(venue.venue.openingSchedule || {}).length ? <article className="hospitality-public-hours"><h3><Clock size={18} />Opening hours</h3><dl>{openingScheduleRows(venue.venue.openingSchedule).map((row) => <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl></article> : venue.venue.openingHours ? <article className="hospitality-public-hours"><h3><Clock size={18} />Opening hours</h3><p>{venue.venue.openingHours}</p></article> : null}
+          {(venue.venue.whatsapp || venue.venue.website || venue.links.length > 0) ? <div className="cafe-connect"><h3>Connect with us</h3><div className="hospitality-links">
+            {venue.venue.whatsapp ? <a href={`https://wa.me/${venue.venue.whatsapp.replace(/\D/g, "")}`} onClick={() => track("social_click", "whatsapp")} target="_blank" rel="noreferrer"><MessageSquare size={19} />WhatsApp</a> : null}
+            {venue.venue.website ? <a href={venue.venue.website} onClick={() => track("social_click", "website")} target="_blank" rel="noreferrer"><Globe size={19} />Website</a> : null}
             {venue.links.map((link) => (
               <a href={link.value} key={link.id} onClick={() => track("social_click", `social_${link.link_type}`)} target="_blank" rel="noreferrer">
-                {link.label || link.link_type}
+                {link.link_type === "instagram" ? <Instagram size={19} /> : <ExternalLink size={17} />}{link.label || link.link_type}
               </a>
             ))}
-          </div>
-          <p className="hospitality-rating">
-            {venue.rating.count ? `Rating: ${venue.rating.average.toFixed(1)} / 5 (${venue.rating.count})` : "No ratings yet"}
-          </p>
+          </div></div> : null}
+          {venue.rating.count > 0 ? <p className="hospitality-rating">{venue.rating.average.toFixed(1)} / 5 · {venue.rating.count} ratings</p> : null}
           {venue.feedbackEnabled ? (
             <form id="feedback" onSubmit={submitFeedback} className="hospitality-feedback">
-              <h3>Leave anonymous feedback</h3>
-              <p>Your response is private and anonymous unless you choose to share contact details.</p>
-              <label>Rating<select value={feedback.rating} onChange={(e) => { setFeedback({ ...feedback, rating: Number(e.target.value) }); track("rating_click", "rating", e.target.value) }}>
-                <option value="5">5 — Excellent</option><option value="4">4 — Good</option><option value="3">3 — Average</option><option value="2">2 — Needs improvement</option><option value="1">1 — Poor</option>
-              </select></label>
-              <label>Message <span>(optional)</span><TextArea value={feedback.comment} maxLength={2000} onChange={(e) => setFeedback({ ...feedback, comment: e.target.value })} placeholder="Tell the business about your experience" /></label>
+              <div className="cafe-feedback-heading"><h3>Share your experience</h3><span>Private feedback</span></div>
+              <p>Your response is anonymous unless you choose to share contact details.</p>
+              <div className="cafe-stars" role="group" aria-label="Rating">
+                {[1, 2, 3, 4, 5].map((rating) => <button key={rating} type="button" aria-label={`Rate ${rating} out of 5`} aria-pressed={feedback.rating === rating} onClick={() => { setFeedback({ ...feedback, rating }); track("rating_click", "rating", String(rating)); }}><Star size={27} fill="none" style={{ opacity: rating <= feedback.rating ? 1 : 0.4 }} /></button>)}
+              </div>
+              <label className="cafe-message">Message <span>(optional)</span><TextArea value={feedback.comment} maxLength={2000} onChange={(e) => setFeedback({ ...feedback, comment: e.target.value })} placeholder="Share an optional message…" /></label>
               <label className="hospitality-feedback-contact-toggle"><input type="checkbox" checked={feedback.shareContact} onChange={(e) => setFeedback({ ...feedback, shareContact: e.target.checked })} /> Share optional contact details so the business can follow up</label>
               {feedback.shareContact ? <div className="hospitality-feedback-contact-fields">
                 <label>Name <span>(optional)</span><TextInput value={feedback.contactName} maxLength={120} onChange={(e) => setFeedback({ ...feedback, contactName: e.target.value })} /></label>
@@ -1780,19 +1814,25 @@ export function PublicHospitalityProfile() {
                 <small>These details are visible only to this business and are never displayed publicly.</small>
               </div> : null}
               <label className="hospitality-feedback-honeypot" aria-hidden="true">Company website<input tabIndex={-1} autoComplete="off" value={feedback.company_website} onChange={(e) => setFeedback({ ...feedback, company_website: e.target.value })} /></label>
-              <button className="manage-button is-primary">
-                Send feedback
+              <button className="cafe-primary" disabled={sendingFeedback}>
+                {sendingFeedback ? "Sending…" : "Send feedback"}
               </button>
-              {venue.venue.googleReviewUrl ? <a className="hospitality-feedback-google" href={venue.venue.googleReviewUrl} onClick={() => track("google_review_click", "google_review")} target="_blank" rel="noreferrer">Or leave a public review on Google</a> : null}
-              {feedbackMessage ? <small>{feedbackMessage}</small> : null}
+              {venue.venue.googleReviewUrl ? <a className="hospitality-feedback-google" href={venue.venue.googleReviewUrl} onClick={() => track("google_review_click", "google_review")} target="_blank" rel="noreferrer">Review on Google</a> : null}
+              {feedbackMessage ? <small role="status">{feedbackMessage}</small> : null}
             </form>
           ) : null}
         </section>
       ) : (
         <section>
-          <h2>Menu</h2>
-          {venue.categories.map((category) => (
-            <article key={category.id}>
+          <h2 className="cafe-menu-title">Our menu</h2>
+          {venue.categories.length ? <nav className="cafe-categories" aria-label="Menu categories">
+            <button type="button" className={selectedCategory === null ? "is-active" : ""} aria-pressed={selectedCategory === null} onClick={() => setSelectedCategory(null)}>All</button>
+            {venue.categories.map((category) => <button type="button" key={category.slug} className={selectedCategory === category.slug ? "is-active" : ""} aria-pressed={selectedCategory === category.slug} onClick={() => setSelectedCategory(category.slug)}>{category.name}</button>)}
+          </nav> : null}
+          {menuPhoto ? <img className="cafe-menu-cover" src={menuPhoto} alt="" /> : null}
+          {!menuCategories.some((category) => category.items?.length) ? <p className="cafe-empty">The menu is being prepared. Please ask our team for today’s options.</p> : null}
+          {menuCategories.map((category) => (
+            <article key={category.slug}>
               <h3>{category.name}</h3>
               {category.items?.map((entry) => (
                 <button type="button" className="hospitality-menu-item" key={entry.id} onClick={() => { setSelectedMenuItem(entry); track("menu_item_click", "menu_item", entry.name); }} aria-label={`View details for ${entry.name}`}>
@@ -1819,23 +1859,24 @@ export function PublicHospitalityProfile() {
                       <small className="hospitality-badge is-sold-out">Sold out</small>
                     ) : null}
                     <p>{entry.description}</p>
-                    {entry.priceVariants?.length ? <small>{entry.priceVariants.map((variant) => `${variant.label}: ${variant.price}`).join(" · ")}</small> : null}
+                    {entry.priceVariants?.length ? <small>{entry.priceVariants.map((variant) => `${variant.label}: Rs. ${variant.price}`).join(" · ")}</small> : null}
                   </div>
-                  <b>{entry.price}</b>
+                  <b>Rs. {entry.price}</b>
                 </button>
               ))}
             </article>
           ))}
-          {selectedMenuItem ? <section className="hospitality-menu-detail" role="dialog" aria-modal="true" aria-labelledby="hospitality-menu-detail-title">
+          {selectedMenuItem ? <section ref={detailRef} className="hospitality-menu-detail" role="dialog" aria-modal="true" aria-labelledby="hospitality-menu-detail-title">
             <button type="button" onClick={() => setSelectedMenuItem(null)} aria-label="Close menu item details"><X size={18} /></button>
             {selectedMenuItem.image ? <img src={selectedMenuItem.image} alt="" /> : null}
             <h3 id="hospitality-menu-detail-title">{selectedMenuItem.name}</h3>
             <p>{selectedMenuItem.description || 'No additional description has been provided.'}</p>
-            {selectedMenuItem.priceVariants?.length ? <ul>{selectedMenuItem.priceVariants.map((variant) => <li key={variant.label}>{variant.label}: {variant.price}</li>)}</ul> : null}
-            <strong>{selectedMenuItem.price}</strong>
+            {selectedMenuItem.priceVariants?.length ? <ul>{selectedMenuItem.priceVariants.map((variant) => <li key={variant.label}>{variant.label}: Rs. {variant.price}</li>)}</ul> : null}
+            <strong>Rs. {selectedMenuItem.price}</strong>
           </section> : null}
         </section>
       )}
+      <footer className="cafe-footer">Powered by <a href="/">Tap2Connect</a></footer>
     </main>
   );
 }
