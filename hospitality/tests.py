@@ -441,13 +441,11 @@ class HospitalityWorkspaceTests(TestCase):
         self.assertEqual(payload['setup'], [
             {'key': 'profile', 'label': 'Profile published', 'complete': False},
             {'key': 'menu', 'label': 'Menu has items', 'complete': True},
-            {'key': 'staff', 'label': 'Staff profile added', 'complete': False},
             {'key': 'feedback', 'label': 'Feedback form enabled', 'complete': True},
         ])
         self.assertEqual(payload['readiness'], {
             'profileReady': False,
             'menuItemCount': 1,
-            'staffProfileCount': 0,
             'feedbackEnabled': True,
         })
         self.assertEqual(payload['organizations'], [

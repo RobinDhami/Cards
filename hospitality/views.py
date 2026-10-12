@@ -1040,7 +1040,6 @@ def venue_overview_api(request, organization_id):
         row['created_at'] = row['created_at'].isoformat()
 
     item_count = venue.menu_items.filter(is_published=True).count()
-    staff_count = venue.staff_profiles.filter(is_active=True).count()
     organizations = College.objects.filter(organization_type='hospitality').order_by('name')
     if not request.user.is_superuser:
         organizations = organizations.filter(admin_user=request.user)
@@ -1048,7 +1047,6 @@ def venue_overview_api(request, organization_id):
         {'key': 'profile', 'label': 'Profile published',
          'complete': bool(venue.is_active and venue.description.strip() and (venue.organization.phone or venue.organization.email))},
         {'key': 'menu', 'label': 'Menu has items', 'complete': item_count > 0},
-        {'key': 'staff', 'label': 'Staff profile added', 'complete': staff_count > 0},
         {'key': 'feedback', 'label': 'Feedback form enabled', 'complete': venue.feedback_enabled},
     ]
     return JsonResponse({
@@ -1061,7 +1059,6 @@ def venue_overview_api(request, organization_id):
         'readiness': {
             'profileReady': setup[0]['complete'],
             'menuItemCount': item_count,
-            'staffProfileCount': staff_count,
             'feedbackEnabled': venue.feedback_enabled,
         },
         'organizations': [{'id': item.pk, 'name': item.name} for item in organizations],

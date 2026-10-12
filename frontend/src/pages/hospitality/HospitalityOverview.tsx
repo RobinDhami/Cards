@@ -13,7 +13,6 @@ import Plus from 'lucide-react/dist/esm/icons/plus.js'
 import QrCode from 'lucide-react/dist/esm/icons/qr-code.js'
 import Store from 'lucide-react/dist/esm/icons/store.js'
 import Utensils from 'lucide-react/dist/esm/icons/utensils.js'
-import UserRound from 'lucide-react/dist/esm/icons/user-round.js'
 import X from 'lucide-react/dist/esm/icons/x.js'
 import './HospitalityOverview.css'
 
@@ -25,7 +24,7 @@ export type HospitalityOverviewData = {
   dailyVisits: Array<{ date: string; count: number }>
   recentFeedback: Feedback[]
   setup: Array<{ key: string; label: string; complete: boolean }>
-  readiness: { profileReady: boolean; menuItemCount: number; staffProfileCount: number; feedbackEnabled: boolean }
+  readiness: { profileReady: boolean; menuItemCount: number; feedbackEnabled: boolean }
   organizations: Array<{ id: number; name: string }>
   trackingNotes: { profileViews: string; googleReviewClicks: string }
 }
@@ -180,7 +179,6 @@ export function HospitalityOverview({ organizationId, publicIdentifier, organiza
     profile: { label: 'Edit business details', href: `/dashboard/organizations/${organizationId}/hospitality/?tab=profile` },
     menu: { label: 'Add menu item', href: `/dashboard/organizations/${organizationId}/hospitality/?tab=menu&action=add-item` },
     qr: { label: 'Download QR', onClick: () => setShareOpen(true) },
-    staff: { label: 'Open Staff & Cards', href: `/dashboard/organizations/${organizationId}/hospitality/?tab=staff&action=add-staff` },
     feedback: { label: 'Review profile settings', href: `/dashboard/organizations/${organizationId}/hospitality/?tab=profile` },
   }
 
@@ -228,7 +226,7 @@ export function HospitalityOverview({ organizationId, publicIdentifier, organiza
             <div className="hospitality-quick-list">
               <QuickAction href={`/dashboard/organizations/${organizationId}/hospitality/?tab=menu&action=add-item`} icon={Plus} title="Add menu item" detail="Keep your menu up to date" />
               <QuickAction href={`/dashboard/organizations/${organizationId}/hospitality/?tab=profile`} icon={Store} title="Edit profile" detail="Update business information" />
-              <QuickAction href={`/dashboard/organizations/${organizationId}/hospitality/?tab=staff&action=add-staff`} icon={UserRound} title="Staff & Cards" detail="Add staff profiles and manage physical cards" />
+              <QuickAction href={`/dashboard/organizations/${organizationId}/hospitality/?tab=staff`} icon={QrCode} title="QR & NFC touchpoints" detail="Manage café scan and tap entry points" />
               <QuickAction icon={QrCode} title="Share or download QR" detail="Help customers find your profile" onClick={() => setShareOpen(true)} />
             </div>
           </section>
