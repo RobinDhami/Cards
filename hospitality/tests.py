@@ -21,9 +21,12 @@ class HospitalityWorkspaceTests(TestCase):
         VenueMenuItem.objects.create(venue=self.venue, category=self.category, name='Pancakes', price='12.00', is_today_special=True)
 
     def test_public_payload_contains_active_ordered_menu(self):
+        self.org.slogan = 'Traditional Taste, Modern Vibes'
+        self.org.save(update_fields=['slogan'])
         response = self.client.get(f'/api/venue/{self.venue.public_identifier}/')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['categories'][0]['items'][0]['name'], 'Pancakes')
+        self.assertEqual(response.json()['organization']['slogan'], self.org.slogan)
 
     def test_menu_item_rejects_cross_venue_category(self):
         other = VenueProfile.objects.create(organization=College.objects.create(name='Other Cafe', organization_code='OTHER'))

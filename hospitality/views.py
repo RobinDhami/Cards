@@ -203,7 +203,7 @@ def _payload(request, venue):
         if items:
             categories.append({'name': category.name, 'slug': category.slug, 'items': items})
     return {
-        'organization': {'id': venue.organization_id, 'name': venue.organization.name},
+        'organization': {'id': venue.organization_id, 'name': venue.organization.name, 'slogan': venue.organization.slogan or ''},
         'venue': {'publicIdentifier': venue.public_identifier, 'type': venue.venue_type, 'description': venue.description or venue.organization.description or '',
                   'logo': _file_url(request, venue.logo or venue.organization.logo), 'coverImage': _file_url(request, venue.cover_image or venue.organization.cover_photo),
                   'primaryColor': venue.primary_color, 'secondaryColor': venue.secondary_color,

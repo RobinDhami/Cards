@@ -9,7 +9,13 @@ import Pencil from "lucide-react/dist/esm/icons/pencil.js";
 import Plus from "lucide-react/dist/esm/icons/plus.js";
 import Save from "lucide-react/dist/esm/icons/save.js";
 import Search from "lucide-react/dist/esm/icons/search.js";
-import ArrowRight from "lucide-react/dist/esm/icons/arrow-right.js";
+import ArrowLeft from "lucide-react/dist/esm/icons/arrow-left.js";
+import Share2 from "lucide-react/dist/esm/icons/share-2.js";
+import House from "lucide-react/dist/esm/icons/house.js";
+import Coffee from "lucide-react/dist/esm/icons/coffee.js";
+import CakeSlice from "lucide-react/dist/esm/icons/cake-slice.js";
+import Leaf from "lucide-react/dist/esm/icons/leaf.js";
+import Facebook from "lucide-react/dist/esm/icons/facebook.js";
 import MapPin from "lucide-react/dist/esm/icons/map-pin.js";
 import Phone from "lucide-react/dist/esm/icons/phone.js";
 import Clock from "lucide-react/dist/esm/icons/clock.js";
@@ -42,7 +48,7 @@ import "./HospitalityWorkspace.css";
 import "./PublicCafeProfile.css";
 
 export type Venue = {
-  organization: { id: number; name: string };
+  organization: { id: number; name: string; slogan?: string };
   venue: {
     publicIdentifier: string;
     type: string;
@@ -1692,6 +1698,7 @@ export function PublicHospitalityProfile() {
     source: feedbackSource,
   });
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [shareMessage, setShareMessage] = useState("");
   const [loadError, setLoadError] = useState(false);
   const [sendingFeedback, setSendingFeedback] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState("");
@@ -1743,26 +1750,48 @@ export function PublicHospitalityProfile() {
     }
   }
   const menuCategories = venue.categories.filter((category) => selectedCategory === null || category.slug === selectedCategory);
-  const menuPhoto = venue.categories.flatMap((category) => category.items || []).find((item) => item.image)?.image;
+  const today = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'Asia/Kathmandu' }).format(new Date()).toLowerCase();
+  const todaySchedule = venue.venue.openingSchedule?.[today];
+  const todayHours = todaySchedule
+    ? (todaySchedule.closed || !todaySchedule.intervals.length ? 'Closed today' : todaySchedule.intervals.map((interval) => `${interval.start}–${interval.end}`).join(', '))
+    : venue.venue.openingHours || 'View weekly hours';
   const initials = venue.organization.name.split(/\s+/).slice(0, 2).map((word) => word[0]).join("");
   const openMenu = () => { setActiveTab("menu"); track("menu_open", "menu"); };
+  const categoryIcon = (name: string) => {
+    if (/breakfast|coffee|beverage|drink/i.test(name)) return <Coffee size={17} />;
+    if (/dessert|bakery|cake/i.test(name)) return <CakeSlice size={17} />;
+    if (/snack|salad/i.test(name)) return <Leaf size={17} />;
+    return <Utensils size={17} />;
+  };
+  async function shareProfile() {
+    try {
+      if (navigator.share) await navigator.share({ title: venue!.organization.name, url: window.location.href });
+      else { await navigator.clipboard.writeText(window.location.href); setShareMessage("Profile link copied"); }
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === "AbortError")) setShareMessage("Copy the page address to share this profile.");
+    }
+  }
   return (
     <main className={`hospitality-public cafe-public ${activeTab === "menu" ? "is-menu" : ""}`} style={{ "--cafe-brand": /^#[0-9a-f]{6}$/i.test(venue.venue.primaryColor) ? venue.venue.primaryColor : "#3e5948" } as CSSProperties}>
       <header className="cafe-header">
-        {activeTab === "home" && venue.venue.coverImage ? <img className="cafe-cover" src={venue.venue.coverImage} alt={`${venue.organization.name} café`} fetchPriority="high" /> : null}
+        <div className="cafe-toolbar">
+          <button type="button" aria-label="Back to café home" onClick={() => { setActiveTab("home"); setSelectedCategory(null); }}><ArrowLeft size={21} /></button>
+          <button type="button" aria-label="Share café profile" onClick={() => void shareProfile()}><Share2 size={21} /></button>
+        </div>
+        {shareMessage ? <p role="status" className="cafe-share-status">{shareMessage}</p> : null}
+        {venue.venue.coverImage ? <img className="cafe-cover" src={venue.venue.coverImage} alt={`${venue.organization.name} café`} fetchPriority="high" /> : null}
         <div className="cafe-identity">
           {venue.venue.logo ? <img className="hospitality-public-logo" src={venue.venue.logo} alt="" /> : <span className="cafe-monogram" aria-hidden="true">{initials}</span>}
           <div><h1>{venue.organization.name}</h1>
-          {activeTab === "home" && venue.venue.description ? <p className="cafe-description">{venue.venue.description}</p> : null}
-          {venue.venue.address ? <p className="cafe-location"><MapPin size={17} />{venue.venue.address}</p> : null}</div>
+          {venue.venue.address ? <p className="cafe-location"><MapPin size={15} />{venue.venue.address}</p> : null}
+          {venue.organization.slogan ? <p className="cafe-description">{venue.organization.slogan} <Leaf size={17} /></p> : null}</div>
         </div>
-        {activeTab === "home" ? <div className="cafe-entry-actions">
-          <button className="cafe-primary" type="button" onClick={openMenu}>Explore the menu <ArrowRight size={18} /></button>
+        <div className="cafe-entry-actions">
           <div className="cafe-quick-actions">
             {venue.venue.mapUrl ? <a href={venue.venue.mapUrl} onClick={() => track("social_click", "directions")} target="_blank" rel="noreferrer"><MapPin size={18} />Directions</a> : null}
             {venue.venue.phone ? <a href={`tel:${venue.venue.phone}`} onClick={() => track("social_click", "call")}><Phone size={17} />Call</a> : null}
           </div>
-        </div> : null}
+        </div>
       </header>
       <nav className="hospitality-public-tabs">
         <button
@@ -1770,38 +1799,45 @@ export function PublicHospitalityProfile() {
           className={activeTab === "home" ? "is-active" : ""}
           onClick={() => setActiveTab("home")}
         >
-          Profile
+          <House size={20} /> Home
         </button>
         <button
           aria-pressed={activeTab === "menu"}
           className={activeTab === "menu" ? "is-active" : ""}
           onClick={openMenu}
         >
-          Menu
+          <Utensils size={20} /> Menu
         </button>
       </nav>
       {activeTab === "home" ? (
         <section>
-          {venue.venue.description ? <article className="cafe-about"><h2>About</h2><p>{venue.venue.description}</p></article> : null}
+          {venue.venue.description ? <article className="cafe-about"><Leaf size={29} /><p>{venue.venue.description}</p></article> : null}
           <div className="hospitality-public-contact">
             {venue.venue.email ? <a href={`mailto:${venue.venue.email}`}>{venue.venue.email}</a> : null}
             {venue.venue.reservationUrl ? <a href={venue.venue.reservationUrl} onClick={() => track("social_click", "reservation")} target="_blank" rel="noreferrer">Reserve / Book <ExternalLink size={15} /></a> : null}
           </div>
-          {Object.keys(venue.venue.openingSchedule || {}).length ? <article className="hospitality-public-hours"><h3><Clock size={18} />Opening hours</h3><dl>{openingScheduleRows(venue.venue.openingSchedule).map((row) => <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl></article> : venue.venue.openingHours ? <article className="hospitality-public-hours"><h3><Clock size={18} />Opening hours</h3><p>{venue.venue.openingHours}</p></article> : null}
+          {(Object.keys(venue.venue.openingSchedule || {}).length || venue.venue.openingHours) ? <details className="hospitality-public-hours">
+            <summary><span className="cafe-clock"><Clock size={23} /></span><span><strong>Opening hours</strong><span>{todayHours}</span></span><span aria-hidden="true" className="cafe-hours-chevron">›</span></summary>
+            {Object.keys(venue.venue.openingSchedule || {}).length ? <dl>{openingScheduleRows(venue.venue.openingSchedule).map((row) => <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl> : <p>{venue.venue.openingHours}</p>}
+          </details> : null}
+          {venue.venue.mapUrl ? <article className="cafe-map">
+            {venue.venue.address ? <iframe title={`Map for ${venue.organization.name}`} src={`https://maps.google.com/maps?q=${encodeURIComponent(`${venue.organization.name}, ${venue.venue.address}`)}&output=embed`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <div><MapPin size={28} />{venue.organization.name}</div>}
+            <a className="cafe-primary" href={venue.venue.mapUrl} onClick={() => track("social_click", "directions")} target="_blank" rel="noreferrer">View on Google Maps <ExternalLink size={15} /></a>
+          </article> : null}
           {(venue.venue.whatsapp || venue.venue.website || venue.links.length > 0) ? <div className="cafe-connect"><h3>Connect with us</h3><div className="hospitality-links">
-            {venue.venue.whatsapp ? <a href={`https://wa.me/${venue.venue.whatsapp.replace(/\D/g, "")}`} onClick={() => track("social_click", "whatsapp")} target="_blank" rel="noreferrer"><MessageSquare size={19} />WhatsApp</a> : null}
-            {venue.venue.website ? <a href={venue.venue.website} onClick={() => track("social_click", "website")} target="_blank" rel="noreferrer"><Globe size={19} />Website</a> : null}
+            {venue.venue.whatsapp ? <a href={`https://wa.me/${venue.venue.whatsapp.replace(/\D/g, "")}`} onClick={() => track("social_click", "whatsapp")} target="_blank" rel="noreferrer"><span className="cafe-social-icon is-whatsapp"><Phone size={24} /></span>WhatsApp</a> : null}
+            {venue.venue.website ? <a href={venue.venue.website} onClick={() => track("social_click", "website")} target="_blank" rel="noreferrer"><span className="cafe-social-icon is-website"><Globe size={24} /></span>Website</a> : null}
             {venue.links.map((link) => (
               <a href={link.value} key={link.id} onClick={() => track("social_click", `social_${link.link_type}`)} target="_blank" rel="noreferrer">
-                {link.link_type === "instagram" ? <Instagram size={19} /> : <ExternalLink size={17} />}{link.label || link.link_type}
+                <span className={`cafe-social-icon is-${link.link_type}`}>{link.link_type === "instagram" ? <Instagram size={24} /> : link.link_type === "facebook" ? <Facebook size={26} /> : <ExternalLink size={22} />}</span>{link.label || link.link_type}
               </a>
             ))}
           </div></div> : null}
           {venue.rating.count > 0 ? <p className="hospitality-rating">{venue.rating.average.toFixed(1)} / 5 · {venue.rating.count} ratings</p> : null}
           {venue.feedbackEnabled ? (
             <form id="feedback" onSubmit={submitFeedback} className="hospitality-feedback">
-              <div className="cafe-feedback-heading"><h3>Share your experience</h3><span>Private feedback</span></div>
-              <p>Your response is anonymous unless you choose to share contact details.</p>
+              <div className="cafe-feedback-heading"><h3>Share your experience</h3></div>
+              <p>Your feedback helps us improve. It is private to this café.</p>
               <div className="cafe-stars" role="group" aria-label="Rating">
                 {[1, 2, 3, 4, 5].map((rating) => <button key={rating} type="button" aria-label={`Rate ${rating} out of 5`} aria-pressed={feedback.rating === rating} onClick={() => { setFeedback({ ...feedback, rating }); track("rating_click", "rating", String(rating)); }}><Star size={27} fill="none" style={{ opacity: rating <= feedback.rating ? 1 : 0.4 }} /></button>)}
               </div>
@@ -1815,25 +1851,24 @@ export function PublicHospitalityProfile() {
               </div> : null}
               <label className="hospitality-feedback-honeypot" aria-hidden="true">Company website<input tabIndex={-1} autoComplete="off" value={feedback.company_website} onChange={(e) => setFeedback({ ...feedback, company_website: e.target.value })} /></label>
               <button className="cafe-primary" disabled={sendingFeedback}>
-                {sendingFeedback ? "Sending…" : "Send feedback"}
+                {sendingFeedback ? "Sending…" : "Submit Feedback"}
               </button>
-              {venue.venue.googleReviewUrl ? <a className="hospitality-feedback-google" href={venue.venue.googleReviewUrl} onClick={() => track("google_review_click", "google_review")} target="_blank" rel="noreferrer">Review on Google</a> : null}
               {feedbackMessage ? <small role="status">{feedbackMessage}</small> : null}
             </form>
           ) : null}
+          {venue.venue.googleReviewUrl ? <article className="cafe-google-reviews"><Globe size={30} /><h3>Google Reviews</h3><a className="cafe-primary" href={venue.venue.googleReviewUrl} onClick={() => track("google_review_click", "google_review")} target="_blank" rel="noreferrer">View on Google Reviews <ExternalLink size={15} /></a></article> : null}
         </section>
       ) : (
         <section>
           <h2 className="cafe-menu-title">Our menu</h2>
           {venue.categories.length ? <nav className="cafe-categories" aria-label="Menu categories">
             <button type="button" className={selectedCategory === null ? "is-active" : ""} aria-pressed={selectedCategory === null} onClick={() => setSelectedCategory(null)}>All</button>
-            {venue.categories.map((category) => <button type="button" key={category.slug} className={selectedCategory === category.slug ? "is-active" : ""} aria-pressed={selectedCategory === category.slug} onClick={() => setSelectedCategory(category.slug)}>{category.name}</button>)}
+            {venue.categories.map((category) => <button type="button" key={category.slug} className={selectedCategory === category.slug ? "is-active" : ""} aria-pressed={selectedCategory === category.slug} onClick={() => setSelectedCategory(category.slug)}>{categoryIcon(category.name)}{category.name}</button>)}
           </nav> : null}
-          {menuPhoto ? <img className="cafe-menu-cover" src={menuPhoto} alt="" /> : null}
           {!menuCategories.some((category) => category.items?.length) ? <p className="cafe-empty">The menu is being prepared. Please ask our team for today’s options.</p> : null}
           {menuCategories.map((category) => (
             <article key={category.slug}>
-              <h3>{category.name}</h3>
+              <h3>{category.name}<span>{category.items?.length || 0} {category.items?.length === 1 ? "item" : "items"}</span></h3>
               {category.items?.map((entry) => (
                 <button type="button" className="hospitality-menu-item" key={entry.id} onClick={() => { setSelectedMenuItem(entry); track("menu_item_click", "menu_item", entry.name); }} aria-label={`View details for ${entry.name}`}>
                   {entry.image ? (
