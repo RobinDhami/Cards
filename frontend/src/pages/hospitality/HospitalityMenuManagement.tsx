@@ -74,6 +74,7 @@ export function HospitalityMenuManagement({ organizationId, publicIdentifier }: 
   const [categoryName, setCategoryName] = useState('')
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [deletingCategory, setDeletingCategory] = useState<Category | null>(null)
+  const [deletingItem, setDeletingItem] = useState<MenuItem | null>(null)
   const [moveTarget, setMoveTarget] = useState('')
 
   const load = useCallback(async () => {
@@ -168,10 +169,11 @@ export function HospitalityMenuManagement({ organizationId, publicIdentifier }: 
     } catch (reason) { setError(displayError(reason)) }
   }
 
-  async function removeItem(id: number) {
+  async function removeItem() {
+    if (!deletingItem) return
     try {
-      await apiFetch(`/api/organizations/${organizationId}/venue/menu/items/`, { method: 'DELETE', body: jsonBody({ id }) })
-      setSelected((current) => current.filter((itemId) => itemId !== id)); await load()
+      await apiFetch(`/api/organizations/${organizationId}/venue/menu/items/`, { method: 'DELETE', body: jsonBody({ id: deletingItem.id }) })
+      setSelected((current) => current.filter((itemId) => itemId !== deletingItem.id)); setDeletingItem(null); setNotice('Menu item deleted.'); await load()
     } catch (reason) { setError(displayError(reason)) }
   }
 
@@ -264,13 +266,14 @@ export function HospitalityMenuManagement({ organizationId, publicIdentifier }: 
               <span>{categoryNames.get(item.category_id) || 'Unknown'}</span><b>{npr(item.price)}</b>
               <button type="button" className={`menu-status is-${item.is_available ? 'available' : 'sold-out'}`} onClick={() => void patchItem(item.id, { is_available: !item.is_available })}><i />{item.is_available ? 'Available' : 'Sold out'}</button>
               <label className="menu-switch"><input type="checkbox" checked={item.is_published} onChange={(event) => void patchItem(item.id, { is_published: event.target.checked })} /><i /><span>{item.is_published ? 'Published' : 'Unpublished'}</span></label>
-              <div className="menu-row-actions"><button type="button" aria-label={`Edit ${item.name}`} onClick={() => setDraft(itemDraft(item))}><Pencil size={15} /></button><button type="button" aria-label={`Duplicate ${item.name}`} onClick={() => void duplicateItem(item.id)}><Copy size={15} /></button><button type="button" disabled={index === 0 && visibleItems.length === items.length} aria-label={`Move ${item.name} up`} onClick={() => void moveItem(item.id, -1)}><ArrowUp size={15} /></button><button type="button" disabled={index === visibleItems.length - 1 && visibleItems.length === items.length} aria-label={`Move ${item.name} down`} onClick={() => void moveItem(item.id, 1)}><ArrowDown size={15} /></button><button type="button" className="is-danger" aria-label={`Delete ${item.name}`} onClick={() => void removeItem(item.id)}><Trash2 size={15} /></button></div>
+              <div className="menu-row-actions"><button type="button" aria-label={`Edit ${item.name}`} onClick={() => setDraft(itemDraft(item))}><Pencil size={15} /></button><button type="button" aria-label={`Duplicate ${item.name}`} onClick={() => void duplicateItem(item.id)}><Copy size={15} /></button><button type="button" disabled={index === 0 && visibleItems.length === items.length} aria-label={`Move ${item.name} up`} onClick={() => void moveItem(item.id, -1)}><ArrowUp size={15} /></button><button type="button" disabled={index === visibleItems.length - 1 && visibleItems.length === items.length} aria-label={`Move ${item.name} down`} onClick={() => void moveItem(item.id, 1)}><ArrowDown size={15} /></button><button type="button" className="is-danger" aria-label={`Delete ${item.name}`} onClick={() => setDeletingItem(item)}><Trash2 size={15} /></button></div>
             </article>)}
             {!visibleItems.length ? <div className="menu-list-empty"><Utensils size={23} /><strong>No menu items found</strong><p>Adjust the filters or add an item.</p></div> : null}
           </div>
         </div>
       </div>
       {deletingCategory ? <div className="menu-confirm" role="dialog" aria-modal="true" aria-labelledby="delete-category-title"><div><h2 id="delete-category-title">Delete {deletingCategory.name}?</h2>{(counts.get(deletingCategory.id) || 0) > 0 ? <><p>This category contains {counts.get(deletingCategory.id)} item(s). Choose where to move them first.</p><Field label="Move items to"><SelectInput value={moveTarget} onChange={(event) => setMoveTarget(event.target.value)}><option value="">Choose another category</option>{categories.filter((category) => category.id !== deletingCategory.id).map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}</SelectInput></Field></> : <p>The empty category will be removed.</p>}<footer><button type="button" className="manage-button" onClick={() => setDeletingCategory(null)}>Cancel</button><button type="button" className="manage-button is-primary" disabled={(counts.get(deletingCategory.id) || 0) > 0 && !moveTarget} onClick={() => void deleteCategory()}>Delete category</button></footer></div></div> : null}
+      {deletingItem ? <div className="menu-confirm" role="dialog" aria-modal="true" aria-labelledby="delete-item-title"><div><h2 id="delete-item-title">Delete {deletingItem.name}?</h2><p>This removes the item from the dashboard and public menu. This action cannot be undone.</p><footer><button type="button" className="manage-button" onClick={() => setDeletingItem(null)}>Cancel</button><button type="button" className="manage-button is-primary" onClick={() => void removeItem()}>Delete item</button></footer></div></div> : null}
       {draft ? <><button type="button" className="menu-drawer-backdrop" aria-label="Close item editor" onClick={() => setDraft(null)} /><aside className="menu-item-drawer" role="dialog" aria-modal="true" aria-labelledby="menu-item-editor-title"><header><div><h2 id="menu-item-editor-title">{draft.id ? 'Edit item' : 'Add item'}</h2><p>{draft.id ? 'Update this menu item.' : 'Create a new menu item.'}</p></div><button type="button" aria-label="Close item editor" onClick={() => setDraft(null)}><X size={20} /></button></header><form onSubmit={saveItem}><div className="menu-drawer-fields">
         <Field label="Item name"><TextInput required value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} placeholder="e.g. Chicken Momo" /></Field>
         <div className="menu-drawer-pair"><Field label="Category"><SelectInput required value={draft.category_id || ''} onChange={(event) => setDraft({ ...draft, category_id: Number(event.target.value) })}><option value="">Select category</option>{categories.map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}</SelectInput></Field><Field label="Price (NPR)"><TextInput required inputMode="decimal" value={draft.price} onChange={(event) => setDraft({ ...draft, price: event.target.value })} placeholder="e.g. 220" /></Field></div>

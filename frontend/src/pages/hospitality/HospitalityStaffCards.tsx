@@ -46,12 +46,20 @@ function StaffPreview({ staff, organizationName, organizationId, logo }: { staff
 
 function QrPanel({ touchpoint, onClose }: { touchpoint: Touchpoint; onClose: () => void }) {
   const [image, setImage] = useState('')
-  useEffect(() => { void QRCode.toDataURL(touchpoint.qrUrl, { width: 280, margin: 2, color: { dark: '#102644', light: '#ffffff' } }).then(setImage) }, [touchpoint.qrUrl])
+  const [error, setError] = useState('')
+  useEffect(() => {
+    let active = true
+    void QRCode.toDataURL(touchpoint.qrUrl, { width: 280, margin: 2, color: { dark: '#102644', light: '#ffffff' } })
+      .then((result) => { if (active) setImage(result) })
+      .catch(() => { if (active) setError('Could not generate this QR code. Close this window and try again.') })
+    return () => { active = false }
+  }, [touchpoint.qrUrl])
   return <div className="hospitality-staff-modal" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><section role="dialog" aria-modal="true" aria-labelledby="touchpoint-qr-title">
     <button type="button" onClick={onClose} aria-label="Close"><X size={19} /></button><h2 id="touchpoint-qr-title">{touchpoint.name} QR code</h2><p>Destination: {touchpoint.destination}. The source identifier is preserved for analytics.</p>
     {image ? <img src={image} alt={`QR code for ${touchpoint.name}`} /> : <div className="hospitality-qr-loading">Preparing QR…</div>}
+    {error ? <p role="alert">{error}</p> : null}
     <label>Tracked destination<input readOnly value={touchpoint.qrUrl} onFocus={(event) => event.currentTarget.select()} /></label>
-    <a className="manage-button is-primary" href={image || undefined} download={`${touchpoint.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-qr.png`}>Download QR</a>
+    <a className="manage-button is-primary" href={image || undefined} aria-disabled={!image} download={`${touchpoint.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-qr.png`}>Download QR</a>
   </section></div>
 }
 
@@ -66,6 +74,7 @@ export function HospitalityStaffCards({ organizationId, organizationName, logo }
   const [touchpoint, setTouchpoint] = useState({ name: '', destination: 'profile' })
   const [qr, setQr] = useState<Touchpoint | null>(null)
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
   const [saving, setSaving] = useState(false)
 
   const load = useCallback(async () => {
@@ -86,39 +95,46 @@ export function HospitalityStaffCards({ organizationId, organizationName, logo }
     setDraft(staff ? { id: staff.id, name: staff.name, position: staff.position, bio: staff.bio, is_active: staff.isActive, links: staff.links.map((link) => ({ ...link })), photo: null } : { ...blankDraft, links: [] })
     setDrawer(true); setError('')
   }
+  useEffect(() => {
+    if (!data || new URLSearchParams(window.location.search).get('action') !== 'add-staff') return
+    setDraft({ ...blankDraft, links: [] })
+    setDrawer(true)
+    window.history.replaceState({}, '', `${window.location.pathname}?tab=staff`)
+  }, [data])
   async function saveStaff(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setSaving(true); setError('')
+    event.preventDefault(); setSaving(true); setError(''); setNotice('')
     try {
       const body = new FormData(); body.append('action', draft.id ? 'update_staff' : 'create_staff')
       if (draft.id) body.append('id', String(draft.id))
       body.append('name', draft.name); body.append('position', draft.position); body.append('bio', draft.bio); body.append('is_active', String(draft.is_active)); body.append('links', JSON.stringify(draft.links))
       if (draft.photo) body.append('photo', draft.photo)
       await apiFetch(`/api/organizations/${organizationId}/venue/staff-cards/`, { method: 'POST', body })
-      setDrawer(false); await load()
+      setDrawer(false); setNotice(draft.id ? 'Staff profile updated.' : 'Staff profile created.'); await load()
     } catch (reason) { setError(displayError(reason)) } finally { setSaving(false) }
   }
   async function setActive(staff: Staff) {
-    try { await apiFetch(`/api/organizations/${organizationId}/venue/staff-cards/`, { method: 'PATCH', body: jsonBody({ action: 'update_staff', id: staff.id, is_active: !staff.isActive }) }); await load() }
+    try { await apiFetch(`/api/organizations/${organizationId}/venue/staff-cards/`, { method: 'PATCH', body: jsonBody({ action: 'update_staff', id: staff.id, is_active: !staff.isActive }) }); setNotice(`Staff profile ${staff.isActive ? 'deactivated' : 'activated'}.`); await load() }
     catch (reason) { setError(displayError(reason)) }
   }
   async function assignCard(targetType: 'staff' | 'touchpoint', targetId: number, cardId: number) {
     if (!cardId) return
-    try { await apiFetch(`/api/organizations/${organizationId}/venue/staff-cards/`, { method: 'POST', body: jsonBody({ action: 'assign_card', target_type: targetType, target_id: targetId, card_id: cardId }) }); await load() }
+    try { await apiFetch(`/api/organizations/${organizationId}/venue/staff-cards/`, { method: 'POST', body: jsonBody({ action: 'assign_card', target_type: targetType, target_id: targetId, card_id: cardId }) }); setNotice('Card assigned.'); await load() }
     catch (reason) { setError(displayError(reason)) }
   }
   async function unassign(assignmentId: number) {
-    try { await apiFetch(`/api/organizations/${organizationId}/venue/staff-cards/`, { method: 'DELETE', body: jsonBody({ assignment_id: assignmentId }) }); await load() }
+    try { await apiFetch(`/api/organizations/${organizationId}/venue/staff-cards/`, { method: 'DELETE', body: jsonBody({ assignment_id: assignmentId }) }); setNotice('Card unassigned.'); await load() }
     catch (reason) { setError(displayError(reason)) }
   }
   async function createTouchpoint(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    try { await apiFetch(`/api/organizations/${organizationId}/venue/staff-cards/`, { method: 'POST', body: jsonBody({ action: 'create_touchpoint', ...touchpoint }) }); setTouchpoint({ name: '', destination: 'profile' }); await load() }
+    try { await apiFetch(`/api/organizations/${organizationId}/venue/staff-cards/`, { method: 'POST', body: jsonBody({ action: 'create_touchpoint', ...touchpoint }) }); setTouchpoint({ name: '', destination: 'profile' }); setNotice('Touchpoint created.'); await load() }
     catch (reason) { setError(displayError(reason)) }
   }
 
   if (!data) return <div className="manage-state">{error || 'Loading staff and cards…'}</div>
   return <div className="hospitality-staff-page">
     {error ? <div className="manage-alert" role="alert">{error}</div> : null}
+    {notice ? <div className="manage-alert is-success" role="status">{notice}</div> : null}
     <div className="hospitality-staff-summary">
       <article><span className="is-blue"><UserRound size={20} /></span><div><strong>{data.summary.staff}</strong><p>Staff profiles</p></div></article>
       <article><span className="is-green"><BadgeCheck size={20} /></span><div><strong>{data.summary.active}</strong><p>Active profiles</p></div></article>

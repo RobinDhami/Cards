@@ -1039,18 +1039,17 @@ def venue_overview_api(request, organization_id):
     for row in recent_feedback:
         row['created_at'] = row['created_at'].isoformat()
 
-    item_count = venue.menu_items.count()
+    item_count = venue.menu_items.filter(is_published=True).count()
     staff_count = venue.staff_profiles.filter(is_active=True).count()
     organizations = College.objects.filter(organization_type='hospitality').order_by('name')
     if not request.user.is_superuser:
         organizations = organizations.filter(admin_user=request.user)
     setup = [
-        {'key': 'profile', 'label': 'Complete business profile',
-         'complete': bool(venue.description.strip() and (venue.organization.phone or venue.organization.email))},
-        {'key': 'menu', 'label': 'Add at least 5 menu items', 'complete': item_count >= 5},
-        {'key': 'staff', 'label': 'Publish a staff profile', 'complete': staff_count > 0},
-        {'key': 'feedback', 'label': 'Receive your first 10 customer feedback entries',
-         'complete': feedback.count() >= 10},
+        {'key': 'profile', 'label': 'Profile published',
+         'complete': bool(venue.is_active and venue.description.strip() and (venue.organization.phone or venue.organization.email))},
+        {'key': 'menu', 'label': 'Menu has items', 'complete': item_count > 0},
+        {'key': 'staff', 'label': 'Staff profile added', 'complete': staff_count > 0},
+        {'key': 'feedback', 'label': 'Feedback form enabled', 'complete': venue.feedback_enabled},
     ]
     return JsonResponse({
         'days': days,
@@ -1059,6 +1058,12 @@ def venue_overview_api(request, organization_id):
         'dailyVisits': [{'date': row['date'], 'count': row['profileViews']} for row in analytics['daily']],
         'recentFeedback': recent_feedback,
         'setup': setup,
+        'readiness': {
+            'profileReady': setup[0]['complete'],
+            'menuItemCount': item_count,
+            'staffProfileCount': staff_count,
+            'feedbackEnabled': venue.feedback_enabled,
+        },
         'organizations': [{'id': item.pk, 'name': item.name} for item in organizations],
         'trackingNotes': {
             'profileViews': analytics['definitions']['profileViews'],

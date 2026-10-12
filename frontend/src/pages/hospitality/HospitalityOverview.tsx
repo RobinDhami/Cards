@@ -10,8 +10,10 @@ import Download from 'lucide-react/dist/esm/icons/download.js'
 import Eye from 'lucide-react/dist/esm/icons/eye.js'
 import MessageSquare from 'lucide-react/dist/esm/icons/message-square.js'
 import Plus from 'lucide-react/dist/esm/icons/plus.js'
+import QrCode from 'lucide-react/dist/esm/icons/qr-code.js'
 import Store from 'lucide-react/dist/esm/icons/store.js'
 import Utensils from 'lucide-react/dist/esm/icons/utensils.js'
+import UserRound from 'lucide-react/dist/esm/icons/user-round.js'
 import X from 'lucide-react/dist/esm/icons/x.js'
 import './HospitalityOverview.css'
 
@@ -23,6 +25,7 @@ export type HospitalityOverviewData = {
   dailyVisits: Array<{ date: string; count: number }>
   recentFeedback: Feedback[]
   setup: Array<{ key: string; label: string; complete: boolean }>
+  readiness: { profileReady: boolean; menuItemCount: number; staffProfileCount: number; feedbackEnabled: boolean }
   organizations: Array<{ id: number; name: string }>
   trackingNotes: { profileViews: string; googleReviewClicks: string }
 }
@@ -80,7 +83,7 @@ function VisitorsChart({ values }: { values: HospitalityOverviewData['dailyVisit
             <span key={point.date}>{new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(new Date(`${point.date}T12:00:00`))}</span>
           ))}
         </div>
-      </> : <div className="hospitality-overview-empty">No profile visits have been recorded for this period yet.</div>}
+      </> : <div className="hospitality-chart-empty"><span><ArrowUpRight size={21} /></span><strong>Activity will appear after customers scan or tap your card.</strong><p>Profile visits are recorded automatically.</p></div>}
     </section>
   )
 }
@@ -94,7 +97,7 @@ function relativeDate(value: string) {
   return days === 1 ? '1 day ago' : `${days} days ago`
 }
 
-function ShareQrDialog({ url, name, onClose }: { url: string; name: string; onClose: () => void }) {
+function ShareQrDialog({ url, name, onClose, onDownloaded }: { url: string; name: string; onClose: () => void; onDownloaded: () => void }) {
   const [image, setImage] = useState('')
   const [message, setMessage] = useState('')
   const closeButton = useRef<HTMLButtonElement>(null)
@@ -139,7 +142,7 @@ function ShareQrDialog({ url, name, onClose }: { url: string; name: string; onCl
         {message ? <p className="hospitality-qr-message" role="status">{message}</p> : null}
         <div className="hospitality-qr-actions">
           <button type="button" className="manage-button" onClick={() => void copyLink()}><Clipboard size={15} />Copy link</button>
-          <a className="manage-button is-primary" href={image || undefined} download={`${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-profile-qr.png`} aria-disabled={!image}><Download size={15} />Download QR</a>
+          <a className="manage-button is-primary" href={image || undefined} download={`${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-profile-qr.png`} aria-disabled={!image} onClick={onDownloaded}><Download size={15} />Download QR</a>
         </div>
       </section>
     </div>
@@ -156,15 +159,35 @@ export function HospitalityOverview({ organizationId, publicIdentifier, organiza
   data: HospitalityOverviewData | null; loading: boolean; error: string; onRetry: () => void
 }) {
   const [shareOpen, setShareOpen] = useState(false)
+  const qrStorageKey = `tap2connect:venue:${organizationId}:qr-downloaded`
+  const [qrDownloaded, setQrDownloaded] = useState(() => window.localStorage.getItem(qrStorageKey) === 'true')
   const publicUrl = `${window.location.origin}/venue/${publicIdentifier}/`
   const closeShareDialog = useCallback(() => setShareOpen(false), [])
-  const doneCount = data?.setup.filter((step) => step.complete).length || 0
-  const checklist = data?.setup || []
+  const markQrDownloaded = useCallback(() => {
+    window.localStorage.setItem(qrStorageKey, 'true')
+    setQrDownloaded(true)
+  }, [qrStorageKey])
+  const checklist = data ? [
+    ...data.setup.slice(0, 2),
+    { key: 'qr', label: 'QR code downloaded and ready to test', complete: qrDownloaded },
+    ...data.setup.slice(2),
+  ] : []
+  const doneCount = checklist.filter((step) => step.complete).length
+  const progress = checklist.length ? Math.round((doneCount / checklist.length) * 100) : 0
+  const readyForCustomers = Boolean(data?.readiness.profileReady && data.readiness.menuItemCount > 0 && data.readiness.feedbackEnabled && qrDownloaded)
+  const incompleteSteps = checklist.filter((step) => !step.complete)
+  const stepActions: Record<string, { label: string; href?: string; onClick?: () => void }> = {
+    profile: { label: 'Edit business details', href: `/dashboard/organizations/${organizationId}/hospitality/?tab=profile` },
+    menu: { label: 'Add menu item', href: `/dashboard/organizations/${organizationId}/hospitality/?tab=menu&action=add-item` },
+    qr: { label: 'Download QR', onClick: () => setShareOpen(true) },
+    staff: { label: 'Open Staff & Cards', href: `/dashboard/organizations/${organizationId}/hospitality/?tab=staff&action=add-staff` },
+    feedback: { label: 'Review profile settings', href: `/dashboard/organizations/${organizationId}/hospitality/?tab=profile` },
+  }
 
   return (
     <div className="hospitality-overview">
       <div className="hospitality-overview-heading">
-        <div><h2>{organizationName}</h2><p>Monitor customer activity and finish setting up your digital profile.</p></div>
+        <div><h2>{organizationName}</h2><p>Everything you need to run your digital café profile.</p></div>
         <label className="hospitality-date-filter"><CalendarDays size={16} aria-hidden="true" /><span className="sr-only">Overview date range</span>
           <select value={days} onChange={(event) => onDaysChange(Number(event.target.value))}>
             <option value={7}>Last 7 days</option><option value={30}>Last 30 days</option><option value={90}>Last 90 days</option>
@@ -174,15 +197,22 @@ export function HospitalityOverview({ organizationId, publicIdentifier, organiza
       {error ? <div className="manage-alert" role="alert">{error} <button type="button" onClick={onRetry}>Retry</button></div> : null}
       {loading && !data ? <div className="hospitality-overview-loading" role="status">Loading your overview…</div> : null}
       {data ? <>
-        <div className={`hospitality-metric-grid${loading ? ' is-refreshing' : ''}`} aria-busy={loading}>
-          {metricDetails.map(({ key, ...detail }) => <MetricCard
-            key={key}
-            {...detail}
-            value={data.metrics[key]}
-            previous={data.previousMetrics[key]}
-            note={key === 'googleReviewClicks' ? 'Clicks only · not posted reviews' : undefined}
-          />)}
-        </div>
+        <section className="hospitality-readiness">
+          <div><h2>{readyForCustomers ? `${organizationName} is ready for customers` : `Finish setting up ${organizationName}`}</h2><p>{readyForCustomers ? 'Customers can scan or tap to view your profile and menu.' : 'Complete the remaining items before starting the café pilot.'}</p></div>
+          <div className="hospitality-readiness-progress"><span>Pilot setup <strong>{doneCount} of {checklist.length} complete</strong></span><i><b style={{ width: `${progress}%` }} /></i></div>
+          <button type="button" className="manage-button is-primary" onClick={() => setShareOpen(true)}><QrCode size={15} />Share QR code</button>
+        </section>
+        <section className="hospitality-attention-panel">
+          <header><div><h2>{incompleteSteps.length ? 'Needs attention' : 'Pilot setup complete'}</h2><p>{incompleteSteps.length ? 'Finish these items before inviting pilot customers.' : 'Your profile, menu, QR, staff, and feedback setup are ready.'}</p></div></header>
+          {incompleteSteps.length ? <div className="hospitality-attention-list">{incompleteSteps.map((step) => {
+            const action = stepActions[step.key]
+            return <article key={step.key}><span className="hospitality-setup-check" aria-label="Incomplete" /><div><strong>{step.label}</strong><small>{step.key === 'staff' ? 'Staff profiles and physical cards stay together in Staff & Cards.' : step.key === 'qr' ? 'Print it and test the full scan journey on a real phone.' : 'This is required for the free café pilot.'}</small></div>{action.href ? <a href={action.href}>{action.label}<ChevronRight size={15} /></a> : <button type="button" onClick={action.onClick}>{action.label}<ChevronRight size={15} /></button>}</article>
+          })}</div> : <div className="hospitality-attention-complete"><Check size={17} />No setup blockers. You can begin the café pilot.</div>}
+        </section>
+        <section className={`hospitality-activity-summary${loading ? ' is-refreshing' : ''}`} aria-busy={loading}>
+          <header><div><h2>Customer activity</h2><p>Tracked interactions from the selected period.</p></div></header>
+          <div>{metricDetails.map(({ key, icon: Icon }) => <article key={key}><Icon size={19} /><span><small>{metricDetails.find((item) => item.key === key)?.label}</small><strong>{data.metrics[key].toLocaleString()}</strong><em>Last {days} days</em></span></article>)}</div>
+        </section>
         <div className="hospitality-overview-grid">
           <VisitorsChart values={data.dailyVisits} />
           <section className="hospitality-overview-panel hospitality-recent-feedback">
@@ -195,23 +225,17 @@ export function HospitalityOverview({ organizationId, publicIdentifier, organiza
           </section>
           <section className="hospitality-overview-panel hospitality-quick-panel">
             <header><div><h2>Quick actions</h2><p>Common tasks for your business.</p></div></header>
-            <div className="hospitality-quick-grid">
+            <div className="hospitality-quick-list">
               <QuickAction href={`/dashboard/organizations/${organizationId}/hospitality/?tab=menu&action=add-item`} icon={Plus} title="Add menu item" detail="Keep your menu up to date" />
               <QuickAction href={`/dashboard/organizations/${organizationId}/hospitality/?tab=profile`} icon={Store} title="Edit profile" detail="Update business information" />
-              <QuickAction icon={Eye} title="Share QR code" detail="Help customers find your profile" onClick={() => setShareOpen(true)} />
+              <QuickAction href={`/dashboard/organizations/${organizationId}/hospitality/?tab=staff&action=add-staff`} icon={UserRound} title="Staff & Cards" detail="Add staff profiles and manage physical cards" />
+              <QuickAction icon={QrCode} title="Share or download QR" detail="Help customers find your profile" onClick={() => setShareOpen(true)} />
             </div>
           </section>
-          <section className="hospitality-overview-panel hospitality-setup-panel">
-            <header><div><h2>Setup checklist</h2><p>{doneCount} of {checklist.length} complete</p></div></header>
-            {checklist.length ? <ul>{checklist.map((step) => <li key={step.key} className={step.complete ? 'is-complete' : ''}>
-              <span className="hospitality-setup-check" aria-label={step.complete ? 'Complete' : 'Incomplete'}>{step.complete ? <Check size={13} /> : null}</span><span>{step.label}</span>
-              {!step.complete ? <ChevronRight size={16} aria-hidden="true" /> : null}
-            </li>)}</ul> : <div className="hospitality-overview-empty">Checklist is unavailable right now.</div>}
-          </section>
         </div>
-        <p className="hospitality-overview-disclaimer">Profile visits and menu opens are recorded from customer interactions. Google review clicks count button opens only; Google does not report whether a review was later submitted. {data.trackingNotes.googleReviewClicks}</p>
+        <p className="hospitality-overview-disclaimer">Profile visits and menu opens are recorded from customer interactions. Google review clicks count button opens only; Google does not report whether a review was later submitted. Ordering, loyalty, and games are planned for later phases.</p>
       </> : null}
-      {shareOpen ? <ShareQrDialog url={publicUrl} name={organizationName} onClose={closeShareDialog} /> : null}
+      {shareOpen ? <ShareQrDialog url={publicUrl} name={organizationName} onClose={closeShareDialog} onDownloaded={markQrDownloaded} /> : null}
     </div>
   )
 }

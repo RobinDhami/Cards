@@ -228,7 +228,7 @@ function VenueShell({
           ? "Platform administrator"
           : shell.role === "menu_editor" ? "Menu editor" : shell.role === "manager" ? "Manager" : "Organization owner"
       }
-      accent="#145fe2"
+      accent={school?.themePrimary || "#0b5d4b"}
       showNotifications={false}
       schoolOptions={shell.schools.length > 1 ? shell.schools : undefined}
       selectedSchool={school?.id ?? null}
@@ -1301,7 +1301,7 @@ function HospitalityAdminPanel() {
       ) : null}
       {activeTab === "feedback" ? <HospitalityFeedback organizationId={id} googleReviewUrl={venue.venue.googleReviewUrl} /> : null}
       {activeTab === "staff" ? <HospitalityStaffCards organizationId={id} organizationName={venue.organization.name} logo={venue.venue.logo} /> : null}
-      <div hidden={activeTab === "analytics" || activeTab === "menu" || activeTab === "feedback" || activeTab === "staff"}>
+      <div hidden>
         {venue && legacyProfileEnabled ? (
           <div className="hospitality-profile-grid">
             <form onSubmit={saveProfile}>

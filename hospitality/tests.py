@@ -438,6 +438,18 @@ class HospitalityWorkspaceTests(TestCase):
         self.assertEqual(sum(day['count'] for day in payload['dailyVisits']), 1)
         self.assertEqual(len(payload['recentFeedback']), 2)
         self.assertNotIn('name', payload['recentFeedback'][0])
+        self.assertEqual(payload['setup'], [
+            {'key': 'profile', 'label': 'Profile published', 'complete': False},
+            {'key': 'menu', 'label': 'Menu has items', 'complete': True},
+            {'key': 'staff', 'label': 'Staff profile added', 'complete': False},
+            {'key': 'feedback', 'label': 'Feedback form enabled', 'complete': True},
+        ])
+        self.assertEqual(payload['readiness'], {
+            'profileReady': False,
+            'menuItemCount': 1,
+            'staffProfileCount': 0,
+            'feedbackEnabled': True,
+        })
         self.assertEqual(payload['organizations'], [
             {'id': self.org.pk, 'name': self.org.name},
             {'id': managed_branch.pk, 'name': managed_branch.name},

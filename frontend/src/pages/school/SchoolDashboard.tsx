@@ -338,6 +338,10 @@ export function OrganizationWorkspaceOverview() {
   useEffect(() => {
     apiFetch<{ shell: DashboardShellData; report: ReportPayload }>(`/api/dashboard/reports/${queryString({ school: schoolId })}`)
       .then((payload) => {
+        if (payload.shell.currentSchool?.organizationType === 'hospitality') {
+          window.location.replace(`/dashboard/organizations/${schoolId}/hospitality/?tab=overview`)
+          return
+        }
         setShell(payload.shell)
         setReport(payload.report)
         document.title = `${payload.shell.currentSchool?.name || 'Organization'} Workspace | Tap2Connect`
