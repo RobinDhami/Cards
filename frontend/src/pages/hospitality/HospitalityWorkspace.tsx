@@ -19,7 +19,6 @@ import Facebook from "lucide-react/dist/esm/icons/facebook.js";
 import MapPin from "lucide-react/dist/esm/icons/map-pin.js";
 import Mail from "lucide-react/dist/esm/icons/mail.js";
 import Phone from "lucide-react/dist/esm/icons/phone.js";
-import Clock from "lucide-react/dist/esm/icons/clock.js";
 import Globe from "lucide-react/dist/esm/icons/globe.js";
 import Instagram from "lucide-react/dist/esm/icons/instagram.js";
 import Star from "lucide-react/dist/esm/icons/star.js";
@@ -1763,6 +1762,7 @@ export function PublicHospitalityProfile() {
     ? (todaySchedule.closed || !todaySchedule.intervals.length ? 'Closed today' : todaySchedule.intervals.map((interval) => `${interval.start}–${interval.end}`).join(', '))
     : venue.venue.openingHours || 'View weekly hours';
   const todayLabel = todaySchedule ? (todaySchedule.closed || !todaySchedule.intervals.length ? 'Closed today' : 'Open today') : 'Hours';
+  const hoursStatusClass = todaySchedule ? (todaySchedule.closed || !todaySchedule.intervals.length ? 'is-closed' : 'is-open') : 'is-neutral';
   const scheduleEntries = Object.entries(venue.venue.openingSchedule || {});
   const scheduleShapes = scheduleEntries.map(([, value]) => JSON.stringify(value));
   const hasVariableHours = scheduleEntries.length > 1 && new Set(scheduleShapes).size > 1;
@@ -1850,9 +1850,9 @@ export function PublicHospitalityProfile() {
           {venue.venue.description ? <article className="cafe-about"><Leaf size={29} /><p>{venue.venue.description}</p></article> : null}
           {venue.venue.reservationUrl ? <div className="hospitality-public-contact"><a href={venue.venue.reservationUrl} onClick={() => track("social_click", "reservation")} target="_blank" rel="noreferrer">Reserve / Book <ExternalLink size={15} /></a></div> : null}
           {(scheduleEntries.length || venue.venue.openingHours) ? (hasVariableHours ? <details className="hospitality-public-hours">
-            <summary><span className="cafe-clock"><Clock size={23} /></span><span><strong>{todayLabel}</strong><span>{todayDetail}</span></span><span aria-hidden="true" className="cafe-hours-chevron">›</span></summary>
+            <summary><span aria-hidden="true" className={`cafe-hours-status ${hoursStatusClass}`} /><span><strong>{todayLabel}</strong><span>{todayDetail}</span></span><span aria-hidden="true" className="cafe-hours-chevron">›</span></summary>
             {scheduleEntries.length ? <dl><div className="cafe-weekly-hours-label">Weekly hours</div>{openingScheduleRows(venue.venue.openingSchedule).map((row) => <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl> : <p>{venue.venue.openingHours}</p>}
-          </details> : <div className="cafe-simple-hours"><span className="cafe-clock"><Clock size={21} /></span><span><strong>{todayLabel}</strong><span>{todayHours}</span></span></div>) : null}
+          </details> : <div className="cafe-simple-hours"><span aria-hidden="true" className={`cafe-hours-status ${hoursStatusClass}`} /><span><strong>{todayLabel}</strong><span>{todayHours}</span></span></div>) : null}
           {venue.venue.mapUrl ? <article className="cafe-map">
             {venue.venue.address ? <iframe title={`Map for ${venue.organization.name}`} src={`https://maps.google.com/maps?q=${encodeURIComponent(`${venue.organization.name}, ${venue.venue.address}`)}&output=embed`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <div><MapPin size={28} />{venue.organization.name}</div>}
             <a className="cafe-primary" href={venue.venue.mapUrl} onClick={() => track("social_click", "directions")} target="_blank" rel="noreferrer">View on Google Maps <ExternalLink size={15} /></a>

@@ -49,13 +49,15 @@
 .cafe-public .hospitality-public-contact { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
 .cafe-public .hospitality-public-contact:empty { display: none; }
 .cafe-public .hospitality-public-contact a { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 7px 10px; border: 1px solid #e5d4bc; border-radius: 9px; color: var(--cafe-ink); font-size: 12px; font-weight: 600; overflow-wrap: anywhere; text-decoration: none; }
-.cafe-public .cafe-simple-hours { display: flex; align-items: center; gap: 14px; margin: 0 0 10px; border: 1px solid #eee6da; border-radius: 16px; padding: 12px 16px; background: #fffaf4; box-shadow: 0 3px 9px #38201605; }
+.cafe-public .cafe-simple-hours { display: flex; align-items: center; gap: 12px; margin: 0 0 10px; border: 1px solid #eee6da; border-radius: 16px; padding: 14px 16px; background: #fffaf4; box-shadow: 0 3px 9px #38201605; }
 .cafe-public .cafe-simple-hours > span:nth-child(2) { display: block; min-width: 0; }
 .cafe-public .cafe-simple-hours strong { display: block; color: var(--cafe-brand); font-size: 13px; }
 .cafe-public .cafe-simple-hours > span > span { display: block; margin-top: 3px; color: var(--cafe-muted); font-size: 13px; }
-.cafe-public .hospitality-public-hours summary { display: flex; align-items: center; gap: 16px; cursor: pointer; list-style: none; }
+.cafe-public .hospitality-public-hours summary { display: flex; align-items: center; gap: 12px; cursor: pointer; list-style: none; }
 .cafe-public .hospitality-public-hours summary::-webkit-details-marker { display: none; }
-.cafe-public .cafe-clock { display: grid; place-items: center; flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; background: var(--cafe-brand); color: #fff; }
+.cafe-public .cafe-hours-status { flex: 0 0 auto; width: 10px; height: 10px; border: 2px solid #fffaf4; border-radius: 50%; background: #8d867c; box-shadow: 0 0 0 2px #8d867c38; }
+.cafe-public .cafe-hours-status.is-open { background: #238b57; box-shadow: 0 0 0 2px #238b5738; }
+.cafe-public .cafe-hours-status.is-closed { background: #c24c42; box-shadow: 0 0 0 2px #c24c4238; }
 .cafe-public .hospitality-public-hours summary > span:nth-child(2) { flex: 1; min-width: 0; }
 .cafe-public .hospitality-public-hours summary strong { display: block; color: var(--cafe-brand); font-size: 13px; }
 .cafe-public .hospitality-public-hours summary > span > span { display: block; margin-top: 3px; white-space: pre-line; font-size: 13px; color: var(--cafe-muted); }
@@ -66,7 +68,7 @@
 .cafe-public .hospitality-public-hours dl > div { display: flex; justify-content: space-between; gap: 16px; padding: 4px 0; color: var(--cafe-muted); font-size: 12px; }
 .cafe-public .hospitality-public-hours dd { margin: 0; text-align: right; }
 .cafe-public .hospitality-public-hours > p { margin-top: 12px; white-space: pre-line; }
-.cafe-public > section > .cafe-map { position: relative; height: 120px; padding: 0; overflow: hidden; }
+.cafe-public > section > .cafe-map { position: relative; height: 170px; padding: 0; overflow: hidden; }
 .cafe-public .cafe-map iframe { width: 100%; height: 100%; border: 0; }
 .cafe-public .cafe-map > div { display: flex; align-items: center; gap: 10px; padding: 18px; }
 .cafe-public .cafe-map .cafe-primary { position: absolute; right: 12px; bottom: 10px; width: auto; min-height: 36px; font-size: 12px; }
