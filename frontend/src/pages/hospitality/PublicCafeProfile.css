@@ -31,9 +31,9 @@
 .cafe-public .cafe-location svg { flex-shrink: 0; margin-top: 2px; }
 .cafe-public .cafe-description { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-top: 6px; padding-right: 0; }
 .cafe-public .cafe-description svg { flex-shrink: 0; color: var(--cafe-brand); }
-.cafe-public .cafe-entry-actions { position: static; width: auto; padding: 13px 22px 2px; }
-.cafe-public .cafe-quick-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
-.cafe-public .cafe-quick-actions a, .cafe-public .cafe-quick-actions button { display: flex; align-items: center; justify-content: center; gap: 9px; min-height: 42px; padding: 8px 10px; border: 1px solid var(--cafe-brand); border-radius: 11px; background: #fffdf9; color: var(--cafe-brand); text-decoration: none; font-size: 12px; font-weight: 700; }
+.cafe-public .cafe-entry-actions { position: static; width: 100%; padding: 13px 22px 2px; }
+.cafe-public .cafe-quick-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; width: 100%; }
+.cafe-public .cafe-quick-actions a, .cafe-public .cafe-quick-actions button { display: flex; align-items: center; justify-content: center; gap: 9px; width: 100%; min-width: 0; min-height: 42px; padding: 8px 10px; border: 1px solid var(--cafe-brand); border-radius: 11px; background: #fffdf9; color: var(--cafe-brand); text-decoration: none; white-space: nowrap; font-size: 12px; font-weight: 700; }
 .cafe-public .cafe-quick-actions a { background: var(--cafe-brand); color: #fff; }
 .cafe-public .cafe-quick-actions button { width: 100%; }
 .cafe-public .cafe-primary { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 40px; padding: 10px 12px; border: 0; border-radius: 10px; background: var(--cafe-brand); color: #fff; text-decoration: none; font-size: 13px; font-weight: 600; }
@@ -130,9 +130,11 @@
   .cafe-public .hospitality-menu-image { width: 135px; }
 }
 @media(max-width:410px) {
-  .cafe-public h1 { margin-right: 105px; font-size: 30px; }.cafe-public .cafe-location { margin-right: 105px; font-size: 12px; }
-  .cafe-public .cafe-description { padding-right: 105px; font-size: 12px; }
-  .cafe-public .cafe-entry-actions { width: 102px; right: 16px; }
+  .cafe-public h1 { font-size: 30px; }.cafe-public .cafe-location { font-size: 12px; }
+  .cafe-public .cafe-description { font-size: 12px; }
+  .cafe-public .cafe-entry-actions { padding-inline: 16px; }
+  .cafe-public .cafe-quick-actions { gap: 7px; }
+  .cafe-public .cafe-quick-actions a, .cafe-public .cafe-quick-actions button { gap: 6px; padding-inline: 6px; font-size: 11px; }
   .cafe-public .hospitality-feedback { grid-template-columns: 1fr; }.cafe-public .cafe-stars { grid-column: 1; grid-row: auto; }
   .cafe-public .cafe-google-reviews { flex-wrap: wrap; }.cafe-public .cafe-google-reviews a { flex: 1; }
   .cafe-public.hospitality-public button.hospitality-menu-item { grid-template-columns: 110px minmax(0,1fr); }.cafe-public .hospitality-menu-image { width: 110px; }
