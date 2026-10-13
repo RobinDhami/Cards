@@ -26,6 +26,7 @@ import Star from "lucide-react/dist/esm/icons/star.js";
 import Tag from "lucide-react/dist/esm/icons/tag.js";
 import Trash2 from "lucide-react/dist/esm/icons/trash-2.js";
 import Utensils from "lucide-react/dist/esm/icons/utensils.js";
+import UserPlus from "lucide-react/dist/esm/icons/user-plus.js";
 import X from "lucide-react/dist/esm/icons/x.js";
 import {
   Field,
@@ -1781,6 +1782,25 @@ export function PublicHospitalityProfile() {
       if (!(error instanceof DOMException && error.name === "AbortError")) setShareMessage("Copy the page address to share this profile.");
     }
   }
+  function saveContact() {
+    if (!venue) return;
+    const contactVenue = venue;
+    const escapeVCard = (value: string) => value.replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/;/g, "\\;").replace(/,/g, "\\,");
+    const lines = [
+      "BEGIN:VCARD", "VERSION:3.0", `FN:${escapeVCard(contactVenue.organization.name)}`,
+      contactVenue.venue.phone ? `TEL;TYPE=WORK,VOICE:${escapeVCard(contactVenue.venue.phone)}` : "",
+      contactVenue.venue.email ? `EMAIL;TYPE=WORK:${escapeVCard(contactVenue.venue.email)}` : "",
+      contactVenue.venue.website ? `URL:${escapeVCard(contactVenue.venue.website)}` : "",
+      contactVenue.venue.address ? `ADR;TYPE=WORK:;;${escapeVCard(contactVenue.venue.address)};;;` : "",
+      "END:VCARD",
+    ].filter(Boolean).join("\r\n");
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([lines], { type: "text/vcard;charset=utf-8" }));
+    link.download = `${contactVenue.organization.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "cafe"}.vcf`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    setShareMessage("Contact card downloaded");
+  }
   return (
     <main className={`hospitality-public cafe-public ${activeTab === "menu" ? "is-menu" : ""}`} style={{ "--cafe-brand": /^#[0-9a-f]{6}$/i.test(venue.venue.primaryColor) ? venue.venue.primaryColor : "#3e5948" } as CSSProperties}>
       <header className="cafe-header">
@@ -1799,6 +1819,7 @@ export function PublicHospitalityProfile() {
         <div className="cafe-entry-actions">
           <div className="cafe-quick-actions">
             {venue.venue.phone ? <a href={`tel:${venue.venue.phone}`} onClick={() => track("social_click", "call")}><Phone size={17} />Call</a> : null}
+            <button type="button" onClick={saveContact}><UserPlus size={17} />Save contact</button>
           </div>
         </div>
       </header>
