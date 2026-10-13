@@ -149,7 +149,7 @@ export function HospitalityMenuManagement({ organizationId, publicIdentifier }: 
       }
       Object.entries(fields).forEach(([key, value]) => { if (value !== undefined) body.append(key, String(value ?? '')) })
       if (draft.image) body.append('image', draft.image)
-      await apiFetch(`/api/organizations/${organizationId}/venue/menu/items/`, { method: draft.id ? 'PATCH' : 'POST', body })
+      await apiFetch(`/api/organizations/${organizationId}/venue/menu/items/`, { method: 'POST', body })
       setDraft(null); setNotice(draft.id ? 'Menu item updated.' : 'Menu item created.'); await load()
     } catch (reason) { setError(displayError(reason)) } finally { setSaving(false) }
   }

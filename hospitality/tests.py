@@ -3,6 +3,7 @@ import json
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.utils import timezone
 from datetime import timedelta
@@ -261,6 +262,37 @@ class HospitalityWorkspaceTests(TestCase):
         self.assertTrue(item.is_available)
         self.assertFalse(item.is_today_special)
         self.assertFalse(item.is_offer)
+
+    def test_menu_item_photo_can_be_updated_with_multipart_post(self):
+        self.client.force_login(self.user)
+        item = VenueMenuItem.objects.create(
+            venue=self.venue, category=self.category, name='Plain toast', price='120'
+        )
+        item_count = VenueMenuItem.objects.count()
+        image = SimpleUploadedFile(
+            'toast.gif',
+            b'GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;',
+            content_type='image/gif',
+        )
+
+        response = self.client.post(
+            f'/api/organizations/{self.org.pk}/venue/menu/items/',
+            {
+                'id': item.pk,
+                'category_id': self.category.pk,
+                'name': 'Toast with jam',
+                'price': '140',
+                'is_available': 'true',
+                'is_published': 'true',
+                'image': image,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(VenueMenuItem.objects.count(), item_count)
+        item.refresh_from_db()
+        self.assertEqual(item.name, 'Toast with jam')
+        self.assertTrue(item.image.name.startswith('venue_menu/toast'))
 
     def test_published_sold_out_item_stays_public_and_unpublished_item_is_hidden(self):
         sold_out = VenueMenuItem.objects.create(

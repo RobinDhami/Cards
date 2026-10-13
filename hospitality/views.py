@@ -610,7 +610,8 @@ def venue_menu_items_api(request, organization_id):
             )
             VenueMenuItemVariant.objects.bulk_create([VenueMenuItemVariant(item=duplicate, label=row.label, price=row.price, display_order=row.display_order) for row in source.price_variants.all()])
         return JsonResponse({'item': _menu_item_payload(request, duplicate)}, status=201)
-    item = get_object_or_404(VenueMenuItem, pk=data.get('id'), venue=venue) if request.method == 'PATCH' else VenueMenuItem(venue=venue)
+    item_id = data.get('id')
+    item = get_object_or_404(VenueMenuItem, pk=item_id, venue=venue) if item_id else VenueMenuItem(venue=venue)
     boolean_fields = {'is_vegetarian', 'is_available', 'is_published', 'is_today_special', 'is_offer'}
     try:
         with transaction.atomic():
@@ -638,7 +639,7 @@ def venue_menu_items_api(request, organization_id):
     except (ValidationError, ValueError) as exc:
         message = _validation_message(exc) if isinstance(exc, ValidationError) else str(exc)
         return JsonResponse({'message': message}, status=400)
-    return JsonResponse({'item': _menu_item_payload(request, item)}, status=201 if request.method == 'POST' else 200)
+    return JsonResponse({'item': _menu_item_payload(request, item)}, status=200 if item_id else 201)
 
 
 @require_http_methods(['GET', 'POST', 'PATCH', 'DELETE'])
