@@ -95,10 +95,9 @@
 .cafe-public .hospitality-feedback-contact-fields label:last-of-type, .cafe-public .hospitality-feedback-contact-fields small { grid-column: 1 / -1; }
 .cafe-public .hospitality-feedback-honeypot { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .cafe-public .hospitality-feedback [role=status] { font-size: 12px; }
-.cafe-public .cafe-google-reviews { display: flex; align-items: center; gap: 12px; }
-.cafe-public .cafe-google-reviews > svg { color: #4285f4; flex-shrink: 0; }
-.cafe-public .cafe-google-reviews h3 { font-size: 17px; margin: 0; flex: 1; }
-.cafe-public .cafe-google-reviews a { width: auto; font-size: 11px; min-height: 36px; }
+.cafe-public .cafe-google-reviews { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.cafe-public .cafe-google-reviews > img { display: block; width: 128px; height: auto; }
+.cafe-public .cafe-google-reviews a { display: inline-flex; align-items: center; justify-content: center; gap: 5px; flex: 0 0 auto; min-height: 34px; padding: 7px 9px; border: 1px solid #d7c7b3; border-radius: 9px; background: transparent; color: var(--cafe-brand); text-decoration: none; white-space: nowrap; font-size: 10px; font-weight: 700; }
 .cafe-public .cafe-menu-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .cafe-public .cafe-categories { display: flex; flex-wrap: wrap; gap: 7px; margin: 0 0 10px; }
 .cafe-public .cafe-categories button { display: flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 11px; padding: 9px 14px; min-height: 38px; background: #f1e8da; color: var(--cafe-ink); font-size: 11px; font-weight: 600; }
@@ -138,6 +137,6 @@
   .cafe-public .cafe-quick-actions { gap: 7px; }
   .cafe-public .cafe-quick-actions a, .cafe-public .cafe-quick-actions button { gap: 6px; padding-inline: 6px; font-size: 11px; }
   .cafe-public .hospitality-feedback { grid-template-columns: 1fr; }.cafe-public .cafe-stars { grid-column: 1; grid-row: auto; }
-  .cafe-public .cafe-google-reviews { flex-wrap: wrap; }.cafe-public .cafe-google-reviews a { flex: 1; }
+  .cafe-public .cafe-google-reviews > img { width: 112px; }
   .cafe-public.hospitality-public button.hospitality-menu-item { grid-template-columns: 110px minmax(0,1fr); }.cafe-public .hospitality-menu-image { width: 110px; }
 }

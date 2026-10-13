@@ -46,6 +46,7 @@ import { HospitalityMenuManagement } from "./HospitalityMenuManagement";
 import { HospitalityFeedback } from "./HospitalityFeedback";
 import { HospitalityStaffCards } from "./HospitalityStaffCards";
 import { HospitalityAnalytics } from "./HospitalityAnalytics";
+import googleReviewsLogo from "../../../../theme/static/branding/google-reviews.webp";
 import "./HospitalityWorkspace.css";
 import "./PublicCafeProfile.css";
 
@@ -1889,7 +1890,7 @@ export function PublicHospitalityProfile() {
               {feedbackMessage ? <small role="status">{feedbackMessage}</small> : null}
             </form>
           ) : null}
-          {venue.venue.googleReviewUrl ? <article className="cafe-google-reviews"><Globe size={30} /><h3>Google Reviews</h3><a className="cafe-primary" href={venue.venue.googleReviewUrl} onClick={() => track("google_review_click", "google_review")} target="_blank" rel="noreferrer">View on Google Reviews <ExternalLink size={15} /></a></article> : null}
+          {venue.venue.googleReviewUrl ? <article className="cafe-google-reviews"><img src={googleReviewsLogo} alt="Google Reviews" /><a href={venue.venue.googleReviewUrl} onClick={() => track("google_review_click", "google_review")} target="_blank" rel="noreferrer">Open reviews <ExternalLink size={13} /></a></article> : null}
         </section>
       ) : (
         <section>
