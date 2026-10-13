@@ -1767,6 +1767,11 @@ export function PublicHospitalityProfile() {
   const hasVariableHours = scheduleEntries.length > 1 && new Set(scheduleShapes).size > 1;
   const todayDetail = todaySchedule && !todaySchedule.closed && todaySchedule.intervals.length ? todayHours : (hasVariableHours ? 'See weekly hours' : todayHours);
   const initials = venue.organization.name.split(/\s+/).slice(0, 2).map((word) => word[0]).join("");
+  const socialPriority: Record<string, number> = { instagram: 0, tiktok: 1, facebook: 2 };
+  const socialLinks = [...venue.links].sort((left, right) =>
+    (socialPriority[left.link_type] ?? 99) - (socialPriority[right.link_type] ?? 99)
+  );
+  const contactLinkCount = socialLinks.length + Number(Boolean(venue.venue.whatsapp)) + Number(Boolean(venue.venue.website)) + Number(Boolean(venue.venue.email));
   const openMenu = () => { setActiveTab("menu"); track("menu_open", "menu"); };
   const categoryIcon = (name: string) => {
     if (/breakfast|coffee|beverage|drink/i.test(name)) return <Coffee size={17} />;
@@ -1851,15 +1856,15 @@ export function PublicHospitalityProfile() {
             {venue.venue.address ? <iframe title={`Map for ${venue.organization.name}`} src={`https://maps.google.com/maps?q=${encodeURIComponent(`${venue.organization.name}, ${venue.venue.address}`)}&output=embed`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <div><MapPin size={28} />{venue.organization.name}</div>}
             <a className="cafe-primary" href={venue.venue.mapUrl} onClick={() => track("social_click", "directions")} target="_blank" rel="noreferrer">View on Google Maps <ExternalLink size={15} /></a>
           </article> : null}
-          {(venue.venue.email || venue.venue.whatsapp || venue.venue.website || venue.links.length > 0) ? <div className="cafe-connect"><h3>Connect with us</h3><div className="hospitality-links">
-            {venue.venue.email ? <a href={`mailto:${venue.venue.email}`}><span className="cafe-social-icon is-email"><Mail size={22} /></span>Email</a> : null}
+          {(venue.venue.email || venue.venue.whatsapp || venue.venue.website || venue.links.length > 0) ? <div className="cafe-connect"><h3>Stay connected{contactLinkCount > 4 ? <small>Swipe for more →</small> : null}</h3><div className="hospitality-links">
             {venue.venue.whatsapp ? <a href={`https://wa.me/${venue.venue.whatsapp.replace(/\D/g, "")}`} onClick={() => track("social_click", "whatsapp")} target="_blank" rel="noreferrer"><span className="cafe-social-icon is-whatsapp"><Phone size={24} /></span>WhatsApp</a> : null}
-            {venue.venue.website ? <a href={venue.venue.website} onClick={() => track("social_click", "website")} target="_blank" rel="noreferrer"><span className="cafe-social-icon is-website"><Globe size={24} /></span>Website</a> : null}
-            {venue.links.map((link) => (
+            {socialLinks.map((link) => (
               <a href={link.value} key={link.id} onClick={() => track("social_click", `social_${link.link_type}`)} target="_blank" rel="noreferrer">
                 <span className={`cafe-social-icon is-${link.link_type}`}>{link.link_type === "instagram" ? <Instagram size={24} /> : link.link_type === "facebook" ? <Facebook size={26} /> : link.link_type === "tiktok" ? <TikTokMark size={22} /> : <ExternalLink size={22} />}</span>{link.label || link.link_type}
               </a>
             ))}
+            {venue.venue.website ? <a href={venue.venue.website} onClick={() => track("social_click", "website")} target="_blank" rel="noreferrer"><span className="cafe-social-icon is-website"><Globe size={24} /></span>Website</a> : null}
+            {venue.venue.email ? <a href={`mailto:${venue.venue.email}`}><span className="cafe-social-icon is-email"><Mail size={22} /></span>Email</a> : null}
           </div></div> : null}
           {venue.rating.count > 0 ? <p className="hospitality-rating">{venue.rating.average.toFixed(1)} / 5 · {venue.rating.count} ratings</p> : null}
           {venue.feedbackEnabled ? (

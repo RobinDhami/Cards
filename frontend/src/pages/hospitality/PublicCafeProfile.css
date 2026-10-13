@@ -70,9 +70,11 @@
 .cafe-public .cafe-map iframe { width: 100%; height: 100%; border: 0; }
 .cafe-public .cafe-map > div { display: flex; align-items: center; gap: 10px; padding: 18px; }
 .cafe-public .cafe-map .cafe-primary { position: absolute; right: 12px; bottom: 10px; width: auto; min-height: 36px; font-size: 12px; }
-.cafe-public .cafe-connect h3 { margin: 0 0 10px; font-size: 18px; }
-.cafe-public .hospitality-links { display: flex; flex-wrap: wrap; justify-content: space-around; gap: 12px; margin: 0; }
-.cafe-public .hospitality-links a { display: flex; align-items: center; flex-direction: column; gap: 5px; min-width: 56px; padding: 0; background: transparent; border: 0; color: #262626; text-decoration: none; font-size: 11px; }
+.cafe-public .cafe-connect h3 { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 0 10px; font-size: 18px; }
+.cafe-public .cafe-connect h3 small { color: var(--cafe-muted); white-space: nowrap; font: 10px Arial, Helvetica, sans-serif; }
+.cafe-public .hospitality-links { display: grid; grid-auto-flow: column; grid-auto-columns: calc((100% - 36px) / 4); gap: 12px; margin: 0; padding: 0 0 3px; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: inline proximity; scrollbar-width: none; }
+.cafe-public .hospitality-links::-webkit-scrollbar { display: none; }
+.cafe-public .hospitality-links a { display: flex; align-items: center; flex-direction: column; gap: 5px; min-width: 0; padding: 0; overflow: hidden; background: transparent; border: 0; color: #262626; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; scroll-snap-align: start; }
 .cafe-public .cafe-social-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 9px; background: var(--cafe-brand); color: white; }
 .cafe-public .is-whatsapp { background: #20c55a; }.cafe-public .is-website { background: #079bfa; }.cafe-public .is-email { background: var(--cafe-brand); }.cafe-public .is-instagram { background: linear-gradient(30deg,#ffb331,#e13168,#7748ce); }.cafe-public .is-facebook { background: #087df4; }.cafe-public .is-tiktok { background: #161616; }
 .cafe-public .hospitality-rating { padding: 2px 6px 10px; font-size: 12px; }
