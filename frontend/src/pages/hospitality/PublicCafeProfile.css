@@ -38,9 +38,10 @@
 .cafe-public .cafe-quick-actions button { width: 100%; }
 .cafe-public .cafe-primary { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 40px; padding: 10px 12px; border: 0; border-radius: 10px; background: var(--cafe-brand); color: #fff; text-decoration: none; font-size: 13px; font-weight: 600; }
 .cafe-public .cafe-primary:disabled { opacity: .6; cursor: wait; }
-.cafe-public .hospitality-public-tabs { display: flex; gap: 0; padding: 0 20px; margin: 0; background: #f6f0e6; border: 0; border-bottom: 1px solid var(--cafe-line); }
-.cafe-public .hospitality-public-tabs button { display: flex; align-items: center; justify-content: center; gap: 12px; flex: 1; min-height: 48px; padding: 10px; border: 0; border-bottom: 3px solid transparent; border-radius: 0; background: transparent; color: var(--cafe-muted); font-size: 14px; font-weight: 600; }
-.cafe-public .hospitality-public-tabs button.is-active { color: var(--cafe-brand); border-bottom-color: var(--cafe-brand); }
+.cafe-public .hospitality-public-tabs { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; margin: 10px 16px 0; padding: 6px; border: 1px solid #e6dacb; border-radius: 14px; background: #f1e9dd; box-shadow: 0 5px 16px #38201610; }
+.cafe-public .hospitality-public-tabs button { display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; min-height: 46px; padding: 9px 12px; border: 0; border-radius: 10px; background: transparent; color: #625d5a; font-size: 14px; font-weight: 700; transition: background-color .18s ease,color .18s ease,box-shadow .18s ease; }
+.cafe-public .hospitality-public-tabs button.is-active { background: var(--cafe-brand); color: #fff; box-shadow: 0 4px 10px color-mix(in srgb,var(--cafe-brand) 24%,transparent); }
+.cafe-public .hospitality-public-tabs button:not(.is-active):hover { background: #fffaf4; color: var(--cafe-brand); }
 .cafe-public > section { padding: 12px 16px; }
 .cafe-public > section > article, .cafe-public .cafe-connect, .cafe-public .hospitality-feedback, .cafe-public .hospitality-public-hours { margin: 0 0 10px; border: 1px solid #eee6da; border-radius: 16px; padding: 12px 16px; background: #fffaf4; box-shadow: 0 3px 9px #38201605; }
 .cafe-public .cafe-about { display: flex; align-items: center; gap: 18px; }
@@ -126,7 +127,8 @@
 .cafe-public .cafe-footer { margin: 0 18px; padding: 10px; text-align: center; color: #999083; font-size: 10px; }
 .cafe-public .cafe-footer a { color: inherit; text-decoration: none; }
 @media(max-width:560px) {
-  .cafe-public.hospitality-public { margin: 0 auto; border: 0; border-radius: 0; min-height: 100dvh; box-shadow: none; }
+  .cafe-public.hospitality-public { margin: 0 auto; border: 0; border-radius: 0; min-height: 100dvh; overflow: visible; box-shadow: none; }
+  .cafe-public .hospitality-public-tabs { position: sticky; top: 6px; z-index: 20; }
   .cafe-public .cafe-cover { height: 205px; }
   .cafe-public h1 { font-size: 33px; }
   .cafe-public.hospitality-public button.hospitality-menu-item { grid-template-columns: 135px minmax(0,1fr); }

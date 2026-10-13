@@ -11,7 +11,8 @@ import Save from "lucide-react/dist/esm/icons/save.js";
 import Search from "lucide-react/dist/esm/icons/search.js";
 import ArrowLeft from "lucide-react/dist/esm/icons/arrow-left.js";
 import Share2 from "lucide-react/dist/esm/icons/share-2.js";
-import House from "lucide-react/dist/esm/icons/house.js";
+import Store from "lucide-react/dist/esm/icons/store.js";
+import BookOpen from "lucide-react/dist/esm/icons/book-open.js";
 import Coffee from "lucide-react/dist/esm/icons/coffee.js";
 import CakeSlice from "lucide-react/dist/esm/icons/cake-slice.js";
 import Leaf from "lucide-react/dist/esm/icons/leaf.js";
@@ -1835,14 +1836,14 @@ export function PublicHospitalityProfile() {
           className={activeTab === "home" ? "is-active" : ""}
           onClick={() => setActiveTab("home")}
         >
-          <House size={20} /> Home
+          <Store size={19} /> Home
         </button>
         <button
           aria-pressed={activeTab === "menu"}
           className={activeTab === "menu" ? "is-active" : ""}
           onClick={openMenu}
         >
-          <Utensils size={20} /> Menu
+          <BookOpen size={19} /> Menu
         </button>
       </nav>
       {activeTab === "home" ? (
