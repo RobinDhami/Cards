@@ -17,6 +17,7 @@ import CakeSlice from "lucide-react/dist/esm/icons/cake-slice.js";
 import Leaf from "lucide-react/dist/esm/icons/leaf.js";
 import Facebook from "lucide-react/dist/esm/icons/facebook.js";
 import MapPin from "lucide-react/dist/esm/icons/map-pin.js";
+import Mail from "lucide-react/dist/esm/icons/mail.js";
 import Phone from "lucide-react/dist/esm/icons/phone.js";
 import Clock from "lucide-react/dist/esm/icons/clock.js";
 import Globe from "lucide-react/dist/esm/icons/globe.js";
@@ -1673,6 +1674,10 @@ function openingScheduleRows(schedule: Venue["venue"]["openingSchedule"]) {
   });
 }
 
+function TikTokMark({ size = 22 }: { size?: number }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M14.3 3c.4 2.1 1.6 3.5 3.7 4v2.8a8.8 8.8 0 0 1-3.7-1.1v6.1a5.2 5.2 0 1 1-4.5-5.1v2.9a2.4 2.4 0 1 0 1.7 2.2V3h2.8Z" /></svg>
+}
+
 export function PublicHospitalityProfile() {
   const identifier =
     window.location.pathname.match(/^\/venue\/([^/]+)/)?.[1] || "";
@@ -1755,6 +1760,7 @@ export function PublicHospitalityProfile() {
   const todayHours = todaySchedule
     ? (todaySchedule.closed || !todaySchedule.intervals.length ? 'Closed today' : todaySchedule.intervals.map((interval) => `${interval.start}–${interval.end}`).join(', '))
     : venue.venue.openingHours || 'View weekly hours';
+  const todayLabel = todaySchedule ? (todaySchedule.closed || !todaySchedule.intervals.length ? 'Closed today' : 'Open today') : 'Hours';
   const initials = venue.organization.name.split(/\s+/).slice(0, 2).map((word) => word[0]).join("");
   const openMenu = () => { setActiveTab("menu"); track("menu_open", "menu"); };
   const categoryIcon = (name: string) => {
@@ -1813,11 +1819,11 @@ export function PublicHospitalityProfile() {
         <section>
           {venue.venue.description ? <article className="cafe-about"><Leaf size={29} /><p>{venue.venue.description}</p></article> : null}
           <div className="hospitality-public-contact">
-            {venue.venue.email ? <a href={`mailto:${venue.venue.email}`}>{venue.venue.email}</a> : null}
+            {venue.venue.email ? <a className="cafe-email-link" href={`mailto:${venue.venue.email}`}><Mail size={15} />Email us</a> : null}
             {venue.venue.reservationUrl ? <a href={venue.venue.reservationUrl} onClick={() => track("social_click", "reservation")} target="_blank" rel="noreferrer">Reserve / Book <ExternalLink size={15} /></a> : null}
           </div>
           {(Object.keys(venue.venue.openingSchedule || {}).length || venue.venue.openingHours) ? <details className="hospitality-public-hours">
-            <summary><span className="cafe-clock"><Clock size={23} /></span><span><strong>Opening hours</strong><span>{todayHours}</span></span><span aria-hidden="true" className="cafe-hours-chevron">›</span></summary>
+            <summary><span className="cafe-clock"><Clock size={23} /></span><span><strong>{todayLabel}</strong><span>{todayHours}</span></span><span aria-hidden="true" className="cafe-hours-chevron">›</span></summary>
             {Object.keys(venue.venue.openingSchedule || {}).length ? <dl>{openingScheduleRows(venue.venue.openingSchedule).map((row) => <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl> : <p>{venue.venue.openingHours}</p>}
           </details> : null}
           {venue.venue.mapUrl ? <article className="cafe-map">
@@ -1829,7 +1835,7 @@ export function PublicHospitalityProfile() {
             {venue.venue.website ? <a href={venue.venue.website} onClick={() => track("social_click", "website")} target="_blank" rel="noreferrer"><span className="cafe-social-icon is-website"><Globe size={24} /></span>Website</a> : null}
             {venue.links.map((link) => (
               <a href={link.value} key={link.id} onClick={() => track("social_click", `social_${link.link_type}`)} target="_blank" rel="noreferrer">
-                <span className={`cafe-social-icon is-${link.link_type}`}>{link.link_type === "instagram" ? <Instagram size={24} /> : link.link_type === "facebook" ? <Facebook size={26} /> : <ExternalLink size={22} />}</span>{link.label || link.link_type}
+                <span className={`cafe-social-icon is-${link.link_type}`}>{link.link_type === "instagram" ? <Instagram size={24} /> : link.link_type === "facebook" ? <Facebook size={26} /> : link.link_type === "tiktok" ? <TikTokMark size={22} /> : <ExternalLink size={22} />}</span>{link.label || link.link_type}
               </a>
             ))}
           </div></div> : null}
