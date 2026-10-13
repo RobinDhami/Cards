@@ -47,7 +47,10 @@
 .cafe-public .hospitality-public-contact { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
 .cafe-public .hospitality-public-contact:empty { display: none; }
 .cafe-public .hospitality-public-contact a { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 7px 10px; border: 1px solid #e5d4bc; border-radius: 9px; color: var(--cafe-ink); font-size: 12px; font-weight: 600; overflow-wrap: anywhere; text-decoration: none; }
-.cafe-public .hospitality-public-contact .cafe-email-link svg { color: var(--cafe-brand); }
+.cafe-public .cafe-simple-hours { display: flex; align-items: center; gap: 14px; margin: 0 0 10px; border: 1px solid #eee6da; border-radius: 16px; padding: 12px 16px; background: #fffaf4; box-shadow: 0 3px 9px #38201605; }
+.cafe-public .cafe-simple-hours > span:nth-child(2) { display: block; min-width: 0; }
+.cafe-public .cafe-simple-hours strong { display: block; color: var(--cafe-brand); font-size: 13px; }
+.cafe-public .cafe-simple-hours > span > span { display: block; margin-top: 3px; color: var(--cafe-muted); font-size: 13px; }
 .cafe-public .hospitality-public-hours summary { display: flex; align-items: center; gap: 16px; cursor: pointer; list-style: none; }
 .cafe-public .hospitality-public-hours summary::-webkit-details-marker { display: none; }
 .cafe-public .cafe-clock { display: grid; place-items: center; flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; background: var(--cafe-brand); color: #fff; }
@@ -57,6 +60,7 @@
 .cafe-public .cafe-hours-chevron { font-size: 25px; color: var(--cafe-muted); }
 .cafe-public .hospitality-public-hours[open] .cafe-hours-chevron { transform: rotate(90deg); }
 .cafe-public .hospitality-public-hours dl { margin: 14px 0 0; }
+.cafe-public .hospitality-public-hours .cafe-weekly-hours-label { padding: 0 0 6px; color: var(--cafe-brand); font-size: 11px; font-weight: 700; }
 .cafe-public .hospitality-public-hours dl > div { display: flex; justify-content: space-between; gap: 16px; padding: 4px 0; color: var(--cafe-muted); font-size: 12px; }
 .cafe-public .hospitality-public-hours dd { margin: 0; text-align: right; }
 .cafe-public .hospitality-public-hours > p { margin-top: 12px; white-space: pre-line; }
@@ -68,7 +72,7 @@
 .cafe-public .hospitality-links { display: flex; flex-wrap: wrap; justify-content: space-around; gap: 12px; margin: 0; }
 .cafe-public .hospitality-links a { display: flex; align-items: center; flex-direction: column; gap: 5px; min-width: 56px; padding: 0; background: transparent; border: 0; color: #262626; text-decoration: none; font-size: 11px; }
 .cafe-public .cafe-social-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 9px; background: var(--cafe-brand); color: white; }
-.cafe-public .is-whatsapp { background: #20c55a; }.cafe-public .is-website { background: #079bfa; }.cafe-public .is-instagram { background: linear-gradient(30deg,#ffb331,#e13168,#7748ce); }.cafe-public .is-facebook { background: #087df4; }.cafe-public .is-tiktok { background: #161616; }
+.cafe-public .is-whatsapp { background: #20c55a; }.cafe-public .is-website { background: #079bfa; }.cafe-public .is-email { background: var(--cafe-brand); }.cafe-public .is-instagram { background: linear-gradient(30deg,#ffb331,#e13168,#7748ce); }.cafe-public .is-facebook { background: #087df4; }.cafe-public .is-tiktok { background: #161616; }
 .cafe-public .hospitality-rating { padding: 2px 6px 10px; font-size: 12px; }
 .cafe-public .hospitality-feedback { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; }
 .cafe-public .cafe-feedback-heading { align-self: center; }
