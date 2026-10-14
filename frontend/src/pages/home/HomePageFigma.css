@@ -13,15 +13,16 @@
 .fig-header__inner { display: flex; align-items: center; justify-content: space-between; width: min(calc(100% - 56px), 1384px); min-height: 72px; margin-inline: auto; padding: 0 30px; border: 1px solid #ded9cf; border-radius: 14px; background: #fffdf8; box-shadow: 0 10px 28px rgba(20, 24, 34, .08); color: var(--fig-ink); }
 .fig-brand { display: inline-flex; align-items: center; gap: 10px; }
 .fig-brand .fig-brand__image { display: block; width: 44px; height: 44px; object-fit: contain; }
-.fig-brand__wordmark { display: grid; gap: 1px; }
+.fig-brand__wordmark { display: flex; align-items: center; }
 .fig-brand__wordmark strong { font-size: 22px; letter-spacing: -.055em; line-height: 1; }
-.fig-brand__wordmark small { color: var(--fig-blue); font-size: 7px; font-weight: 900; letter-spacing: .42em; line-height: 1; text-transform: uppercase; }
+.fig-brand__flag { display: inline-flex; align-items: center; margin-left: -3px; font-size: 25px; line-height: 1; filter: drop-shadow(0 2px 2px rgba(13, 30, 58, .12)); }
 .fig-nav { display: flex; align-items: center; gap: clamp(28px, 4vw, 58px); font-size: 16px; }
 .fig-nav > a:not(.fig-signin) { color: #2f3239; transition: color .2s ease; }
 .fig-nav > a:not(.fig-signin):first-child { color: var(--fig-blue); }
 .fig-nav > a:hover { color: var(--fig-blue); }
-.fig-signin { min-width: 124px; padding: 12px 26px; border: 1px solid #242731; border-radius: 999px; color: #171920; text-align: center; transition: transform .2s ease, border-color .2s ease, background .2s ease; }
-.fig-signin:hover { border-color: var(--fig-blue); background: rgba(63, 87, 255, .06); transform: translateY(-2px); }
+.fig-home .fig-signin { display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-width: 138px; padding: 13px 24px; border: 1px solid #1e58de; border-radius: 999px; color: #fff; background: linear-gradient(135deg, #142f61, #0d234a); box-shadow: 0 8px 20px rgba(29, 86, 219, .18); text-align: center; transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
+.fig-signin svg { width: 18px; height: 18px; }
+.fig-signin:hover { border-color: #3680ff; box-shadow: 0 11px 26px rgba(29, 86, 219, .3); transform: translateY(-2px); }
 .fig-menu-button { display: none; padding: 8px; border: 0; color: var(--fig-ink); background: transparent; }
 
 .fig-hero { position: relative; width: 100%; height: calc(100svh - 92px); height: calc(100dvh - 92px); min-height: 590px; max-height: calc(100dvh - 92px); overflow: hidden; color: var(--fig-white); background: #050609; }
@@ -111,7 +112,7 @@
 @media (max-width: 900px) {
   .fig-brand .fig-brand__image { width: 38px; height: 38px; }
   .fig-brand__wordmark strong { font-size: 19px; }
-  .fig-brand__wordmark small { font-size: 6px; }
+  .fig-brand__flag { font-size: 21px; }
 }
 
 /* Final Figma layout corrections from the supplied section exports. */

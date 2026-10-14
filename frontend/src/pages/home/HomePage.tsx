@@ -70,7 +70,8 @@ function BrandLogo() {
   return (
     <span className="fig-brand">
       <img className="fig-brand__image" src={brandSymbol} alt="" decoding="async" />
-      <span className="fig-brand__wordmark"><strong>Tap2Connect</strong><small>Nepal</small></span>
+      <span className="fig-brand__wordmark"><strong>Tap2Connect</strong></span>
+      <span className="fig-brand__flag" role="img" aria-label="Nepal">🇳🇵</span>
     </span>
   )
 }
@@ -94,7 +95,7 @@ function Header() {
         </button>
         <nav className={`fig-nav${menuOpen ? ' is-open' : ''}`} id="fig-navigation" aria-label="Main navigation">
           {navigation.map((item) => <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>{item.label}</a>)}
-          <a className="fig-signin" href="/login/" onClick={() => setMenuOpen(false)}>Sign in</a>
+          <a className="fig-signin" href="/login/" onClick={() => setMenuOpen(false)}>Sign in <ArrowRight /></a>
         </nav>
       </div>
     </header>
