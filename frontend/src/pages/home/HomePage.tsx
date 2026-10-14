@@ -16,8 +16,8 @@ import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left.js'
 import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right.js'
 import X from 'lucide-react/dist/esm/icons/x.js'
 import { apiFetch, displayError } from '../../lib/api'
-import homeWordmarkAsset from '../../../../theme/static/branding/tap2connect-wordmark-optimized.webp'
-import heroAsset from '../../../../theme/static/home/figma-assets/hero-card-phone-brand-transparent.webp'
+import brandSymbol from '../../../../theme/static/branding/tap2connect-symbol.png'
+import heroProfile from '../../../../theme/static/hero/professional-profile-preview.webp'
 import workflowAsset from '../../../../theme/static/home/figma-assets/workflow-phone-card-transparent.webp'
 import audienceStudent from '../../../../theme/static/home/figma-assets/audience-student-mobile.webp'
 import audienceProfessional from '../../../../theme/static/home/figma-assets/audience-professional-mobile.webp'
@@ -69,8 +69,8 @@ const studioCards = {
 function BrandLogo() {
   return (
     <span className="fig-brand">
-      <img className="fig-brand__image" src={homeWordmarkAsset} alt="" decoding="async" />
-      <span className="fig-brand__country">Nepal</span>
+      <img className="fig-brand__image" src={brandSymbol} alt="" decoding="async" />
+      <span className="fig-brand__wordmark"><strong>Tap2Connect</strong><small>Nepal</small></span>
     </span>
   )
 }
@@ -114,7 +114,16 @@ function Hero() {
           </div>
         </div>
         <div className="fig-hero__media" aria-hidden="true">
-          <img src={heroAsset} alt="" decoding="async" fetchPriority="high" />
+          <div className="fig-hero-device">
+            <div className="fig-hero-card">
+              <img src={brandSymbol} alt="" decoding="async" />
+            </div>
+            <div className="fig-hero-signal"><i /><i /><i /></div>
+            <div className="fig-hero-phone">
+              <span className="fig-hero-phone__speaker" />
+              <img src={heroProfile} alt="" decoding="async" fetchPriority="high" />
+            </div>
+          </div>
         </div>
       </div>
       <div className="fig-shell fig-hero__statement">
