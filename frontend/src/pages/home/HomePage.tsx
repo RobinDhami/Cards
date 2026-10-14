@@ -103,7 +103,7 @@ function Header() {
 
 function Hero() {
   return (
-    <section className="fig-hero" id="home" style={{ backgroundImage: `url(${heroAsset})` }}>
+    <section className="fig-hero" id="home">
       <div className="fig-shell fig-hero__layout">
         <div className="fig-hero__copy">
           <h1><span>Tap</span><span>Share</span><span>Connect.</span></h1>
@@ -112,6 +112,9 @@ function Hero() {
             <a className="fig-button fig-button--primary" href="#design-yours">Create your card <ArrowRight /></a>
             <a className="fig-button fig-button--outline" href="#how-it-works"><span className="fig-play">▶</span> See how it works</a>
           </div>
+        </div>
+        <div className="fig-hero__media" aria-hidden="true">
+          <img src={heroAsset} alt="" decoding="async" fetchPriority="high" />
         </div>
       </div>
       <div className="fig-shell fig-hero__statement">
