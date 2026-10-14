@@ -2,6 +2,7 @@ import { useEffect, useState, type CSSProperties, type FormEvent } from 'react'
 import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right.js'
 import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3.js'
 import CheckCircle2 from 'lucide-react/dist/esm/icons/check-circle-2.js'
+import CircleSlash2 from 'lucide-react/dist/esm/icons/circle-slash-2.js'
 import Facebook from 'lucide-react/dist/esm/icons/facebook.js'
 import Instagram from 'lucide-react/dist/esm/icons/instagram.js'
 import Linkedin from 'lucide-react/dist/esm/icons/linkedin.js'
@@ -10,6 +11,7 @@ import Menu from 'lucide-react/dist/esm/icons/menu.js'
 import MapPin from 'lucide-react/dist/esm/icons/map-pin.js'
 import Phone from 'lucide-react/dist/esm/icons/phone.js'
 import RefreshCw from 'lucide-react/dist/esm/icons/refresh-cw.js'
+import Settings from 'lucide-react/dist/esm/icons/settings.js'
 import ShieldCheck from 'lucide-react/dist/esm/icons/shield-check.js'
 import Sparkles from 'lucide-react/dist/esm/icons/sparkles.js'
 import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left.js'
@@ -17,7 +19,7 @@ import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right.js'
 import X from 'lucide-react/dist/esm/icons/x.js'
 import { apiFetch, displayError } from '../../lib/api'
 import brandSymbol from '../../../../theme/static/branding/tap2connect-symbol.png'
-import heroProfile from '../../../../theme/static/hero/professional-profile-preview.webp'
+import heroPerson from '../../../../theme/static/home/hero-person-phone-card-transparent.webp'
 import workflowAsset from '../../../../theme/static/home/figma-assets/workflow-phone-card-transparent.webp'
 import audienceStudent from '../../../../theme/static/home/figma-assets/audience-student-mobile.webp'
 import audienceProfessional from '../../../../theme/static/home/figma-assets/audience-professional-mobile.webp'
@@ -32,10 +34,9 @@ import './HomePageFigma.css'
 
 const navigation = [
   { label: 'Home', href: '#home' },
+  { label: 'Features', href: '#cards' },
   { label: 'How it works', href: '#how-it-works' },
-  { label: 'Products', href: '#cards' },
-  { label: 'Design yours', href: '#design-yours' },
-  { label: 'FAQ', href: '#faq' },
+  { label: 'Contact', href: '#contact' },
 ]
 
 const steps = [
@@ -95,7 +96,7 @@ function Header() {
         </button>
         <nav className={`fig-nav${menuOpen ? ' is-open' : ''}`} id="fig-navigation" aria-label="Main navigation">
           {navigation.map((item) => <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>{item.label}</a>)}
-          <a className="fig-signin" href="/login/" onClick={() => setMenuOpen(false)}>Sign in <ArrowRight /></a>
+          <a className="fig-signin" href="#design-yours" onClick={() => setMenuOpen(false)}>Get Your Card <ArrowRight /></a>
         </nav>
       </div>
     </header>
@@ -107,30 +108,24 @@ function Hero() {
     <section className="fig-hero" id="home">
       <div className="fig-shell fig-hero__layout">
         <div className="fig-hero__copy">
-          <h1><span>Tap</span><span>Share</span><span>Connect.</span></h1>
-          <p>One smart identity for your contacts, profiles, portfolios, school IDs, products, and links—shared instantly with a tap.</p>
+          <h1><span>One tap.</span><span>Endless</span><span>connections.</span></h1>
+          <p>Share your contact details, social links and business profile with a single tap.</p>
           <div className="fig-actions">
-            <a className="fig-button fig-button--primary" href="#design-yours">Create your card <ArrowRight /></a>
-            <a className="fig-button fig-button--outline" href="#how-it-works"><span className="fig-play">▶</span> See how it works</a>
+            <a className="fig-button fig-button--primary" href="#design-yours">Get Your Card <ArrowRight /></a>
+            <a className="fig-button fig-button--outline" href="#how-it-works"><span className="fig-play">▶</span> See How It Works</a>
+          </div>
+          <div className="fig-hero-benefits" aria-label="Tap2Connect benefits">
+            <span><CircleSlash2 /> No app needed</span>
+            <span><Settings /> Easy to update</span>
+            <span><ShieldCheck /> Made for your brand</span>
           </div>
         </div>
         <div className="fig-hero__media" aria-hidden="true">
-          <div className="fig-hero-device">
-            <div className="fig-hero-card">
-              <img src={brandSymbol} alt="" decoding="async" />
-            </div>
-            <div className="fig-hero-signal"><i /><i /><i /></div>
-            <div className="fig-hero-phone">
-              <span className="fig-hero-phone__speaker" />
-              <img src={heroProfile} alt="" decoding="async" fetchPriority="high" />
-            </div>
+          <div className="fig-hero-person">
+            <img className="fig-hero-person__photo" src={heroPerson} alt="" decoding="async" fetchPriority="high" />
+            <img className="fig-hero-person__card-logo" src={brandSymbol} alt="" decoding="async" />
           </div>
         </div>
-      </div>
-      <div className="fig-shell fig-hero__statement">
-        <strong>One tap. All of you.</strong>
-        <span>Simple, secure, and always up to date.</span>
-        <small>Designed in Nepal</small>
       </div>
     </section>
   )

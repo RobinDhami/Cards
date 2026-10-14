@@ -179,3 +179,54 @@
 
 @media (max-width: 900px) { .fig-card-carousel { grid-template-columns: 52% 48%; }.fig-card-carousel__copy { padding-right: 20px; }.fig-carousel-arrow--previous { left: -24px; }.fig-carousel-arrow--next { right: -24px; }.fig-studio__controls { padding-right: 0; }.fig-contact__art { margin-top: 0; }.fig-footer__grid { grid-template-columns: 1.35fr repeat(3, 1fr); }.fig-footer__brand { grid-column: 1 / -1; }.fig-footer__contact { grid-column: auto; } }
 @media (max-width: 600px) { .fig-how__top img { margin-top: 35px; }.fig-audience-card { min-height: 300px; }.fig-trust__intro { margin-bottom: 45px; }.fig-benefits article { grid-template-columns: 42px 35px 1fr; }.fig-products { min-height: 0; }.fig-card-carousel { grid-template-columns: 1fr; min-height: 590px; margin-top: 25px; }.fig-card-carousel__stage { min-height: 330px; }.fig-card-carousel__stage img { width: min(60%, 240px); max-height: 300px; }.fig-card-carousel__copy { justify-content: start; padding: 10px 38px; }.fig-card-carousel__copy h3 { font-size: 40px; }.fig-card-carousel__copy > a { width: auto; min-height: 44px; }.fig-carousel-arrow { top: 30%; }.fig-carousel-arrow--previous { left: -18px; }.fig-carousel-arrow--next { right: -18px; }.fig-studio { padding-top: 65px; }.fig-studio__preview { min-height: 420px; }.fig-contact__layout { min-height: 0; }.fig-contact__art { min-height: 340px; margin-top: 30px; }.fig-contact__artwork { object-position: 62% center; }.fig-footer__grid { grid-template-columns: 1fr 1fr; }.fig-footer__contact { grid-column: auto; }.fig-footer__base { align-items: flex-start; }.fig-footer__base strong { margin-left: 0; } }
+
+/* Light homepage header and hero. */
+.fig-header { padding: 0; background: #fffdf8; }
+.fig-header__inner { width: min(calc(100% - 80px), 1384px); min-height: 94px; padding: 0 20px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.fig-nav { gap: clamp(32px, 4vw, 64px); }
+.fig-home .fig-signin { min-width: 190px; padding: 15px 27px; border-color: #2879f2; background: linear-gradient(135deg, #2c86ff, #1769f3); box-shadow: 0 12px 26px rgba(37, 112, 239, .2); font-size: 16px; font-weight: 700; }
+
+.fig-hero { height: calc(100svh - 94px); height: calc(100dvh - 94px); min-height: 720px; max-height: none; color: #132544; background: linear-gradient(105deg, #fffdf8 0%, #fffdf8 43%, #f2f8fb 70%, #e7f5fc 100%); }
+.fig-hero__layout { grid-template-columns: 45% 55%; height: 100%; padding: 18px 0 0; }
+.fig-hero__copy { z-index: 3; padding-left: 40px; }
+.fig-hero h1 { color: #102443; font-size: clamp(68px, 6.25vw, 100px); font-weight: 800; letter-spacing: -.068em; line-height: .94; }
+.fig-hero h1 span:nth-child(2) { color: #102443; }
+.fig-hero__copy > p { max-width: 590px; margin-top: 28px; color: #526681; font-size: clamp(17px, 1.5vw, 22px); letter-spacing: -.025em; line-height: 1.48; }
+.fig-hero .fig-actions { gap: 16px; margin-top: 30px; }
+.fig-hero .fig-button { min-height: 62px; padding: 0 31px; border-radius: 999px; font-size: 16px; }
+.fig-home .fig-hero .fig-button--primary { color: #fff; background: linear-gradient(135deg, #2c86ff, #1769f3); box-shadow: 0 14px 30px rgba(37,112,239,.22); }
+.fig-hero .fig-button--outline { color: #102443; border-color: #8fa5c6; background: rgba(255,255,255,.72); }
+.fig-hero-benefits { display: flex; flex-wrap: wrap; gap: 22px 30px; margin-top: 42px; color: #263e61; }
+.fig-hero-benefits span { display: inline-flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 600; white-space: nowrap; }
+.fig-hero-benefits svg { width: 28px; height: 28px; stroke-width: 1.8; }
+.fig-hero__media { align-self: stretch; overflow: visible; padding: 0; }
+.fig-hero-person { position: relative; align-self: end; height: 95%; aspect-ratio: 1.5; transform: translateX(-34%); }
+.fig-hero-person__photo { display: block; width: 100%; height: 100%; object-fit: contain; }
+.fig-hero-person__card-logo { position: absolute; z-index: 2; top: 43.5%; left: 84.2%; width: 6.5%; height: auto; transform: rotate(-7deg); }
+
+@media (max-width: 900px) {
+  .fig-header { padding: 7px 0; }
+  .fig-header__inner { width: calc(100% - 24px); min-height: 62px; padding: 0 18px; border: 1px solid #ded9cf; border-radius: 14px; background: #fffdf8; box-shadow: 0 10px 28px rgba(20,24,34,.08); }
+  .fig-nav { gap: 4px; }
+  .fig-home .fig-signin { min-width: 0; }
+  .fig-hero { height: auto; min-height: 0; }
+  .fig-hero__layout { grid-template-columns: 1fr; height: auto; padding: 52px 0 0; }
+  .fig-hero__copy { padding: 0 20px; }
+  .fig-hero__media { width: calc(100% + 40px); height: 570px; margin: 28px -20px 0; }
+  .fig-hero-person { height: 100%; transform: translateX(-15%); }
+}
+
+@media (max-width: 600px) {
+  .fig-hero__layout { padding-top: 38px; }
+  .fig-hero__copy { padding: 0; }
+  .fig-hero h1 { font-size: clamp(52px, 14vw, 66px); }
+  .fig-hero__copy > p { margin-top: 22px; font-size: 16px; }
+  .fig-hero .fig-actions { margin-top: 25px; }
+  .fig-hero .fig-button { min-height: 54px; }
+  .fig-hero-benefits { display: grid; grid-template-columns: 1fr 1fr; gap: 17px 12px; margin-top: 32px; }
+  .fig-hero-benefits span { font-size: 12px; white-space: normal; }
+  .fig-hero-benefits span:last-child { grid-column: 1 / -1; }
+  .fig-hero-benefits svg { width: 24px; height: 24px; }
+  .fig-hero__media { width: calc(100% + 30px); height: 430px; margin: 22px -15px 0; }
+  .fig-hero-person { height: 430px; transform: translateX(-35%); }
+}
