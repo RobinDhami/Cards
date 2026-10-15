@@ -8,3 +8,7 @@
 @media(max-width:700px){.launch-hero-media img{width:145%}}
 @media(min-width:701px){.launch-hero-media img{width:110%;transform:translateX(-4%)}}
 .launch-preview-card strong{left:34%;color:var(--accent)}
+/* Preserve the earlier card designer without letting its heading crowd the intro. */
+.launch .fig-studio h2{line-height:1.03;margin-bottom:16px}
+.launch .fig-studio__lead{margin-top:0}
+.launch .fig-studio__button{color:#fff}

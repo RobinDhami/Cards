@@ -29,6 +29,7 @@ import previewCustom from '../../../../theme/static/home/figma-assets/cr80-custo
 import cafeContactArtwork from '../../../../theme/static/home/figma-assets/contact-cafe-landscape.webp'
 import cafeContactPortrait from '../../../../theme/static/home/figma-assets/contact-cafe-portrait.webp'
 import generalContactArtwork from '../../../../theme/static/home/figma-assets/contact-premium-cards-ivory.webp'
+import './HomePageFigma.css'
 import './HomePageLaunch.css'
 
 const products = [
@@ -119,18 +120,17 @@ function Products() {
 function Studio() {
   const [material, setMaterial] = useState<(typeof products)[number]['key']>('plastic')
   const [finish, setFinish] = useState('Matte')
-  const [accent, setAccent] = useState('#316dff')
-  const [name, setName] = useState('Aayush Thapa')
+  const [accent, setAccent] = useState('#3e57ff')
+  const [name, setName] = useState('Tap2Connect Nepal')
   const image = products.find((item) => item.key === material)?.image ?? previewPlastic
-  return <section className="launch-section launch-studio" id="design-yours"><div className="launch-shell launch-studio-layout">
-    <div className="launch-studio-controls"><p className="launch-eyebrow">DESIGN YOURS</p><h2>Make it yours<span>.</span></h2><p>Pick a material, add your name and make the first impression your own.</p>
-      <fieldset><legend>Material</legend><div className="launch-materials">{products.map((item) => <button key={item.key} type="button" aria-pressed={material === item.key} onClick={() => setMaterial(item.key)}><img src={item.image} alt="" /><span>{item.key}</span></button>)}</div></fieldset>
-      <fieldset><legend>Finish</legend><div className="launch-finishes">{['Matte', 'Brushed', 'Gloss'].map((item) => <button key={item} type="button" aria-pressed={finish === item} onClick={() => setFinish(item)}>{item}</button>)}</div></fieldset>
-      <fieldset><legend>Accent</legend><div className="launch-accents">{['#316dff', '#58dbc9', '#ffc360', '#e7e8eb'].map((color) => <button key={color} type="button" aria-label={`Set accent to ${color}`} aria-pressed={accent === color} onClick={() => setAccent(color)} style={{ backgroundColor: color }} />)}</div></fieldset>
-      <label className="launch-name">Name on card<input maxLength={20} value={name} onChange={(event) => setName(event.target.value)} /></label>
-      <a className="launch-button launch-button-primary" href="/card-editor/">Continue to card editor <ArrowRight /></a>
-    </div>
-    <div className={`launch-studio-preview is-${finish.toLowerCase()}`} style={{ '--accent': accent } as CSSProperties}><div className="launch-preview-card"><img src={image} alt={`${material} card preview`} /><strong>{name}</strong></div><p>Your preview</p></div>
+  return <section className="fig-studio" id="design-yours" aria-labelledby="studio-title"><div className="fig-shell fig-studio__layout">
+    <div className="fig-studio__controls"><p className="fig-eyebrow">Design yours</p><h2 id="studio-title">Make it yours.<br />Tap to stand out.</h2><p className="fig-studio__lead">Customize every detail and see it come to life in real time.</p>
+      <fieldset><legend>Material</legend><div className="fig-materials">{products.map((item) => <button className={`${item.key}${material === item.key ? ' is-selected' : ''}`} key={item.key} type="button" aria-pressed={material === item.key} onClick={() => setMaterial(item.key)}><i /><span>{item.key}</span></button>)}</div></fieldset>
+      <fieldset><legend>Finish</legend><div className="fig-finishes">{['Matte', 'Brushed', 'Gloss'].map((item) => <button className={finish === item ? 'is-selected' : ''} key={item} type="button" aria-pressed={finish === item} onClick={() => setFinish(item)}>{item}</button>)}</div></fieldset>
+      <fieldset><legend>Accent</legend><div className="fig-accents">{['#3e57ff', '#63ddca', '#ffbd45', '#aeb4be'].map((color) => <button className={accent === color ? 'is-selected' : ''} key={color} type="button" aria-label={`Set accent to ${color}`} aria-pressed={accent === color} onClick={() => setAccent(color)} style={{ backgroundColor: color }} />)}</div></fieldset>
+      <label className="fig-name-field">Name on card <span><input maxLength={20} value={name} onChange={(event) => setName(event.target.value)} /><small>{name.length} / 20</small></span></label>
+      <a className="fig-button fig-button--primary fig-studio__button" href="/card-editor/">Continue to Advanced Editor <ArrowRight /></a>
+    </div><div className={`fig-studio__preview fig-studio__preview--${finish.toLowerCase()}`} style={{ '--card-accent': accent } as CSSProperties}><img src={image} alt={`${material} ${finish.toLowerCase()} card preview`} loading="lazy" decoding="async" /></div>
   </div></section>
 }
 
