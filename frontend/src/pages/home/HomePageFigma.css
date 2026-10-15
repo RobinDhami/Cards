@@ -400,3 +400,20 @@
   .fig-contact__experience-copy h3 { font-size: clamp(31px, 2.6vw, 42px); }
   .fig-contact__experience-copy p { margin-top: 11px; font-size: 16px; }
 }
+
+.fig-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+.fig-contact__fields { margin-top: 0; }
+.fig-contact__fields label { gap: 0; }
+.fig-contact__experience > img { height: 67%; }
+
+@media (min-width: 701px) {
+  .fig-contact .fig-contact__form { padding-top: 28px; padding-bottom: 25px; }
+  .fig-contact__fields { gap: 12px 14px; }
+  .fig-contact__experience-copy h3 { font-size: clamp(30px, 2.35vw, 38px); }
+  .fig-contact__experience-copy p { max-width: 390px; }
+  .fig-contact__experience > img { height: 54%; }
+}
+
+@media (max-width: 700px) {
+  .fig-contact__experience > img { height: 54%; }
+}

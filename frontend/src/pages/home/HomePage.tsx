@@ -285,7 +285,6 @@ function Contact() {
   const [message, setMessage] = useState('')
   const [enquiry, setEnquiry] = useState<(typeof enquiryOptions)[number]['id']>('cafe')
   const activeOption = enquiryOptions.find((option) => option.id === enquiry) ?? enquiryOptions[1]
-  const ActiveIcon = activeOption.Icon
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -314,13 +313,12 @@ function Contact() {
         </div>
         <div className="fig-contact__layout">
           <form className="fig-contact__form" onSubmit={submit}>
-            <div className="fig-contact__form-title"><span><ActiveIcon /></span><div><small>You&apos;re asking about</small><strong>{activeOption.label}</strong></div></div>
             <input type="hidden" name="email" value="" />
             <div className="fig-contact__fields">
-              <label>Your full name <b>*</b><input required name="fullName" placeholder="e.g. Aayush Thapa" autoComplete="name" /></label>
-              <label>Phone / WhatsApp <b>*</b><input required type="tel" name="phone" placeholder="e.g. 98XXXXXXXX" autoComplete="tel" /></label>
-              <label className="is-wide">Business name <b>*</b><input required name="organization" placeholder="e.g. Himalayan Coffee House" autoComplete="organization" /></label>
-              <label className="is-wide">Message <b>*</b><textarea required name="message" placeholder="Tell us about your café, menu or customer experience…" rows={3} /></label>
+              <label><span className="fig-sr-only">Your full name</span><input required name="fullName" aria-label="Your full name" placeholder="Full name *   e.g. Aayush Thapa" autoComplete="name" /></label>
+              <label><span className="fig-sr-only">Phone or WhatsApp</span><input required type="tel" name="phone" aria-label="Phone or WhatsApp" placeholder="Phone / WhatsApp *   e.g. 98XXXXXXXX" autoComplete="tel" /></label>
+              <label className="is-wide"><span className="fig-sr-only">Business name</span><input required name="organization" aria-label="Business name" placeholder="Business name *   e.g. Himalayan Coffee House" autoComplete="organization" /></label>
+              <label className="is-wide"><span className="fig-sr-only">Message</span><textarea required name="message" aria-label="Message" placeholder="Tell us about your café, menu or customer experience… *" rows={3} /></label>
             </div>
             <label className="fig-contact__consent"><input required type="checkbox" name="priority" /><span>I agree to be contacted about this enquiry. <b>*</b></span></label>
             <div className="fig-contact__actions"><button className="fig-contact__submit" type="submit" disabled={state === 'submitting'}>{state === 'submitting' ? 'Sending…' : 'Send enquiry'} <ArrowRight /></button><a className="fig-contact__whatsapp" href="https://wa.me/?text=Hello%20Tap2Connect%2C%20I%27d%20like%20to%20talk%20about%20a%20digital%20profile." target="_blank" rel="noreferrer"><MessageCircle />Chat on WhatsApp</a></div>
