@@ -3,17 +3,23 @@ import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right.js'
 import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3.js'
 import CheckCircle2 from 'lucide-react/dist/esm/icons/check-circle-2.js'
 import CircleSlash2 from 'lucide-react/dist/esm/icons/circle-slash-2.js'
+import Coffee from 'lucide-react/dist/esm/icons/coffee.js'
+import Dumbbell from 'lucide-react/dist/esm/icons/dumbbell.js'
 import Facebook from 'lucide-react/dist/esm/icons/facebook.js'
+import Gift from 'lucide-react/dist/esm/icons/gift.js'
 import Instagram from 'lucide-react/dist/esm/icons/instagram.js'
 import Linkedin from 'lucide-react/dist/esm/icons/linkedin.js'
 import Mail from 'lucide-react/dist/esm/icons/mail.js'
 import Menu from 'lucide-react/dist/esm/icons/menu.js'
+import MessageCircle from 'lucide-react/dist/esm/icons/message-circle.js'
 import MapPin from 'lucide-react/dist/esm/icons/map-pin.js'
 import Phone from 'lucide-react/dist/esm/icons/phone.js'
 import RefreshCw from 'lucide-react/dist/esm/icons/refresh-cw.js'
 import Settings from 'lucide-react/dist/esm/icons/settings.js'
 import ShieldCheck from 'lucide-react/dist/esm/icons/shield-check.js'
 import Sparkles from 'lucide-react/dist/esm/icons/sparkles.js'
+import UserRound from 'lucide-react/dist/esm/icons/user-round.js'
+import UsersRound from 'lucide-react/dist/esm/icons/users-round.js'
 import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left.js'
 import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right.js'
 import X from 'lucide-react/dist/esm/icons/x.js'
@@ -30,7 +36,7 @@ import previewPlastic from '../../../../theme/static/home/figma-assets/cr80-plas
 import previewMetal from '../../../../theme/static/home/figma-assets/cr80-metal-transparent.webp'
 import previewWood from '../../../../theme/static/home/figma-assets/cr80-wood-transparent.webp'
 import previewCustom from '../../../../theme/static/home/figma-assets/cr80-custom-transparent.webp'
-import contactArtwork from '../../../../theme/static/home/figma-assets/contact-premium-cards-ivory.webp'
+import cafeContactArtwork from '../../../../theme/static/home/figma-assets/contact-cafe-experience.png'
 import './HomePageFigma.css'
 
 const navigation = [
@@ -266,15 +272,26 @@ function Studio() {
   )
 }
 
+const enquiryOptions = [
+  { id: 'personal', label: 'Personal card', Icon: UserRound },
+  { id: 'cafe', label: 'Café & restaurant', Icon: Coffee },
+  { id: 'club', label: 'Club or organisation', Icon: UsersRound },
+  { id: 'gym', label: 'Gym', Icon: Dumbbell },
+  { id: 'loyalty', label: 'Loyalty', Icon: Gift },
+] as const
+
 function Contact() {
   const [state, setState] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
+  const [enquiry, setEnquiry] = useState<(typeof enquiryOptions)[number]['id']>('cafe')
+  const activeOption = enquiryOptions.find((option) => option.id === enquiry) ?? enquiryOptions[1]
+  const ActiveIcon = activeOption.Icon
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const form = event.currentTarget
     const body = new FormData(form)
-    body.set('contactType', 'Website inquiry')
-    body.set('organization', '')
+    body.set('contactType', activeOption.label)
     body.set('hearAbout', 'Website')
     setState('submitting')
     setMessage('')
@@ -283,20 +300,40 @@ function Contact() {
       form.reset(); setState('success'); setMessage(response.message || 'Thank you. Your inquiry has been sent.')
     } catch (error) { setState('error'); setMessage(displayError(error)) }
   }
+
   return (
     <section className="fig-contact" id="contact" aria-labelledby="contact-title">
-      <div className="fig-shell fig-contact__layout">
-        <div className="fig-contact__copy"><p className="fig-eyebrow">Let&apos;s connect</p><h2 id="contact-title">Ready to make<br />your first tap count?</h2><p>Have a question or want to get started? Send us a message and we&apos;ll get back to you.</p>
-          <form onSubmit={submit}>
-            <label>Name<input required name="fullName" placeholder="Your full name" autoComplete="name" /></label>
-            <label>Email<input required type="email" name="email" placeholder="you@example.com" autoComplete="email" /></label>
-            <label>Phone (optional)<input type="tel" name="phone" placeholder="98XXXXXXXX" autoComplete="tel" /></label>
-            <label>Message<textarea required name="message" placeholder="How can we help you?" rows={3} /></label>
-            <button className="fig-button fig-button--primary" type="submit" disabled={state === 'submitting'}>{state === 'submitting' ? 'Sending...' : 'Send message'} <ArrowRight /></button>
+      <div className="fig-shell fig-contact__shell">
+        <header className="fig-contact__intro">
+          <p className="fig-eyebrow">Let&apos;s build your connection</p>
+          <h2 id="contact-title">Tell us what you want<br />to connect.</h2>
+          <p>Choose an experience and share a few details. We&apos;ll help you find the right Tap2Connect setup.</p>
+        </header>
+        <div className="fig-contact__options" role="group" aria-label="Choose an experience">
+          {enquiryOptions.map(({ id, label, Icon }) => <button className={enquiry === id ? 'is-active' : ''} type="button" key={id} onClick={() => setEnquiry(id)} aria-pressed={enquiry === id}><Icon />{label}</button>)}
+        </div>
+        <div className="fig-contact__layout">
+          <form className="fig-contact__form" onSubmit={submit}>
+            <div className="fig-contact__form-title"><span><ActiveIcon /></span><div><small>You&apos;re asking about</small><strong>{activeOption.label}</strong></div></div>
+            <input type="hidden" name="email" value="" />
+            <div className="fig-contact__fields">
+              <label>Your full name <b>*</b><input required name="fullName" placeholder="e.g. Aayush Thapa" autoComplete="name" /></label>
+              <label>Phone / WhatsApp <b>*</b><input required type="tel" name="phone" placeholder="e.g. 98XXXXXXXX" autoComplete="tel" /></label>
+              <label className="is-wide">Business name <b>*</b><input required name="organization" placeholder="e.g. Himalayan Coffee House" autoComplete="organization" /></label>
+              <label className="is-wide">Message <b>*</b><textarea required name="message" placeholder="Tell us about your café, menu or customer experience…" rows={4} /></label>
+            </div>
+            <label className="fig-contact__consent"><input required type="checkbox" name="priority" /><span>I agree to be contacted about this enquiry. <b>*</b></span></label>
+            <div className="fig-contact__actions"><button className="fig-contact__submit" type="submit" disabled={state === 'submitting'}>{state === 'submitting' ? 'Sending…' : 'Send enquiry'} <ArrowRight /></button><a className="fig-contact__whatsapp" href="https://wa.me/?text=Hello%20Tap2Connect%2C%20I%27d%20like%20to%20talk%20about%20a%20digital%20profile." target="_blank" rel="noreferrer"><MessageCircle />Chat on WhatsApp</a></div>
+            <p className="fig-contact__email">Prefer email? <a href="mailto:hello@tap2connect.com.np">hello@tap2connect.com.np</a></p>
             {message ? <p className={`fig-contact__message is-${state}`} role="status">{state === 'success' && <CheckCircle2 />} {message}</p> : null}
           </form>
+          <aside className="fig-contact__experience">
+            <div className="fig-contact__experience-copy"><i /><h3>{enquiry === 'cafe' ? 'A better table experience starts here.' : `A better ${activeOption.label.toLowerCase()} experience starts here.`}</h3><p>{enquiry === 'cafe' ? 'Let customers view your menu, leave reviews and share feedback — all with a simple tap.' : 'Tell us what you need and we’ll recommend a setup that fits.'}</p></div>
+            <img src={cafeContactArtwork} alt="Tap2Connect café menu experience on an NFC table card and phone" loading="lazy" decoding="async" />
+            <div className="fig-contact__tags"><span>🍴 Digital menu</span><span>🌈 Google reviews</span><span>💬 Customer feedback</span></div>
+            <a href="mailto:hello@tap2connect.com.np" className="fig-contact__help"><MessageCircle /><span><strong>Not sure what you need?</strong><small>Share your idea—we&apos;ll recommend a setup.</small></span><ArrowRight /></a>
+          </aside>
         </div>
-        <div className="fig-contact__art" aria-hidden="true"><img className="fig-contact__artwork" src={contactArtwork} alt="" loading="lazy" decoding="async" /></div>
       </div>
     </section>
   )
