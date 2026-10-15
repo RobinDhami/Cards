@@ -126,8 +126,9 @@
 
 /* Final Figma layout corrections from the supplied section exports. */
 .fig-how { padding-top: 108px; padding-bottom: 66px; }
-.fig-how__top { grid-template-columns: 47% 53%; min-height: 430px; }
-.fig-how h2 { font-size: clamp(62px, 5.9vw, 90px); }
+.fig-how__top { grid-template-columns: 47% 53%; min-height: 500px; }
+.fig-how h2 { font-size: clamp(78px, 8.1vw, 136px); }
+.fig-how__lead { max-width: 540px; margin-top: 42px; font-size: 19px; line-height: 1.72; }
 .fig-how__top img { justify-self: end; width: auto; height: clamp(390px, 34vw, 500px); max-width: calc(100% - 70px); margin: 0 clamp(34px, 4.5vw, 68px) 0 0; transform: translateX(-24px); }
 .fig-steps { margin-top: 32px; }
 .fig-steps article { min-height: 118px; }
@@ -283,6 +284,7 @@
 
 @media (max-width: 900px) {
   .fig-how__top { grid-template-columns: 1fr; min-height: 0; }
+  .fig-how__lead { font-size: 16px; }
   .fig-how__top img {
     justify-self: center;
     width: min(76%, 430px);
