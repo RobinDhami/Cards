@@ -1,17 +1,25 @@
-import { useEffect, useState, type CSSProperties, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react'
 import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right.js'
 import CheckCircle2 from 'lucide-react/dist/esm/icons/check-circle-2.js'
 import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left.js'
 import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right.js'
 import CircleSlash2 from 'lucide-react/dist/esm/icons/circle-slash-2.js'
 import Coffee from 'lucide-react/dist/esm/icons/coffee.js'
+import ExternalLink from 'lucide-react/dist/esm/icons/external-link.js'
+import Globe2 from 'lucide-react/dist/esm/icons/globe-2.js'
+import Instagram from 'lucide-react/dist/esm/icons/instagram.js'
 import Mail from 'lucide-react/dist/esm/icons/mail.js'
+import MapPin from 'lucide-react/dist/esm/icons/map-pin.js'
 import Menu from 'lucide-react/dist/esm/icons/menu.js'
 import MessageCircle from 'lucide-react/dist/esm/icons/message-circle.js'
+import Phone from 'lucide-react/dist/esm/icons/phone.js'
+import QrCode from 'lucide-react/dist/esm/icons/qr-code.js'
 import Settings from 'lucide-react/dist/esm/icons/settings.js'
 import ShieldCheck from 'lucide-react/dist/esm/icons/shield-check.js'
+import Star from 'lucide-react/dist/esm/icons/star.js'
 import UserRound from 'lucide-react/dist/esm/icons/user-round.js'
 import UsersRound from 'lucide-react/dist/esm/icons/users-round.js'
+import UtensilsCrossed from 'lucide-react/dist/esm/icons/utensils-crossed.js'
 import X from 'lucide-react/dist/esm/icons/x.js'
 import { apiFetch, displayError } from '../../lib/api'
 import brandLogo from '../../../../theme/static/branding/tap2connect-logo-optimized.webp'
@@ -30,6 +38,8 @@ import cafeContactArtwork from '../../../../theme/static/home/figma-assets/conta
 import cafeContactPortrait from '../../../../theme/static/home/figma-assets/contact-cafe-portrait.webp'
 import personalContactArtwork from '../../../../theme/static/home/figma-assets/contact-personal.webp'
 import educationContactArtwork from '../../../../theme/static/home/figma-assets/contact-education.webp'
+import professionalProfileCover from '../../../../theme/static/home/figma-assets/live-profile-professional-cover.webp'
+import clubProfileCover from '../../../../theme/static/home/figma-assets/live-profile-club-cover.webp'
 import './HomePageFigma.css'
 import './HomePageLaunch.css'
 
@@ -115,9 +125,69 @@ function HowItWorks() {
     <div className="launch-section-head"><p className="launch-eyebrow">HOW IT WORKS</p><h2>One tap. So many possibilities<span>.</span></h2><p>Share a profile people can actually use—in three simple steps.</p></div>
     <div className="launch-steps">
       <article><div className="launch-step-art launch-tap-art"><img src={howTapPhoto} alt="A card tapping a phone" loading="lazy" /></div><span className="launch-step-number">01</span><h3>Tap or scan</h3><p>Share your card or QR code in a moment.</p></article>
-      <article id="live-profile"><div className="launch-step-art launch-profile-art"><SampleProfile /></div><span className="launch-step-number">02</span><h3>Open your profile</h3><p>Your details, links and story appear instantly.</p></article>
+      <article><div className="launch-step-art launch-profile-art"><SampleProfile /></div><span className="launch-step-number">02</span><h3>Open your profile</h3><p>Your details, links and story appear instantly.</p></article>
       <article><div className="launch-step-art launch-profile-art launch-saved-art"><SampleProfile saved /><div className="launch-saved-badge"><CheckCircle2 /> Contact saved</div></div><span className="launch-step-number">03</span><h3>Save and connect</h3><p>Make it easy to keep the conversation going.</p></article>
     </div>
+  </div></section>
+}
+
+const liveProfiles = [
+  { id: 'professional', tab: 'Professional', title: 'Robin Dhami', subtitle: 'CEO · Tap2Connect Nepal', description: 'A focused business identity for sharing services, links and contact details.', cover: professionalProfileCover },
+  { id: 'cafe', tab: 'Café', title: 'Jyapu Cafe', subtitle: 'Rabibhawan-14, Kalanki', description: 'A warm customer experience with a menu, location and reviews in one place.', cover: cafeContactArtwork },
+  { id: 'club', tab: 'Club', title: 'Ram Gautam', subtitle: 'General Member · ABC Club', description: 'A clear member profile for club details, events and social connections.', cover: clubProfileCover },
+] as const
+
+type LiveProfile = (typeof liveProfiles)[number]
+
+function LiveProfilePhone({ profile }: { profile: LiveProfile }) {
+  const isProfessional = profile.id === 'professional'
+  const isCafe = profile.id === 'cafe'
+  return <div className={`launch-live-phone launch-live-phone--${profile.id}`}>
+    <div className="launch-live-phone__speaker" />
+    <div className="launch-live-phone__screen">
+      <div className="launch-live-phone__bar"><span>{isCafe ? 'JYAPU' : isProfessional ? 'T2C' : 'ABC'}</span><span><QrCode /> ···</span></div>
+      <img className="launch-live-phone__cover" src={profile.cover} alt="" loading="lazy" />
+      <div className="launch-live-phone__identity">
+        <div className="launch-live-phone__avatar">{isProfessional ? <img src={brandLogo} alt="Tap2Connect logo" /> : isCafe ? <><Coffee /><small>JYAPU</small></> : <strong>ABC</strong>}</div>
+        <div><h3>{profile.title}</h3><p>{profile.subtitle}</p></div>
+      </div>
+      <div className="launch-live-phone__actions"><span>{isCafe ? <Phone /> : isProfessional ? <ExternalLink /> : <MessageCircle />}{isCafe ? 'Call' : isProfessional ? 'Order now' : 'Contact me'}</span><span><UserRound /> Save</span></div>
+      {isCafe ? <>
+        <div className="launch-live-phone__nav"><b><Coffee /> Home</b><span><UtensilsCrossed /> Menu</span></div>
+        <div className="launch-live-phone__hours"><span><i /> Open today</span><b>7:00 AM – 9:00 PM</b></div>
+        <div className="launch-live-phone__menu"><h4>Popular today</h4><p><span>Masala Omelette</span><b>Rs. 180</b></p><p><span>Veg Momo</span><b>Rs. 180</b></p><p><span>French Toast</span><b>Rs. 220</b></p></div>
+        <div className="launch-live-phone__review"><strong>Google Reviews</strong><span>★★★★★</span></div>
+      </> : isProfessional ? <>
+        <div className="launch-live-phone__shortcuts"><span><MessageCircle />WhatsApp</span><span><Mail />Email</span><span><Globe2 />Website</span><span><MapPin />Map</span></div>
+        <div className="launch-live-phone__list"><h4>What I do</h4><p><ShieldCheck /><span><b>Digital business cards</b><small>Tap-ready contact sharing</small></span></p><p><UsersRound /><span><b>Networking profiles</b><small>Connect and grow</small></span></p><p><Star /><span><b>Google review tools</b><small>Simple customer feedback</small></span></p></div>
+      </> : <>
+        <div className="launch-live-phone__member"><span>Member ID</span><b>5654654</b></div>
+        <div className="launch-live-phone__shortcuts"><span><Mail />Email</span><span><Globe2 />Website</span><span><Instagram />Instagram</span><span><MapPin />Map</span></div>
+        <div className="launch-live-phone__list"><h4>Club access</h4><p><Star /><span><b>Events</b><small>See what is coming up</small></span></p><p><UsersRound /><span><b>Membership</b><small>Connect with the club</small></span></p><p><MapPin /><span><b>Location</b><small>Rabibhawan, Kathmandu</small></span></p></div>
+      </>}
+    </div>
+  </div>
+}
+
+function LiveProfiles() {
+  const [active, setActive] = useState(0)
+  const pointerStart = useRef<number | null>(null)
+  const didSwipe = useRef(false)
+  const activeProfile = liveProfiles[active]
+  const positionFor = (index: number) => {
+    if (index === active) return 'is-active'
+    return (index - active + liveProfiles.length) % liveProfiles.length === 1 ? 'is-right' : 'is-left'
+  }
+  const rotate = (direction: number) => setActive((current) => (current + direction + liveProfiles.length) % liveProfiles.length)
+  return <section className="launch-section launch-live" id="live-profile"><div className="launch-shell">
+    <div className="launch-live__intro"><div><p className="launch-eyebrow">LIVE PROFILE PREVIEW</p><h2>See how Tap2Connect<br />works in real life<span>.</span></h2></div><p>Explore three different profiles made for professionals, cafés and clubs. Switch between them to see what your visitors can open with one tap.</p></div>
+    <div className="launch-live__tabs" role="tablist" aria-label="Choose a live profile">{liveProfiles.map((profile, index) => <button key={profile.id} type="button" role="tab" aria-selected={active === index} onClick={() => setActive(index)}>{profile.tab}</button>)}</div>
+    <div className="launch-live__stage" onPointerDown={(event) => { pointerStart.current = event.clientX; didSwipe.current = false }} onPointerUp={(event) => { if (pointerStart.current === null) return; const distance = event.clientX - pointerStart.current; if (Math.abs(distance) > 45) { didSwipe.current = true; rotate(distance > 0 ? -1 : 1) } pointerStart.current = null }}>
+      {liveProfiles.map((profile, index) => <button className={`launch-live__phone-slot ${positionFor(index)}`} type="button" key={profile.id} aria-label={`Show ${profile.tab} profile`} aria-pressed={active === index} onClick={() => { if (didSwipe.current) { didSwipe.current = false; return } setActive(index) }}><LiveProfilePhone profile={profile} /></button>)}
+      <button className="launch-live__arrow launch-live__arrow--left" type="button" aria-label="Previous profile" onClick={() => rotate(-1)}><ChevronLeft /></button>
+      <button className="launch-live__arrow launch-live__arrow--right" type="button" aria-label="Next profile" onClick={() => rotate(1)}><ChevronRight /></button>
+    </div>
+    <div className="launch-live__caption" aria-live="polite"><div><span>{activeProfile.tab} profile</span><h3>{activeProfile.title}</h3><p>{activeProfile.description}</p></div><a className="launch-button launch-button-outline" href="#contact">Build a profile like this <ArrowRight /></a></div>
   </div></section>
 }
 
@@ -223,5 +293,5 @@ function Footer({ onSelect }: { onSelect: (id: Enquiry) => void }) {
 export function HomePage() {
   const [enquiry, setEnquiry] = useState<Enquiry>('cafe')
   useEffect(() => { document.documentElement.style.scrollBehavior = 'smooth'; return () => { document.documentElement.style.scrollBehavior = '' } }, [])
-  return <div className="launch"><Header /><main><Hero /><HowItWorks /><Audience onSelect={setEnquiry} /><Products /><Studio /><Contact enquiry={enquiry} setEnquiry={setEnquiry} /><Faq /><Closing /></main><Footer onSelect={setEnquiry} /></div>
+  return <div className="launch"><Header /><main><Hero /><HowItWorks /><LiveProfiles /><Audience onSelect={setEnquiry} /><Products /><Studio /><Contact enquiry={enquiry} setEnquiry={setEnquiry} /><Faq /><Closing /></main><Footer onSelect={setEnquiry} /></div>
 }
