@@ -300,6 +300,14 @@
   filter: saturate(.8);
   transform: translateX(calc(-50% + 255px)) translateY(45px) translateZ(-90px) rotateY(-15deg) scale(.84);
 }
+.launch-live__profile-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 38px;
+  pointer-events: none;
+  filter: drop-shadow(0 24px 30px #10244322);
+}
 .launch-live-phone {
   position: relative;
   width: 240px;
@@ -445,6 +453,7 @@
   .launch-live__tabs button { min-width: 0; flex: 1; padding: 0 10px; font-size: 11px; }
   .launch-live__stage { width: calc(100% + 36px); height: 445px; margin-left: -18px; }
   .launch-live__phone-slot { top: 22px; width: 200px; }
+  .launch-live__profile-image { border-radius: 30px; }
   .launch-live-phone { width: 200px; height: 395px; border-radius: 29px; }
   .launch-live-phone__screen { border-radius: 25px; }
   .launch-live-phone__bar { height: 31px; }
