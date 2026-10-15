@@ -28,7 +28,8 @@ import previewWood from '../../../../theme/static/home/figma-assets/cr80-wood-tr
 import previewCustom from '../../../../theme/static/home/figma-assets/cr80-custom-transparent.webp'
 import cafeContactArtwork from '../../../../theme/static/home/figma-assets/contact-cafe-landscape.webp'
 import cafeContactPortrait from '../../../../theme/static/home/figma-assets/contact-cafe-portrait.webp'
-import generalContactArtwork from '../../../../theme/static/home/figma-assets/contact-premium-cards-ivory.webp'
+import personalContactArtwork from '../../../../theme/static/home/figma-assets/contact-personal.webp'
+import educationContactArtwork from '../../../../theme/static/home/figma-assets/contact-education.webp'
 import './HomePageFigma.css'
 import './HomePageLaunch.css'
 
@@ -53,6 +54,27 @@ const enquiryOptions = [
 ] as const
 
 type Enquiry = (typeof enquiryOptions)[number]['id']
+
+const contactArtwork = {
+  personal: {
+    image: personalContactArtwork,
+    alt: 'A professional sharing her digital contact profile on a phone',
+    title: 'Make every introduction count.',
+    description: 'Share your contact details and links in one simple tap.',
+  },
+  cafe: {
+    image: cafeContactArtwork,
+    alt: 'Digital café menu beside a Tap2Connect table card',
+    title: 'A better table experience starts here.',
+    description: 'Let customers explore your menu, share feedback and find you—all with a simple tap.',
+  },
+  team: {
+    image: educationContactArtwork,
+    alt: 'University students sharing a digital profile with an NFC card',
+    title: 'Connect your school or team.',
+    description: 'Give students and staff a simple way to share the right details.',
+  },
+} as const
 
 function Logo() {
   return <span className="launch-logo"><img src={brandLogo} alt="" /><span><strong>TAP<span>2</span>CONNECT</strong><small>NEPAL</small></span></span>
@@ -138,6 +160,7 @@ function Contact({ enquiry, setEnquiry }: { enquiry: Enquiry, setEnquiry: (id: E
   const [state, setState] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
   const active = enquiryOptions.find((item) => item.id === enquiry) ?? enquiryOptions[0]
+  const artwork = contactArtwork[enquiry]
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const form = event.currentTarget
@@ -159,7 +182,7 @@ function Contact({ enquiry, setEnquiry }: { enquiry: Enquiry, setEnquiry: (id: E
     </div><label className="launch-consent"><input required type="checkbox" name="contactConsent" /><span>I agree to be contacted about this enquiry. <b>*</b></span></label>
     <div className="launch-form-actions"><button type="submit" disabled={state === 'submitting'} className="launch-button launch-button-primary">{state === 'submitting' ? 'Sending…' : 'Send enquiry'} <ArrowRight /></button><a className="launch-button launch-button-outline" href="https://wa.me/9779767452069?text=Hello%20Tap2Connect%2C%20I%27d%20like%20to%20ask%20about%20a%20card%20or%20digital%20profile." target="_blank" rel="noreferrer"><MessageCircle /> Chat on WhatsApp</a></div>
     <p className="launch-contact-email">Prefer email? <a href="mailto:hello@tap2connect.com.np">hello@tap2connect.com.np</a></p>{message && <p role="status" className={`launch-form-message is-${state}`}>{message}</p>}</form>
-    <aside className="launch-contact-art"><picture>{enquiry === 'cafe' && <source media="(max-width: 700px)" srcSet={cafeContactPortrait} />}<img src={enquiry === 'cafe' ? cafeContactArtwork : generalContactArtwork} alt={enquiry === 'cafe' ? 'Digital café menu beside a Tap2Connect table card' : 'Tap2Connect card designs'} loading="lazy" /></picture><div><h3>{enquiry === 'cafe' ? 'A better table experience starts here.' : 'A better connection starts here.'}</h3><p>{enquiry === 'cafe' ? 'Let customers explore your menu, share feedback and find you—all with a simple tap.' : 'Share the right details in one simple tap.'}</p></div></aside></div>
+    <aside className={`launch-contact-art launch-contact-art--${enquiry}`}><picture>{enquiry === 'cafe' && <source media="(max-width: 700px)" srcSet={cafeContactPortrait} />}<img src={artwork.image} alt={artwork.alt} loading="lazy" /></picture><div><h3>{artwork.title}</h3><p>{artwork.description}</p></div></aside></div>
   </div></section>
 }
 
