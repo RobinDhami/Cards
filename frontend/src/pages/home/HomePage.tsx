@@ -37,6 +37,7 @@ import previewMetal from '../../../../theme/static/home/figma-assets/cr80-metal-
 import previewWood from '../../../../theme/static/home/figma-assets/cr80-wood-transparent.webp'
 import previewCustom from '../../../../theme/static/home/figma-assets/cr80-custom-transparent.webp'
 import cafeContactArtwork from '../../../../theme/static/home/figma-assets/contact-cafe-landscape.webp'
+import cafeContactPortrait from '../../../../theme/static/home/figma-assets/contact-cafe-portrait.webp'
 import generalContactArtwork from '../../../../theme/static/home/figma-assets/contact-premium-cards-ivory.webp'
 import './HomePageFigma.css'
 
@@ -329,7 +330,10 @@ function Contact() {
           </form>
           <aside className="fig-contact__experience">
             <div className="fig-contact__experience-copy"><i /><h3>{enquiry === 'cafe' ? 'A better table experience starts here.' : `A better ${activeOption.label.toLowerCase()} experience starts here.`}</h3><p>{enquiry === 'cafe' ? 'Let customers view your menu, leave reviews and share feedback — all with a simple tap.' : 'Tell us what you need and we’ll recommend a setup that fits.'}</p></div>
-            <img src={enquiry === 'cafe' ? cafeContactArtwork : generalContactArtwork} alt={enquiry === 'cafe' ? 'NFC table card and café menu on a phone' : 'Tap2Connect card designs'} loading="lazy" decoding="async" />
+            <picture className="fig-contact__experience-art">
+              {enquiry === 'cafe' ? <source media="(max-width: 700px)" srcSet={cafeContactPortrait} /> : null}
+              <img src={enquiry === 'cafe' ? cafeContactArtwork : generalContactArtwork} alt={enquiry === 'cafe' ? 'NFC table card and café menu on a phone' : 'Tap2Connect card designs'} loading="lazy" decoding="async" />
+            </picture>
             {enquiry === 'cafe' ? <div className="fig-contact__tags"><span>Digital menu</span><span>Google reviews</span><span>Customer feedback</span></div> : null}
             <a href="mailto:hello@tap2connect.com.np" className="fig-contact__help"><MessageCircle /><span><strong>Not sure what you need?</strong><small>Share your idea—we&apos;ll recommend a setup.</small></span><ArrowRight /></a>
           </aside>
