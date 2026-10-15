@@ -13,7 +13,11 @@
   .launch-hero-media{height:300px}
   .launch-hero-media img{width:108%}
 }
-@media(min-width:701px){.launch-hero-media img{width:110%;transform:translateX(-4%)}}
+@media(min-width:701px){.launch-hero-media img{width:110%;transform:translateX(-8%)}}
+@media(min-width:1001px) and (max-height:760px){
+  .launch-hero-layout{min-height:calc(100svh - 82px)}
+  .launch-hero-media{height:calc(100svh - 82px)}
+}
 .launch-preview-card strong{left:34%;color:var(--accent)}
 /* Preserve the earlier card designer without letting its heading crowd the intro. */
 .launch .fig-studio h2{line-height:1.03;margin-bottom:16px}
