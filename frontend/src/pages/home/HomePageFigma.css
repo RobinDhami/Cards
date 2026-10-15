@@ -374,3 +374,29 @@
   .fig-contact__tags { right: 18px; bottom: 84px; left: 18px; }
   .fig-contact__help { right: 18px; bottom: 14px; left: 18px; }
 }
+
+/* Compact the contact section to match the page's shorter desktop rhythm. */
+@media (min-width: 701px) {
+  .fig-contact { padding: 52px 0 64px; }
+  .fig-contact__shell { padding: 34px; }
+  .fig-contact h2 { font-size: clamp(48px, 4.45vw, 70px); }
+  .fig-contact__intro > p:last-child { margin-top: 14px; font-size: 18px; }
+  .fig-contact__options { margin-top: 22px; }
+  .fig-contact__options button { min-height: 50px; }
+  .fig-contact__layout { margin-top: 18px; }
+  .fig-contact .fig-contact__form { padding: 27px 30px; }
+  .fig-contact__form-title > span { width: 48px; height: 48px; flex-basis: 48px; }
+  .fig-contact__form-title svg { width: 24px; height: 24px; }
+  .fig-contact__fields { gap: 11px 14px; margin-top: 19px; }
+  .fig-contact__fields label { gap: 5px; }
+  .fig-contact__fields input { min-height: 43px; padding-block: 10px; }
+  .fig-contact__fields textarea { min-height: 80px; padding-block: 10px; }
+  .fig-contact__consent { margin-top: 13px; }
+  .fig-contact__actions { gap: 12px; margin-top: 16px; }
+  .fig-contact .fig-contact__submit { grid-column: auto; }
+  .fig-contact__submit, .fig-contact__whatsapp { min-height: 48px; }
+  .fig-contact__email { margin-top: 16px; padding-top: 15px; }
+  .fig-contact__experience { min-height: 0; }
+  .fig-contact__experience-copy h3 { font-size: clamp(31px, 2.6vw, 42px); }
+  .fig-contact__experience-copy p { margin-top: 11px; font-size: 16px; }
+}

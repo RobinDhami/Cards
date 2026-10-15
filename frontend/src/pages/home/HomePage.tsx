@@ -320,7 +320,7 @@ function Contact() {
               <label>Your full name <b>*</b><input required name="fullName" placeholder="e.g. Aayush Thapa" autoComplete="name" /></label>
               <label>Phone / WhatsApp <b>*</b><input required type="tel" name="phone" placeholder="e.g. 98XXXXXXXX" autoComplete="tel" /></label>
               <label className="is-wide">Business name <b>*</b><input required name="organization" placeholder="e.g. Himalayan Coffee House" autoComplete="organization" /></label>
-              <label className="is-wide">Message <b>*</b><textarea required name="message" placeholder="Tell us about your café, menu or customer experience…" rows={4} /></label>
+              <label className="is-wide">Message <b>*</b><textarea required name="message" placeholder="Tell us about your café, menu or customer experience…" rows={3} /></label>
             </div>
             <label className="fig-contact__consent"><input required type="checkbox" name="priority" /><span>I agree to be contacted about this enquiry. <b>*</b></span></label>
             <div className="fig-contact__actions"><button className="fig-contact__submit" type="submit" disabled={state === 'submitting'}>{state === 'submitting' ? 'Sending…' : 'Send enquiry'} <ArrowRight /></button><a className="fig-contact__whatsapp" href="https://wa.me/?text=Hello%20Tap2Connect%2C%20I%27d%20like%20to%20talk%20about%20a%20digital%20profile." target="_blank" rel="noreferrer"><MessageCircle />Chat on WhatsApp</a></div>
