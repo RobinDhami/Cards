@@ -125,16 +125,15 @@ function HowItWorks() {
 }
 
 const liveProfiles = [
-  { id: 'professional', tab: 'Professional', title: 'Robin Dhami', description: 'A professional identity with direct contact links, Instagram and a clear location map.', preview: professionalProfilePreview },
-  { id: 'cafe', tab: 'Café', title: 'Jyapu Cafe', description: 'A warm café profile with opening hours, popular dishes, location and Google reviews.', preview: cafeProfilePreview },
-  { id: 'club', tab: 'Club', title: 'Ram Gautam', description: 'A community-led member profile with club access, an upcoming event and location.', preview: clubProfilePreview },
+  { id: 'professional', tab: 'Professional', title: 'Robin Dhami', preview: professionalProfilePreview },
+  { id: 'cafe', tab: 'Café', title: 'Jyapu Cafe', preview: cafeProfilePreview },
+  { id: 'club', tab: 'Club', title: 'Ram Gautam', preview: clubProfilePreview },
 ] as const
 
 function LiveProfiles() {
   const [active, setActive] = useState(0)
   const pointerStart = useRef<number | null>(null)
   const didSwipe = useRef(false)
-  const activeProfile = liveProfiles[active]
   const positionFor = (index: number) => {
     if (index === active) return 'is-active'
     return (index - active + liveProfiles.length) % liveProfiles.length === 1 ? 'is-right' : 'is-left'
@@ -148,7 +147,6 @@ function LiveProfiles() {
       <button className="launch-live__arrow launch-live__arrow--left" type="button" aria-label="Previous profile" onClick={() => rotate(-1)}><ChevronLeft /></button>
       <button className="launch-live__arrow launch-live__arrow--right" type="button" aria-label="Next profile" onClick={() => rotate(1)}><ChevronRight /></button>
     </div>
-    <div className="launch-live__caption" aria-live="polite"><div><span>{activeProfile.tab} profile</span><h3>{activeProfile.title}</h3><p>{activeProfile.description}</p></div><a className="launch-button launch-button-outline" href="#contact">Build a profile like this <ArrowRight /></a></div>
   </div></section>
 }
 
