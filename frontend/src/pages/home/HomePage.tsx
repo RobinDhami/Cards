@@ -136,9 +136,9 @@ function HowItWorks() {
   return (
     <section className="fig-how" id="how-it-works" aria-labelledby="how-title">
       <div className="fig-shell">
+        <p className="fig-eyebrow fig-how__eyebrow">How it works</p>
         <div className="fig-how__top">
           <div>
-            <p className="fig-eyebrow">How it works</p>
             <h2 id="how-title">One tap.<br />All of you<span>.</span></h2>
             <p className="fig-how__lead">Tap2Connect Nepal makes sharing who you are simple, secure and always up to date.<br />Four steps. Endless connections.</p>
           </div>
