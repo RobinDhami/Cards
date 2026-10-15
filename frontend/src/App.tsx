@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { Component, lazy, Suspense, useEffect, useState, type ErrorInfo, type ReactNode } from 'react'
 
 const HomePage = lazy(() => import('./pages/home/HomePage').then((module) => ({ default: module.HomePage })))
 const DashboardHome = lazy(() => import('./pages/dashboard/DashboardHome').then((module) => ({ default: module.DashboardHome })))
@@ -203,11 +203,30 @@ function AppRoutes() {
   return <MigrationNeededPage title="Route not found in React" />
 }
 
+class RouteErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false }
+
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('The page could not be loaded.', error, info)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <div className="route-error-screen" role="alert"><strong>Tap2Connect</strong><h1>Let’s load the latest version.</h1><p>Your browser has an older website file saved.</p><button type="button" onClick={() => { sessionStorage.removeItem('tap2connect-stale-chunk-reload'); window.location.reload() }}>Reload website</button></div>
+    }
+    return this.props.children
+  }
+}
+
 function App() {
   const [, rerender] = useState(0)
   useEffect(() => { const onPopState = () => rerender((value) => value + 1); window.addEventListener('popstate', onPopState); return () => window.removeEventListener('popstate', onPopState) }, [])
   return (
-    <Suspense fallback={<div className="route-loading-screen">Loading…</div>}><AppRoutes /></Suspense>
+    <RouteErrorBoundary><Suspense fallback={<div className="route-loading-screen">Loading…</div>}><AppRoutes /></Suspense></RouteErrorBoundary>
   )
 }
 
