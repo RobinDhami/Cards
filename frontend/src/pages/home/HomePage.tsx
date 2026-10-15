@@ -96,8 +96,7 @@ function Header() {
         </button>
         <nav className={`fig-nav${menuOpen ? ' is-open' : ''}`} id="fig-navigation" aria-label="Main navigation">
           {navigation.map((item) => <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>{item.label}</a>)}
-          <a className="fig-login-link" href="/login/" onClick={() => setMenuOpen(false)}>Log in</a>
-          <a className="fig-signin" href="#design-yours" onClick={() => setMenuOpen(false)}>Get Your Card <ArrowRight /></a>
+          <a className="fig-signin" href="/login/" onClick={() => setMenuOpen(false)}>Log in</a>
         </nav>
       </div>
     </header>
