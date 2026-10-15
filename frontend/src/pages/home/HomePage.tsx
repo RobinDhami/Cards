@@ -197,10 +197,31 @@ function Faq() {
 
 function Closing() { return <section className="launch-closing"><div className="launch-shell"><h2>Turn every tap into a new opportunity<span>.</span></h2><a className="launch-button launch-button-primary" href="#contact">Let's connect <ArrowRight /></a></div></section> }
 
-function Footer() { return <footer className="launch-footer"><div className="launch-shell launch-footer-main"><div><a href="#home" aria-label="Tap2Connect Nepal home"><Logo /></a><p>One tap. Endless connections.</p></div><nav aria-label="Footer navigation"><a href="#cards">Cards</a><a href="#how-it-works">How it works</a><a href="#faq">FAQ</a><a href="#contact">Contact</a></nav><a className="launch-footer-email" href="mailto:hello@tap2connect.com.np"><Mail /> hello@tap2connect.com.np</a></div><div className="launch-shell launch-footer-bottom">© {new Date().getFullYear()} Tap2Connect Nepal. Made for Nepal.</div></footer> }
+function Footer({ onSelect }: { onSelect: (id: Enquiry) => void }) {
+  return <footer className="launch-footer">
+    <div className="launch-shell launch-footer-main">
+      <div className="launch-footer-brand">
+        <a href="#home" aria-label="Tap2Connect Nepal home"><Logo /></a>
+        <strong>One tap. Endless connections.</strong>
+        <p>Digital profiles and NFC cards made for real connections.</p>
+      </div>
+      <nav className="launch-footer-fit" aria-label="Find your fit">
+        <h3>Find your fit</h3>
+        {enquiryOptions.map(({ id, label }) => <a href="#contact" key={id} onClick={() => onSelect(id)}>{label}<ArrowRight aria-hidden="true" /></a>)}
+      </nav>
+      <div className="launch-footer-contact">
+        <h3>Get in touch</h3>
+        <a href="mailto:hello@tap2connect.com.np"><Mail aria-hidden="true" /> <span>hello@tap2connect.com.np</span></a>
+        <a href="https://wa.me/9779767452069" target="_blank" rel="noreferrer"><MessageCircle aria-hidden="true" /> <span>+977 9767452069</span></a>
+        <a className="launch-footer-contact-button" href="#contact">Contact us <ArrowRight aria-hidden="true" /></a>
+      </div>
+    </div>
+    <div className="launch-shell launch-footer-bottom"><span>© {new Date().getFullYear()} Tap2Connect Nepal</span><span>Made for Nepal <span aria-hidden="true">🇳🇵</span></span></div>
+  </footer>
+}
 
 export function HomePage() {
   const [enquiry, setEnquiry] = useState<Enquiry>('cafe')
   useEffect(() => { document.documentElement.style.scrollBehavior = 'smooth'; return () => { document.documentElement.style.scrollBehavior = '' } }, [])
-  return <div className="launch"><Header /><main><Hero /><HowItWorks /><Audience onSelect={setEnquiry} /><Products /><Studio /><Contact enquiry={enquiry} setEnquiry={setEnquiry} /><Faq /><Closing /></main><Footer /></div>
+  return <div className="launch"><Header /><main><Hero /><HowItWorks /><Audience onSelect={setEnquiry} /><Products /><Studio /><Contact enquiry={enquiry} setEnquiry={setEnquiry} /><Faq /><Closing /></main><Footer onSelect={setEnquiry} /></div>
 }

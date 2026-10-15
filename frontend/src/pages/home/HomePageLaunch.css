@@ -12,3 +12,151 @@
 .launch .fig-studio h2{line-height:1.03;margin-bottom:16px}
 .launch .fig-studio__lead{margin-top:0}
 .launch .fig-studio__button{color:#fff}
+
+/* A compact footer that leads visitors to the right contact choice. */
+.launch-footer {
+  padding: 0;
+  border-top: 4px solid var(--blue);
+  background: #f6f5f1;
+}
+.launch .launch-footer-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(190px, .7fr) minmax(260px, .9fr);
+  align-items: start;
+  gap: clamp(32px, 5vw, 90px);
+  padding-top: 48px;
+  padding-bottom: 46px;
+}
+.launch-footer-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.launch-footer-brand > strong {
+  margin-top: 25px;
+  font-size: 17px;
+  font-weight: 600;
+}
+.launch-footer-brand p {
+  max-width: 400px;
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.launch-footer-main h3 {
+  margin: 0 0 19px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+.launch-footer .launch-footer-fit,
+.launch-footer-contact {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+}
+.launch-footer .launch-footer-fit h3,
+.launch-footer-contact h3 { margin-bottom: 3px; }
+.launch-footer-fit a {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.launch-footer-fit a svg {
+  width: 16px;
+  height: 16px;
+  color: var(--blue);
+  transition: transform .2s ease;
+}
+.launch-footer-fit a:hover svg { transform: translateX(3px); }
+.launch-footer-contact > a:not(.launch-footer-contact-button) {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.launch-footer-contact > a:not(.launch-footer-contact-button) span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.launch-footer-contact > a > svg {
+  width: 19px;
+  height: 19px;
+  flex: 0 0 19px;
+  margin-top: 1px;
+}
+.launch-footer-contact > a[href^="https://wa.me/"] svg { color: #11b958; }
+.launch-footer-contact-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  margin-top: 2px;
+  padding: 0 13px;
+  border: 1px solid var(--blue);
+  border-radius: 7px;
+  color: var(--blue) !important;
+  font-size: 13px;
+  font-weight: 600;
+}
+.launch-footer-contact-button svg { width: 15px !important; height: 15px !important; flex-basis: 15px !important; }
+.launch .launch-footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 0;
+  padding: 19px 0 24px;
+  border-top: 1px solid #d7dfe8;
+  color: var(--muted);
+  font-size: 13px;
+}
+.launch-footer-bottom > span:last-child { display: inline-flex; align-items: center; gap: 9px; white-space: nowrap; }
+.launch-footer-bottom > span:last-child span { font-size: 20px; line-height: 1; }
+@media (max-width: 700px) {
+  .launch .launch-footer-main {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 30px 20px;
+    padding-top: 32px;
+    padding-bottom: 32px;
+  }
+  .launch-footer-brand { grid-column: 1 / -1; }
+  .launch-footer-brand > strong { margin-top: 21px; font-size: 16px; }
+  .launch-footer-brand p { max-width: 350px; font-size: 13px; }
+  .launch-footer-main h3 { font-size: 15px; }
+  .launch-footer-fit a,
+  .launch-footer-contact > a:not(.launch-footer-contact-button) { font-size: 12px; }
+  .launch-footer-fit a { gap: 5px; }
+  .launch-footer-fit a svg { flex: 0 0 14px; width: 14px; }
+  .launch-footer-contact > a:not(.launch-footer-contact-button) { gap: 6px; }
+  .launch-footer-contact > a > svg { width: 16px; height: 16px; flex-basis: 16px; }
+  .launch-footer-contact-button { min-height: 35px; padding: 0 9px; font-size: 12px; }
+  .launch .launch-footer-bottom { padding: 17px 0 23px; font-size: 11px; }
+  .launch-footer-bottom > span:last-child span { font-size: 17px; }
+}
+@media (max-width: 360px) {
+  .launch .launch-footer-main { gap: 25px 12px; }
+  .launch .launch-footer-bottom { flex-wrap: wrap; gap: 7px; }
+}
+.launch-footer-fit a { font-weight: 500; }
+.launch-footer-brand .launch-logo img { width: 53px; height: 53px; }
+.launch-footer-brand .launch-logo strong { font-size: 22px; }
+@media (max-width: 700px) {
+  .launch-footer-brand .launch-logo img { width: 44px; height: 44px; }
+  .launch-footer-brand .launch-logo strong { font-size: 17px; }
+  .launch-footer-fit a,
+  .launch-footer-contact > a:not(.launch-footer-contact-button) { font-size: 13px; }
+}
+@media (max-width: 700px) {
+  .launch .launch-footer-main { grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); }
+}
+@media (max-width: 360px) {
+  .launch .launch-footer-main { grid-template-columns: 1fr; gap: 23px; }
+  .launch-footer-brand { grid-column: auto; }
+}
