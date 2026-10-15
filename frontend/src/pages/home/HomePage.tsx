@@ -36,7 +36,8 @@ import previewPlastic from '../../../../theme/static/home/figma-assets/cr80-plas
 import previewMetal from '../../../../theme/static/home/figma-assets/cr80-metal-transparent.webp'
 import previewWood from '../../../../theme/static/home/figma-assets/cr80-wood-transparent.webp'
 import previewCustom from '../../../../theme/static/home/figma-assets/cr80-custom-transparent.webp'
-import cafeContactArtwork from '../../../../theme/static/home/figma-assets/contact-cafe-experience.png'
+import cafeContactArtwork from '../../../../theme/static/home/figma-assets/contact-cafe-landscape.webp'
+import generalContactArtwork from '../../../../theme/static/home/figma-assets/contact-premium-cards-ivory.webp'
 import './HomePageFigma.css'
 
 const navigation = [
@@ -285,6 +286,7 @@ function Contact() {
   const [message, setMessage] = useState('')
   const [enquiry, setEnquiry] = useState<(typeof enquiryOptions)[number]['id']>('cafe')
   const activeOption = enquiryOptions.find((option) => option.id === enquiry) ?? enquiryOptions[1]
+  const organizationLabel = enquiry === 'personal' ? 'Name on card' : enquiry === 'club' ? 'Organisation name' : enquiry === 'loyalty' ? 'Business or programme name' : 'Business name'
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -315,20 +317,20 @@ function Contact() {
           <form className="fig-contact__form" onSubmit={submit}>
             <input type="hidden" name="email" value="" />
             <div className="fig-contact__fields">
-              <label><span className="fig-sr-only">Your full name</span><input required name="fullName" aria-label="Your full name" placeholder="Full name *   e.g. Aayush Thapa" autoComplete="name" /></label>
-              <label><span className="fig-sr-only">Phone or WhatsApp</span><input required type="tel" name="phone" aria-label="Phone or WhatsApp" placeholder="Phone / WhatsApp *   e.g. 98XXXXXXXX" autoComplete="tel" /></label>
-              <label className="is-wide"><span className="fig-sr-only">Business name</span><input required name="organization" aria-label="Business name" placeholder="Business name *   e.g. Himalayan Coffee House" autoComplete="organization" /></label>
-              <label className="is-wide"><span className="fig-sr-only">Message</span><textarea required name="message" aria-label="Message" placeholder="Tell us about your café, menu or customer experience… *" rows={3} /></label>
+              <label><span>Your full name <b>*</b></span><input required name="fullName" placeholder="e.g. Aayush Thapa" autoComplete="name" /></label>
+              <label><span>Phone / WhatsApp <b>*</b></span><input required type="tel" name="phone" placeholder="e.g. 98XXXXXXXX" autoComplete="tel" /></label>
+              <label className="is-wide"><span>{organizationLabel} <b>*</b></span><input required name="organization" placeholder={enquiry === 'cafe' ? 'e.g. Himalayan Coffee House' : 'Enter a name'} autoComplete="organization" /></label>
+              <label className="is-wide"><span>Message <b>*</b></span><textarea required name="message" placeholder={enquiry === 'cafe' ? 'Tell us about your café, menu or customer experience…' : 'Tell us what you would like to create…'} rows={3} /></label>
             </div>
-            <label className="fig-contact__consent"><input required type="checkbox" name="priority" /><span>I agree to be contacted about this enquiry. <b>*</b></span></label>
+            <label className="fig-contact__consent"><input required type="checkbox" name="contactConsent" /><span>I agree to be contacted about this enquiry. <b>*</b></span></label>
             <div className="fig-contact__actions"><button className="fig-contact__submit" type="submit" disabled={state === 'submitting'}>{state === 'submitting' ? 'Sending…' : 'Send enquiry'} <ArrowRight /></button><a className="fig-contact__whatsapp" href="https://wa.me/?text=Hello%20Tap2Connect%2C%20I%27d%20like%20to%20talk%20about%20a%20digital%20profile." target="_blank" rel="noreferrer"><MessageCircle />Chat on WhatsApp</a></div>
             <p className="fig-contact__email">Prefer email? <a href="mailto:hello@tap2connect.com.np">hello@tap2connect.com.np</a></p>
             {message ? <p className={`fig-contact__message is-${state}`} role="status">{state === 'success' && <CheckCircle2 />} {message}</p> : null}
           </form>
           <aside className="fig-contact__experience">
             <div className="fig-contact__experience-copy"><i /><h3>{enquiry === 'cafe' ? 'A better table experience starts here.' : `A better ${activeOption.label.toLowerCase()} experience starts here.`}</h3><p>{enquiry === 'cafe' ? 'Let customers view your menu, leave reviews and share feedback — all with a simple tap.' : 'Tell us what you need and we’ll recommend a setup that fits.'}</p></div>
-            <img src={cafeContactArtwork} alt="Tap2Connect café menu experience on an NFC table card and phone" loading="lazy" decoding="async" />
-            <div className="fig-contact__tags"><span>🍴 Digital menu</span><span>🌈 Google reviews</span><span>💬 Customer feedback</span></div>
+            <img src={enquiry === 'cafe' ? cafeContactArtwork : generalContactArtwork} alt={enquiry === 'cafe' ? 'NFC table card and café menu on a phone' : 'Tap2Connect card designs'} loading="lazy" decoding="async" />
+            {enquiry === 'cafe' ? <div className="fig-contact__tags"><span>Digital menu</span><span>Google reviews</span><span>Customer feedback</span></div> : null}
             <a href="mailto:hello@tap2connect.com.np" className="fig-contact__help"><MessageCircle /><span><strong>Not sure what you need?</strong><small>Share your idea—we&apos;ll recommend a setup.</small></span><ArrowRight /></a>
           </aside>
         </div>

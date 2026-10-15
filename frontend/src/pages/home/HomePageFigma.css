@@ -417,3 +417,33 @@
 @media (max-width: 700px) {
   .fig-contact__experience > img { height: 54%; }
 }
+
+/* Final contact-card layout: readable labels, one-line consent, complete product image. */
+.fig-contact .fig-contact__form { justify-content: center; }
+.fig-contact__fields { gap: 12px 14px; }
+.fig-contact .fig-contact__fields label { display: flex; min-width: 0; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; line-height: 1.2; }
+.fig-contact__fields label > span { white-space: nowrap; }
+.fig-contact__fields input, .fig-contact__fields textarea { min-width: 0; background: #f8fafc; font-size: 14px; font-weight: 400; }
+.fig-contact__fields input::placeholder, .fig-contact__fields textarea::placeholder { color: #7b8ca6; opacity: 1; }
+.fig-contact .fig-contact__consent { display: flex; align-items: center; gap: 10px; margin-top: 15px; color: #415578; font-size: 13px; font-weight: 500; line-height: 1.4; cursor: pointer; }
+.fig-contact__consent input { width: 19px; height: 19px; flex: 0 0 19px; margin: 0; cursor: pointer; }
+.fig-contact__consent span { display: inline; }
+.fig-contact__experience { display: flex; min-height: 0; flex-direction: column; justify-content: flex-start; padding: 0; background: #eaf6ff; }
+.fig-contact__experience-copy { max-width: none; padding: 25px 28px 18px; }
+.fig-contact__experience-copy h3 { max-width: 510px; margin-top: 13px; font-size: clamp(29px, 2.25vw, 36px); line-height: 1.05; }
+.fig-contact__experience-copy p { max-width: 475px; margin-top: 10px; font-size: 15px; line-height: 1.45; }
+.fig-contact__experience > img { position: static; display: block; width: 100%; height: 245px; flex: 1 1 245px; min-height: 0; margin: 0; object-fit: cover; object-position: center 55%; mix-blend-mode: normal; }
+.fig-contact__experience::after { display: none; }
+.fig-contact__tags { position: static; display: flex; justify-content: center; gap: 8px; margin: 0; padding: 10px 12px 0; background: #fff; }
+.fig-contact__tags span { box-shadow: none; border: 1px solid #dfe8f5; background: #f7faff; }
+.fig-contact__help { position: static; display: flex; min-height: 56px; margin: 0; padding: 11px 20px; border-radius: 0; background: #fff; }
+.fig-contact__help > svg:last-child { margin-left: auto; }
+@media (max-width: 700px) {
+  .fig-contact__experience { min-height: 0; padding: 0; }
+  .fig-contact__experience-copy { padding: 23px 22px 16px; }
+  .fig-contact__experience-copy h3 { font-size: clamp(29px, 8vw, 34px); }
+  .fig-contact__experience > img { height: 215px; flex-basis: 215px; }
+  .fig-contact__tags { flex-wrap: wrap; gap: 5px; padding: 9px 8px 0; }
+  .fig-contact__help { min-height: 61px; padding: 10px 14px; }
+  .fig-contact .fig-contact__consent { align-items: flex-start; }
+}
