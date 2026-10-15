@@ -171,3 +171,20 @@
   .launch .launch-footer-main { grid-template-columns: 1fr; gap: 23px; }
   .launch-footer-brand { grid-column: auto; }
 }
+@media (max-width: 600px) {
+  .launch .fig-studio__layout { display: flex; flex-direction: column; }
+  .launch .fig-studio__controls { display: contents; }
+  .launch .fig-studio__controls > .fig-eyebrow { order: 1; }
+  .launch .fig-studio__controls > h2 { order: 2; }
+  .launch .fig-studio__controls > .fig-studio__lead { order: 3; }
+  .launch .fig-studio__preview {
+    order: 4;
+    width: 100%;
+    min-height: 330px;
+    margin: 26px 0 14px;
+    border-radius: 14px;
+  }
+  .launch .fig-studio__controls > fieldset,
+  .launch .fig-studio__controls > .fig-name-field,
+  .launch .fig-studio__controls > .fig-studio__button { order: 5; }
+}
