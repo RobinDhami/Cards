@@ -7,7 +7,7 @@
 .launch-product>div{position:relative;overflow:hidden}.launch-product>div img{position:absolute;inset:0;width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain}.launch-preview-card strong{top:24%;bottom:auto;left:32%;color:#fff;font-size:clamp(11px,1.1vw,17px);text-shadow:0 1px 3px #0008}.launch-hero-media img{width:100%}
 @media(max-width:700px){
   .launch-hero-media{height:320px;justify-content:center}
-  .launch-hero-media img{width:112%;margin-inline:auto;object-position:center bottom}
+  .launch-hero-media img{width:112%;margin-inline:auto;object-position:center bottom;transform:translateX(clamp(-82px,-18vw,-58px))}
 }
 @media(max-width:390px){
   .launch-hero-media{height:300px}
