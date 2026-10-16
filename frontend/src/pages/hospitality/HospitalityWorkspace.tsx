@@ -1116,14 +1116,21 @@ function HospitalityAdminPanel() {
     }
   }, [id, overviewDays]);
 
+  const canLoadOverview = shell?.capabilities.includes("overview") ?? false;
+
   useEffect(() => {
-    if (shell && !shell.capabilities.includes("overview")) return;
+    if (!canLoadOverview) return;
     void loadOverview();
-  }, [loadOverview, shell]);
+  }, [canLoadOverview, loadOverview]);
 
   useEffect(() => {
     if (!organizationOptions) return;
-    setShell((current) => current ? { ...current, schools: organizationOptions } : current);
+    setShell((current) => {
+      if (!current) return current;
+      const unchanged = current.schools.length === organizationOptions.length
+        && current.schools.every((school, index) => school.id === organizationOptions[index]?.id && school.name === organizationOptions[index]?.name);
+      return unchanged ? current : { ...current, schools: organizationOptions };
+    });
   }, [organizationOptions]);
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
