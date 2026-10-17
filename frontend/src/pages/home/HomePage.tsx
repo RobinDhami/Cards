@@ -101,7 +101,7 @@ function Hero() {
       <div className="launch-actions"><a className="launch-button launch-button-primary" href="#cards">Explore cards <ArrowRight /></a><a className="launch-button launch-button-outline" href="#live-profile">View a live profile <ArrowRight /></a></div>
       <div className="launch-benefits"><span><CircleSlash2 /> No app needed</span><span><Settings /> Easy to update</span><span><ShieldCheck /> Made for Nepal</span></div>
     </div>
-    <div className="launch-hero-media"><img src={heroPerson} alt="A Tap2Connect card and a digital profile shown together" fetchPriority="high" /></div>
+    <div className="launch-hero-media" onContextMenu={(event) => event.preventDefault()}><img src={heroPerson} alt="A Tap2Connect card and a digital profile shown together" fetchPriority="high" draggable={false} /></div>
   </div></section>
 }
 

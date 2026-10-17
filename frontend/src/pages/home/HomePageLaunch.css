@@ -9,6 +9,19 @@
   .launch-hero-media{height:320px;justify-content:center}
   .launch-hero-media img{width:112%;margin-inline:auto;object-position:center bottom;transform:translateX(clamp(-82px,-18vw,-58px))}
 }
+
+/* Keep the hero artwork presentation-only: prevent common select, drag, and save gestures. */
+.launch-hero-media,
+.launch-hero-media img {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.launch-hero-media img {
+  -webkit-user-drag: none;
+  user-drag: none;
+  pointer-events: none;
+}
 @media(max-width:390px){
   .launch-hero-media{height:300px}
   .launch-hero-media img{width:108%}
