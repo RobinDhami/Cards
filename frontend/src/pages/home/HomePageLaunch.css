@@ -22,6 +22,15 @@
   user-drag: none;
   pointer-events: none;
 }
+
+/* Protect every landing-page artwork, including the logo and section imagery. */
+.launch img {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  user-drag: none;
+  -webkit-touch-callout: none;
+}
 @media(max-width:390px){
   .launch-hero-media{height:300px}
   .launch-hero-media img{width:108%}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent, type SyntheticEvent } from 'react'
 import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right.js'
 import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left.js'
 import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right.js'
@@ -253,5 +253,6 @@ function Footer({ onSelect }: { onSelect: (id: Enquiry) => void }) {
 export function HomePage() {
   const [enquiry, setEnquiry] = useState<Enquiry>('cafe')
   useEffect(() => { document.documentElement.style.scrollBehavior = 'smooth'; return () => { document.documentElement.style.scrollBehavior = '' } }, [])
-  return <div className="launch"><Header /><main><Hero /><HowItWorks /><LiveProfiles /><Audience onSelect={setEnquiry} /><Products /><Studio /><Contact enquiry={enquiry} setEnquiry={setEnquiry} /><Faq /><Closing /></main><Footer onSelect={setEnquiry} /></div>
+  const protectImage = (event: SyntheticEvent) => { if (event.target instanceof HTMLImageElement) event.preventDefault() }
+  return <div className="launch" onContextMenu={protectImage} onDragStart={protectImage}><Header /><main><Hero /><HowItWorks /><LiveProfiles /><Audience onSelect={setEnquiry} /><Products /><Studio /><Contact enquiry={enquiry} setEnquiry={setEnquiry} /><Faq /><Closing /></main><Footer onSelect={setEnquiry} /></div>
 }
