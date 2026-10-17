@@ -607,3 +607,70 @@
   .launch-step-card,
   .launch-how .launch-step-art img { transition-duration: .01ms; }
 }
+
+/* Open, connected How it works composition from the approved visual. */
+.launch-how { overflow: hidden; align-items: start; padding-block: clamp(44px, 5vh, 60px); background: radial-gradient(ellipse at 50% 54%, rgba(215,231,255,.72), transparent 38%), #f8f7f3; }
+.launch-how-inner { position: relative; align-content: start; gap: clamp(12px, 2vh, 22px); }
+.launch-how .launch-how-head { display: block; max-width: 1120px; margin-inline: auto; text-align: center; }
+.launch-how .launch-how-head .launch-eyebrow { display: flex; align-items: center; justify-content: center; gap: 23px; margin-bottom: 12px; letter-spacing: .34em; }
+.launch-how .launch-how-head .launch-eyebrow::before,
+.launch-how .launch-how-head .launch-eyebrow::after { width: 43px; height: 1px; background: #8eb7ff; content: ''; }
+.launch-how .launch-how-head h2 { max-width: none; font-size: clamp(50px, 5.1vw, 78px); letter-spacing: -.067em; white-space: nowrap; }
+.launch-how .launch-how-head h2 span { color: var(--blue); }
+.launch-how .launch-how-head > p { max-width: none; margin: 13px auto 0; font-size: 16px; text-align: center; }
+.launch-how .launch-steps { position: relative; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; min-height: clamp(540px, 67vh, 640px); align-items: end; }
+.launch-how .launch-steps::before { display: none; }
+.launch-how-path { position: absolute; z-index: 0; top: 5px; left: 3%; width: 94%; height: 72%; overflow: visible; fill: none; pointer-events: none; }
+.launch-how-path path { stroke: #2c75ff; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.launch-how-path circle { fill: #fff; stroke: #2c75ff; stroke-width: 6; vector-effect: non-scaling-stroke; }
+.launch-how-float { position: absolute; z-index: 3; display: grid; width: 54px; height: 54px; place-items: center; border-radius: 14px; color: var(--blue); background: rgba(255,255,255,.94); box-shadow: 0 12px 28px rgba(34,77,137,.14); }
+.launch-how-float svg { width: 27px; height: 27px; stroke-width: 2.3; }
+.launch-how-float--profile { top: 25%; left: 1%; }
+.launch-how-float--qr { top: 32%; left: 65.8%; }
+.launch-how-float--network { top: 29%; right: .5%; }
+.launch-how .launch-step-card { position: relative; z-index: 1; display: grid; grid-template-rows: minmax(0, 1fr) auto; min-width: 0; overflow: visible; border: 0; border-radius: 0; background: transparent; box-shadow: none; transition: none; }
+.launch-how .launch-step-card:hover { box-shadow: none; transform: none; }
+.launch-how .launch-step-art { height: clamp(390px, 50vh, 500px); overflow: visible; border-radius: 0; background: transparent; }
+.launch-how .launch-step-art::before { width: 245px; height: 245px; background: rgba(222,235,255,.42); }
+.launch-how .launch-step-art::after { width: 185px; height: 185px; }
+.launch-how .launch-step-orbit { width: 125px; height: 125px; }
+.launch-how .launch-step-art img { position: absolute; top: auto; right: auto; bottom: 0; left: 50%; width: 65%; height: 100%; margin: 0; object-fit: contain; filter: drop-shadow(0 20px 20px rgba(17,37,65,.16)); transform: translateX(-50%); }
+.launch-how .launch-step-card--2 .launch-step-phone { z-index: 2; left: 57%; width: 86%; }
+.launch-how .launch-step-art .launch-step-card-back { z-index: 1; top: 24%; bottom: auto; left: 11%; width: 48%; height: auto; filter: drop-shadow(0 20px 18px rgba(17,37,65,.22)); transform: rotate(-11deg); }
+.launch-how .launch-step-card:hover .launch-step-phone { transform: translateX(-50%) translateY(-5px) scale(1.02); }
+.launch-how .launch-step-card:hover .launch-step-card-back { transform: rotate(-8deg) translateY(-4px); }
+.launch-how .launch-step-copy { position: relative; display: grid; grid-template-columns: 50px 1fr; gap: 13px; min-height: 118px; padding: 10px 18px 0 7px; }
+.launch-how .launch-step-copy::after { position: absolute; top: 31px; right: -18px; left: 55px; height: 1px; background: linear-gradient(90deg, #9dc0ff, rgba(157,192,255,.1)); content: ''; }
+.launch-how .launch-step-card:last-child .launch-step-copy::after { display: none; }
+.launch-how .launch-step-number { position: relative; z-index: 1; width: 42px; height: 42px; border: 7px solid #edf4ff; font-size: 14px; box-shadow: 0 0 0 1px #bad0f3, 0 7px 16px rgba(38,109,255,.19); }
+.launch-how .launch-step-copy > div { position: relative; z-index: 1; padding-top: 4px; background: #f8f7f3; }
+.launch-how .launch-steps h3 { margin: 0 0 8px; font-size: clamp(25px, 2vw, 31px); }
+.launch-how .launch-steps p { max-width: 330px; font-size: 14px; line-height: 1.5; }
+
+@media (max-width: 700px) {
+  .launch-how { min-height: 100svh; padding-block: 40px; }
+  .launch-how-inner { gap: 16px; }
+  .launch-how .launch-how-head .launch-eyebrow { gap: 13px; margin-bottom: 11px; font-size: 10px; letter-spacing: .2em; }
+  .launch-how .launch-how-head .launch-eyebrow::before,
+  .launch-how .launch-how-head .launch-eyebrow::after { width: 27px; }
+  .launch-how .launch-how-head h2 { font-size: clamp(39px, 10.7vw, 48px); white-space: normal; }
+  .launch-how .launch-how-head h2 span { display: inline; }
+  .launch-how .launch-how-head > p { max-width: 350px; margin-top: 11px; font-size: 13px; }
+  .launch-how .launch-steps { width: calc(100% + 18px); min-height: 510px; gap: 18px; }
+  .launch-how-path,
+  .launch-how-float { display: none; }
+  .launch-how .launch-step-card { display: grid; min-height: 500px; flex: 0 0 100%; overflow: clip; grid-template-rows: 365px auto; }
+  .launch-how .launch-step-art { height: 365px; }
+  .launch-how .launch-step-art::before { width: 220px; height: 220px; }
+  .launch-how .launch-step-art::after { width: 160px; height: 160px; }
+  .launch-how .launch-step-orbit { width: 105px; height: 105px; }
+  .launch-how .launch-step-art img { width: 72%; }
+  .launch-how .launch-step-card--2 .launch-step-phone { left: 58%; width: 96%; }
+  .launch-how .launch-step-art .launch-step-card-back { top: 27%; left: 3%; width: 52%; }
+  .launch-how .launch-step-copy { grid-template-columns: 46px 1fr; min-height: 120px; padding: 4px 10px 0 2px; }
+  .launch-how .launch-step-copy::after { display: none; }
+  .launch-how .launch-step-copy > div { background: transparent; }
+  .launch-how .launch-step-number { width: 39px; height: 39px; }
+  .launch-how .launch-steps h3 { font-size: 25px; }
+  .launch-how .launch-steps p { font-size: 13px; }
+}

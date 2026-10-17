@@ -9,6 +9,7 @@ import Instagram from 'lucide-react/dist/esm/icons/instagram.js'
 import Mail from 'lucide-react/dist/esm/icons/mail.js'
 import Menu from 'lucide-react/dist/esm/icons/menu.js'
 import MessageCircle from 'lucide-react/dist/esm/icons/message-circle.js'
+import QrCode from 'lucide-react/dist/esm/icons/qr-code.js'
 import Settings from 'lucide-react/dist/esm/icons/settings.js'
 import ShieldCheck from 'lucide-react/dist/esm/icons/shield-check.js'
 import UserRound from 'lucide-react/dist/esm/icons/user-round.js'
@@ -109,14 +110,16 @@ function Hero() {
 
 function HowItWorks() {
   const steps = [
-    { number: '01', label: 'SET UP', title: 'Create your profile', image: howProfileEditor, alt: 'A complete phone showing the Tap2Connect profile editor', description: 'Add your contact details, social links, work and brand style. Update everything anytime without replacing your card.' },
-    { number: '02', label: 'SHARE', title: 'Tap or scan', image: howTapShare, alt: 'A complete phone showing an NFC and QR sharing screen', description: 'Tap the NFC card or scan its QR code. Your profile opens instantly in any phone browser—no app or account needed.' },
-    { number: '03', label: 'CONNECT', title: 'Stay connected', image: howLiveProfile, alt: 'A complete phone showing a live digital profile and saved contact confirmation', description: 'Visitors save your details, explore your links and always return to the latest version of your profile.' },
+    { number: '1', title: 'Create your profile', image: howProfileEditor, alt: 'A complete phone showing the Tap2Connect profile editor', description: 'Add your contact details, links and branding in minutes.' },
+    { number: '2', title: 'Tap or scan', image: howTapShare, alt: 'A complete phone showing an NFC and QR sharing screen', description: 'Share instantly through NFC or a simple QR code.' },
+    { number: '3', title: 'Stay connected', image: howLiveProfile, alt: 'A complete phone showing a live digital profile and saved contact confirmation', description: 'Visitors save your details and return to an always-current profile.' },
   ]
   return <section className="launch-section launch-how" id="how-it-works"><div className="launch-shell launch-how-inner">
-    <div className="launch-section-head launch-how-head"><div><p className="launch-eyebrow">HOW IT WORKS</p><h2>One tap. So many possibilities<span>.</span></h2></div><p>From your first setup to every new connection, Tap2Connect keeps sharing simple.</p></div>
+    <div className="launch-section-head launch-how-head"><p className="launch-eyebrow">HOW IT WORKS</p><h2>One tap. <span>So many possibilities.</span></h2><p>From your first setup to every new connection, Tap2Connect keeps sharing simple.</p></div>
     <div className="launch-steps">
-      {steps.map((step) => <article className="launch-step-card" key={step.number}><div className="launch-step-art"><span className="launch-step-orbit" aria-hidden="true" /><img src={step.image} alt={step.alt} loading="lazy" draggable={false} /></div><div className="launch-step-copy"><div className="launch-step-meta"><span className="launch-step-number">{step.number}</span><span>{step.label}</span></div><h3>{step.title}</h3><p>{step.description}</p></div></article>)}
+      <svg className="launch-how-path" viewBox="0 0 1200 360" preserveAspectRatio="none" aria-hidden="true"><path d="M70 220 C260 120 330 280 510 190 S780 110 900 205 S1070 250 1140 165" /><circle cx="330" cy="210" r="7" /><circle cx="725" cy="155" r="7" /><circle cx="1010" cy="220" r="7" /></svg>
+      <span className="launch-how-float launch-how-float--profile" aria-hidden="true"><UserRound /></span><span className="launch-how-float launch-how-float--qr" aria-hidden="true"><QrCode /></span><span className="launch-how-float launch-how-float--network" aria-hidden="true"><UsersRound /></span>
+      {steps.map((step, index) => <article className={`launch-step-card launch-step-card--${index + 1}`} key={step.number}><div className="launch-step-art"><span className="launch-step-orbit" aria-hidden="true" />{index === 1 && <img className="launch-step-card-back" src={previewPlastic} alt="" loading="lazy" draggable={false} />}<img className="launch-step-phone" src={step.image} alt={step.alt} loading="lazy" draggable={false} /></div><div className="launch-step-copy"><span className="launch-step-number">{step.number}</span><div><h3>{step.title}</h3><p>{step.description}</p></div></div></article>)}
     </div>
   </div></section>
 }
