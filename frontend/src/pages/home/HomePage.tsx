@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react'
 import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right.js'
-import CheckCircle2 from 'lucide-react/dist/esm/icons/check-circle-2.js'
 import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left.js'
 import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right.js'
 import CircleSlash2 from 'lucide-react/dist/esm/icons/circle-slash-2.js'
@@ -20,10 +19,11 @@ import brandLogo from '../../../../theme/static/branding/tap2connect-logo-optimi
 import heroPerson from '../../../../theme/static/home/hero-person-phone-card-transparent.webp'
 import audienceStudent from '../../../../theme/static/home/figma-assets/audience-student-mobile.webp'
 import audienceProfessional from '../../../../theme/static/home/figma-assets/audience-professional-mobile.webp'
-import audienceCollege from '../../../../theme/static/home/figma-assets/audience-college-mobile.webp'
 import audienceOrganization from '../../../../theme/static/home/figma-assets/audience-business-mobile.webp'
 import audienceCafe from '../../../../theme/static/home/figma-assets/audience-cafe-pilot.webp'
-import howTapPhoto from '../../../../theme/static/home/figma-assets/how-tap-nfc.webp'
+import howProfileEditor from '../../../../theme/static/home/figma-assets/how-profile-editor.webp'
+import howTapShare from '../../../../theme/static/home/figma-assets/how-tap-share.webp'
+import howLiveProfile from '../../../../theme/static/home/figma-assets/how-live-profile.webp'
 import previewPlastic from '../../../../theme/static/home/figma-assets/cr80-plastic-transparent.webp'
 import previewMetal from '../../../../theme/static/home/figma-assets/cr80-metal-transparent.webp'
 import previewWood from '../../../../theme/static/home/figma-assets/cr80-wood-transparent.webp'
@@ -107,21 +107,16 @@ function Hero() {
   </div></section>
 }
 
-function SampleProfile({ saved = false }: { saved?: boolean }) {
-  return <div className="launch-phone"><div className="launch-phone-notch" /><div className="launch-phone-screen">
-    <div className="launch-phone-cover"><img src={audienceCollege} alt="" /></div><div className="launch-phone-avatar"><img src={audienceCollege} alt="" /></div>
-    <strong>Aarya Sharma</strong><small>Marketing Manager · Kathmandu</small><div className="launch-phone-social"><span>in</span><span>◎</span><span>✉</span></div>
-    <div className="launch-phone-save">{saved ? '✓ Contact saved' : 'Save contact'}</div><div className="launch-phone-row">Email <ArrowRight /></div><div className="launch-phone-row">Phone <ArrowRight /></div><div className="launch-phone-row">Website <ArrowRight /></div>
-  </div></div>
-}
-
 function HowItWorks() {
-  return <section className="launch-section launch-how" id="how-it-works"><div className="launch-shell">
-    <div className="launch-section-head"><p className="launch-eyebrow">HOW IT WORKS</p><h2>One tap. So many possibilities<span>.</span></h2><p>Share a profile people can actually use—in three simple steps.</p></div>
+  const steps = [
+    { number: '01', label: 'SET UP', title: 'Create your profile', image: howProfileEditor, alt: 'A complete phone showing the Tap2Connect profile editor', description: 'Add your contact details, social links, work and brand style. Update everything anytime without replacing your card.' },
+    { number: '02', label: 'SHARE', title: 'Tap or scan', image: howTapShare, alt: 'A complete phone showing an NFC and QR sharing screen', description: 'Tap the NFC card or scan its QR code. Your profile opens instantly in any phone browser—no app or account needed.' },
+    { number: '03', label: 'CONNECT', title: 'Stay connected', image: howLiveProfile, alt: 'A complete phone showing a live digital profile and saved contact confirmation', description: 'Visitors save your details, explore your links and always return to the latest version of your profile.' },
+  ]
+  return <section className="launch-section launch-how" id="how-it-works"><div className="launch-shell launch-how-inner">
+    <div className="launch-section-head launch-how-head"><div><p className="launch-eyebrow">HOW IT WORKS</p><h2>One tap. So many possibilities<span>.</span></h2></div><p>From your first setup to every new connection, Tap2Connect keeps sharing simple.</p></div>
     <div className="launch-steps">
-      <article><div className="launch-step-art launch-tap-art"><img src={howTapPhoto} alt="A card tapping a phone" loading="lazy" /></div><span className="launch-step-number">01</span><h3>Tap or scan</h3><p>Share your card or QR code in a moment.</p></article>
-      <article><div className="launch-step-art launch-profile-art"><SampleProfile /></div><span className="launch-step-number">02</span><h3>Open your profile</h3><p>Your details, links and story appear instantly.</p></article>
-      <article><div className="launch-step-art launch-profile-art launch-saved-art"><SampleProfile saved /><div className="launch-saved-badge"><CheckCircle2 /> Contact saved</div></div><span className="launch-step-number">03</span><h3>Save and connect</h3><p>Make it easy to keep the conversation going.</p></article>
+      {steps.map((step) => <article className="launch-step-card" key={step.number}><div className="launch-step-art"><span className="launch-step-orbit" aria-hidden="true" /><img src={step.image} alt={step.alt} loading="lazy" draggable={false} /></div><div className="launch-step-copy"><div className="launch-step-meta"><span className="launch-step-number">{step.number}</span><span>{step.label}</span></div><h3>{step.title}</h3><p>{step.description}</p></div></article>)}
     </div>
   </div></section>
 }
