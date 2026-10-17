@@ -100,7 +100,7 @@ function Header() {
 
 function Hero() {
   return <section className="launch-hero" id="home"><div className="launch-shell launch-hero-layout">
-    <div className="launch-hero-copy"><h1>One tap.<br />Endless<br />connections<span>.</span></h1><p>NFC cards and QR profiles for people and businesses in Nepal.</p>
+    <div className="launch-hero-copy"><h1>One tap.<br />Endless connections<span>.</span></h1><p>NFC cards and QR profiles for people and businesses in Nepal.</p>
       <div className="launch-actions"><a className="launch-button launch-button-primary" href="#cards">Explore cards <ArrowRight /></a><a className="launch-button launch-button-outline" href="#live-profile">View a live profile <ArrowRight /></a></div>
       <div className="launch-benefits"><span><CircleSlash2 /> No app needed</span><span><Settings /> Easy to update</span><span><ShieldCheck /> Made for Nepal</span></div>
     </div>
@@ -115,7 +115,7 @@ function HowItWorks() {
     { number: '3', title: 'Stay connected', image: howLiveProfile, alt: 'A complete phone showing a live digital profile and saved contact confirmation', description: 'Visitors save your details and return to an always-current profile.' },
   ]
   return <section className="launch-section launch-how" id="how-it-works"><div className="launch-shell launch-how-inner">
-    <div className="launch-section-head launch-how-head"><p className="launch-eyebrow">HOW IT WORKS</p><h2>One tap. <span>So many possibilities.</span></h2><p>From your first setup to every new connection, Tap2Connect keeps sharing simple.</p></div>
+    <div className="launch-section-head launch-how-head"><p className="launch-eyebrow">HOW IT WORKS</p><h2>Tap. Share. Connect<span>.</span></h2><p>From your first setup to every new connection, Tap2Connect keeps sharing simple.</p></div>
     <div className="launch-steps">
       <svg className="launch-how-path" viewBox="0 0 1200 360" preserveAspectRatio="none" aria-hidden="true"><path d="M70 220 C260 120 330 280 510 190 S780 110 900 205 S1070 250 1140 165" /><circle cx="330" cy="210" r="7" /><circle cx="725" cy="155" r="7" /><circle cx="1010" cy="220" r="7" /></svg>
       <span className="launch-how-float launch-how-float--profile" aria-hidden="true"><UserRound /></span><span className="launch-how-float launch-how-float--qr" aria-hidden="true"><QrCode /></span><span className="launch-how-float launch-how-float--network" aria-hidden="true"><UsersRound /></span>
@@ -140,7 +140,7 @@ function LiveProfiles() {
   }
   const rotate = (direction: number) => setActive((current) => (current + direction + liveProfiles.length) % liveProfiles.length)
   return <section className="launch-section launch-live" id="live-profile"><div className="launch-shell">
-    <div className="launch-live__intro"><div><p className="launch-eyebrow">LIVE PROFILE PREVIEW</p><h2>See how Tap2Connect<br />works in real life<span>.</span></h2></div><p>Explore three different profiles made for professionals, cafés and clubs. Switch between them to see what your visitors can open with one tap.</p></div>
+    <div className="launch-live__intro"><div><p className="launch-eyebrow">LIVE PROFILE PREVIEW</p><h2>Profiles in action<span>.</span></h2></div><p>Explore professional, café and club profiles to see what visitors open with one tap.</p></div>
     <div className="launch-live__tabs" role="tablist" aria-label="Choose a live profile">{liveProfiles.map((profile, index) => <button key={profile.id} type="button" role="tab" aria-selected={active === index} onClick={() => setActive(index)}>{profile.tab}</button>)}</div>
     <div className="launch-live__stage" onPointerDown={(event) => { pointerStart.current = event.clientX; didSwipe.current = false }} onPointerUp={(event) => { if (pointerStart.current === null) return; const distance = event.clientX - pointerStart.current; if (Math.abs(distance) > 45) { didSwipe.current = true; rotate(distance > 0 ? -1 : 1) } pointerStart.current = null }}>
       {liveProfiles.map((profile, index) => <button className={`launch-live__phone-slot ${positionFor(index)}`} type="button" key={profile.id} aria-label={`Show ${profile.tab} profile`} aria-pressed={active === index} onClick={() => { if (didSwipe.current) { didSwipe.current = false; return } setActive(index) }}><img className="launch-live__profile-image" src={profile.preview} alt={`${profile.title} ${profile.tab.toLowerCase()} profile preview`} loading="lazy" /></button>)}
@@ -152,7 +152,7 @@ function LiveProfiles() {
 
 function Audience({ onSelect }: { onSelect: (id: Enquiry) => void }) {
   return <section className="launch-section launch-audience"><div className="launch-shell">
-    <div className="launch-section-head"><p className="launch-eyebrow">MADE FOR YOU</p><h2>A connection for every story<span>.</span></h2><p>From personal introductions to places people love.</p></div>
+    <div className="launch-section-head"><p className="launch-eyebrow">MADE FOR YOU</p><h2>Made for everyone<span>.</span></h2><p>From personal introductions to places people love.</p></div>
     <div className="launch-audience-grid">{audiences.map(({ name, image, enquiry }) => <a href="#contact" key={name} onClick={() => onSelect(enquiry)} className="launch-audience-card"><img src={image} alt="" loading="lazy" /><strong>{name}</strong><ArrowRight /></a>)}</div>
   </div></section>
 }
@@ -201,7 +201,7 @@ function Contact({ enquiry, setEnquiry }: { enquiry: Enquiry, setEnquiry: (id: E
     catch (error) { setState('error'); setMessage(displayError(error)) }
   }
   return <section className="launch-section launch-contact" id="contact"><div className="launch-shell">
-    <div className="launch-section-head"><p className="launch-eyebrow">LET'S BUILD YOUR CONNECTION</p><h2>Tell us what you want to connect<span>.</span></h2><p>Choose an experience and share a few details. We’ll help you find the right setup.</p></div>
+    <div className="launch-section-head"><p className="launch-eyebrow">LET'S BUILD YOUR CONNECTION</p><h2>Let’s build your profile<span>.</span></h2><p>Choose an experience and share a few details. We’ll help you find the right setup.</p></div>
     <div className="launch-contact-options" role="group" aria-label="Choose an experience">{enquiryOptions.map(({ id, label, Icon }) => <button type="button" key={id} aria-pressed={enquiry === id} onClick={() => setEnquiry(id)}><Icon /> {label}</button>)}</div>
     <div className="launch-contact-layout"><form onSubmit={submit} className="launch-contact-form"><div className="launch-form-grid">
       <label>Your full name <b>*</b><input required name="fullName" autoComplete="name" placeholder="e.g. Aayush Thapa" /></label>
@@ -221,10 +221,10 @@ function Faq() {
     ['Can I update my details later?', 'Yes. You can update your digital profile without replacing your physical card.'],
     ['Can a café show its menu through a QR code?', 'Yes. Guests can scan or tap to open the café profile and browse its menu.'],
   ]
-  return <section className="launch-section launch-faq" id="faq"><div className="launch-shell launch-faq-layout"><div><p className="launch-eyebrow">GOOD TO KNOW</p><h2>Frequently asked questions<span>.</span></h2></div><div>{questions.map(([question, answer]) => <details key={question}><summary>{question}<span>+</span></summary><p>{answer}</p></details>)}</div></div></section>
+  return <section className="launch-section launch-faq" id="faq"><div className="launch-shell launch-faq-layout"><div><p className="launch-eyebrow">GOOD TO KNOW</p><h2>Questions, answered<span>.</span></h2></div><div>{questions.map(([question, answer]) => <details key={question}><summary>{question}<span>+</span></summary><p>{answer}</p></details>)}</div></div></section>
 }
 
-function Closing() { return <section className="launch-closing"><div className="launch-shell"><h2>Turn every tap into a new opportunity<span>.</span></h2><a className="launch-button launch-button-primary" href="#contact">Let's connect <ArrowRight /></a></div></section> }
+function Closing() { return <section className="launch-closing"><div className="launch-shell"><h2>Ready to connect<span>?</span></h2><a className="launch-button launch-button-primary" href="#contact">Let's connect <ArrowRight /></a></div></section> }
 
 function Footer({ onSelect }: { onSelect: (id: Enquiry) => void }) {
   return <footer className="launch-footer">
