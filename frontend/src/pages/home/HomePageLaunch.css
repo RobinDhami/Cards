@@ -130,6 +130,7 @@
   font-weight: 600;
 }
 .launch-footer-contact-button svg { width: 15px !important; height: 15px !important; flex-basis: 15px !important; }
+.launch-contact-socials,.launch-footer-socials{display:flex;align-items:center;flex-wrap:wrap;gap:8px}.launch-contact-socials{justify-content:center;margin-top:13px;color:#647892;font-size:12px}.launch-contact-socials a,.launch-footer-socials a{display:inline-flex;align-items:center;min-height:29px;padding:0 10px;border:1px solid #cfd9e7;border-radius:999px;background:#fff;color:var(--ink);font-size:12px;font-weight:700}.launch-contact-socials a:hover,.launch-footer-socials a:hover{border-color:var(--blue);color:var(--blue)}.launch-footer-socials{margin-top:1px}.launch-footer-socials a{min-height:27px;padding:0 9px;font-size:11px}
 .launch .launch-footer-bottom {
   display: flex;
   align-items: center;

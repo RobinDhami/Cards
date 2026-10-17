@@ -210,7 +210,8 @@ function Contact({ enquiry, setEnquiry }: { enquiry: Enquiry, setEnquiry: (id: E
       <label className="is-wide">Message <b>*</b><textarea required name="message" rows={4} placeholder="Tell us what you would like to create…" /></label>
     </div><label className="launch-consent"><input required type="checkbox" name="contactConsent" /><span>I agree to be contacted about this enquiry. <b>*</b></span></label>
     <div className="launch-form-actions"><button type="submit" disabled={state === 'submitting'} className="launch-button launch-button-primary">{state === 'submitting' ? 'Sending…' : 'Send enquiry'} <ArrowRight /></button><a className="launch-button launch-button-outline" href="https://wa.me/9779767452069?text=Hello%20Tap2Connect%2C%20I%27d%20like%20to%20ask%20about%20a%20card%20or%20digital%20profile." target="_blank" rel="noreferrer"><MessageCircle /> Chat on WhatsApp</a></div>
-    <p className="launch-contact-email">Prefer email? <a href="mailto:hello@tap2connect.com.np">hello@tap2connect.com.np</a></p>{message && <p role="status" className={`launch-form-message is-${state}`}>{message}</p>}</form>
+    <p className="launch-contact-email">Prefer email? <a href="mailto:hello@tap2connect.com.np">hello@tap2connect.com.np</a></p>
+    <div className="launch-contact-socials" aria-label="Follow Tap2Connect Nepal"><span>Follow us</span><a href="https://www.facebook.com/Tap2connectnepal/" target="_blank" rel="noreferrer">Facebook</a><a href="https://www.instagram.com/tap2connectnepal/" target="_blank" rel="noreferrer">Instagram</a></div>{message && <p role="status" className={`launch-form-message is-${state}`}>{message}</p>}</form>
     <aside className={`launch-contact-art launch-contact-art--${enquiry}`}><picture>{enquiry === 'cafe' && <source media="(max-width: 700px)" srcSet={cafeContactPortrait} />}<img src={artwork.image} alt={artwork.alt} loading="lazy" /></picture><div><h3>{artwork.title}</h3><p>{artwork.description}</p></div></aside></div>
   </div></section>
 }
@@ -242,6 +243,7 @@ function Footer({ onSelect }: { onSelect: (id: Enquiry) => void }) {
         <h3>Get in touch</h3>
         <a href="mailto:hello@tap2connect.com.np"><Mail aria-hidden="true" /> <span>hello@tap2connect.com.np</span></a>
         <a href="https://wa.me/9779767452069" target="_blank" rel="noreferrer"><MessageCircle aria-hidden="true" /> <span>+977 9767452069</span></a>
+        <div className="launch-footer-socials" aria-label="Follow Tap2Connect Nepal"><a href="https://www.facebook.com/Tap2connectnepal/" target="_blank" rel="noreferrer">Facebook</a><a href="https://www.instagram.com/tap2connectnepal/" target="_blank" rel="noreferrer">Instagram</a></div>
         <a className="launch-footer-contact-button" href="#contact">Contact us <ArrowRight aria-hidden="true" /></a>
       </div>
     </div>
