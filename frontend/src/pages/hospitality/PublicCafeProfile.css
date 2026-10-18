@@ -268,10 +268,17 @@
   font-size: 12px;
   font-weight: 700;
 }
+.cafe-public > section > .cafe-specials {
+  margin: 0 0 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
 .cafe-public .cafe-specials-rail {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: calc((100% - 24px) / 4);
+  grid-auto-columns: minmax(112px, 38%);
   overflow-x: auto;
   gap: 8px;
   padding: 1px 0 4px;
