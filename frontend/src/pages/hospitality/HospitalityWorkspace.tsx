@@ -1954,16 +1954,16 @@ export function PublicHospitalityProfile() {
               ))}
             </article>
           ))}
-          {selectedMenuItem ? <section ref={detailRef} className="hospitality-menu-detail" role="dialog" aria-modal="true" aria-labelledby="hospitality-menu-detail-title">
-            <button type="button" onClick={() => setSelectedMenuItem(null)} aria-label="Close menu item details"><X size={18} /></button>
-            {selectedMenuItem.image ? <img src={selectedMenuItem.image} alt="" /> : null}
-            <h3 id="hospitality-menu-detail-title">{selectedMenuItem.name}</h3>
-            <p>{selectedMenuItem.description || 'No additional description has been provided.'}</p>
-            {selectedMenuItem.priceVariants?.length ? <ul>{selectedMenuItem.priceVariants.map((variant) => <li key={variant.label}>{variant.label}: Rs. {variant.price}</li>)}</ul> : null}
-            <strong>Rs. {selectedMenuItem.price}</strong>
-          </section> : null}
         </section>
       )}
+      {selectedMenuItem ? <section ref={detailRef} className="hospitality-menu-detail" role="dialog" aria-modal="true" aria-labelledby="hospitality-menu-detail-title">
+        <button type="button" onClick={() => setSelectedMenuItem(null)} aria-label="Close menu item details"><X size={18} /></button>
+        {selectedMenuItem.image ? <img src={selectedMenuItem.image} alt="" /> : null}
+        <h3 id="hospitality-menu-detail-title">{selectedMenuItem.name}</h3>
+        <p>{selectedMenuItem.description || 'No additional description has been provided.'}</p>
+        {selectedMenuItem.priceVariants?.length ? <ul>{selectedMenuItem.priceVariants.map((variant) => <li key={variant.label}>{variant.label}: Rs. {variant.price}</li>)}</ul> : null}
+        <strong>Rs. {selectedMenuItem.price}</strong>
+      </section> : null}
       <footer className="cafe-footer">Powered by <a href="/">Tap2Connect</a></footer>
     </main>
   );
