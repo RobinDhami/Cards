@@ -11,8 +11,6 @@ import Save from "lucide-react/dist/esm/icons/save.js";
 import Search from "lucide-react/dist/esm/icons/search.js";
 import ArrowLeft from "lucide-react/dist/esm/icons/arrow-left.js";
 import Share2 from "lucide-react/dist/esm/icons/share-2.js";
-import Coffee from "lucide-react/dist/esm/icons/coffee.js";
-import CakeSlice from "lucide-react/dist/esm/icons/cake-slice.js";
 import Leaf from "lucide-react/dist/esm/icons/leaf.js";
 import Facebook from "lucide-react/dist/esm/icons/facebook.js";
 import MapPin from "lucide-react/dist/esm/icons/map-pin.js";
@@ -1721,6 +1719,7 @@ export function PublicHospitalityProfile() {
     source: feedbackSource,
   });
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [menuSearch, setMenuSearch] = useState("");
   const [shareMessage, setShareMessage] = useState("");
   const [loadError, setLoadError] = useState(false);
   const [sendingFeedback, setSendingFeedback] = useState(false);
@@ -1776,7 +1775,14 @@ export function PublicHospitalityProfile() {
       setSendingFeedback(false);
     }
   }
-  const menuCategories = venue.categories.filter((category) => selectedCategory === null || category.slug === selectedCategory);
+  const searchTerm = menuSearch.trim().toLocaleLowerCase();
+  const menuCategories = venue.categories
+    .filter((category) => selectedCategory === null || category.slug === selectedCategory)
+    .map((category) => ({
+      ...category,
+      items: (category.items || []).filter((item) => !searchTerm || `${item.name} ${item.description}`.toLocaleLowerCase().includes(searchTerm)),
+    }))
+    .filter((category) => category.items?.length);
   const availableMenuItems = venue.categories.flatMap((category) =>
     (category.items || [])
       .filter((entry) => entry.isAvailable !== false)
@@ -1800,12 +1806,6 @@ export function PublicHospitalityProfile() {
     (socialPriority[left.link_type] ?? 99) - (socialPriority[right.link_type] ?? 99)
   );
   const openMenu = () => { setActiveTab("menu"); track("menu_open", "menu"); };
-  const categoryIcon = (name: string) => {
-    if (/breakfast|coffee|beverage|drink/i.test(name)) return <Coffee size={17} />;
-    if (/dessert|bakery|cake/i.test(name)) return <CakeSlice size={17} />;
-    if (/snack|salad/i.test(name)) return <Leaf size={17} />;
-    return <Utensils size={17} />;
-  };
   async function shareProfile() {
     try {
       if (navigator.share) await navigator.share({ title: venue!.organization.name, url: window.location.href });
@@ -1923,11 +1923,12 @@ export function PublicHospitalityProfile() {
       ) : (
         <section>
           <h2 className="cafe-menu-title">Our menu</h2>
+          <label className="cafe-menu-search"><Search size={18} aria-hidden="true" /><span className="sr-only">Search menu</span><input type="search" value={menuSearch} onChange={(event) => setMenuSearch(event.target.value)} placeholder="Search menu" /></label>
           {venue.categories.length ? <nav className="cafe-categories" aria-label="Menu categories">
             <button type="button" className={selectedCategory === null ? "is-active" : ""} aria-pressed={selectedCategory === null} onClick={() => setSelectedCategory(null)}>All</button>
-            {venue.categories.map((category) => <button type="button" key={category.slug} className={selectedCategory === category.slug ? "is-active" : ""} aria-pressed={selectedCategory === category.slug} onClick={() => setSelectedCategory(category.slug)}>{categoryIcon(category.name)}{category.name}</button>)}
+            {venue.categories.map((category) => <button type="button" key={category.slug} className={selectedCategory === category.slug ? "is-active" : ""} aria-pressed={selectedCategory === category.slug} onClick={() => setSelectedCategory(category.slug)}>{category.name}</button>)}
           </nav> : null}
-          {!menuCategories.some((category) => category.items?.length) ? <p className="cafe-empty">The menu is being prepared. Please ask our team for today’s options.</p> : null}
+          {!menuCategories.length ? <p className="cafe-empty">No menu items match your search.</p> : null}
           {menuCategories.map((category) => (
             <article key={category.slug}>
               <h3>{category.name}<span>{category.items?.length || 0} {category.items?.length === 1 ? "item" : "items"}</span></h3>
@@ -1946,7 +1947,7 @@ export function PublicHospitalityProfile() {
                       <small className="hospitality-badge is-offer">{itemOfferLabel(entry)}</small>
                     ) : null}
                     {itemIsTodaySpecial(entry) ? (
-                      <small className="hospitality-badge is-special">Today’s special</small>
+                      <small className="hospitality-badge is-special"><span aria-hidden="true">★</span>Today’s special</small>
                     ) : null}
                     {entry.isAvailable === false ? (
                       <small className="hospitality-badge is-sold-out">Sold out</small>

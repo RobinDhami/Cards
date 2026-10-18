@@ -500,3 +500,31 @@
 .cafe-public .cafe-detail-badges span.is-special { border: 1px solid #cde7d6; background: #effaf3; color: #167443; }
 .cafe-public .cafe-detail-price > span { color: #a76360; }
 .cafe-public .cafe-detail-price strong { color: #167443; }
+
+/* Simple searchable café menu. */
+.cafe-public .cafe-menu-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  margin: 0 0 10px;
+  padding: 0 14px;
+  border: 1px solid var(--cafe-line);
+  border-radius: 999px;
+  background: #fffdfa;
+  color: var(--cafe-muted);
+}
+.cafe-public .cafe-menu-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--cafe-ink);
+  font-size: 13px;
+}
+.cafe-public .cafe-menu-search input::placeholder { color: #8b8c91; }
+.cafe-public .cafe-categories { gap: 7px; margin-bottom: 17px; }
+.cafe-public .cafe-categories button { min-width: 0; padding: 8px 17px; font-size: 12px; }
+.cafe-public .hospitality-badge.is-special { display: inline-flex; align-items: center; gap: 3px; font-size: 8px; line-height: 1.1; letter-spacing: .01em; }
+.cafe-public .hospitality-badge.is-special span { color: #bd7d18; font-size: 9px; line-height: 1; }
