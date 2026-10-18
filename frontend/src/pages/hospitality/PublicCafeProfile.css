@@ -612,3 +612,8 @@
   .cafe-public .cafe-rating-prompt { align-items: flex-start; flex-direction: column; }
   .cafe-public .cafe-rating-prompt .cafe-stars { margin-left: -1px; }
 }
+
+.cafe-public .cafe-rating-prompt .cafe-stars button[aria-pressed="true"] svg {
+  color: #e69a17;
+  fill: #e69a17;
+}
