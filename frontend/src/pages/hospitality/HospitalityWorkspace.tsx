@@ -1777,7 +1777,7 @@ export function PublicHospitalityProfile() {
   const specialItems = [
     ...highlightedMenuItems,
     ...availableMenuItems.filter((entry) => !highlightedMenuItemKeys.has(entry.id ?? `${entry.categoryName}:${entry.name}`)),
-  ].slice(0, 5);
+  ].slice(0, 4);
   const today = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'Asia/Kathmandu' }).format(new Date()).toLowerCase();
   const todaySchedule = venue.venue.openingSchedule?.[today];
   const todayHours = todaySchedule
@@ -1874,7 +1874,7 @@ export function PublicHospitalityProfile() {
             <div className="cafe-specials-rail">
               {specialItems.map((entry) => <button type="button" className="cafe-special-card" key={entry.id ?? `${entry.categoryName}:${entry.name}`} onClick={() => { setActiveTab("menu"); setSelectedMenuItem(entry); track("menu_item_click", "special", entry.name); }}>
                 {entry.image ? <img src={entry.image} alt="" loading="lazy" /> : <span className="cafe-special-placeholder"><Utensils size={24} /></span>}
-                <span><small>{entry.categoryName}</small><strong>{entry.name}</strong><b>Rs. {Number(entry.price).toLocaleString("en-NP", { maximumFractionDigits: 2 })}</b></span>
+                <span><strong>{entry.name}</strong></span>
               </button>)}
             </div>
           </section> : null}
@@ -1910,7 +1910,7 @@ export function PublicHospitalityProfile() {
                   <small>These details are visible only to this business and are never displayed publicly.</small>
                 </div> : null}
                 <label className="hospitality-feedback-honeypot" aria-hidden="true">Company website<input tabIndex={-1} autoComplete="off" value={feedback.company_website} onChange={(e) => setFeedback({ ...feedback, company_website: e.target.value })} /></label>
-                <button className="cafe-primary" disabled={sendingFeedback}>{sendingFeedback ? "Sending…" : "Submit feedback"}</button>
+                <button type="submit" className="cafe-primary" disabled={sendingFeedback}>{sendingFeedback ? "Sending…" : "Submit feedback"}</button>
                 {feedbackMessage ? <small role="status">{feedbackMessage}</small> : null}
               </div> : null}
             </form> : null}
