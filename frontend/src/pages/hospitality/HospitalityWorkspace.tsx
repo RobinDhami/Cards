@@ -1912,7 +1912,7 @@ export function PublicHospitalityProfile() {
               <button type="submit" className="cafe-primary" disabled={sendingFeedback}>{sendingFeedback ? "Sending…" : "Submit Feedback"}</button>
               {feedbackMessage ? <small role="status">{feedbackMessage}</small> : null}
             </form> : null}
-          {venue.venue.googleReviewUrl ? <article className="cafe-google-reviews"><img src={googleReviewsLogo} alt="Google Reviews" /><a href={venue.venue.googleReviewUrl} onClick={() => track("google_review_click", "google_review")} target="_blank" rel="noreferrer">Open reviews <ExternalLink size={13} /></a></article> : null}
+          {venue.venue.googleReviewUrl ? <article className="cafe-google-reviews"><img src={googleReviewsLogo} alt="Google Reviews" /><a className="cafe-google-review-link" href={venue.venue.googleReviewUrl} onClick={() => track("google_review_click", "google_review")} target="_blank" rel="noreferrer">View on Google <ExternalLink size={13} /></a></article> : null}
         </section>
       ) : (
         <section>
