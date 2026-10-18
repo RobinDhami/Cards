@@ -100,9 +100,13 @@
 .cafe-public .hospitality-feedback-honeypot { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .cafe-public .hospitality-feedback [role=status] { font-size: 12px; }
 .cafe-public .cafe-google-reviews { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.cafe-public .cafe-google-reviews > img { display: block; width: 128px; height: auto; }
-.cafe-public .cafe-google-reviews .cafe-google-review-link { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: 0 0 auto; min-height: 36px; padding: 8px 11px; border: 1px solid #d6c8b5; border-radius: 999px; background: #fff; box-shadow: 0 3px 9px #3820160d; color: #255db2; text-decoration: none; white-space: nowrap; font-size: 10px; font-weight: 700; transition: transform .18s ease, box-shadow .18s ease; }
-.cafe-public .cafe-google-reviews .cafe-google-review-link:hover { transform: translateY(-1px); box-shadow: 0 6px 14px #38201618; }
+.cafe-public .cafe-google-review-copy { display: flex; align-items: center; min-width: 0; gap: 10px; }
+.cafe-public .cafe-google-review-copy > img { display: block; flex: 0 0 auto; width: 42px; height: 42px; }
+.cafe-public .cafe-google-review-copy > span { display: grid; min-width: 0; gap: 1px; }
+.cafe-public .cafe-google-review-copy strong { color: var(--cafe-ink); font-size: 14px; line-height: 1.2; }
+.cafe-public .cafe-google-review-copy small { color: var(--cafe-muted); font-size: 11px; line-height: 1.25; }
+.cafe-public .cafe-google-reviews .cafe-google-review-link { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; min-height: 40px; padding: 9px 15px; border: 1px solid var(--cafe-brand); border-radius: 999px; background: var(--cafe-brand); color: #fff; text-decoration: none; white-space: nowrap; font-size: 11px; font-weight: 700; transition: background-color .18s ease; }
+.cafe-public .cafe-google-reviews .cafe-google-review-link:hover { background: color-mix(in srgb, var(--cafe-brand) 88%, #000); }
 .cafe-public .cafe-menu-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .cafe-public .cafe-categories { display: flex; flex-wrap: wrap; gap: 7px; margin: 0 0 10px; }
 .cafe-public .cafe-categories button { display: flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 11px; padding: 9px 14px; min-height: 38px; background: #f1e8da; color: var(--cafe-ink); font-size: 11px; font-weight: 600; }
@@ -143,7 +147,7 @@
   .cafe-public .cafe-quick-actions { gap: 7px; }
   .cafe-public .cafe-quick-actions a, .cafe-public .cafe-quick-actions button { gap: 6px; padding-inline: 6px; font-size: 11px; }
   .cafe-public .hospitality-feedback { grid-template-columns: 1fr; }.cafe-public .cafe-stars { grid-column: 1; grid-row: auto; }
-  .cafe-public .cafe-google-reviews > img { width: 112px; }
+  .cafe-public .cafe-google-review-copy > img { width: 38px; height: 38px; }
   .cafe-public.hospitality-public button.hospitality-menu-item { grid-template-columns: 110px minmax(0,1fr); }.cafe-public .hospitality-menu-image { width: 110px; }
 }
 

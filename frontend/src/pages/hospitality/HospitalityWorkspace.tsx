@@ -42,7 +42,7 @@ import { HospitalityMenuManagement } from "./HospitalityMenuManagement";
 import { HospitalityFeedback } from "./HospitalityFeedback";
 import { HospitalityStaffCards } from "./HospitalityStaffCards";
 import { HospitalityAnalytics } from "./HospitalityAnalytics";
-import googleReviewsLogo from "../../../../theme/static/branding/google-reviews.webp";
+import googleGLogo from "./google-g.svg";
 import "./HospitalityWorkspace.css";
 import "./PublicCafeProfile.css";
 
@@ -1920,7 +1920,10 @@ export function PublicHospitalityProfile() {
           {venue.venue.mapUrl ? <article className="cafe-map">
             {venue.venue.address ? <iframe title={`Map for ${venue.organization.name}`} src={`https://maps.google.com/maps?q=${encodeURIComponent(`${venue.organization.name}, ${venue.venue.address}`)}&output=embed`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <div><MapPin size={28} />{venue.organization.name}</div>}
           </article> : null}
-          {venue.venue.googleReviewUrl ? <article className="cafe-google-reviews"><img src={googleReviewsLogo} alt="Google Reviews" /><a className="cafe-google-review-link" href={venue.venue.googleReviewUrl} onClick={() => track("google_review_click", "google_review")} target="_blank" rel="noreferrer">View on Google <ExternalLink size={13} /></a></article> : null}
+          {venue.venue.googleReviewUrl ? <article className="cafe-google-reviews">
+            <div className="cafe-google-review-copy"><img src={googleGLogo} alt="" /><span><strong>Review us on Google</strong><small>Share your public review</small></span></div>
+            <a className="cafe-google-review-link" href={venue.venue.googleReviewUrl} onClick={() => track("google_review_click", "google_review")} target="_blank" rel="noreferrer">Write a review</a>
+          </article> : null}
         </section>
       ) : (
         <section>
