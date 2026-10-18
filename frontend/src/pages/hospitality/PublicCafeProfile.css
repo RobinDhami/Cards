@@ -426,3 +426,10 @@
   background: transparent;
   box-shadow: none;
 }
+
+.cafe-public .cafe-specials .cafe-section-heading { margin-bottom: 7px; }
+.cafe-public .cafe-specials .cafe-section-heading h2 { font-size: 18px; }
+.cafe-public .cafe-special-card > img,
+.cafe-public .cafe-special-placeholder { height: 56px; }
+.cafe-public .cafe-connect { padding-top: 10px; padding-bottom: 10px; }
+.cafe-public .cafe-social-icon { width: 34px; height: 34px; }

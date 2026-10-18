@@ -10,7 +10,6 @@ import Plus from "lucide-react/dist/esm/icons/plus.js";
 import Save from "lucide-react/dist/esm/icons/save.js";
 import Search from "lucide-react/dist/esm/icons/search.js";
 import ArrowLeft from "lucide-react/dist/esm/icons/arrow-left.js";
-import ArrowRight from "lucide-react/dist/esm/icons/arrow-right.js";
 import Share2 from "lucide-react/dist/esm/icons/share-2.js";
 import Coffee from "lucide-react/dist/esm/icons/coffee.js";
 import CakeSlice from "lucide-react/dist/esm/icons/cake-slice.js";
@@ -1791,7 +1790,6 @@ export function PublicHospitalityProfile() {
   const socialLinks = [...venue.links].sort((left, right) =>
     (socialPriority[left.link_type] ?? 99) - (socialPriority[right.link_type] ?? 99)
   );
-  const contactLinkCount = socialLinks.length + Number(Boolean(venue.venue.whatsapp)) + Number(Boolean(venue.venue.website)) + Number(Boolean(venue.venue.email));
   const openMenu = () => { setActiveTab("menu"); track("menu_open", "menu"); };
   const categoryIcon = (name: string) => {
     if (/breakfast|coffee|beverage|drink/i.test(name)) return <Coffee size={17} />;
@@ -1878,15 +1876,15 @@ export function PublicHospitalityProfile() {
             <summary><span aria-hidden="true" className={`cafe-hours-status ${hoursStatusClass}`} /><span><strong>{todayLabel}</strong><span>{todayDetail}</span></span><span aria-hidden="true" className="cafe-hours-chevron">›</span></summary>
             {scheduleEntries.length ? <dl><div className="cafe-weekly-hours-label">Weekly hours</div>{openingScheduleRows(venue.venue.openingSchedule).map((row) => <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl> : <p>{venue.venue.openingHours}</p>}
           </details> : <div className="cafe-simple-hours"><span aria-hidden="true" className={`cafe-hours-status ${hoursStatusClass}`} /><span><strong>{todayLabel}</strong><span>{todayHours}</span></span></div>) : null}
-          {(venue.venue.email || venue.venue.whatsapp || venue.venue.website || venue.links.length > 0) ? <div className="cafe-connect"><h3>Stay connected{contactLinkCount > 4 ? <small>Swipe for more <ArrowRight size={13} /></small> : null}</h3><div className="hospitality-links">
-            {venue.venue.whatsapp ? <a href={`https://wa.me/${venue.venue.whatsapp.replace(/\D/g, "")}`} onClick={() => track("social_click", "whatsapp")} target="_blank" rel="noreferrer"><span className="cafe-social-icon is-whatsapp"><Phone size={24} /></span>WhatsApp</a> : null}
+          {(venue.venue.email || venue.venue.whatsapp || venue.venue.website || venue.links.length > 0) ? <div className="cafe-connect"><div className="hospitality-links">
+            {venue.venue.whatsapp ? <a href={`https://wa.me/${venue.venue.whatsapp.replace(/\D/g, "")}`} onClick={() => track("social_click", "whatsapp")} target="_blank" rel="noreferrer"><span className="cafe-social-icon is-whatsapp"><Phone size={19} /></span>WhatsApp</a> : null}
             {socialLinks.map((link) => (
               <a href={link.value} key={link.id} onClick={() => track("social_click", `social_${link.link_type}`)} target="_blank" rel="noreferrer">
-                <span className={`cafe-social-icon is-${link.link_type}`}>{link.link_type === "instagram" ? <Instagram size={24} /> : link.link_type === "facebook" ? <Facebook size={26} /> : link.link_type === "tiktok" ? <TikTokMark size={22} /> : <ExternalLink size={22} />}</span>{link.label || link.link_type}
+                <span className={`cafe-social-icon is-${link.link_type}`}>{link.link_type === "instagram" ? <Instagram size={19} /> : link.link_type === "facebook" ? <Facebook size={20} /> : link.link_type === "tiktok" ? <TikTokMark size={18} /> : <ExternalLink size={18} />}</span>{link.label || link.link_type}
               </a>
             ))}
-            {venue.venue.website ? <a href={venue.venue.website} onClick={() => track("social_click", "website")} target="_blank" rel="noreferrer"><span className="cafe-social-icon is-website"><Globe size={24} /></span>Website</a> : null}
-            {venue.venue.email ? <a href={`mailto:${venue.venue.email}`}><span className="cafe-social-icon is-email"><Mail size={22} /></span>Email</a> : null}
+            {venue.venue.website ? <a href={venue.venue.website} onClick={() => track("social_click", "website")} target="_blank" rel="noreferrer"><span className="cafe-social-icon is-website"><Globe size={19} /></span>Website</a> : null}
+            {venue.venue.email ? <a href={`mailto:${venue.venue.email}`}><span className="cafe-social-icon is-email"><Mail size={18} /></span>Email</a> : null}
           </div></div> : null}
           {venue.rating.count > 0 ? <p className="hospitality-rating">{venue.rating.average.toFixed(1)} / 5 · {venue.rating.count} {venue.rating.count === 1 ? "rating" : "ratings"}</p> : null}
           {venue.feedbackEnabled ? <form id="feedback" onSubmit={submitFeedback} className="hospitality-feedback">
@@ -1910,7 +1908,6 @@ export function PublicHospitalityProfile() {
             </form> : null}
           {venue.venue.mapUrl ? <article className="cafe-map">
             {venue.venue.address ? <iframe title={`Map for ${venue.organization.name}`} src={`https://maps.google.com/maps?q=${encodeURIComponent(`${venue.organization.name}, ${venue.venue.address}`)}&output=embed`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <div><MapPin size={28} />{venue.organization.name}</div>}
-            <a className="cafe-primary" href={venue.venue.mapUrl} onClick={() => track("social_click", "directions")} target="_blank" rel="noreferrer">View on Google Maps <ExternalLink size={15} /></a>
           </article> : null}
           {venue.venue.googleReviewUrl ? <article className="cafe-google-reviews"><img src={googleReviewsLogo} alt="Google Reviews" /><a className="cafe-google-review-link" href={venue.venue.googleReviewUrl} onClick={() => track("google_review_click", "google_review")} target="_blank" rel="noreferrer">View on Google <ExternalLink size={13} /></a></article> : null}
         </section>
