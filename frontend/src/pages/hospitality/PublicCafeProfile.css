@@ -107,6 +107,7 @@
 .cafe-public .cafe-google-review-copy small { color: var(--cafe-muted); font-size: 11px; line-height: 1.25; }
 .cafe-public .cafe-google-reviews .cafe-google-review-link { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; min-height: 40px; padding: 9px 15px; border: 1px solid var(--cafe-brand); border-radius: 999px; background: var(--cafe-brand); color: #fff; text-decoration: none; white-space: nowrap; font-size: 11px; font-weight: 700; transition: background-color .18s ease; }
 .cafe-public .cafe-google-reviews .cafe-google-review-link:hover { background: color-mix(in srgb, var(--cafe-brand) 88%, #000); }
+.cafe-public > section > .cafe-map { margin-bottom: 18px; }
 .cafe-public .cafe-menu-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .cafe-public .cafe-categories { display: flex; flex-wrap: wrap; gap: 7px; margin: 0 0 10px; }
 .cafe-public .cafe-categories button { display: flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 11px; padding: 9px 14px; min-height: 38px; background: #f1e8da; color: var(--cafe-ink); font-size: 11px; font-weight: 600; }
