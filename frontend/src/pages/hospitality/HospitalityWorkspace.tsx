@@ -1943,10 +1943,10 @@ export function PublicHospitalityProfile() {
                   <div>
                     <strong>{entry.name}</strong>
                     {itemIsOffer(entry) ? (
-                      <small className="hospitality-badge">{itemOfferLabel(entry)}</small>
+                      <small className="hospitality-badge is-offer">{itemOfferLabel(entry)}</small>
                     ) : null}
                     {itemIsTodaySpecial(entry) ? (
-                      <small className="hospitality-badge">Today’s special</small>
+                      <small className="hospitality-badge is-special">Today’s special</small>
                     ) : null}
                     {entry.isAvailable === false ? (
                       <small className="hospitality-badge is-sold-out">Sold out</small>
@@ -1968,8 +1968,8 @@ export function PublicHospitalityProfile() {
         <button type="button" onClick={() => setSelectedMenuItem(null)} aria-label="Close menu item details"><X size={18} /></button>
         {selectedMenuItem.image ? <img src={selectedMenuItem.image} alt="" /> : null}
         {(itemIsTodaySpecial(selectedMenuItem) || itemIsOffer(selectedMenuItem)) ? <div className="cafe-detail-badges">
-          {itemIsTodaySpecial(selectedMenuItem) ? <span>Today’s special</span> : null}
-          {itemIsOffer(selectedMenuItem) ? <span>{itemOfferLabel(selectedMenuItem)}</span> : null}
+          {itemIsTodaySpecial(selectedMenuItem) ? <span className="is-special">Today’s special</span> : null}
+          {itemIsOffer(selectedMenuItem) ? <span className="is-offer">{itemOfferLabel(selectedMenuItem)}</span> : null}
         </div> : null}
         <h3 id="hospitality-menu-detail-title">{selectedMenuItem.name}</h3>
         <p>{selectedMenuItem.description || 'No additional description has been provided.'}</p>

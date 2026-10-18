@@ -479,12 +479,12 @@
   color: #167443;
   font-weight: 700;
 }
-.cafe-public .hospitality-badge:first-of-type {
+.cafe-public .hospitality-badge.is-offer {
   border-color: #f4d8d8;
   background: #fff2f1;
   color: #b33a38;
 }
-.cafe-public .hospitality-badge + .hospitality-badge {
+.cafe-public .hospitality-badge.is-special {
   border-color: #ccead8;
   background: #effaf3;
   color: #167443;
@@ -496,7 +496,7 @@
 }
 .cafe-public .cafe-menu-pricing del { color: #ad6764; }
 .cafe-public .cafe-menu-pricing b { color: #167443; }
-.cafe-public .cafe-detail-badges span { border: 1px solid #f0d2cf; background: #fff3f2; color: #b33a38; }
-.cafe-public .cafe-detail-badges span + span { border-color: #cde7d6; background: #effaf3; color: #167443; }
+.cafe-public .cafe-detail-badges span.is-offer { border: 1px solid #f0d2cf; background: #fff3f2; color: #b33a38; }
+.cafe-public .cafe-detail-badges span.is-special { border: 1px solid #cde7d6; background: #effaf3; color: #167443; }
 .cafe-public .cafe-detail-price > span { color: #a76360; }
 .cafe-public .cafe-detail-price strong { color: #167443; }
