@@ -622,3 +622,57 @@
   color: #e69a17;
   fill: #e69a17;
 }
+
+/* Customer feedback: clear rating summary with one focused response form. */
+.cafe-public .cafe-feedback-section { margin: 0 0 18px; }
+.cafe-public .cafe-feedback-section > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 2px 10px;
+}
+.cafe-public .cafe-feedback-section > header h2 {
+  margin: 0;
+  color: var(--cafe-ink);
+  font: 700 19px/1.15 Arial, Helvetica, sans-serif;
+  letter-spacing: -.3px;
+}
+.cafe-public .cafe-feedback-score {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  color: #e69a17;
+  white-space: nowrap;
+}
+.cafe-public .cafe-feedback-score > strong { color: var(--cafe-ink); font-size: 13px; }
+.cafe-public .cafe-feedback-score > span { display: inline-flex; gap: 1px; }
+.cafe-public .cafe-feedback-score svg { color: #e69a17; stroke-width: 1.7; }
+.cafe-public .cafe-feedback-score small { color: var(--cafe-muted); font-size: 11px; }
+.cafe-public .cafe-feedback-section .hospitality-feedback {
+  display: grid;
+  gap: 13px;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--cafe-line);
+  border-radius: 17px;
+  background: #fffdf9;
+  box-shadow: none;
+}
+.cafe-public .cafe-feedback-section .cafe-rating-prompt { align-items: flex-start; }
+.cafe-public .cafe-feedback-section .cafe-rating-prompt > div:first-child { gap: 4px; }
+.cafe-public .cafe-feedback-section .cafe-rating-prompt strong { font-size: 16px; }
+.cafe-public .cafe-feedback-section .cafe-rating-prompt span { font-size: 11px; }
+.cafe-public .cafe-feedback-section .cafe-message { color: var(--cafe-ink); font-size: 12px; font-weight: 700; }
+.cafe-public .cafe-feedback-section .cafe-message span { color: var(--cafe-muted); font-weight: 400; }
+.cafe-public .cafe-feedback-section .cafe-message textarea { height: 88px; min-height: 88px; padding: 10px 11px; background: #fff; font-size: 12px; }
+.cafe-public .cafe-feedback-section .hospitality-feedback-contact-toggle { color: var(--cafe-muted); font-size: 11px; font-weight: 600; }
+.cafe-public .cafe-feedback-section .hospitality-feedback-contact-toggle input { width: 16px; height: 16px; margin-top: 0; }
+.cafe-public .cafe-feedback-section .cafe-primary { min-height: 46px; font-size: 14px; font-weight: 700; }
+@media(max-width:410px) {
+  .cafe-public .cafe-feedback-section > header h2 { font-size: 18px; }
+  .cafe-public .cafe-feedback-score { gap: 4px; }
+  .cafe-public .cafe-feedback-score svg { width: 15px; height: 15px; }
+  .cafe-public .cafe-feedback-score small { font-size: 10px; }
+}

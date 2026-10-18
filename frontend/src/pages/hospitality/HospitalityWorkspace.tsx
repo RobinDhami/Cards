@@ -1895,28 +1895,36 @@ export function PublicHospitalityProfile() {
             {venue.venue.website ? <a href={venue.venue.website} onClick={() => track("social_click", "website")} target="_blank" rel="noreferrer"><span className="cafe-social-icon is-website"><Globe size={19} /></span>Website</a> : null}
             {venue.venue.email ? <a href={`mailto:${venue.venue.email}`}><span className="cafe-social-icon is-email"><Mail size={18} /></span>Email</a> : null}
           </div></div> : null}
-          {venue.rating.count > 0 ? <p className="hospitality-rating">{venue.rating.average.toFixed(1)} / 5 · {venue.rating.count} {venue.rating.count === 1 ? "rating" : "ratings"}</p> : null}
-          {venue.feedbackEnabled ? <form id="feedback" onSubmit={submitFeedback} className="hospitality-feedback">
-              <div className="cafe-feedback-heading"><h3>Share your experience</h3></div>
-              <div className="cafe-rating-prompt">
-                <div><strong>How was your visit?</strong><span>Tap a star to share your experience</span></div>
-                <div className="cafe-stars" role="group" aria-label="Rating">
-                  {[1, 2, 3, 4, 5].map((rating) => <button key={rating} type="button" aria-label={`Rate ${rating} out of 5`} aria-pressed={feedback.rating === rating} onClick={() => { setFeedback({ ...feedback, rating }); track("rating_click", "rating", String(rating)); }}><Star size={27} fill={rating <= feedback.rating ? "currentColor" : "none"} /></button>)}
+          {venue.feedbackEnabled ? <section className="cafe-feedback-section" aria-labelledby="cafe-feedback-title">
+              <header>
+                <h2 id="cafe-feedback-title">Customer feedback</h2>
+                {venue.rating.count > 0 ? <div className="cafe-feedback-score" aria-label={`${venue.rating.average.toFixed(1)} out of 5 from ${venue.rating.count} ${venue.rating.count === 1 ? "rating" : "ratings"}`}>
+                  <strong>{venue.rating.average.toFixed(1)}</strong>
+                  <span aria-hidden="true">{[1, 2, 3, 4, 5].map((rating) => <Star key={rating} size={18} fill={rating <= Math.round(venue.rating.average) ? "currentColor" : "none"} />)}</span>
+                  <small>{venue.rating.count} {venue.rating.count === 1 ? "rating" : "ratings"}</small>
+                </div> : null}
+              </header>
+              <form id="feedback" onSubmit={submitFeedback} className="hospitality-feedback">
+                <div className="cafe-rating-prompt">
+                  <div><strong>How was your visit?</strong><span>Your feedback is private to this café.</span></div>
+                  <div className="cafe-stars" role="group" aria-label="Rating">
+                    {[1, 2, 3, 4, 5].map((rating) => <button key={rating} type="button" aria-label={`Rate ${rating} out of 5`} aria-pressed={feedback.rating === rating} onClick={() => { setFeedback({ ...feedback, rating }); track("rating_click", "rating", String(rating)); }}><Star size={27} fill={rating <= feedback.rating ? "currentColor" : "none"} /></button>)}
+                  </div>
                 </div>
-              </div>
-              <label className="cafe-message">Message <span>(optional)</span><TextArea value={feedback.comment} maxLength={2000} onChange={(e) => setFeedback({ ...feedback, comment: e.target.value })} placeholder="Share an optional message…" /></label>
-              <label className="hospitality-feedback-contact-toggle"><input type="checkbox" checked={feedback.shareContact} onChange={(e) => setFeedback({ ...feedback, shareContact: e.target.checked })} /> Share optional contact details so the business can follow up</label>
-              {feedback.shareContact ? <div className="hospitality-feedback-contact-fields">
-                  <label>Name <span>(optional)</span><TextInput value={feedback.contactName} maxLength={120} onChange={(e) => setFeedback({ ...feedback, contactName: e.target.value })} /></label>
-                  <label>Email <span>(optional)</span><TextInput type="email" value={feedback.contactEmail} onChange={(e) => setFeedback({ ...feedback, contactEmail: e.target.value })} /></label>
-                  <label>Phone <span>(optional)</span><TextInput type="tel" value={feedback.contactPhone} maxLength={40} onChange={(e) => setFeedback({ ...feedback, contactPhone: e.target.value })} /></label>
-                  <small>These details are visible only to this business and are never displayed publicly.</small>
-              </div>
-              : null}
-              <label className="hospitality-feedback-honeypot" aria-hidden="true">Company website<input tabIndex={-1} autoComplete="off" value={feedback.company_website} onChange={(e) => setFeedback({ ...feedback, company_website: e.target.value })} /></label>
-              <button type="submit" className="cafe-primary" disabled={sendingFeedback}>{sendingFeedback ? "Sending…" : "Submit Feedback"}</button>
-              {feedbackMessage ? <small role="status">{feedbackMessage}</small> : null}
-            </form> : null}
+                <label className="cafe-message">Message <span>(optional)</span><TextArea value={feedback.comment} maxLength={2000} onChange={(e) => setFeedback({ ...feedback, comment: e.target.value })} placeholder="Tell us more…" /></label>
+                <label className="hospitality-feedback-contact-toggle"><input type="checkbox" checked={feedback.shareContact} onChange={(e) => setFeedback({ ...feedback, shareContact: e.target.checked })} /> Let the café contact me about this feedback</label>
+                {feedback.shareContact ? <div className="hospitality-feedback-contact-fields">
+                    <label>Name <span>(optional)</span><TextInput value={feedback.contactName} maxLength={120} onChange={(e) => setFeedback({ ...feedback, contactName: e.target.value })} /></label>
+                    <label>Email <span>(optional)</span><TextInput type="email" value={feedback.contactEmail} onChange={(e) => setFeedback({ ...feedback, contactEmail: e.target.value })} /></label>
+                    <label>Phone <span>(optional)</span><TextInput type="tel" value={feedback.contactPhone} maxLength={40} onChange={(e) => setFeedback({ ...feedback, contactPhone: e.target.value })} /></label>
+                    <small>These details are visible only to this business and are never displayed publicly.</small>
+                </div>
+                : null}
+                <label className="hospitality-feedback-honeypot" aria-hidden="true">Company website<input tabIndex={-1} autoComplete="off" value={feedback.company_website} onChange={(e) => setFeedback({ ...feedback, company_website: e.target.value })} /></label>
+                <button type="submit" className="cafe-primary" disabled={sendingFeedback}>{sendingFeedback ? "Sending…" : "Send feedback"}</button>
+                {feedbackMessage ? <small role="status">{feedbackMessage}</small> : null}
+              </form>
+            </section> : null}
           {venue.venue.mapUrl ? <article className="cafe-map">
             {venue.venue.address ? <iframe title={`Map for ${venue.organization.name}`} src={`https://maps.google.com/maps?q=${encodeURIComponent(`${venue.organization.name}, ${venue.venue.address}`)}&output=embed`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <div><MapPin size={28} />{venue.organization.name}</div>}
           </article> : null}
