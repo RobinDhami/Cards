@@ -1867,7 +1867,7 @@ export function PublicHospitalityProfile() {
       {activeTab === "home" ? (
         <section className="cafe-overview">
           {specialItems.length ? <section className="cafe-specials" aria-labelledby="cafe-specials-title">
-            <div className="cafe-section-heading"><h2 id="cafe-specials-title">Our Specials</h2><button type="button" onClick={openMenu}>View full menu <ArrowRight size={16} /></button></div>
+            <div className="cafe-section-heading"><h2 id="cafe-specials-title">Our Specials</h2></div>
             <div className="cafe-specials-rail">
               {specialItems.map((entry) => <button type="button" className="cafe-special-card" aria-label={`View details for ${entry.name}`} key={entry.id ?? `${entry.categoryName}:${entry.name}`} onClick={() => { setActiveTab("menu"); setSelectedMenuItem(entry); track("menu_item_click", "special", entry.name); }}>
                 {entry.image ? <img src={entry.image} alt="" loading="lazy" /> : <span className="cafe-special-placeholder"><Utensils size={24} /></span>}
@@ -1888,10 +1888,9 @@ export function PublicHospitalityProfile() {
             {venue.venue.website ? <a href={venue.venue.website} onClick={() => track("social_click", "website")} target="_blank" rel="noreferrer"><span className="cafe-social-icon is-website"><Globe size={24} /></span>Website</a> : null}
             {venue.venue.email ? <a href={`mailto:${venue.venue.email}`}><span className="cafe-social-icon is-email"><Mail size={22} /></span>Email</a> : null}
           </div></section> : null}
-          {(venue.feedbackEnabled || venue.venue.googleReviewUrl || venue.rating.count > 0) ? <section className="cafe-reviews-feedback" aria-labelledby="cafe-reviews-title">
+          {(venue.feedbackEnabled || venue.rating.count > 0) ? <section className="cafe-reviews-feedback" aria-labelledby="cafe-reviews-title">
             <h3 id="cafe-reviews-title">Reviews &amp; feedback</h3>
             {venue.rating.count > 0 ? <div className="cafe-customer-score"><span>Customer feedback</span><strong>{venue.rating.average.toFixed(1)} · {venue.rating.count} {venue.rating.count === 1 ? "rating" : "ratings"}</strong></div> : null}
-            {venue.venue.googleReviewUrl ? <div className="cafe-google-review-row"><img src={googleReviewsLogo} alt="Google Reviews" /><a href={venue.venue.googleReviewUrl} onClick={() => track("google_review_click", "google_review")} target="_blank" rel="noreferrer">Open reviews <ExternalLink size={13} /></a></div> : null}
             {venue.feedbackEnabled ? <form id="feedback" onSubmit={submitFeedback} className="cafe-private-feedback">
               <div className="cafe-private-feedback-heading"><div><strong>How was your visit?</strong><span>Your feedback is private to this café.</span></div><div className="cafe-stars" role="group" aria-label="Rating">
                 {[1, 2, 3, 4, 5].map((rating) => <button key={rating} type="button" aria-label={`Rate ${rating} out of 5`} aria-pressed={feedback.rating === rating} onClick={() => { setFeedback({ ...feedback, rating }); track("rating_click", "rating", String(rating)); }}><Star size={27} fill={rating <= feedback.rating ? "currentColor" : "none"} /></button>)}
@@ -1915,6 +1914,7 @@ export function PublicHospitalityProfile() {
             {venue.venue.address ? <iframe title={`Map for ${venue.organization.name}`} src={`https://maps.google.com/maps?q=${encodeURIComponent(`${venue.organization.name}, ${venue.venue.address}`)}&output=embed`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <div><MapPin size={28} />{venue.organization.name}</div>}
             <a className="cafe-primary" href={venue.venue.mapUrl} onClick={() => track("social_click", "directions")} target="_blank" rel="noreferrer">Get directions <ExternalLink size={15} /></a>
           </article></section> : null}
+          {venue.venue.googleReviewUrl ? <div className="cafe-google-review-row"><img src={googleReviewsLogo} alt="Google Reviews" /><a href={venue.venue.googleReviewUrl} onClick={() => track("google_review_click", "google_review")} target="_blank" rel="noreferrer">Open reviews <ExternalLink size={13} /></a></div> : null}
         </section>
       ) : (
         <section>
