@@ -1867,7 +1867,7 @@ export function PublicHospitalityProfile() {
           {specialItems.length ? <section className="cafe-specials" aria-labelledby="cafe-specials-title">
             <div className="cafe-section-heading"><h2 id="cafe-specials-title">Our Specials</h2></div>
             <div className="cafe-specials-rail">
-              {specialItems.map((entry) => <button type="button" className="cafe-special-card" aria-label={`View details for ${entry.name}`} key={entry.id ?? `${entry.categoryName}:${entry.name}`} onClick={() => { setActiveTab("menu"); setSelectedMenuItem(entry); track("menu_item_click", "special", entry.name); }}>
+              {specialItems.map((entry) => <button type="button" className="cafe-special-card" aria-label={`View details for ${entry.name}`} key={entry.id ?? `${entry.categoryName}:${entry.name}`} onClick={() => { setSelectedMenuItem(entry); track("menu_item_click", "special", entry.name); }}>
                 {entry.image ? <img src={entry.image} alt="" loading="lazy" /> : <span className="cafe-special-placeholder"><Utensils size={24} /></span>}
               </button>)}
             </div>
