@@ -544,3 +544,9 @@
   box-shadow: none;
   transform: none;
 }
+
+.cafe-public .cafe-quick-actions button {
+  border: 2px solid var(--cafe-brand) !important;
+  background: #fffdf8 !important;
+  color: var(--cafe-brand);
+}
