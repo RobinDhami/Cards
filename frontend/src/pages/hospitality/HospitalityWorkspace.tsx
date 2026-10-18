@@ -10,8 +10,8 @@ import Plus from "lucide-react/dist/esm/icons/plus.js";
 import Save from "lucide-react/dist/esm/icons/save.js";
 import Search from "lucide-react/dist/esm/icons/search.js";
 import ArrowLeft from "lucide-react/dist/esm/icons/arrow-left.js";
+import ArrowRight from "lucide-react/dist/esm/icons/arrow-right.js";
 import Share2 from "lucide-react/dist/esm/icons/share-2.js";
-import Store from "lucide-react/dist/esm/icons/store.js";
 import Coffee from "lucide-react/dist/esm/icons/coffee.js";
 import CakeSlice from "lucide-react/dist/esm/icons/cake-slice.js";
 import Leaf from "lucide-react/dist/esm/icons/leaf.js";
@@ -1701,7 +1701,7 @@ export function PublicHospitalityProfile() {
       : "home",
   );
   const [feedback, setFeedback] = useState({
-    rating: 5,
+    rating: 0,
     comment: "",
     shareContact: false,
     contactName: "",
@@ -1755,7 +1755,7 @@ export function PublicHospitalityProfile() {
         body: jsonBody(feedback),
       });
       setFeedbackMessage("Thank you for your feedback.");
-      setFeedback({ rating: 5, comment: "", shareContact: false, contactName: "", contactEmail: "", contactPhone: "", company_website: "", source: feedbackSource });
+      setFeedback({ rating: 0, comment: "", shareContact: false, contactName: "", contactEmail: "", contactPhone: "", company_website: "", source: feedbackSource });
     } catch (reason) {
       setFeedbackMessage(displayError(reason));
     } finally {
@@ -1763,6 +1763,21 @@ export function PublicHospitalityProfile() {
     }
   }
   const menuCategories = venue.categories.filter((category) => selectedCategory === null || category.slug === selectedCategory);
+  const availableMenuItems = venue.categories.flatMap((category) =>
+    (category.items || [])
+      .filter((entry) => entry.isAvailable !== false)
+      .map((entry) => ({ ...entry, categoryName: category.name })),
+  );
+  const highlightedMenuItems = availableMenuItems.filter((entry) =>
+    entry.isTodaySpecial || entry.is_today_special || entry.isOffer || entry.is_offer,
+  );
+  const highlightedMenuItemKeys = new Set(
+    highlightedMenuItems.map((entry) => entry.id ?? `${entry.categoryName}:${entry.name}`),
+  );
+  const specialItems = [
+    ...highlightedMenuItems,
+    ...availableMenuItems.filter((entry) => !highlightedMenuItemKeys.has(entry.id ?? `${entry.categoryName}:${entry.name}`)),
+  ].slice(0, 5);
   const today = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'Asia/Kathmandu' }).format(new Date()).toLowerCase();
   const todaySchedule = venue.venue.openingSchedule?.[today];
   const todayHours = todaySchedule
@@ -1842,29 +1857,32 @@ export function PublicHospitalityProfile() {
           className={activeTab === "home" ? "is-active" : ""}
           onClick={() => setActiveTab("home")}
         >
-          <Store size={19} /> Home
+          Overview
         </button>
         <button
           aria-pressed={activeTab === "menu"}
           className={activeTab === "menu" ? "is-active" : ""}
           onClick={openMenu}
         >
-          <Utensils size={19} /> Menu
+          Menu
         </button>
       </nav>
       {activeTab === "home" ? (
-        <section>
-          {venue.venue.description ? <article className="cafe-about"><Leaf size={29} /><p>{venue.venue.description}</p></article> : null}
-          {venue.venue.reservationUrl ? <div className="hospitality-public-contact"><a href={venue.venue.reservationUrl} onClick={() => track("social_click", "reservation")} target="_blank" rel="noreferrer">Reserve / Book <ExternalLink size={15} /></a></div> : null}
+        <section className="cafe-overview">
+          {specialItems.length ? <section className="cafe-specials" aria-labelledby="cafe-specials-title">
+            <div className="cafe-section-heading"><h2 id="cafe-specials-title">Our Specials</h2><button type="button" onClick={openMenu}>View full menu <ArrowRight size={16} /></button></div>
+            <div className="cafe-specials-rail">
+              {specialItems.map((entry) => <button type="button" className="cafe-special-card" key={entry.id ?? `${entry.categoryName}:${entry.name}`} onClick={() => { setActiveTab("menu"); setSelectedMenuItem(entry); track("menu_item_click", "special", entry.name); }}>
+                {entry.image ? <img src={entry.image} alt="" loading="lazy" /> : <span className="cafe-special-placeholder"><Utensils size={24} /></span>}
+                <span><small>{entry.categoryName}</small><strong>{entry.name}</strong><b>Rs. {Number(entry.price).toLocaleString("en-NP", { maximumFractionDigits: 2 })}</b></span>
+              </button>)}
+            </div>
+          </section> : null}
           {(scheduleEntries.length || venue.venue.openingHours) ? (hasVariableHours ? <details className="hospitality-public-hours">
             <summary><span aria-hidden="true" className={`cafe-hours-status ${hoursStatusClass}`} /><span><strong>{todayLabel}</strong><span>{todayDetail}</span></span><span aria-hidden="true" className="cafe-hours-chevron">›</span></summary>
             {scheduleEntries.length ? <dl><div className="cafe-weekly-hours-label">Weekly hours</div>{openingScheduleRows(venue.venue.openingSchedule).map((row) => <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl> : <p>{venue.venue.openingHours}</p>}
           </details> : <div className="cafe-simple-hours"><span aria-hidden="true" className={`cafe-hours-status ${hoursStatusClass}`} /><span><strong>{todayLabel}</strong><span>{todayHours}</span></span></div>) : null}
-          {venue.venue.mapUrl ? <article className="cafe-map">
-            {venue.venue.address ? <iframe title={`Map for ${venue.organization.name}`} src={`https://maps.google.com/maps?q=${encodeURIComponent(`${venue.organization.name}, ${venue.venue.address}`)}&output=embed`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <div><MapPin size={28} />{venue.organization.name}</div>}
-            <a className="cafe-primary" href={venue.venue.mapUrl} onClick={() => track("social_click", "directions")} target="_blank" rel="noreferrer">View on Google Maps <ExternalLink size={15} /></a>
-          </article> : null}
-          {(venue.venue.email || venue.venue.whatsapp || venue.venue.website || venue.links.length > 0) ? <div className="cafe-connect"><h3>Stay connected{contactLinkCount > 4 ? <small>Swipe for more →</small> : null}</h3><div className="hospitality-links">
+          {(venue.venue.email || venue.venue.whatsapp || venue.venue.website || venue.links.length > 0) ? <section className="cafe-connect"><h3>Stay connected{contactLinkCount > 4 ? <small>Swipe for more <ArrowRight size={13} /></small> : null}</h3><div className="hospitality-links">
             {venue.venue.whatsapp ? <a href={`https://wa.me/${venue.venue.whatsapp.replace(/\D/g, "")}`} onClick={() => track("social_click", "whatsapp")} target="_blank" rel="noreferrer"><span className="cafe-social-icon is-whatsapp"><Phone size={24} /></span>WhatsApp</a> : null}
             {socialLinks.map((link) => (
               <a href={link.value} key={link.id} onClick={() => track("social_click", `social_${link.link_type}`)} target="_blank" rel="noreferrer">
@@ -1873,31 +1891,34 @@ export function PublicHospitalityProfile() {
             ))}
             {venue.venue.website ? <a href={venue.venue.website} onClick={() => track("social_click", "website")} target="_blank" rel="noreferrer"><span className="cafe-social-icon is-website"><Globe size={24} /></span>Website</a> : null}
             {venue.venue.email ? <a href={`mailto:${venue.venue.email}`}><span className="cafe-social-icon is-email"><Mail size={22} /></span>Email</a> : null}
-          </div></div> : null}
-          {venue.rating.count > 0 ? <p className="hospitality-rating">{venue.rating.average.toFixed(1)} / 5 · {venue.rating.count} ratings</p> : null}
-          {venue.feedbackEnabled ? (
-            <form id="feedback" onSubmit={submitFeedback} className="hospitality-feedback">
-              <div className="cafe-feedback-heading"><h3>Share your experience</h3></div>
-              <p>Your feedback helps us improve. It is private to this café.</p>
-              <div className="cafe-stars" role="group" aria-label="Rating">
-                {[1, 2, 3, 4, 5].map((rating) => <button key={rating} type="button" aria-label={`Rate ${rating} out of 5`} aria-pressed={feedback.rating === rating} onClick={() => { setFeedback({ ...feedback, rating }); track("rating_click", "rating", String(rating)); }}><Star size={27} fill="none" style={{ opacity: rating <= feedback.rating ? 1 : 0.4 }} /></button>)}
-              </div>
-              <label className="cafe-message">Message <span>(optional)</span><TextArea value={feedback.comment} maxLength={2000} onChange={(e) => setFeedback({ ...feedback, comment: e.target.value })} placeholder="Share an optional message…" /></label>
-              <label className="hospitality-feedback-contact-toggle"><input type="checkbox" checked={feedback.shareContact} onChange={(e) => setFeedback({ ...feedback, shareContact: e.target.checked })} /> Share optional contact details so the business can follow up</label>
-              {feedback.shareContact ? <div className="hospitality-feedback-contact-fields">
-                <label>Name <span>(optional)</span><TextInput value={feedback.contactName} maxLength={120} onChange={(e) => setFeedback({ ...feedback, contactName: e.target.value })} /></label>
-                <label>Email <span>(optional)</span><TextInput type="email" value={feedback.contactEmail} onChange={(e) => setFeedback({ ...feedback, contactEmail: e.target.value })} /></label>
-                <label>Phone <span>(optional)</span><TextInput type="tel" value={feedback.contactPhone} maxLength={40} onChange={(e) => setFeedback({ ...feedback, contactPhone: e.target.value })} /></label>
-                <small>These details are visible only to this business and are never displayed publicly.</small>
+          </div></section> : null}
+          {(venue.feedbackEnabled || venue.venue.googleReviewUrl || venue.rating.count > 0) ? <section className="cafe-reviews-feedback" aria-labelledby="cafe-reviews-title">
+            <h3 id="cafe-reviews-title">Reviews &amp; feedback</h3>
+            {venue.rating.count > 0 ? <div className="cafe-customer-score"><span>Customer feedback</span><strong>{venue.rating.average.toFixed(1)} · {venue.rating.count} {venue.rating.count === 1 ? "rating" : "ratings"}</strong></div> : null}
+            {venue.venue.googleReviewUrl ? <div className="cafe-google-review-row"><img src={googleReviewsLogo} alt="Google Reviews" /><a href={venue.venue.googleReviewUrl} onClick={() => track("google_review_click", "google_review")} target="_blank" rel="noreferrer">Open reviews <ExternalLink size={13} /></a></div> : null}
+            {venue.feedbackEnabled ? <form id="feedback" onSubmit={submitFeedback} className="cafe-private-feedback">
+              <div className="cafe-private-feedback-heading"><div><strong>How was your visit?</strong><span>Your feedback is private to this café.</span></div><div className="cafe-stars" role="group" aria-label="Rating">
+                {[1, 2, 3, 4, 5].map((rating) => <button key={rating} type="button" aria-label={`Rate ${rating} out of 5`} aria-pressed={feedback.rating === rating} onClick={() => { setFeedback({ ...feedback, rating }); track("rating_click", "rating", String(rating)); }}><Star size={27} fill={rating <= feedback.rating ? "currentColor" : "none"} /></button>)}
+              </div></div>
+              {feedback.rating > 0 ? <div className="cafe-feedback-expanded">
+                <label className="cafe-message">Message <span>(optional)</span><TextArea value={feedback.comment} maxLength={2000} onChange={(e) => setFeedback({ ...feedback, comment: e.target.value })} placeholder="Share an optional message…" /></label>
+                <label className="hospitality-feedback-contact-toggle"><input type="checkbox" checked={feedback.shareContact} onChange={(e) => setFeedback({ ...feedback, shareContact: e.target.checked })} /> Share optional contact details so the business can follow up</label>
+                {feedback.shareContact ? <div className="hospitality-feedback-contact-fields">
+                  <label>Name <span>(optional)</span><TextInput value={feedback.contactName} maxLength={120} onChange={(e) => setFeedback({ ...feedback, contactName: e.target.value })} /></label>
+                  <label>Email <span>(optional)</span><TextInput type="email" value={feedback.contactEmail} onChange={(e) => setFeedback({ ...feedback, contactEmail: e.target.value })} /></label>
+                  <label>Phone <span>(optional)</span><TextInput type="tel" value={feedback.contactPhone} maxLength={40} onChange={(e) => setFeedback({ ...feedback, contactPhone: e.target.value })} /></label>
+                  <small>These details are visible only to this business and are never displayed publicly.</small>
+                </div> : null}
+                <label className="hospitality-feedback-honeypot" aria-hidden="true">Company website<input tabIndex={-1} autoComplete="off" value={feedback.company_website} onChange={(e) => setFeedback({ ...feedback, company_website: e.target.value })} /></label>
+                <button className="cafe-primary" disabled={sendingFeedback}>{sendingFeedback ? "Sending…" : "Submit feedback"}</button>
+                {feedbackMessage ? <small role="status">{feedbackMessage}</small> : null}
               </div> : null}
-              <label className="hospitality-feedback-honeypot" aria-hidden="true">Company website<input tabIndex={-1} autoComplete="off" value={feedback.company_website} onChange={(e) => setFeedback({ ...feedback, company_website: e.target.value })} /></label>
-              <button className="cafe-primary" disabled={sendingFeedback}>
-                {sendingFeedback ? "Sending…" : "Submit Feedback"}
-              </button>
-              {feedbackMessage ? <small role="status">{feedbackMessage}</small> : null}
-            </form>
-          ) : null}
-          {venue.venue.googleReviewUrl ? <article className="cafe-google-reviews"><img src={googleReviewsLogo} alt="Google Reviews" /><a href={venue.venue.googleReviewUrl} onClick={() => track("google_review_click", "google_review")} target="_blank" rel="noreferrer">Open reviews <ExternalLink size={13} /></a></article> : null}
+            </form> : null}
+          </section> : null}
+          {venue.venue.mapUrl ? <section className="cafe-find-us" aria-labelledby="cafe-find-us-title"><header><h3 id="cafe-find-us-title">Find us</h3>{venue.venue.address ? <p><MapPin size={15} />{venue.venue.address}</p> : null}</header><article className="cafe-map">
+            {venue.venue.address ? <iframe title={`Map for ${venue.organization.name}`} src={`https://maps.google.com/maps?q=${encodeURIComponent(`${venue.organization.name}, ${venue.venue.address}`)}&output=embed`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <div><MapPin size={28} />{venue.organization.name}</div>}
+            <a className="cafe-primary" href={venue.venue.mapUrl} onClick={() => track("social_click", "directions")} target="_blank" rel="noreferrer">Get directions <ExternalLink size={15} /></a>
+          </article></section> : null}
         </section>
       ) : (
         <section>
