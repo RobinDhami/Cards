@@ -528,3 +528,19 @@
 .cafe-public .cafe-categories button { min-width: 0; padding: 8px 17px; font-size: 12px; }
 .cafe-public .hospitality-badge.is-special { display: inline-flex; align-items: center; gap: 3px; font-size: 8px; line-height: 1.1; letter-spacing: .01em; }
 .cafe-public .hospitality-badge.is-special span { color: #bd7d18; font-size: 9px; line-height: 1; }
+
+/* Keep the entry actions balanced: the call action stays clear without overpowering Save contact. */
+.cafe-public .cafe-quick-actions a,
+.cafe-public .cafe-quick-actions button {
+  box-shadow: none;
+}
+.cafe-public .cafe-quick-actions button {
+  border-width: 1.5px;
+  border-color: color-mix(in srgb, var(--cafe-brand) 78%, #fff);
+  background: #fffdf8;
+}
+.cafe-public .cafe-quick-actions a:hover,
+.cafe-public .cafe-quick-actions button:hover {
+  box-shadow: none;
+  transform: none;
+}
