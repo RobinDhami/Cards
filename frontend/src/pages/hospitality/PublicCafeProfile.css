@@ -550,3 +550,44 @@
   background: #fffdf8 !important;
   color: var(--cafe-brand);
 }
+
+/* Weekly hours: a calm status row that expands into the schedule. */
+.cafe-public .hospitality-public-hours,
+.cafe-public .cafe-simple-hours {
+  border-width: 1px 0;
+  border-radius: 0;
+  padding: 17px 5px;
+  background: transparent;
+  box-shadow: none;
+}
+.cafe-public .hospitality-public-hours summary,
+.cafe-public .cafe-simple-hours {
+  min-height: 28px;
+  gap: 15px;
+}
+.cafe-public .hospitality-public-hours summary > span:nth-child(2),
+.cafe-public .cafe-simple-hours > span:nth-child(2) {
+  gap: 13px;
+}
+.cafe-public .hospitality-public-hours summary strong,
+.cafe-public .cafe-simple-hours strong {
+  color: var(--cafe-ink);
+  font-size: 15px;
+}
+.cafe-public .hospitality-public-hours summary > span > span,
+.cafe-public .cafe-simple-hours > span > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 13px;
+  color: var(--cafe-muted);
+  font-size: 14px;
+}
+.cafe-public .hospitality-public-hours summary > span > span::before,
+.cafe-public .cafe-simple-hours > span > span::before {
+  width: 1px;
+  height: 23px;
+  background: var(--cafe-line);
+  content: "";
+}
+.cafe-public .cafe-hours-chevron { color: #737783; font-size: 31px; font-weight: 300; }
+.cafe-public .hospitality-public-hours dl { margin: 15px 0 0; padding-top: 10px; border-top: 1px solid var(--cafe-line); }
