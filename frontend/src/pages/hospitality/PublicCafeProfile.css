@@ -433,3 +433,51 @@
 .cafe-public .cafe-special-placeholder { height: 56px; }
 .cafe-public .cafe-connect { padding-top: 10px; padding-bottom: 10px; }
 .cafe-public .cafe-social-icon { width: 34px; height: 34px; }
+
+/* Offers and daily specials share the same compact treatment in highlights, menus and detail popups. */
+.cafe-public .cafe-special-card { position: relative; }
+.cafe-public .cafe-highlight-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  position: absolute;
+  inset: auto 5px 5px 5px;
+  pointer-events: none;
+}
+.cafe-public .cafe-highlight-badges small,
+.cafe-public .cafe-detail-badges span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 19px;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: #fffdf8e8;
+  color: var(--cafe-brand);
+  box-shadow: 0 2px 8px #38201618;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+}
+.cafe-public .cafe-menu-pricing {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  grid-column: 2;
+  grid-row: 2;
+  padding: 3px 9px 7px 0;
+}
+.cafe-public .cafe-menu-pricing del {
+  color: var(--cafe-muted);
+  font-size: 10px;
+  text-decoration-thickness: 1px;
+}
+.cafe-public .cafe-menu-pricing b { color: var(--cafe-ink); font: bold 12px Georgia, serif; }
+.cafe-public .hospitality-menu-item:not(:has(img)) .cafe-menu-pricing { grid-column: 1; }
+.cafe-public .hospitality-menu-detail { padding: 20px; }
+.cafe-public .hospitality-menu-detail > img { margin-bottom: 10px; }
+.cafe-public .cafe-detail-badges { display: flex; flex-wrap: wrap; gap: 5px; margin: 0 46px 8px 0; }
+.cafe-public .cafe-detail-badges span { background: #f1e3c9; box-shadow: none; color: #845920; }
+.cafe-public .cafe-detail-price { display: flex; align-items: baseline; gap: 9px; margin-top: 14px; }
+.cafe-public .cafe-detail-price > span { color: var(--cafe-muted); font-size: 12px; }
+.cafe-public .cafe-detail-price del { text-decoration-thickness: 1px; }
+.cafe-public .cafe-detail-price strong { display: block; margin: 0; color: var(--cafe-brand); font: 700 22px/1 Georgia, serif; }

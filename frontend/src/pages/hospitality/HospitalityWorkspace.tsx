@@ -91,6 +91,7 @@ type Item = {
   description: string;
   price: string;
   original_price?: string;
+  originalPrice?: string;
   offer_label?: string;
   dietary_info?: string;
   is_vegetarian?: boolean;
@@ -126,6 +127,16 @@ type DraftItem = {
   is_today_special: boolean;
   is_available: boolean;
   image: File | null;
+};
+
+const itemIsOffer = (item: Item) => Boolean(item.is_offer || item.isOffer);
+const itemIsTodaySpecial = (item: Item) => Boolean(item.is_today_special || item.isTodaySpecial);
+const itemOfferLabel = (item: Item) => item.offer_label || item.offerLabel || "Offer";
+const itemOriginalPrice = (item: Item) => item.original_price || item.originalPrice || "";
+const itemHasReducedPrice = (item: Item) => {
+  const original = Number(itemOriginalPrice(item));
+  const current = Number(item.price);
+  return itemIsOffer(item) && Number.isFinite(original) && Number.isFinite(current) && original > current;
 };
 // Kept while the older internal menu helpers remain in this module; the active
 // Analytics page owns its own, richer API contract.
@@ -1771,8 +1782,8 @@ export function PublicHospitalityProfile() {
       .filter((entry) => entry.isAvailable !== false)
       .map((entry) => ({ ...entry, categoryName: category.name })),
   );
-  const specialItems = availableMenuItems.filter((entry) =>
-    entry.isTodaySpecial || entry.is_today_special,
+  const highlightItems = availableMenuItems.filter((entry) =>
+    itemIsTodaySpecial(entry) || itemIsOffer(entry),
   );
   const today = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'Asia/Kathmandu' }).format(new Date()).toLowerCase();
   const todaySchedule = venue.venue.openingSchedule?.[today];
@@ -1864,11 +1875,15 @@ export function PublicHospitalityProfile() {
       </nav>
       {activeTab === "home" ? (
         <section>
-          {specialItems.length ? <section className="cafe-specials" aria-labelledby="cafe-specials-title">
-            <div className="cafe-section-heading"><h2 id="cafe-specials-title">Our Specials</h2></div>
+          {highlightItems.length ? <section className="cafe-specials" aria-labelledby="cafe-specials-title">
+            <div className="cafe-section-heading"><h2 id="cafe-specials-title">Highlights</h2></div>
             <div className="cafe-specials-rail">
-              {specialItems.map((entry) => <button type="button" className="cafe-special-card" aria-label={`View details for ${entry.name}`} key={entry.id ?? `${entry.categoryName}:${entry.name}`} onClick={() => { setSelectedMenuItem(entry); track("menu_item_click", "special", entry.name); }}>
+              {highlightItems.map((entry) => <button type="button" className="cafe-special-card" aria-label={`View details for ${entry.name}`} key={entry.id ?? `${entry.categoryName}:${entry.name}`} onClick={() => { setSelectedMenuItem(entry); track("menu_item_click", "highlight", entry.name); }}>
                 {entry.image ? <img src={entry.image} alt="" loading="lazy" /> : <span className="cafe-special-placeholder"><Utensils size={24} /></span>}
+                <span className="cafe-highlight-badges">
+                  {itemIsTodaySpecial(entry) ? <small>Today’s special</small> : null}
+                  {itemIsOffer(entry) ? <small>{itemOfferLabel(entry)}</small> : null}
+                </span>
               </button>)}
             </div>
           </section> : null}
@@ -1933,15 +1948,11 @@ export function PublicHospitalityProfile() {
                   ) : null}
                   <div>
                     <strong>{entry.name}</strong>
-                    {entry.is_offer || entry.isOffer ? (
-                      <small className="hospitality-badge">
-                        {entry.offer_label || entry.offerLabel || "Offer"}
-                      </small>
+                    {itemIsOffer(entry) ? (
+                      <small className="hospitality-badge">{itemOfferLabel(entry)}</small>
                     ) : null}
-                    {entry.is_today_special || entry.isTodaySpecial ? (
-                      <small className="hospitality-badge">
-                        Today’s special
-                      </small>
+                    {itemIsTodaySpecial(entry) ? (
+                      <small className="hospitality-badge">Today’s special</small>
                     ) : null}
                     {entry.isAvailable === false ? (
                       <small className="hospitality-badge is-sold-out">Sold out</small>
@@ -1949,7 +1960,10 @@ export function PublicHospitalityProfile() {
                     <p>{entry.description}</p>
                     {entry.priceVariants?.length ? <small>{entry.priceVariants.map((variant) => `${variant.label}: Rs. ${variant.price}`).join(" · ")}</small> : null}
                   </div>
-                  <b>Rs. {entry.price}</b>
+                  <span className="cafe-menu-pricing">
+                    {itemHasReducedPrice(entry) ? <del>Rs. {itemOriginalPrice(entry)}</del> : null}
+                    <b>Rs. {entry.price}</b>
+                  </span>
                 </button>
               ))}
             </article>
@@ -1959,10 +1973,17 @@ export function PublicHospitalityProfile() {
       {selectedMenuItem ? <section ref={detailRef} className="hospitality-menu-detail" role="dialog" aria-modal="true" aria-labelledby="hospitality-menu-detail-title">
         <button type="button" onClick={() => setSelectedMenuItem(null)} aria-label="Close menu item details"><X size={18} /></button>
         {selectedMenuItem.image ? <img src={selectedMenuItem.image} alt="" /> : null}
+        {(itemIsTodaySpecial(selectedMenuItem) || itemIsOffer(selectedMenuItem)) ? <div className="cafe-detail-badges">
+          {itemIsTodaySpecial(selectedMenuItem) ? <span>Today’s special</span> : null}
+          {itemIsOffer(selectedMenuItem) ? <span>{itemOfferLabel(selectedMenuItem)}</span> : null}
+        </div> : null}
         <h3 id="hospitality-menu-detail-title">{selectedMenuItem.name}</h3>
         <p>{selectedMenuItem.description || 'No additional description has been provided.'}</p>
         {selectedMenuItem.priceVariants?.length ? <ul>{selectedMenuItem.priceVariants.map((variant) => <li key={variant.label}>{variant.label}: Rs. {variant.price}</li>)}</ul> : null}
-        <strong>Rs. {selectedMenuItem.price}</strong>
+        <div className="cafe-detail-price">
+          {itemHasReducedPrice(selectedMenuItem) ? <span>Was <del>Rs. {itemOriginalPrice(selectedMenuItem)}</del></span> : null}
+          <strong>{itemHasReducedPrice(selectedMenuItem) ? 'Now ' : ''}Rs. {selectedMenuItem.price}</strong>
+        </div>
       </section> : null}
       <footer className="cafe-footer">Powered by <a href="/">Tap2Connect</a></footer>
     </main>
