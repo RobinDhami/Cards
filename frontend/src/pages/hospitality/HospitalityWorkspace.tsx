@@ -1908,7 +1908,7 @@ export function PublicHospitalityProfile() {
                 <div className="cafe-rating-prompt">
                   <div><strong>How was your visit?</strong><span>Your feedback is private to this café.</span></div>
                   <div className="cafe-stars" role="group" aria-label="Rating">
-                    {[1, 2, 3, 4, 5].map((rating) => <button key={rating} type="button" aria-label={`Rate ${rating} out of 5`} aria-pressed={feedback.rating === rating} onClick={() => { setFeedback({ ...feedback, rating }); track("rating_click", "rating", String(rating)); }}><Star size={27} fill={rating <= feedback.rating ? "currentColor" : "none"} /></button>)}
+                    {[1, 2, 3, 4, 5].map((rating) => <button key={rating} type="button" aria-label={`Rate ${rating} out of 5`} aria-pressed={feedback.rating === rating} data-selected={rating <= feedback.rating ? "true" : undefined} onClick={() => { setFeedback({ ...feedback, rating }); track("rating_click", "rating", String(rating)); }}><Star size={27} fill={rating <= feedback.rating ? "currentColor" : "none"} /></button>)}
                   </div>
                 </div>
                 <label className="cafe-message">Message <span>(optional)</span><TextArea value={feedback.comment} maxLength={2000} onChange={(e) => setFeedback({ ...feedback, comment: e.target.value })} placeholder="Tell us more…" /></label>
