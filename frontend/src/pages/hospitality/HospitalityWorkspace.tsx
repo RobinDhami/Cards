@@ -1878,10 +1878,6 @@ export function PublicHospitalityProfile() {
             <summary><span aria-hidden="true" className={`cafe-hours-status ${hoursStatusClass}`} /><span><strong>{todayLabel}</strong><span>{todayDetail}</span></span><span aria-hidden="true" className="cafe-hours-chevron">›</span></summary>
             {scheduleEntries.length ? <dl><div className="cafe-weekly-hours-label">Weekly hours</div>{openingScheduleRows(venue.venue.openingSchedule).map((row) => <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl> : <p>{venue.venue.openingHours}</p>}
           </details> : <div className="cafe-simple-hours"><span aria-hidden="true" className={`cafe-hours-status ${hoursStatusClass}`} /><span><strong>{todayLabel}</strong><span>{todayHours}</span></span></div>) : null}
-          {venue.venue.mapUrl ? <article className="cafe-map">
-            {venue.venue.address ? <iframe title={`Map for ${venue.organization.name}`} src={`https://maps.google.com/maps?q=${encodeURIComponent(`${venue.organization.name}, ${venue.venue.address}`)}&output=embed`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <div><MapPin size={28} />{venue.organization.name}</div>}
-            <a className="cafe-primary" href={venue.venue.mapUrl} onClick={() => track("social_click", "directions")} target="_blank" rel="noreferrer">View on Google Maps <ExternalLink size={15} /></a>
-          </article> : null}
           {(venue.venue.email || venue.venue.whatsapp || venue.venue.website || venue.links.length > 0) ? <div className="cafe-connect"><h3>Stay connected{contactLinkCount > 4 ? <small>Swipe for more <ArrowRight size={13} /></small> : null}</h3><div className="hospitality-links">
             {venue.venue.whatsapp ? <a href={`https://wa.me/${venue.venue.whatsapp.replace(/\D/g, "")}`} onClick={() => track("social_click", "whatsapp")} target="_blank" rel="noreferrer"><span className="cafe-social-icon is-whatsapp"><Phone size={24} /></span>WhatsApp</a> : null}
             {socialLinks.map((link) => (
@@ -1912,6 +1908,10 @@ export function PublicHospitalityProfile() {
               <button type="submit" className="cafe-primary" disabled={sendingFeedback}>{sendingFeedback ? "Sending…" : "Submit Feedback"}</button>
               {feedbackMessage ? <small role="status">{feedbackMessage}</small> : null}
             </form> : null}
+          {venue.venue.mapUrl ? <article className="cafe-map">
+            {venue.venue.address ? <iframe title={`Map for ${venue.organization.name}`} src={`https://maps.google.com/maps?q=${encodeURIComponent(`${venue.organization.name}, ${venue.venue.address}`)}&output=embed`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <div><MapPin size={28} />{venue.organization.name}</div>}
+            <a className="cafe-primary" href={venue.venue.mapUrl} onClick={() => track("social_click", "directions")} target="_blank" rel="noreferrer">View on Google Maps <ExternalLink size={15} /></a>
+          </article> : null}
           {venue.venue.googleReviewUrl ? <article className="cafe-google-reviews"><img src={googleReviewsLogo} alt="Google Reviews" /><a className="cafe-google-review-link" href={venue.venue.googleReviewUrl} onClick={() => track("google_review_click", "google_review")} target="_blank" rel="noreferrer">View on Google <ExternalLink size={13} /></a></article> : null}
         </section>
       ) : (
