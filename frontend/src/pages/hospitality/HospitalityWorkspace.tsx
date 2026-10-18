@@ -1898,9 +1898,11 @@ export function PublicHospitalityProfile() {
           {venue.rating.count > 0 ? <p className="hospitality-rating">{venue.rating.average.toFixed(1)} / 5 · {venue.rating.count} {venue.rating.count === 1 ? "rating" : "ratings"}</p> : null}
           {venue.feedbackEnabled ? <form id="feedback" onSubmit={submitFeedback} className="hospitality-feedback">
               <div className="cafe-feedback-heading"><h3>Share your experience</h3></div>
-              <p>Your feedback helps us improve. It is private to this café.</p>
-              <div className="cafe-stars" role="group" aria-label="Rating">
-                {[1, 2, 3, 4, 5].map((rating) => <button key={rating} type="button" aria-label={`Rate ${rating} out of 5`} aria-pressed={feedback.rating === rating} onClick={() => { setFeedback({ ...feedback, rating }); track("rating_click", "rating", String(rating)); }}><Star size={27} fill={rating <= feedback.rating ? "currentColor" : "none"} /></button>)}
+              <div className="cafe-rating-prompt">
+                <div><strong>How was your visit?</strong><span>Tap a star to share your experience</span></div>
+                <div className="cafe-stars" role="group" aria-label="Rating">
+                  {[1, 2, 3, 4, 5].map((rating) => <button key={rating} type="button" aria-label={`Rate ${rating} out of 5`} aria-pressed={feedback.rating === rating} onClick={() => { setFeedback({ ...feedback, rating }); track("rating_click", "rating", String(rating)); }}><Star size={27} fill={rating <= feedback.rating ? "currentColor" : "none"} /></button>)}
+                </div>
               </div>
               <label className="cafe-message">Message <span>(optional)</span><TextArea value={feedback.comment} maxLength={2000} onChange={(e) => setFeedback({ ...feedback, comment: e.target.value })} placeholder="Share an optional message…" /></label>
               <label className="hospitality-feedback-contact-toggle"><input type="checkbox" checked={feedback.shareContact} onChange={(e) => setFeedback({ ...feedback, shareContact: e.target.checked })} /> Share optional contact details so the business can follow up</label>

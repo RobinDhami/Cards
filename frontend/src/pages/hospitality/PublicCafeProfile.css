@@ -591,3 +591,24 @@
 }
 .cafe-public .cafe-hours-chevron { color: #737783; font-size: 31px; font-weight: 300; }
 .cafe-public .hospitality-public-hours dl { margin: 15px 0 0; padding-top: 10px; border-top: 1px solid var(--cafe-line); }
+
+/* Rating prompt keeps the feedback invitation clear and compact. */
+.cafe-public .hospitality-feedback { grid-template-columns: 1fr; gap: 10px; }
+.cafe-public .cafe-feedback-heading { display: block; }
+.cafe-public .cafe-rating-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.cafe-public .cafe-rating-prompt > div:first-child { display: grid; gap: 2px; min-width: 0; }
+.cafe-public .cafe-rating-prompt strong { color: var(--cafe-ink); font-size: 14px; }
+.cafe-public .cafe-rating-prompt span { color: var(--cafe-muted); font-size: 11px; }
+.cafe-public .cafe-rating-prompt .cafe-stars { display: flex; flex: 0 0 auto; gap: 1px; }
+.cafe-public .cafe-rating-prompt .cafe-stars button { min-width: 27px; min-height: 31px; padding: 1px; }
+.cafe-public .cafe-rating-prompt .cafe-stars svg { width: 23px; height: 23px; color: #8b91a0; stroke-width: 1.7; }
+.cafe-public .cafe-rating-prompt .cafe-stars button[aria-pressed="true"] svg { color: #e69a17; }
+@media(max-width:380px) {
+  .cafe-public .cafe-rating-prompt { align-items: flex-start; flex-direction: column; }
+  .cafe-public .cafe-rating-prompt .cafe-stars { margin-left: -1px; }
+}
