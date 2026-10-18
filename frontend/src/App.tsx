@@ -1,4 +1,5 @@
 import { Component, lazy, Suspense, useEffect, useState, type ErrorInfo, type ReactNode } from 'react'
+import { BrandLoader } from './components/BrandLoader'
 
 const HomePage = lazy(() => import('./pages/home/HomePage').then((module) => ({ default: module.HomePage })))
 const DashboardHome = lazy(() => import('./pages/dashboard/DashboardHome').then((module) => ({ default: module.DashboardHome })))
@@ -226,7 +227,7 @@ function App() {
   const [, rerender] = useState(0)
   useEffect(() => { const onPopState = () => rerender((value) => value + 1); window.addEventListener('popstate', onPopState); return () => window.removeEventListener('popstate', onPopState) }, [])
   return (
-    <RouteErrorBoundary><Suspense fallback={<div className="route-loading-screen">Loading…</div>}><AppRoutes /></Suspense></RouteErrorBoundary>
+    <RouteErrorBoundary><Suspense fallback={<div className="route-loading-screen"><BrandLoader label="Connecting…" /></div>}><AppRoutes /></Suspense></RouteErrorBoundary>
   )
 }
 
