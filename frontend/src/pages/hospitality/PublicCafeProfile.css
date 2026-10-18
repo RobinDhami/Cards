@@ -435,16 +435,6 @@
 .cafe-public .cafe-social-icon { width: 34px; height: 34px; }
 
 /* Offers and daily specials share the same compact treatment in highlights, menus and detail popups. */
-.cafe-public .cafe-special-card { position: relative; }
-.cafe-public .cafe-highlight-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  position: absolute;
-  inset: auto 5px 5px 5px;
-  pointer-events: none;
-}
-.cafe-public .cafe-highlight-badges small,
 .cafe-public .cafe-detail-badges span {
   display: inline-flex;
   align-items: center;
