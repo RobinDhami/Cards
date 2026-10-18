@@ -415,3 +415,13 @@
   .cafe-public.hospitality-public button.hospitality-menu-item { grid-template-columns: 84px minmax(0,1fr); }
   .cafe-public .hospitality-menu-image { width: 84px; }
 }
+
+/* Feedback belongs to the page flow; Google Reviews remains the single review card. */
+.cafe-public .hospitality-feedback {
+  margin: 0 0 12px;
+  padding: 4px 0 10px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
