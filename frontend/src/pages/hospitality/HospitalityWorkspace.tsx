@@ -1748,6 +1748,10 @@ export function PublicHospitalityProfile() {
   async function submitFeedback(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (sendingFeedback) return;
+    if (feedback.rating < 1) {
+      setFeedbackMessage("Please select a star rating before submitting.");
+      return;
+    }
     setSendingFeedback(true);
     try {
       await apiFetch(`/api/venue/${identifier}/feedback/`, {
@@ -1768,16 +1772,9 @@ export function PublicHospitalityProfile() {
       .filter((entry) => entry.isAvailable !== false)
       .map((entry) => ({ ...entry, categoryName: category.name })),
   );
-  const highlightedMenuItems = availableMenuItems.filter((entry) =>
-    entry.isTodaySpecial || entry.is_today_special || entry.isOffer || entry.is_offer,
+  const specialItems = availableMenuItems.filter((entry) =>
+    entry.isTodaySpecial || entry.is_today_special,
   );
-  const highlightedMenuItemKeys = new Set(
-    highlightedMenuItems.map((entry) => entry.id ?? `${entry.categoryName}:${entry.name}`),
-  );
-  const specialItems = [
-    ...highlightedMenuItems,
-    ...availableMenuItems.filter((entry) => !highlightedMenuItemKeys.has(entry.id ?? `${entry.categoryName}:${entry.name}`)),
-  ].slice(0, 4);
   const today = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'Asia/Kathmandu' }).format(new Date()).toLowerCase();
   const todaySchedule = venue.venue.openingSchedule?.[today];
   const todayHours = todaySchedule
@@ -1872,9 +1869,8 @@ export function PublicHospitalityProfile() {
           {specialItems.length ? <section className="cafe-specials" aria-labelledby="cafe-specials-title">
             <div className="cafe-section-heading"><h2 id="cafe-specials-title">Our Specials</h2><button type="button" onClick={openMenu}>View full menu <ArrowRight size={16} /></button></div>
             <div className="cafe-specials-rail">
-              {specialItems.map((entry) => <button type="button" className="cafe-special-card" key={entry.id ?? `${entry.categoryName}:${entry.name}`} onClick={() => { setActiveTab("menu"); setSelectedMenuItem(entry); track("menu_item_click", "special", entry.name); }}>
+              {specialItems.map((entry) => <button type="button" className="cafe-special-card" aria-label={`View details for ${entry.name}`} key={entry.id ?? `${entry.categoryName}:${entry.name}`} onClick={() => { setActiveTab("menu"); setSelectedMenuItem(entry); track("menu_item_click", "special", entry.name); }}>
                 {entry.image ? <img src={entry.image} alt="" loading="lazy" /> : <span className="cafe-special-placeholder"><Utensils size={24} /></span>}
-                <span><strong>{entry.name}</strong></span>
               </button>)}
             </div>
           </section> : null}
@@ -1900,7 +1896,7 @@ export function PublicHospitalityProfile() {
               <div className="cafe-private-feedback-heading"><div><strong>How was your visit?</strong><span>Your feedback is private to this café.</span></div><div className="cafe-stars" role="group" aria-label="Rating">
                 {[1, 2, 3, 4, 5].map((rating) => <button key={rating} type="button" aria-label={`Rate ${rating} out of 5`} aria-pressed={feedback.rating === rating} onClick={() => { setFeedback({ ...feedback, rating }); track("rating_click", "rating", String(rating)); }}><Star size={27} fill={rating <= feedback.rating ? "currentColor" : "none"} /></button>)}
               </div></div>
-              {feedback.rating > 0 ? <div className="cafe-feedback-expanded">
+              <div className="cafe-feedback-expanded">
                 <label className="cafe-message">Message <span>(optional)</span><TextArea value={feedback.comment} maxLength={2000} onChange={(e) => setFeedback({ ...feedback, comment: e.target.value })} placeholder="Share an optional message…" /></label>
                 <label className="hospitality-feedback-contact-toggle"><input type="checkbox" checked={feedback.shareContact} onChange={(e) => setFeedback({ ...feedback, shareContact: e.target.checked })} /> Share optional contact details so the business can follow up</label>
                 {feedback.shareContact ? <div className="hospitality-feedback-contact-fields">
@@ -1912,7 +1908,7 @@ export function PublicHospitalityProfile() {
                 <label className="hospitality-feedback-honeypot" aria-hidden="true">Company website<input tabIndex={-1} autoComplete="off" value={feedback.company_website} onChange={(e) => setFeedback({ ...feedback, company_website: e.target.value })} /></label>
                 <button type="submit" className="cafe-primary" disabled={sendingFeedback}>{sendingFeedback ? "Sending…" : "Submit feedback"}</button>
                 {feedbackMessage ? <small role="status">{feedbackMessage}</small> : null}
-              </div> : null}
+              </div>
             </form> : null}
           </section> : null}
           {venue.venue.mapUrl ? <section className="cafe-find-us" aria-labelledby="cafe-find-us-title"><header><h3 id="cafe-find-us-title">Find us</h3>{venue.venue.address ? <p><MapPin size={15} />{venue.venue.address}</p> : null}</header><article className="cafe-map">

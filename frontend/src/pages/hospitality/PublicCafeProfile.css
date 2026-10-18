@@ -270,7 +270,9 @@
 }
 .cafe-public .cafe-specials-rail {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - 24px) / 4);
+  overflow-x: auto;
   gap: 8px;
   padding: 1px 0 4px;
 }
@@ -290,8 +292,6 @@
 }
 .cafe-public .cafe-special-card > img,
 .cafe-public .cafe-special-placeholder { display: grid; width: 100%; height: 72px; place-items: center; object-fit: cover; background: #f0e8dc; color: var(--cafe-brand); }
-.cafe-public .cafe-special-card > span:last-child { display: grid; align-items: center; min-height: 34px; padding: 6px; }
-.cafe-public .cafe-special-card strong { display: -webkit-box; overflow: hidden; font: 700 11px/1.15 Arial, Helvetica, sans-serif; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 
 .cafe-public .cafe-overview .hospitality-public-hours,
 .cafe-public .cafe-overview .cafe-simple-hours {
