@@ -676,3 +676,99 @@
   .cafe-public .cafe-feedback-score svg { width: 15px; height: 15px; }
   .cafe-public .cafe-feedback-score small { font-size: 10px; }
 }
+
+/* Public café visual foundation: an editorial display face paired with quiet UI text. */
+.cafe-public.hospitality-public {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.cafe-public h1,
+.cafe-public .cafe-section-heading h2,
+.cafe-public .cafe-feedback-section > header h2,
+.cafe-public .hospitality-menu-item strong,
+.cafe-public.is-menu > section > article > h3 {
+  font-family: Georgia, "Times New Roman", serif;
+}
+.cafe-public > .cafe-overview { gap: 18px; }
+.cafe-public .cafe-section-heading { margin-bottom: 8px; }
+.cafe-public .cafe-specials .cafe-section-heading h2 { font-size: 19px; }
+
+/* Opening hours reads as one intentional status control, not a pair of unrelated labels. */
+.cafe-public .cafe-overview .hospitality-public-hours,
+.cafe-public .cafe-overview .cafe-simple-hours {
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--cafe-line);
+  border-radius: 14px;
+  background: #fffdf9;
+}
+.cafe-public .hospitality-public-hours summary,
+.cafe-public .cafe-simple-hours {
+  min-height: 62px;
+  padding: 12px 14px;
+  gap: 11px;
+}
+.cafe-public .hospitality-public-hours summary > .cafe-hours-copy,
+.cafe-public .cafe-simple-hours > span:nth-child(2) {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  align-items: initial;
+}
+.cafe-public .hospitality-public-hours summary > .cafe-hours-copy > strong,
+.cafe-public .cafe-simple-hours strong {
+  color: var(--cafe-ink);
+  font-size: 14px;
+  line-height: 1.15;
+}
+.cafe-public .hospitality-public-hours summary > .cafe-hours-copy > span,
+.cafe-public .cafe-simple-hours > span > span {
+  display: block;
+  color: var(--cafe-muted);
+  font-size: 12px;
+  line-height: 1.2;
+}
+.cafe-public .hospitality-public-hours summary > .cafe-hours-copy > span::before,
+.cafe-public .cafe-simple-hours > span > span::before { display: none; }
+.cafe-public .cafe-hours-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  margin-left: auto;
+  color: var(--cafe-brand);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.cafe-public .hospitality-public-hours[open] .cafe-hours-action svg { transform: rotate(90deg); }
+.cafe-public .hospitality-public-hours dl { margin: 0; padding: 12px 14px 14px; border-top: 1px solid var(--cafe-line); }
+.cafe-public .hospitality-public-hours .cafe-weekly-hours-label { padding-bottom: 8px; color: var(--cafe-muted); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+
+/* Official social marks, with one compact neutral tile family. */
+.cafe-public .cafe-connect { padding-block: 2px; }
+.cafe-public .hospitality-links { gap: 10px; }
+.cafe-public .hospitality-links a { gap: 6px; color: var(--cafe-muted); font-size: 10px; font-weight: 600; }
+.cafe-public .cafe-social-icon {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--cafe-line);
+  border-radius: 11px;
+  background: #fff;
+  color: var(--cafe-brand);
+}
+.cafe-public .cafe-social-icon svg { width: 18px; height: 18px; }
+.cafe-public .cafe-social-icon.is-whatsapp { color: #1b9a57; }
+.cafe-public .cafe-social-icon.is-instagram { color: #d94678; background: #fff7fa; }
+.cafe-public .cafe-social-icon.is-facebook { color: #1877f2; background: #f6f9ff; }
+.cafe-public .cafe-social-icon.is-tiktok { color: #161616; }
+.cafe-public .cafe-social-icon.is-website { color: #1570c9; background: #f4f9ff; }
+.cafe-public .cafe-social-icon.is-email { color: var(--cafe-brand); }
+
+/* The feedback form remains complete, but its type, controls and rhythm now scan as one task. */
+.cafe-public .cafe-feedback-section { margin-top: 2px; margin-bottom: 20px; }
+.cafe-public .cafe-feedback-section > header { margin-bottom: 8px; }
+.cafe-public .cafe-feedback-section > header h2 { font: 700 20px/1.1 Georgia, "Times New Roman", serif; letter-spacing: -.2px; }
+.cafe-public .cafe-feedback-section .hospitality-feedback { gap: 12px; padding: 16px; border-radius: 15px; }
+.cafe-public .cafe-feedback-section .cafe-rating-prompt strong { font-size: 15px; }
+.cafe-public .cafe-feedback-section .cafe-rating-prompt span { font-size: 10px; }
+.cafe-public .cafe-feedback-section .cafe-message textarea { height: 76px; min-height: 76px; }
+.cafe-public .cafe-feedback-section .cafe-primary { min-height: 44px; font-size: 13px; }

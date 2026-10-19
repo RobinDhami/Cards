@@ -10,20 +10,19 @@ import Plus from "lucide-react/dist/esm/icons/plus.js";
 import Save from "lucide-react/dist/esm/icons/save.js";
 import Search from "lucide-react/dist/esm/icons/search.js";
 import ArrowLeft from "lucide-react/dist/esm/icons/arrow-left.js";
+import ChevronRight from "lucide-react/dist/esm/icons/chevron-right.js";
 import Share2 from "lucide-react/dist/esm/icons/share-2.js";
 import Leaf from "lucide-react/dist/esm/icons/leaf.js";
-import Facebook from "lucide-react/dist/esm/icons/facebook.js";
 import MapPin from "lucide-react/dist/esm/icons/map-pin.js";
-import Mail from "lucide-react/dist/esm/icons/mail.js";
 import Phone from "lucide-react/dist/esm/icons/phone.js";
-import Globe from "lucide-react/dist/esm/icons/globe.js";
-import Instagram from "lucide-react/dist/esm/icons/instagram.js";
 import Star from "lucide-react/dist/esm/icons/star.js";
 import Tag from "lucide-react/dist/esm/icons/tag.js";
 import Trash2 from "lucide-react/dist/esm/icons/trash-2.js";
 import Utensils from "lucide-react/dist/esm/icons/utensils.js";
 import UserPlus from "lucide-react/dist/esm/icons/user-plus.js";
 import X from "lucide-react/dist/esm/icons/x.js";
+import { FaFacebookF, FaGlobe, FaInstagram, FaTiktok, FaWhatsapp } from "react-icons/fa6";
+import { HiOutlineEnvelope } from "react-icons/hi2";
 import {
   Field,
   FileInput,
@@ -1690,8 +1689,14 @@ function openingScheduleRows(schedule: Venue["venue"]["openingSchedule"]) {
   });
 }
 
-function TikTokMark({ size = 22 }: { size?: number }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M14.3 3c.4 2.1 1.6 3.5 3.7 4v2.8a8.8 8.8 0 0 1-3.7-1.1v6.1a5.2 5.2 0 1 1-4.5-5.1v2.9a2.4 2.4 0 1 0 1.7 2.2V3h2.8Z" /></svg>
+function CafeSocialIcon({ type }: { type: string }) {
+  if (type === "instagram") return <FaInstagram aria-hidden="true" />;
+  if (type === "facebook") return <FaFacebookF aria-hidden="true" />;
+  if (type === "tiktok") return <FaTiktok aria-hidden="true" />;
+  if (type === "whatsapp") return <FaWhatsapp aria-hidden="true" />;
+  if (type === "website") return <FaGlobe aria-hidden="true" />;
+  if (type === "email") return <HiOutlineEnvelope aria-hidden="true" />;
+  return <ExternalLink aria-hidden="true" />;
 }
 
 export function PublicHospitalityProfile() {
@@ -1799,7 +1804,6 @@ export function PublicHospitalityProfile() {
   const scheduleEntries = Object.entries(venue.venue.openingSchedule || {});
   const scheduleShapes = scheduleEntries.map(([, value]) => JSON.stringify(value));
   const hasVariableHours = scheduleEntries.length > 1 && new Set(scheduleShapes).size > 1;
-  const todayDetail = todaySchedule && !todaySchedule.closed && todaySchedule.intervals.length ? todayHours : (hasVariableHours ? 'See weekly hours' : todayHours);
   const initials = venue.organization.name.split(/\s+/).slice(0, 2).map((word) => word[0]).join("");
   const socialPriority: Record<string, number> = { instagram: 0, tiktok: 1, facebook: 2 };
   const socialLinks = [...venue.links].sort((left, right) =>
@@ -1882,18 +1886,18 @@ export function PublicHospitalityProfile() {
             </div>
           </section> : null}
           {(scheduleEntries.length || venue.venue.openingHours) ? (hasVariableHours ? <details className="hospitality-public-hours">
-            <summary><span aria-hidden="true" className={`cafe-hours-status ${hoursStatusClass}`} /><span><strong>{todayLabel}</strong><span>{todayDetail}</span></span><span aria-hidden="true" className="cafe-hours-chevron">›</span></summary>
+            <summary><span aria-hidden="true" className={`cafe-hours-status ${hoursStatusClass}`} /><span className="cafe-hours-copy"><strong>{todayLabel}</strong>{todaySchedule && !todaySchedule.closed && todaySchedule.intervals.length ? <span>{todayHours}</span> : null}</span><span className="cafe-hours-action">Weekly hours <ChevronRight size={17} /></span></summary>
             {scheduleEntries.length ? <dl><div className="cafe-weekly-hours-label">Weekly hours</div>{openingScheduleRows(venue.venue.openingSchedule).map((row) => <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl> : <p>{venue.venue.openingHours}</p>}
           </details> : <div className="cafe-simple-hours"><span aria-hidden="true" className={`cafe-hours-status ${hoursStatusClass}`} /><span><strong>{todayLabel}</strong><span>{todayHours}</span></span></div>) : null}
           {(venue.venue.email || venue.venue.whatsapp || venue.venue.website || venue.links.length > 0) ? <div className="cafe-connect"><div className="hospitality-links">
-            {venue.venue.whatsapp ? <a href={`https://wa.me/${venue.venue.whatsapp.replace(/\D/g, "")}`} onClick={() => track("social_click", "whatsapp")} target="_blank" rel="noreferrer"><span className="cafe-social-icon is-whatsapp"><Phone size={19} /></span>WhatsApp</a> : null}
+            {venue.venue.whatsapp ? <a href={`https://wa.me/${venue.venue.whatsapp.replace(/\D/g, "")}`} onClick={() => track("social_click", "whatsapp")} target="_blank" rel="noreferrer"><span className="cafe-social-icon is-whatsapp"><CafeSocialIcon type="whatsapp" /></span>WhatsApp</a> : null}
             {socialLinks.map((link) => (
               <a href={link.value} key={link.id} onClick={() => track("social_click", `social_${link.link_type}`)} target="_blank" rel="noreferrer">
-                <span className={`cafe-social-icon is-${link.link_type}`}>{link.link_type === "instagram" ? <Instagram size={19} /> : link.link_type === "facebook" ? <Facebook size={20} /> : link.link_type === "tiktok" ? <TikTokMark size={18} /> : <ExternalLink size={18} />}</span>{link.label || link.link_type}
+                <span className={`cafe-social-icon is-${link.link_type}`}><CafeSocialIcon type={link.link_type} /></span>{link.label || link.link_type}
               </a>
             ))}
-            {venue.venue.website ? <a href={venue.venue.website} onClick={() => track("social_click", "website")} target="_blank" rel="noreferrer"><span className="cafe-social-icon is-website"><Globe size={19} /></span>Website</a> : null}
-            {venue.venue.email ? <a href={`mailto:${venue.venue.email}`}><span className="cafe-social-icon is-email"><Mail size={18} /></span>Email</a> : null}
+            {venue.venue.website ? <a href={venue.venue.website} onClick={() => track("social_click", "website")} target="_blank" rel="noreferrer"><span className="cafe-social-icon is-website"><CafeSocialIcon type="website" /></span>Website</a> : null}
+            {venue.venue.email ? <a href={`mailto:${venue.venue.email}`}><span className="cafe-social-icon is-email"><CafeSocialIcon type="email" /></span>Email</a> : null}
           </div></div> : null}
           {venue.feedbackEnabled ? <section className="cafe-feedback-section" aria-labelledby="cafe-feedback-title">
               <header>
