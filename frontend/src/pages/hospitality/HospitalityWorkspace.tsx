@@ -1942,7 +1942,7 @@ export function PublicHospitalityProfile() {
             </div>
           </section> : null}
           {(scheduleEntries.length || venue.venue.openingHours) ? (hasVariableHours ? <details className="hospitality-public-hours">
-            <summary><span aria-hidden="true" className={`cafe-hours-status ${hoursStatusClass}`} /><span className="cafe-hours-copy"><small>Today</small><strong>{todayLabel}</strong>{!isClosedToday ? <span>{todayHours}</span> : null}</span><span className="cafe-hours-action">See hours <ChevronRight size={17} /></span></summary>
+            <summary><span aria-hidden="true" className={`cafe-hours-status ${hoursStatusClass}`} /><span className="cafe-hours-copy"><small>Today</small><strong>{isClosedToday ? "Closed" : todaySchedule ? "Open" : todayLabel}</strong>{!isClosedToday ? <span>{todayHours}</span> : null}</span><span className="cafe-hours-action">View weekly hours <ChevronRight size={18} /></span></summary>
             {scheduleEntries.length ? <dl><div className="cafe-weekly-hours-label">Weekly hours</div>{openingScheduleRows(venue.venue.openingSchedule).map((row) => <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl> : <p>{venue.venue.openingHours}</p>}
           </details> : <div className="cafe-simple-hours"><span aria-hidden="true" className={`cafe-hours-status ${hoursStatusClass}`} /><span><strong>{todayLabel}</strong><span>{todayHours}</span></span></div>) : null}
           {(venue.venue.email || venue.venue.whatsapp || venue.venue.website || venue.links.length > 0) ? <div className="cafe-connect"><div className="hospitality-links">
