@@ -779,3 +779,97 @@
   .cafe-public .cafe-hours-action { font-size: 11px; }
   .cafe-public .cafe-feedback-section .hospitality-feedback { padding: 17px; }
 }
+
+/* A small, clearly grouped business-hours control. */
+.cafe-public .cafe-overview .hospitality-public-hours {
+  border: 0;
+  border-radius: 16px;
+  background: #f7f3ec;
+}
+.cafe-public .hospitality-public-hours summary {
+  min-height: 68px;
+  padding: 12px 15px;
+  gap: 11px;
+}
+.cafe-public .hospitality-public-hours summary > span.cafe-hours-copy:nth-child(2) {
+  display: grid;
+  flex: 0 1 auto;
+  gap: 1px;
+}
+.cafe-public .hospitality-public-hours .cafe-hours-copy small {
+  color: var(--cafe-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+.cafe-public .hospitality-public-hours .cafe-hours-copy strong {
+  color: var(--cafe-ink);
+  font-size: 15px;
+  line-height: 1.2;
+}
+.cafe-public .hospitality-public-hours .cafe-hours-action {
+  min-height: 34px;
+  margin-left: 7px;
+  padding: 0 9px 0 11px;
+  border: 1px solid color-mix(in srgb, var(--cafe-brand) 20%, transparent);
+  border-radius: 999px;
+  background: #fffdf9;
+  font-size: 11px;
+}
+.cafe-public .hospitality-public-hours dl { border-top-color: #e8e0d6; }
+
+/* Feedback becomes a two-step reading flow: context first, then the response. */
+.cafe-public .cafe-feedback-section {
+  padding-top: 2px;
+  border-top: 1px solid var(--cafe-line);
+}
+.cafe-public .cafe-feedback-section > header {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  margin: 15px 0 11px;
+}
+.cafe-public .cafe-feedback-section > header h2 {
+  font: 700 22px/1.05 Georgia, "Times New Roman", serif;
+}
+.cafe-public .cafe-feedback-score {
+  justify-content: flex-start;
+  gap: 6px;
+}
+.cafe-public .cafe-feedback-score > strong { font-size: 14px; }
+.cafe-public .cafe-feedback-score small { font-size: 11px; }
+.cafe-public .cafe-feedback-section .hospitality-feedback {
+  gap: 16px;
+  padding: 20px 18px 18px;
+  border-color: #e5ddd3;
+  border-radius: 18px;
+  background: #fff;
+}
+.cafe-public .cafe-feedback-section .cafe-rating-prompt {
+  display: grid;
+  gap: 11px;
+}
+.cafe-public .cafe-feedback-section .cafe-rating-prompt > div:first-child { gap: 3px; }
+.cafe-public .cafe-feedback-section .cafe-rating-prompt strong { font-size: 17px; }
+.cafe-public .cafe-feedback-section .cafe-rating-prompt span { font-size: 11px; }
+.cafe-public .cafe-feedback-section .cafe-rating-prompt .cafe-stars {
+  width: min(100%, 255px);
+  justify-content: space-between;
+  gap: 0;
+}
+.cafe-public .cafe-feedback-section .cafe-rating-prompt .cafe-stars button {
+  width: 42px;
+  min-width: 42px;
+  min-height: 42px;
+}
+.cafe-public .cafe-feedback-section .cafe-rating-prompt .cafe-stars svg { width: 28px; height: 28px; }
+.cafe-public .cafe-feedback-section .cafe-message textarea { height: 90px; min-height: 90px; }
+.cafe-public .cafe-feedback-section .hospitality-feedback-contact-toggle { padding-top: 1px; }
+
+@media (max-width: 410px) {
+  .cafe-public .hospitality-public-hours summary { padding-inline: 13px; }
+  .cafe-public .hospitality-public-hours .cafe-hours-action { margin-left: 1px; padding-inline: 9px 7px; }
+  .cafe-public .cafe-feedback-section .hospitality-feedback { padding: 19px 16px 17px; }
+}
