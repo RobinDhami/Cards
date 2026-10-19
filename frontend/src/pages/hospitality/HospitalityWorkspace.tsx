@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, FormEvent, ReactNode } from "react";
+import { create } from "zustand";
 import MessageSquare from "lucide-react/dist/esm/icons/message-square.js";
 import Eye from "lucide-react/dist/esm/icons/eye.js";
 import ExternalLink from "lucide-react/dist/esm/icons/external-link.js";
@@ -104,6 +105,61 @@ type Item = {
   display_order?: number;
   priceVariants?: Array<{ label: string; price: string }>;
 };
+
+type CafeFeedbackDraft = {
+  rating: number;
+  comment: string;
+  shareContact: boolean;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  company_website: string;
+  source: string;
+};
+
+const newCafeFeedbackDraft = (source: string): CafeFeedbackDraft => ({
+  rating: 0, comment: "", shareContact: false, contactName: "", contactEmail: "", contactPhone: "", company_website: "", source,
+});
+
+type PublicCafeUIState = {
+  activeTab: "home" | "menu";
+  feedback: CafeFeedbackDraft;
+  selectedCategory: string | null;
+  menuSearch: string;
+  shareMessage: string;
+  sendingFeedback: boolean;
+  feedbackMessage: string;
+  selectedMenuItem: Item | null;
+  reset: (source: string, activeTab: "home" | "menu") => void;
+  setActiveTab: (activeTab: "home" | "menu") => void;
+  setFeedback: (feedback: CafeFeedbackDraft) => void;
+  setSelectedCategory: (selectedCategory: string | null) => void;
+  setMenuSearch: (menuSearch: string) => void;
+  setShareMessage: (shareMessage: string) => void;
+  setSendingFeedback: (sendingFeedback: boolean) => void;
+  setFeedbackMessage: (feedbackMessage: string) => void;
+  setSelectedMenuItem: (selectedMenuItem: Item | null) => void;
+};
+
+const usePublicCafeUIStore = create<PublicCafeUIState>((set) => ({
+  activeTab: "home",
+  feedback: newCafeFeedbackDraft("public_profile"),
+  selectedCategory: null,
+  menuSearch: "",
+  shareMessage: "",
+  sendingFeedback: false,
+  feedbackMessage: "",
+  selectedMenuItem: null,
+  reset: (source, activeTab) => set({ activeTab, feedback: newCafeFeedbackDraft(source), selectedCategory: null, menuSearch: "", shareMessage: "", sendingFeedback: false, feedbackMessage: "", selectedMenuItem: null }),
+  setActiveTab: (activeTab) => set({ activeTab }),
+  setFeedback: (feedback) => set({ feedback }),
+  setSelectedCategory: (selectedCategory) => set({ selectedCategory }),
+  setMenuSearch: (menuSearch) => set({ menuSearch }),
+  setShareMessage: (shareMessage) => set({ shareMessage }),
+  setSendingFeedback: (sendingFeedback) => set({ sendingFeedback }),
+  setFeedbackMessage: (feedbackMessage) => set({ feedbackMessage }),
+  setSelectedMenuItem: (selectedMenuItem) => set({ selectedMenuItem }),
+}));
 type Link = { id: number; link_type: string; label: string; value: string; display_order?: number; is_active?: boolean; legacy?: boolean };
 type OrganizationContact = { address: string; phone: string; email: string; website: string; mapUrl: string };
 type Feedback = {
@@ -1708,29 +1764,28 @@ export function PublicHospitalityProfile() {
   const dashboardPreview = publicParams.get("preview") === "dashboard" ? "dashboard" : "";
   const feedbackSource = entryChannel ? `${touchpointSource}:${entryChannel}` : touchpointSource;
   const [venue, setVenue] = useState<Venue | null>(null);
-  const [activeTab, setActiveTab] = useState<"home" | "menu">(() =>
-    new URLSearchParams(window.location.search).get("tab") === "menu"
-      ? "menu"
-      : "home",
-  );
-  const [feedback, setFeedback] = useState({
-    rating: 0,
-    comment: "",
-    shareContact: false,
-    contactName: "",
-    contactEmail: "",
-    contactPhone: "",
-    company_website: "",
-    source: feedbackSource,
-  });
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [menuSearch, setMenuSearch] = useState("");
-  const [shareMessage, setShareMessage] = useState("");
   const [loadError, setLoadError] = useState(false);
-  const [sendingFeedback, setSendingFeedback] = useState(false);
-  const [feedbackMessage, setFeedbackMessage] = useState("");
-  const [selectedMenuItem, setSelectedMenuItem] = useState<Item | null>(null);
+  const activeTab = usePublicCafeUIStore((state) => state.activeTab);
+  const feedback = usePublicCafeUIStore((state) => state.feedback);
+  const selectedCategory = usePublicCafeUIStore((state) => state.selectedCategory);
+  const menuSearch = usePublicCafeUIStore((state) => state.menuSearch);
+  const shareMessage = usePublicCafeUIStore((state) => state.shareMessage);
+  const sendingFeedback = usePublicCafeUIStore((state) => state.sendingFeedback);
+  const feedbackMessage = usePublicCafeUIStore((state) => state.feedbackMessage);
+  const selectedMenuItem = usePublicCafeUIStore((state) => state.selectedMenuItem);
+  const resetPublicCafeUI = usePublicCafeUIStore((state) => state.reset);
+  const setActiveTab = usePublicCafeUIStore((state) => state.setActiveTab);
+  const setFeedback = usePublicCafeUIStore((state) => state.setFeedback);
+  const setSelectedCategory = usePublicCafeUIStore((state) => state.setSelectedCategory);
+  const setMenuSearch = usePublicCafeUIStore((state) => state.setMenuSearch);
+  const setShareMessage = usePublicCafeUIStore((state) => state.setShareMessage);
+  const setSendingFeedback = usePublicCafeUIStore((state) => state.setSendingFeedback);
+  const setFeedbackMessage = usePublicCafeUIStore((state) => state.setFeedbackMessage);
+  const setSelectedMenuItem = usePublicCafeUIStore((state) => state.setSelectedMenuItem);
   const detailRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    resetPublicCafeUI(feedbackSource, new URLSearchParams(window.location.search).get("tab") === "menu" ? "menu" : "home");
+  }, [feedbackSource, resetPublicCafeUI]);
   useEffect(() => {
     if (!selectedMenuItem) return;
     const previousFocus = document.activeElement as HTMLElement | null;
@@ -1743,7 +1798,7 @@ export function PublicHospitalityProfile() {
     };
     document.addEventListener("keydown", handleKey);
     return () => { document.removeEventListener("keydown", handleKey); document.body.style.overflow = previousOverflow; previousFocus?.focus(); };
-  }, [selectedMenuItem]);
+  }, [selectedMenuItem, setSelectedMenuItem]);
   const track = useCallback((eventType: string, destination: string, detail = "") => {
     void apiFetch(`/api/venue/${identifier}/track/`, {
       method: "POST",
@@ -1773,7 +1828,7 @@ export function PublicHospitalityProfile() {
         body: jsonBody(feedback),
       });
       setFeedbackMessage("Thank you for your feedback.");
-      setFeedback({ rating: 0, comment: "", shareContact: false, contactName: "", contactEmail: "", contactPhone: "", company_website: "", source: feedbackSource });
+      setFeedback(newCafeFeedbackDraft(feedbackSource));
     } catch (reason) {
       setFeedbackMessage(displayError(reason));
     } finally {

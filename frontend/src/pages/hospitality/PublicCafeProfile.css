@@ -703,14 +703,14 @@
 }
 .cafe-public .hospitality-public-hours summary,
 .cafe-public .cafe-simple-hours {
-  min-height: 62px;
-  padding: 12px 14px;
-  gap: 11px;
+  min-height: 56px;
+  padding: 11px 14px;
+  gap: 10px;
 }
-.cafe-public .hospitality-public-hours summary > .cafe-hours-copy,
+.cafe-public .hospitality-public-hours summary > span.cafe-hours-copy:nth-child(2),
 .cafe-public .cafe-simple-hours > span:nth-child(2) {
   display: grid;
-  flex: 1;
+  flex: 0 1 auto;
   gap: 2px;
   align-items: initial;
 }
@@ -733,7 +733,7 @@
   display: inline-flex;
   align-items: center;
   gap: 1px;
-  margin-left: auto;
+  margin-left: 2px;
   color: var(--cafe-brand);
   font-size: 12px;
   font-weight: 700;
@@ -744,8 +744,8 @@
 .cafe-public .hospitality-public-hours .cafe-weekly-hours-label { padding-bottom: 8px; color: var(--cafe-muted); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
 
 /* Official social marks, with one compact neutral tile family. */
-.cafe-public .cafe-connect { padding-block: 2px; }
-.cafe-public .hospitality-links { gap: 10px; }
+.cafe-public .cafe-overview .cafe-connect { padding: 2px 0; border: 0; background: transparent; box-shadow: none; }
+.cafe-public .hospitality-links { grid-auto-columns: calc((100% - 30px) / 4); gap: 10px; }
 .cafe-public .hospitality-links a { gap: 6px; color: var(--cafe-muted); font-size: 10px; font-weight: 600; }
 .cafe-public .cafe-social-icon {
   width: 36px;
@@ -767,8 +767,15 @@
 .cafe-public .cafe-feedback-section { margin-top: 2px; margin-bottom: 20px; }
 .cafe-public .cafe-feedback-section > header { margin-bottom: 8px; }
 .cafe-public .cafe-feedback-section > header h2 { font: 700 20px/1.1 Georgia, "Times New Roman", serif; letter-spacing: -.2px; }
-.cafe-public .cafe-feedback-section .hospitality-feedback { gap: 12px; padding: 16px; border-radius: 15px; }
+.cafe-public .cafe-feedback-section .hospitality-feedback { gap: 15px; padding: 18px; border-radius: 16px; }
 .cafe-public .cafe-feedback-section .cafe-rating-prompt strong { font-size: 15px; }
 .cafe-public .cafe-feedback-section .cafe-rating-prompt span { font-size: 10px; }
-.cafe-public .cafe-feedback-section .cafe-message textarea { height: 76px; min-height: 76px; }
-.cafe-public .cafe-feedback-section .cafe-primary { min-height: 44px; font-size: 13px; }
+.cafe-public .cafe-feedback-section .cafe-message textarea { height: 82px; min-height: 82px; }
+.cafe-public .cafe-feedback-section .cafe-primary { min-height: 46px; font-size: 13px; }
+
+@media (max-width: 410px) {
+  .cafe-public .hospitality-public-hours summary,
+  .cafe-public .cafe-simple-hours { padding-inline: 12px; }
+  .cafe-public .cafe-hours-action { font-size: 11px; }
+  .cafe-public .cafe-feedback-section .hospitality-feedback { padding: 17px; }
+}
