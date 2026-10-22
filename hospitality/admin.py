@@ -1,7 +1,8 @@
 from django.contrib import admin
 
 from .models import (
-    VenueAnalyticsEvent, VenueCardAssignment, VenueFeedback, VenueLink,
+    LoyaltyCustomer, VenueAnalyticsEvent, VenueCardAssignment, VenueFeedback, VenueLink,
+    VenueLoyaltyMembership,
     VenueMenuCategory, VenueMenuItem, VenueProfile, VenueStaffLink,
     VenueStaffProfile, VenueTouchpoint,
 )
@@ -47,6 +48,21 @@ class VenueAnalyticsEventAdmin(admin.ModelAdmin):
     list_filter = ('event_type', 'created_at')
     search_fields = ('venue__organization__name', 'target')
     readonly_fields = ('venue', 'event_type', 'target', 'created_at')
+
+
+@admin.register(LoyaltyCustomer)
+class LoyaltyCustomerAdmin(admin.ModelAdmin):
+    list_display = ('phone_e164', 'created_at', 'updated_at')
+    search_fields = ('phone_e164',)
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(VenueLoyaltyMembership)
+class VenueLoyaltyMembershipAdmin(admin.ModelAdmin):
+    list_display = ('venue', 'customer', 'stamp_count', 'stamp_goal', 'rewards_redeemed', 'is_active', 'updated_at')
+    list_filter = ('is_active', 'stamp_goal')
+    search_fields = ('venue__organization__name', 'customer__phone_e164', 'public_identifier')
+    readonly_fields = ('public_identifier', 'created_at', 'updated_at')
 
 
 admin.site.register(VenueStaffProfile)

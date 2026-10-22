@@ -10,7 +10,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Avg, Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -19,9 +19,10 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 from .models import (
-    VenueAnalyticsEvent, VenueCardAssignment, VenueFeedback, VenueLink,
-    VenueMenuCategory, VenueMenuItem, VenueMenuItemVariant, VenueProfile,
-    VenueStaffLink, VenueStaffProfile, VenueTouchpoint,
+    LoyaltyCustomer, VenueAnalyticsEvent, VenueCardAssignment, VenueFeedback,
+    VenueLink, VenueLoyaltyMembership, VenueMenuCategory, VenueMenuItem,
+    VenueMenuItemVariant, VenueProfile, VenueStaffLink, VenueStaffProfile,
+    VenueTouchpoint,
 )
 from django.contrib.auth import get_user_model
 from vcards.models import CardBatchCard, College, OrganizationNotificationPreference, OrganizationTeamMember
@@ -171,6 +172,29 @@ def _visitor_hash(request, venue):
     return hmac.new(settings.SECRET_KEY.encode(), raw.encode(), hashlib.sha256).hexdigest()
 
 
+def _normalize_loyalty_phone(value):
+    """Use one canonical form so the same customer cannot join twice."""
+    raw = str(value or '').strip()
+    digits = re.sub(r'\D', '', raw)
+    if len(digits) == 10 and digits.startswith('9'):
+        return f'+977{digits}'
+    if digits.startswith('977') and len(digits) == 13 and digits[3] == '9':
+        return f'+{digits}'
+    if raw.startswith('+') and 8 <= len(digits) <= 15:
+        return f'+{digits}'
+    raise ValidationError('Enter a valid mobile number, including the country code if it is not a Nepali number.')
+
+
+def _loyalty_membership_payload(membership):
+    return {
+        'memberId': membership.public_identifier,
+        'stampCount': membership.stamp_count,
+        'stampGoal': membership.stamp_goal,
+        'rewardsRedeemed': membership.rewards_redeemed,
+        'isActive': membership.is_active,
+    }
+
+
 def _record_event(request, venue, event_type, target='', dedupe_seconds=3):
     if event_type not in dict(VenueAnalyticsEvent.EVENT_TYPES):
         return False
@@ -215,6 +239,11 @@ def _payload(request, venue):
         'links': list(venue.links.filter(is_active=True).order_by('display_order', 'id').values('id', 'link_type', 'label', 'value', 'display_order', 'is_active')),
         'rating': {'average': venue.feedback.aggregate(average=Avg('rating'))['average'] or 0, 'count': venue.feedback.count()},
         'categories': categories, 'feedbackEnabled': venue.feedback_enabled,
+        'loyalty': {
+            'enabled': venue.venue_type == 'cafe',
+            'programName': f'{venue.organization.name} Rewards',
+            'stampGoal': 5,
+        },
     }
 
 
@@ -283,6 +312,44 @@ def venue_feedback_api(request, public_identifier):
     source, entry = _tracking_context(request, touchpoint_source.split(':')[0], touchpoint_source.split(':')[1] if ':' in touchpoint_source else '')
     _record_event(request, venue, 'feedback_submit', _event_target('feedback', source, entry, f'rating-{rating}'), dedupe_seconds=0)
     return JsonResponse({'ok': True}, status=201)
+
+
+@require_http_methods(['POST'])
+def venue_loyalty_join_api(request, public_identifier):
+    venue = get_object_or_404(VenueProfile, public_identifier=public_identifier, is_active=True, venue_type='cafe')
+    data = _body(request)
+    if not isinstance(data, dict):
+        return JsonResponse({'error': 'Invalid JSON.'}, status=400)
+    try:
+        phone_e164 = _normalize_loyalty_phone(data.get('phone'))
+    except ValidationError as error:
+        return JsonResponse({'error': error.messages[0]}, status=400)
+
+    try:
+        with transaction.atomic():
+            customer, _ = LoyaltyCustomer.objects.get_or_create(phone_e164=phone_e164)
+            membership, created = VenueLoyaltyMembership.objects.get_or_create(
+                venue=venue,
+                customer=customer,
+                defaults={'stamp_goal': 5},
+            )
+    except IntegrityError:
+        # A concurrent join for the same number can win the unique constraint.
+        customer = LoyaltyCustomer.objects.filter(phone_e164=phone_e164).first()
+        membership = VenueLoyaltyMembership.objects.filter(venue=venue, customer=customer).first()
+        if not membership:
+            return JsonResponse({'error': 'Please try joining rewards again.'}, status=409)
+        created = False
+
+    source, entry = _tracking_context(request, data.get('source'), data.get('entry'))
+    _record_event(
+        request,
+        venue,
+        'loyalty_join',
+        _event_target('loyalty', source, entry, 'created' if created else 'reopened'),
+        dedupe_seconds=0,
+    )
+    return JsonResponse({'ok': True, 'created': created, 'membership': _loyalty_membership_payload(membership)}, status=201 if created else 200)
 
 
 def _venue_for(request, organization_id, capability='overview'):

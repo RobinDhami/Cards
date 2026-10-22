@@ -9,7 +9,7 @@ from django.utils import timezone
 from datetime import timedelta
 
 from vcards.models import CardBatch, CardBatchCard, College, OrganizationTeamMember
-from .models import VenueAnalyticsEvent, VenueCardAssignment, VenueFeedback, VenueLink, VenueMenuCategory, VenueMenuItem, VenueMenuItemVariant, VenueProfile, VenueStaffProfile, VenueTouchpoint
+from .models import LoyaltyCustomer, VenueAnalyticsEvent, VenueCardAssignment, VenueFeedback, VenueLink, VenueLoyaltyMembership, VenueMenuCategory, VenueMenuItem, VenueMenuItemVariant, VenueProfile, VenueStaffProfile, VenueTouchpoint
 
 
 class HospitalityWorkspaceTests(TestCase):
@@ -168,6 +168,35 @@ class HospitalityWorkspaceTests(TestCase):
         response = self.client.post(f'/api/venue/{self.venue.public_identifier}/feedback/', {'rating': 5, 'comment': 'Lovely'}, content_type='application/json')
         self.assertEqual(response.status_code, 201)
         self.assertEqual(self.venue.feedback.count(), 1)
+
+    def test_loyalty_join_normalizes_a_nepali_number_and_reopens_the_same_card(self):
+        self.venue.venue_type = 'cafe'
+        self.venue.save(update_fields=['venue_type'])
+        endpoint = f'/api/venue/{self.venue.public_identifier}/loyalty/join/'
+        first = self.client.post(endpoint, {'phone': '9812345678'}, content_type='application/json')
+        self.assertEqual(first.status_code, 201, first.content)
+        self.assertTrue(first.json()['created'])
+        self.assertEqual(first.json()['membership']['stampGoal'], 5)
+        self.assertEqual(LoyaltyCustomer.objects.get().phone_e164, '+9779812345678')
+
+        second = self.client.post(endpoint, {'phone': '+977 9812345678'}, content_type='application/json')
+        self.assertEqual(second.status_code, 200, second.content)
+        self.assertFalse(second.json()['created'])
+        self.assertEqual(second.json()['membership']['memberId'], first.json()['membership']['memberId'])
+        self.assertEqual(VenueLoyaltyMembership.objects.count(), 1)
+
+    def test_a_loyalty_customer_can_have_one_card_per_cafe(self):
+        self.venue.venue_type = 'cafe'
+        self.venue.save(update_fields=['venue_type'])
+        other = VenueProfile.objects.create(
+            organization=College.objects.create(name='Second Cafe', organization_code='SECOND', organization_type='hospitality'),
+            venue_type='cafe',
+        )
+        self.client.post(f'/api/venue/{self.venue.public_identifier}/loyalty/join/', {'phone': '9812345678'}, content_type='application/json')
+        response = self.client.post(f'/api/venue/{other.public_identifier}/loyalty/join/', {'phone': '9812345678'}, content_type='application/json')
+        self.assertEqual(response.status_code, 201, response.content)
+        self.assertEqual(LoyaltyCustomer.objects.count(), 1)
+        self.assertEqual(VenueLoyaltyMembership.objects.count(), 2)
 
     def test_feedback_optional_contact_is_private_and_internal_note_never_public(self):
         response = self.client.post(

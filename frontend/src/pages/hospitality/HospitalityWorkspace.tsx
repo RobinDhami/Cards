@@ -16,6 +16,7 @@ import Share2 from "lucide-react/dist/esm/icons/share-2.js";
 import Leaf from "lucide-react/dist/esm/icons/leaf.js";
 import MapPin from "lucide-react/dist/esm/icons/map-pin.js";
 import Phone from "lucide-react/dist/esm/icons/phone.js";
+import Coffee from "lucide-react/dist/esm/icons/coffee.js";
 import Star from "lucide-react/dist/esm/icons/star.js";
 import Tag from "lucide-react/dist/esm/icons/tag.js";
 import Trash2 from "lucide-react/dist/esm/icons/trash-2.js";
@@ -72,6 +73,7 @@ export type Venue = {
   links: Link[];
   rating: { average: number; count: number };
   feedbackEnabled: boolean;
+  loyalty?: { enabled: boolean; programName: string; stampGoal: number };
   sourceConflicts?: string[];
 };
 type Category = {
@@ -117,6 +119,14 @@ type CafeFeedbackDraft = {
   source: string;
 };
 
+type LoyaltyMembership = {
+  memberId: string;
+  stampCount: number;
+  stampGoal: number;
+  rewardsRedeemed: number;
+  isActive: boolean;
+};
+
 const newCafeFeedbackDraft = (source: string): CafeFeedbackDraft => ({
   rating: 0, comment: "", shareContact: false, contactName: "", contactEmail: "", contactPhone: "", company_website: "", source,
 });
@@ -130,6 +140,11 @@ type PublicCafeUIState = {
   sendingFeedback: boolean;
   feedbackMessage: string;
   selectedMenuItem: Item | null;
+  loyaltySheet: "closed" | "join" | "card";
+  loyaltyPhone: string;
+  joiningLoyalty: boolean;
+  loyaltyMessage: string;
+  loyaltyMembership: LoyaltyMembership | null;
   reset: (source: string, activeTab: "home" | "menu") => void;
   setActiveTab: (activeTab: "home" | "menu") => void;
   setFeedback: (feedback: CafeFeedbackDraft) => void;
@@ -139,6 +154,11 @@ type PublicCafeUIState = {
   setSendingFeedback: (sendingFeedback: boolean) => void;
   setFeedbackMessage: (feedbackMessage: string) => void;
   setSelectedMenuItem: (selectedMenuItem: Item | null) => void;
+  setLoyaltySheet: (loyaltySheet: "closed" | "join" | "card") => void;
+  setLoyaltyPhone: (loyaltyPhone: string) => void;
+  setJoiningLoyalty: (joiningLoyalty: boolean) => void;
+  setLoyaltyMessage: (loyaltyMessage: string) => void;
+  setLoyaltyMembership: (loyaltyMembership: LoyaltyMembership | null) => void;
 };
 
 const usePublicCafeUIStore = create<PublicCafeUIState>((set) => ({
@@ -150,7 +170,12 @@ const usePublicCafeUIStore = create<PublicCafeUIState>((set) => ({
   sendingFeedback: false,
   feedbackMessage: "",
   selectedMenuItem: null,
-  reset: (source, activeTab) => set({ activeTab, feedback: newCafeFeedbackDraft(source), selectedCategory: null, menuSearch: "", shareMessage: "", sendingFeedback: false, feedbackMessage: "", selectedMenuItem: null }),
+  loyaltySheet: "closed",
+  loyaltyPhone: "",
+  joiningLoyalty: false,
+  loyaltyMessage: "",
+  loyaltyMembership: null,
+  reset: (source, activeTab) => set({ activeTab, feedback: newCafeFeedbackDraft(source), selectedCategory: null, menuSearch: "", shareMessage: "", sendingFeedback: false, feedbackMessage: "", selectedMenuItem: null, loyaltySheet: "closed", loyaltyPhone: "", joiningLoyalty: false, loyaltyMessage: "", loyaltyMembership: null }),
   setActiveTab: (activeTab) => set({ activeTab }),
   setFeedback: (feedback) => set({ feedback }),
   setSelectedCategory: (selectedCategory) => set({ selectedCategory }),
@@ -159,6 +184,11 @@ const usePublicCafeUIStore = create<PublicCafeUIState>((set) => ({
   setSendingFeedback: (sendingFeedback) => set({ sendingFeedback }),
   setFeedbackMessage: (feedbackMessage) => set({ feedbackMessage }),
   setSelectedMenuItem: (selectedMenuItem) => set({ selectedMenuItem }),
+  setLoyaltySheet: (loyaltySheet) => set({ loyaltySheet }),
+  setLoyaltyPhone: (loyaltyPhone) => set({ loyaltyPhone }),
+  setJoiningLoyalty: (joiningLoyalty) => set({ joiningLoyalty }),
+  setLoyaltyMessage: (loyaltyMessage) => set({ loyaltyMessage }),
+  setLoyaltyMembership: (loyaltyMembership) => set({ loyaltyMembership }),
 }));
 type Link = { id: number; link_type: string; label: string; value: string; display_order?: number; is_active?: boolean; legacy?: boolean };
 type OrganizationContact = { address: string; phone: string; email: string; website: string; mapUrl: string };
@@ -1755,6 +1785,63 @@ function CafeSocialIcon({ type }: { type: string }) {
   return <ExternalLink aria-hidden="true" />;
 }
 
+function CafeLoyaltyPanel({ programName, stampGoal, onJoin }: { programName: string; stampGoal: number; onJoin: () => void }) {
+  return <section className="cafe-loyalty" aria-labelledby="cafe-loyalty-title">
+    <span className="cafe-loyalty-mark" aria-hidden="true"><Coffee size={21} /></span>
+    <div>
+      <strong id="cafe-loyalty-title">{programName}</strong>
+      <p>Collect {stampGoal} stamps. Your {stampGoal + 1}th coffee is on us.</p>
+    </div>
+    <button type="button" onClick={onJoin}>Join rewards</button>
+  </section>;
+}
+
+function CafeLoyaltySheet({
+  cafeName, programName, stampGoal, phone, message, membership, joining, stage, onClose, onPhoneChange, onSubmit,
+}: {
+  cafeName: string;
+  programName: string;
+  stampGoal: number;
+  phone: string;
+  message: string;
+  membership: LoyaltyMembership | null;
+  joining: boolean;
+  stage: "join" | "card";
+  onClose: () => void;
+  onPhoneChange: (phone: string) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+}) {
+  const activeMembership = membership ?? { memberId: '', stampCount: 0, stampGoal, rewardsRedeemed: 0, isActive: true };
+  return <div className="cafe-loyalty-sheet-wrap" role="presentation">
+    <button className="cafe-loyalty-backdrop" type="button" aria-label="Close rewards" onClick={onClose} />
+    <section className="cafe-loyalty-sheet" role="dialog" aria-modal="true" aria-labelledby="cafe-loyalty-sheet-title">
+      <span className="cafe-loyalty-sheet-handle" aria-hidden="true" />
+      <button className="cafe-loyalty-close" type="button" onClick={onClose} aria-label="Close rewards" autoFocus={stage === "card"}><X size={20} /></button>
+      {stage === "join" ? <form onSubmit={onSubmit}>
+        <span className="cafe-loyalty-sheet-icon" aria-hidden="true"><Coffee size={24} /></span>
+        <h2 id="cafe-loyalty-sheet-title">Join {programName}</h2>
+        <p>Enter your phone number to collect stamps and keep one card with {cafeName}.</p>
+        <label>Mobile number
+          <input autoFocus value={phone} onChange={(event) => onPhoneChange(event.target.value)} type="tel" inputMode="tel" autoComplete="tel" placeholder="9812345678" required />
+        </label>
+        <button className="cafe-primary" type="submit" disabled={joining}>{joining ? "Opening your card…" : "Continue"}</button>
+        <small>Already a member? Enter the same number to open your card.</small>
+        {message ? <p className="cafe-loyalty-message" role="status">{message}</p> : null}
+      </form> : <div className="cafe-loyalty-card-state">
+        <span className="cafe-loyalty-sheet-icon" aria-hidden="true"><Coffee size={24} /></span>
+        <h2 id="cafe-loyalty-sheet-title">{programName}</h2>
+        <p>{activeMembership.stampCount} of {activeMembership.stampGoal} stamps</p>
+        <div className="cafe-loyalty-stamps" aria-label={`${activeMembership.stampCount} of ${activeMembership.stampGoal} stamps collected`}>
+          {Array.from({ length: activeMembership.stampGoal }, (_, index) => <span className={index < activeMembership.stampCount ? "is-filled" : ""} key={index}><Coffee size={18} /></span>)}
+        </div>
+        <div className="cafe-loyalty-member-id"><small>Member ID</small><strong>{activeMembership.memberId}</strong></div>
+        <p className="cafe-loyalty-card-note">Show this card at {cafeName} when you collect a stamp.</p>
+        <small className="cafe-loyalty-wallet-note">Apple Wallet and Google Wallet support will be added to this card next.</small>
+      </div>}
+    </section>
+  </div>;
+}
+
 export function PublicHospitalityProfile() {
   const identifier =
     window.location.pathname.match(/^\/venue\/([^/]+)/)?.[1] || "";
@@ -1773,6 +1860,11 @@ export function PublicHospitalityProfile() {
   const sendingFeedback = usePublicCafeUIStore((state) => state.sendingFeedback);
   const feedbackMessage = usePublicCafeUIStore((state) => state.feedbackMessage);
   const selectedMenuItem = usePublicCafeUIStore((state) => state.selectedMenuItem);
+  const loyaltySheet = usePublicCafeUIStore((state) => state.loyaltySheet);
+  const loyaltyPhone = usePublicCafeUIStore((state) => state.loyaltyPhone);
+  const joiningLoyalty = usePublicCafeUIStore((state) => state.joiningLoyalty);
+  const loyaltyMessage = usePublicCafeUIStore((state) => state.loyaltyMessage);
+  const loyaltyMembership = usePublicCafeUIStore((state) => state.loyaltyMembership);
   const resetPublicCafeUI = usePublicCafeUIStore((state) => state.reset);
   const setActiveTab = usePublicCafeUIStore((state) => state.setActiveTab);
   const setFeedback = usePublicCafeUIStore((state) => state.setFeedback);
@@ -1782,6 +1874,11 @@ export function PublicHospitalityProfile() {
   const setSendingFeedback = usePublicCafeUIStore((state) => state.setSendingFeedback);
   const setFeedbackMessage = usePublicCafeUIStore((state) => state.setFeedbackMessage);
   const setSelectedMenuItem = usePublicCafeUIStore((state) => state.setSelectedMenuItem);
+  const setLoyaltySheet = usePublicCafeUIStore((state) => state.setLoyaltySheet);
+  const setLoyaltyPhone = usePublicCafeUIStore((state) => state.setLoyaltyPhone);
+  const setJoiningLoyalty = usePublicCafeUIStore((state) => state.setJoiningLoyalty);
+  const setLoyaltyMessage = usePublicCafeUIStore((state) => state.setLoyaltyMessage);
+  const setLoyaltyMembership = usePublicCafeUIStore((state) => state.setLoyaltyMembership);
   const detailRef = useRef<HTMLElement>(null);
   useEffect(() => {
     resetPublicCafeUI(feedbackSource, new URLSearchParams(window.location.search).get("tab") === "menu" ? "menu" : "home");
@@ -1799,6 +1896,17 @@ export function PublicHospitalityProfile() {
     document.addEventListener("keydown", handleKey);
     return () => { document.removeEventListener("keydown", handleKey); document.body.style.overflow = previousOverflow; previousFocus?.focus(); };
   }, [selectedMenuItem, setSelectedMenuItem]);
+  useEffect(() => {
+    if (loyaltySheet === "closed") return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setLoyaltySheet("closed");
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => { document.removeEventListener("keydown", handleKey); document.body.style.overflow = previousOverflow; previousFocus?.focus(); };
+  }, [loyaltySheet, setLoyaltySheet]);
   const track = useCallback((eventType: string, destination: string, detail = "") => {
     void apiFetch(`/api/venue/${identifier}/track/`, {
       method: "POST",
@@ -1835,6 +1943,25 @@ export function PublicHospitalityProfile() {
       setSendingFeedback(false);
     }
   }
+  async function joinLoyalty(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (joiningLoyalty) return;
+    setJoiningLoyalty(true);
+    setLoyaltyMessage("");
+    try {
+      const response = await apiFetch<{ created: boolean; membership: LoyaltyMembership }>(`/api/venue/${identifier}/loyalty/join/`, {
+        method: "POST",
+        body: jsonBody({ phone: loyaltyPhone, source: touchpointSource, entry: entryChannel }),
+      });
+      setLoyaltyMembership(response.membership);
+      setLoyaltyMessage(response.created ? "Your rewards card is ready." : "Welcome back — your rewards card is ready.");
+      setLoyaltySheet("card");
+    } catch (reason) {
+      setLoyaltyMessage(displayError(reason));
+    } finally {
+      setJoiningLoyalty(false);
+    }
+  }
   const searchTerm = menuSearch.trim().toLocaleLowerCase();
   const menuCategories = venue.categories
     .filter((category) => selectedCategory === null || category.slug === selectedCategory)
@@ -1849,6 +1976,11 @@ export function PublicHospitalityProfile() {
       .map((entry) => ({ ...entry, categoryName: category.name })),
   );
   const specialItems = availableMenuItems.filter((entry) => itemIsTodaySpecial(entry));
+  const loyaltyProgram = venue.loyalty ?? {
+    enabled: venue.venue.type === "cafe",
+    programName: `${venue.organization.name} Rewards`,
+    stampGoal: 5,
+  };
   const today = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'Asia/Kathmandu' }).format(new Date()).toLowerCase();
   const todaySchedule = venue.venue.openingSchedule?.[today];
   const todayHours = todaySchedule
@@ -1941,6 +2073,11 @@ export function PublicHospitalityProfile() {
               </button>)}
             </div>
           </section> : null}
+          {loyaltyProgram.enabled ? <CafeLoyaltyPanel
+            programName={loyaltyProgram.programName}
+            stampGoal={loyaltyProgram.stampGoal}
+            onJoin={() => { setLoyaltyMessage(""); setLoyaltySheet("join"); }}
+          /> : null}
           {(scheduleEntries.length || venue.venue.openingHours) ? (hasVariableHours ? <details className="hospitality-public-hours">
             <summary><span aria-hidden="true" className={`cafe-hours-status ${hoursStatusClass}`} /><span className="cafe-hours-copy"><small>Today</small><strong>{isClosedToday ? "Closed" : todaySchedule ? "Open" : todayLabel}</strong>{!isClosedToday ? <span>{todayHours}</span> : null}</span><span className="cafe-hours-action">View weekly hours <ChevronRight size={18} /></span></summary>
             {scheduleEntries.length ? <dl><div className="cafe-weekly-hours-label">Weekly hours</div>{openingScheduleRows(venue.venue.openingSchedule).map((row) => <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl> : <p>{venue.venue.openingHours}</p>}
@@ -2054,6 +2191,19 @@ export function PublicHospitalityProfile() {
         </div>
       </section> : null}
       <footer className="cafe-footer">Powered by <a href="/">Tap2Connect</a></footer>
+      {loyaltySheet !== "closed" ? <CafeLoyaltySheet
+        cafeName={venue.organization.name}
+        programName={loyaltyProgram.programName}
+        stampGoal={loyaltyProgram.stampGoal}
+        phone={loyaltyPhone}
+        message={loyaltyMessage}
+        membership={loyaltyMembership}
+        joining={joiningLoyalty}
+        stage={loyaltySheet}
+        onClose={() => setLoyaltySheet("closed")}
+        onPhoneChange={setLoyaltyPhone}
+        onSubmit={joinLoyalty}
+      /> : null}
     </main>
   );
 }

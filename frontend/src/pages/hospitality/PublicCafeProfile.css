@@ -1019,3 +1019,122 @@
   .cafe-public .cafe-feedback-section > header h2 { font-size: 22px; }
   .cafe-public .cafe-feedback-section .hospitality-feedback { padding-inline: 16px; }
 }
+
+/* Café rewards: a compact entry point and a wallet-ready card foundation. */
+.cafe-public .cafe-loyalty {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  margin: 12px 0 16px;
+  padding: 11px 12px;
+  border: 1px solid #e5ddd0;
+  border-radius: 16px;
+  background: #fffdf9;
+  box-shadow: 0 4px 14px #38201608;
+}
+.cafe-public .cafe-loyalty-mark,
+.cafe-public .cafe-loyalty-sheet-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #f7eadc;
+  color: var(--cafe-brand);
+}
+.cafe-public .cafe-loyalty > div { min-width: 0; }
+.cafe-public .cafe-loyalty strong {
+  display: block;
+  color: var(--cafe-ink);
+  font: 700 15px/1.08 Georgia, "Times New Roman", serif;
+}
+.cafe-public .cafe-loyalty p { margin-top: 3px; font-size: 11px; line-height: 1.3; }
+.cafe-public .cafe-loyalty > button {
+  min-height: 38px;
+  border: 0;
+  border-radius: 10px;
+  padding: 8px 11px;
+  background: var(--cafe-brand);
+  color: #fff;
+  font: 700 11px/1 Arial, Helvetica, sans-serif;
+}
+.cafe-public .cafe-loyalty-sheet-wrap { position: fixed; inset: 0; z-index: 120; }
+.cafe-public .cafe-loyalty-backdrop { position: absolute; inset: 0; width: 100%; border: 0; background: #21130eb8; }
+.cafe-public .cafe-loyalty-sheet {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: min(100%, 560px);
+  max-height: min(80dvh, 620px);
+  margin: auto;
+  overflow: auto;
+  border-radius: 24px 24px 0 0;
+  background: #fffdf9;
+  padding: 22px 22px 28px;
+  box-shadow: 0 -20px 56px #21130e2b;
+  animation: cafe-loyalty-sheet-in .22s ease-out;
+}
+@keyframes cafe-loyalty-sheet-in { from { transform: translateY(30px); } to { transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .cafe-public .cafe-loyalty-sheet { animation: none; } }
+.cafe-public .cafe-loyalty-sheet-handle { display: block; width: 38px; height: 4px; margin: 0 auto 18px; border-radius: 99px; background: #d7d0c7; }
+.cafe-public .cafe-loyalty-close {
+  display: grid;
+  position: absolute;
+  top: 16px;
+  right: 17px;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--cafe-ink);
+}
+.cafe-public .cafe-loyalty-sheet form,
+.cafe-public .cafe-loyalty-card-state { display: grid; gap: 14px; }
+.cafe-public .cafe-loyalty-sheet-icon { width: 46px; height: 46px; }
+.cafe-public .cafe-loyalty-sheet h2 { margin: 0; padding-right: 35px; font-size: 29px; letter-spacing: -.55px; }
+.cafe-public .cafe-loyalty-sheet h2 + p { margin-top: -7px; font-size: 14px; line-height: 1.45; }
+.cafe-public .cafe-loyalty-sheet label { display: grid; gap: 7px; color: var(--cafe-ink); font-size: 12px; font-weight: 700; }
+.cafe-public .cafe-loyalty-sheet input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #dcd1c2;
+  border-radius: 11px;
+  padding: 10px 13px;
+  color: var(--cafe-ink);
+  background: #fff;
+  font: 16px/1 Arial, Helvetica, sans-serif;
+}
+.cafe-public .cafe-loyalty-sheet .cafe-primary { margin-top: 2px; }
+.cafe-public .cafe-loyalty-sheet form > small { color: var(--cafe-muted); text-align: center; font-size: 11px; line-height: 1.4; }
+.cafe-public .cafe-loyalty-message { color: var(--cafe-brand) !important; text-align: center; font-size: 12px !important; font-weight: 700; }
+.cafe-public .cafe-loyalty-card-state > p { font-size: 15px; font-weight: 700; }
+.cafe-public .cafe-loyalty-stamps { display: flex; gap: 8px; padding: 3px 0 5px; }
+.cafe-public .cafe-loyalty-stamps span {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px dashed #d7cec1;
+  border-radius: 50%;
+  color: #b7afa5;
+}
+.cafe-public .cafe-loyalty-stamps span.is-filled { border-style: solid; border-color: var(--cafe-brand); background: var(--cafe-brand); color: #fff; }
+.cafe-public .cafe-loyalty-member-id { display: grid; gap: 3px; border-top: 1px solid var(--cafe-line); padding-top: 14px; }
+.cafe-public .cafe-loyalty-member-id small { color: var(--cafe-muted); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.cafe-public .cafe-loyalty-member-id strong { overflow-wrap: anywhere; color: var(--cafe-ink); font: 700 14px/1.2 Arial, Helvetica, sans-serif; }
+.cafe-public .cafe-loyalty-card-note { font-size: 12px !important; line-height: 1.4; }
+.cafe-public .cafe-loyalty-wallet-note { padding-top: 3px; color: var(--cafe-muted); font-size: 11px; line-height: 1.4; }
+
+@media (max-width: 380px) {
+  .cafe-public .cafe-loyalty { grid-template-columns: 38px minmax(0, 1fr); gap: 9px; }
+  .cafe-public .cafe-loyalty-mark { width: 38px; height: 38px; }
+  .cafe-public .cafe-loyalty > button { grid-column: 2; width: 100%; }
+  .cafe-public .cafe-loyalty-sheet { padding-inline: 18px; }
+  .cafe-public .cafe-loyalty-stamps { gap: 6px; }
+  .cafe-public .cafe-loyalty-stamps span { width: 39px; height: 39px; }
+}

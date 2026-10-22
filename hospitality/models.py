@@ -38,6 +38,39 @@ class VenueProfile(models.Model):
         return f'{self.organization.name} venue'
 
 
+class LoyaltyCustomer(models.Model):
+    """A customer identity shared across hospitality venues by normalized phone."""
+    phone_e164 = models.CharField(max_length=20, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.phone_e164
+
+
+class VenueLoyaltyMembership(models.Model):
+    venue = models.ForeignKey(VenueProfile, on_delete=models.CASCADE, related_name='loyalty_memberships')
+    customer = models.ForeignKey(LoyaltyCustomer, on_delete=models.CASCADE, related_name='loyalty_memberships')
+    public_identifier = models.CharField(max_length=64, unique=True, default=public_identifier, editable=False)
+    stamp_count = models.PositiveSmallIntegerField(default=0)
+    stamp_goal = models.PositiveSmallIntegerField(default=5, validators=[MinValueValidator(1), MaxValueValidator(50)])
+    rewards_redeemed = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['venue', 'customer'], name='venue_loyalty_membership_unique'),
+        ]
+        indexes = [
+            models.Index(fields=['venue', 'is_active', 'created_at'], name='hospitality_venue_i_a6b624_idx'),
+        ]
+
+    def __str__(self):
+        return f'{self.venue.organization.name} · {self.customer.phone_e164}'
+
+
 class VenueMenuCategory(models.Model):
     venue = models.ForeignKey(VenueProfile, on_delete=models.CASCADE, related_name='menu_categories')
     name = models.CharField(max_length=120)
@@ -227,6 +260,7 @@ class VenueAnalyticsEvent(models.Model):
         ('google_review_click', 'Google review button clicked'),
         ('feedback_submit', 'Feedback submitted'),
         ('social_click', 'Public link clicked'),
+        ('loyalty_join', 'Loyalty card joined or reopened'),
     ]
 
     venue = models.ForeignKey(VenueProfile, on_delete=models.CASCADE, related_name='analytics_events')

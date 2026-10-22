@@ -133,6 +133,7 @@ urlpatterns = [
     path('api/dashboard/print-controls/', react_api.dashboard_print_controls_api, name='react_dashboard_print_controls_api'),
     path('api/venue/<str:public_identifier>/', hospitality_views.venue_public_api, name='venue_public_api'),
     path('api/venue/<str:public_identifier>/feedback/', hospitality_views.venue_feedback_api, name='venue_feedback_api'),
+    path('api/venue/<str:public_identifier>/loyalty/join/', hospitality_views.venue_loyalty_join_api, name='venue_loyalty_join_api'),
     path('api/venue/<str:public_identifier>/track/', hospitality_views.venue_track_api, name='venue_track_api'),
     path('api/venue/<str:public_identifier>/staff/<str:staff_identifier>/', hospitality_views.venue_staff_public_api, name='venue_staff_public_api'),
     path('api/venue/card/<str:public_identifier>/', hospitality_views.venue_card_public_api, name='venue_card_public_api'),
