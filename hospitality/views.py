@@ -240,7 +240,7 @@ def _payload(request, venue):
         'rating': {'average': venue.feedback.aggregate(average=Avg('rating'))['average'] or 0, 'count': venue.feedback.count()},
         'categories': categories, 'feedbackEnabled': venue.feedback_enabled,
         'loyalty': {
-            'enabled': venue.venue_type == 'cafe',
+            'enabled': venue.venue_type in {'cafe', 'restaurant'},
             'programName': f'{venue.organization.name} Rewards',
             'stampGoal': 5,
         },
@@ -316,7 +316,12 @@ def venue_feedback_api(request, public_identifier):
 
 @require_http_methods(['POST'])
 def venue_loyalty_join_api(request, public_identifier):
-    venue = get_object_or_404(VenueProfile, public_identifier=public_identifier, is_active=True, venue_type='cafe')
+    venue = get_object_or_404(
+        VenueProfile,
+        public_identifier=public_identifier,
+        is_active=True,
+        venue_type__in=['cafe', 'restaurant'],
+    )
     data = _body(request)
     if not isinstance(data, dict):
         return JsonResponse({'error': 'Invalid JSON.'}, status=400)

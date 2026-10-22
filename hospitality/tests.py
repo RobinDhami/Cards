@@ -170,7 +170,7 @@ class HospitalityWorkspaceTests(TestCase):
         self.assertEqual(self.venue.feedback.count(), 1)
 
     def test_loyalty_join_normalizes_a_nepali_number_and_reopens_the_same_card(self):
-        self.venue.venue_type = 'cafe'
+        self.venue.venue_type = 'restaurant'
         self.venue.save(update_fields=['venue_type'])
         endpoint = f'/api/venue/{self.venue.public_identifier}/loyalty/join/'
         first = self.client.post(endpoint, {'phone': '9812345678'}, content_type='application/json')

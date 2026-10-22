@@ -1977,7 +1977,7 @@ export function PublicHospitalityProfile() {
   );
   const specialItems = availableMenuItems.filter((entry) => itemIsTodaySpecial(entry));
   const loyaltyProgram = venue.loyalty ?? {
-    enabled: venue.venue.type === "cafe",
+    enabled: venue.venue.type === "cafe" || venue.venue.type === "restaurant",
     programName: `${venue.organization.name} Rewards`,
     stampGoal: 5,
   };
