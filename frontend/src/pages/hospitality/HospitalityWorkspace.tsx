@@ -18,6 +18,7 @@ import Leaf from "lucide-react/dist/esm/icons/leaf.js";
 import MapPin from "lucide-react/dist/esm/icons/map-pin.js";
 import Phone from "lucide-react/dist/esm/icons/phone.js";
 import Coffee from "lucide-react/dist/esm/icons/coffee.js";
+import Gift from "lucide-react/dist/esm/icons/gift.js";
 import Star from "lucide-react/dist/esm/icons/star.js";
 import Tag from "lucide-react/dist/esm/icons/tag.js";
 import Trash2 from "lucide-react/dist/esm/icons/trash-2.js";
@@ -1788,7 +1789,7 @@ function CafeSocialIcon({ type }: { type: string }) {
 
 function CafeLoyaltyPanel({ programName, stampGoal, onJoin }: { programName: string; stampGoal: number; onJoin: () => void }) {
   return <section className="cafe-loyalty" aria-labelledby="cafe-loyalty-title">
-    <span className="cafe-loyalty-mark" aria-hidden="true"><Coffee size={21} /></span>
+    <span className="cafe-loyalty-mark" aria-hidden="true"><Gift size={20} /></span>
     <div>
       <strong id="cafe-loyalty-title">{programName}</strong>
       <p>Collect {stampGoal} stamps. Your {stampGoal + 1}th coffee is on us.</p>

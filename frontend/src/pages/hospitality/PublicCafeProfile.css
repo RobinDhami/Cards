@@ -1043,6 +1043,7 @@
   background: #f7eadc;
   color: var(--cafe-brand);
 }
+.cafe-public .cafe-loyalty-mark { background: #fff0d8; color: #b56a13; }
 .cafe-public .cafe-loyalty > div { min-width: 0; }
 .cafe-public .cafe-loyalty strong {
   display: block;
