@@ -1866,7 +1866,6 @@ function CafeLoyaltySheet({
         <small>Already a member? Enter the same number to open your card.</small>
         {message ? <p className="cafe-loyalty-message" role="status">{message}</p> : null}
       </form> : <div className="cafe-loyalty-card-state">
-        <span className="cafe-loyalty-sheet-icon" aria-hidden="true"><Coffee size={24} /></span>
         <h2 id="cafe-loyalty-sheet-title">{programName}</h2>
         <p>{activeMembership.stampCount} of {activeMembership.stampGoal} stamps</p>
         <div className="cafe-loyalty-stamps" aria-label={`${activeMembership.stampCount} of ${activeMembership.stampGoal} stamps collected`}>
