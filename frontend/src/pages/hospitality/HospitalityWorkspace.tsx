@@ -24,7 +24,7 @@ import Trash2 from "lucide-react/dist/esm/icons/trash-2.js";
 import Utensils from "lucide-react/dist/esm/icons/utensils.js";
 import UserPlus from "lucide-react/dist/esm/icons/user-plus.js";
 import X from "lucide-react/dist/esm/icons/x.js";
-import { FaApple, FaFacebookF, FaGlobe, FaGoogle, FaInstagram, FaTiktok, FaWhatsapp } from "react-icons/fa6";
+import { FaApple, FaFacebookF, FaGlobe, FaInstagram, FaTiktok, FaWhatsapp } from "react-icons/fa6";
 import { HiOutlineEnvelope } from "react-icons/hi2";
 import {
   Field,
@@ -1879,7 +1879,7 @@ function CafeLoyaltySheet({
           <div className="cafe-loyalty-wallet-actions">
             <p>Scan at {cafeName} to collect a stamp.</p>
             <button type="button" disabled title="Wallet pass setup is coming next"><FaApple aria-hidden="true" /> Add to Apple Wallet</button>
-            <button type="button" disabled title="Wallet pass setup is coming next"><FaGoogle aria-hidden="true" /> Add to Google Wallet</button>
+            <button type="button" disabled title="Wallet pass setup is coming next"><img src={googleGLogo} alt="" aria-hidden="true" /> Add to Google Wallet</button>
           </div>
         </div>
         <small className="cafe-loyalty-wallet-note">Wallet passes will be available after the Apple and Google pass setup is complete.</small>
