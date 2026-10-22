@@ -1797,6 +1797,22 @@ function CafeLoyaltyPanel({ programName, stampGoal, onJoin }: { programName: str
   </section>;
 }
 
+const loyaltyPhoneCountries = [
+  { id: "NP", flag: "🇳🇵", label: "Nepal", prefix: "+977", placeholder: "9812345678" },
+  { id: "IN", flag: "🇮🇳", label: "India", prefix: "+91", placeholder: "9876543210" },
+  { id: "BD", flag: "🇧🇩", label: "Bangladesh", prefix: "+880", placeholder: "1712345678" },
+  { id: "BT", flag: "🇧🇹", label: "Bhutan", prefix: "+975", placeholder: "17123456" },
+  { id: "AE", flag: "🇦🇪", label: "United Arab Emirates", prefix: "+971", placeholder: "501234567" },
+  { id: "QA", flag: "🇶🇦", label: "Qatar", prefix: "+974", placeholder: "33123456" },
+  { id: "SA", flag: "🇸🇦", label: "Saudi Arabia", prefix: "+966", placeholder: "501234567" },
+  { id: "GB", flag: "🇬🇧", label: "United Kingdom", prefix: "+44", placeholder: "7700900123" },
+  { id: "US", flag: "🇺🇸", label: "United States / Canada", prefix: "+1", placeholder: "4155550123" },
+  { id: "AU", flag: "🇦🇺", label: "Australia", prefix: "+61", placeholder: "412345678" },
+  { id: "SG", flag: "🇸🇬", label: "Singapore", prefix: "+65", placeholder: "81234567" },
+  { id: "MY", flag: "🇲🇾", label: "Malaysia", prefix: "+60", placeholder: "123456789" },
+  { id: "OTHER", flag: "🌐", label: "Other country", prefix: "", placeholder: "+14155550123" },
+] as const;
+
 function CafeLoyaltySheet({
   cafeName, programName, stampGoal, phone, message, membership, joining, stage, onClose, onPhoneChange, onSubmit,
 }: {
@@ -1810,9 +1826,11 @@ function CafeLoyaltySheet({
   stage: "join" | "card";
   onClose: () => void;
   onPhoneChange: (phone: string) => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>, formattedPhone: string) => void;
 }) {
   const activeMembership = membership ?? { memberId: '', stampCount: 0, stampGoal, rewardsRedeemed: 0, isActive: true };
+  const [countryId, setCountryId] = useState<(typeof loyaltyPhoneCountries)[number]["id"]>("NP");
+  const country = loyaltyPhoneCountries.find((item) => item.id === countryId) ?? loyaltyPhoneCountries[0];
   const [qrImage, setQrImage] = useState("");
   useEffect(() => {
     if (stage !== "card" || !activeMembership.memberId) {
@@ -1832,14 +1850,16 @@ function CafeLoyaltySheet({
     <section className="cafe-loyalty-sheet" role="dialog" aria-modal="true" aria-labelledby="cafe-loyalty-sheet-title">
       <span className="cafe-loyalty-sheet-handle" aria-hidden="true" />
       <button className="cafe-loyalty-close" type="button" onClick={onClose} aria-label="Close rewards" autoFocus={stage === "card"}><X size={20} /></button>
-      {stage === "join" ? <form onSubmit={onSubmit}>
+      {stage === "join" ? <form onSubmit={(event) => onSubmit(event, country.prefix ? `${country.prefix}${phone.replace(/\D/g, "")}` : phone)}>
         <span className="cafe-loyalty-sheet-icon" aria-hidden="true"><Coffee size={24} /></span>
         <h2 id="cafe-loyalty-sheet-title">Join {programName}</h2>
         <p>Enter your phone number to collect stamps and keep one card with {cafeName}.</p>
         <label>Mobile number
           <span className="cafe-loyalty-phone-field">
-            <span className="cafe-loyalty-country" aria-label="Nepal country code">🇳🇵 <b>+977</b></span>
-            <input autoFocus value={phone} onChange={(event) => onPhoneChange(event.target.value)} type="tel" inputMode="tel" autoComplete="tel-national" placeholder="9812345678" required />
+            <select className="cafe-loyalty-country" aria-label="Country code" value={countryId} onChange={(event) => setCountryId(event.target.value as typeof countryId)}>
+              {loyaltyPhoneCountries.map((item) => <option key={item.id} value={item.id}>{item.flag} {item.label} ({item.prefix || "E.164"})</option>)}
+            </select>
+            <input autoFocus value={phone} onChange={(event) => onPhoneChange(event.target.value)} type="tel" inputMode="tel" autoComplete="tel-national" placeholder={country.placeholder} required />
           </span>
         </label>
         <button className="cafe-primary" type="submit" disabled={joining}>{joining ? "Opening your card…" : "Continue"}</button>
@@ -1969,7 +1989,7 @@ export function PublicHospitalityProfile() {
       setSendingFeedback(false);
     }
   }
-  async function joinLoyalty(event: FormEvent<HTMLFormElement>) {
+  async function joinLoyalty(event: FormEvent<HTMLFormElement>, formattedPhone = loyaltyPhone) {
     event.preventDefault();
     if (joiningLoyalty) return;
     setJoiningLoyalty(true);
@@ -1977,7 +1997,7 @@ export function PublicHospitalityProfile() {
     try {
       const response = await apiFetch<{ created: boolean; membership: LoyaltyMembership }>(`/api/venue/${identifier}/loyalty/join/`, {
         method: "POST",
-        body: jsonBody({ phone: loyaltyPhone, source: touchpointSource, entry: entryChannel }),
+        body: jsonBody({ phone: formattedPhone, source: touchpointSource, entry: entryChannel }),
       });
       setLoyaltyMembership(response.membership);
       setLoyaltyMessage(response.created ? "Your rewards card is ready." : "Welcome back — your rewards card is ready.");

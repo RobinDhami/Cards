@@ -198,6 +198,17 @@ class HospitalityWorkspaceTests(TestCase):
         self.assertEqual(LoyaltyCustomer.objects.count(), 1)
         self.assertEqual(VenueLoyaltyMembership.objects.count(), 2)
 
+    def test_loyalty_join_accepts_an_international_e164_number(self):
+        self.venue.venue_type = 'restaurant'
+        self.venue.save(update_fields=['venue_type'])
+        response = self.client.post(
+            f'/api/venue/{self.venue.public_identifier}/loyalty/join/',
+            {'phone': '+44 7700 900123'},
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 201, response.content)
+        self.assertEqual(LoyaltyCustomer.objects.get().phone_e164, '+447700900123')
+
     def test_feedback_optional_contact_is_private_and_internal_note_never_public(self):
         response = self.client.post(
             f'/api/venue/{self.venue.public_identifier}/feedback/',

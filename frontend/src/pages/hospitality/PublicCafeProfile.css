@@ -1099,7 +1099,7 @@
 .cafe-public .cafe-loyalty-sheet h2 + p { margin-top: -7px; font-size: 14px; line-height: 1.45; }
 .cafe-public .cafe-loyalty-sheet label { display: grid; gap: 7px; color: var(--cafe-ink); font-size: 12px; font-weight: 700; }
 .cafe-public .cafe-loyalty-phone-field { display: flex; align-items: stretch; min-height: 48px; overflow: hidden; border: 1px solid #dcd1c2; border-radius: 11px; background: #fff; }
-.cafe-public .cafe-loyalty-country { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; border-right: 1px solid #e8dfd4; padding: 0 11px; color: var(--cafe-ink); font: 700 13px/1 Arial, Helvetica, sans-serif; }
+.cafe-public .cafe-loyalty-country { max-width: 112px; flex: 0 0 112px; border: 0; border-right: 1px solid #e8dfd4; padding: 0 7px; color: var(--cafe-ink); background: #fff; font: 700 12px/1 Arial, Helvetica, sans-serif; }
 .cafe-public .cafe-loyalty-sheet .cafe-loyalty-phone-field input {
   width: 100%;
   min-height: 48px;
