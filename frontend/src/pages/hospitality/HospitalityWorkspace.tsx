@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, FormEvent, ReactNode } from "react";
 import { create } from "zustand";
+import QRCode from "qrcode";
 import MessageSquare from "lucide-react/dist/esm/icons/message-square.js";
 import Eye from "lucide-react/dist/esm/icons/eye.js";
 import ExternalLink from "lucide-react/dist/esm/icons/external-link.js";
@@ -23,7 +24,7 @@ import Trash2 from "lucide-react/dist/esm/icons/trash-2.js";
 import Utensils from "lucide-react/dist/esm/icons/utensils.js";
 import UserPlus from "lucide-react/dist/esm/icons/user-plus.js";
 import X from "lucide-react/dist/esm/icons/x.js";
-import { FaFacebookF, FaGlobe, FaInstagram, FaTiktok, FaWhatsapp } from "react-icons/fa6";
+import { FaApple, FaFacebookF, FaGlobe, FaGoogle, FaInstagram, FaTiktok, FaWhatsapp } from "react-icons/fa6";
 import { HiOutlineEnvelope } from "react-icons/hi2";
 import {
   Field,
@@ -1812,6 +1813,20 @@ function CafeLoyaltySheet({
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
   const activeMembership = membership ?? { memberId: '', stampCount: 0, stampGoal, rewardsRedeemed: 0, isActive: true };
+  const [qrImage, setQrImage] = useState("");
+  useEffect(() => {
+    if (stage !== "card" || !activeMembership.memberId) {
+      setQrImage("");
+      return;
+    }
+    let active = true;
+    void QRCode.toDataURL(`T2C-LOYALTY:${activeMembership.memberId}`, {
+      width: 260,
+      margin: 1,
+      color: { dark: "#102644", light: "#ffffff" },
+    }).then((image) => { if (active) setQrImage(image); });
+    return () => { active = false; };
+  }, [activeMembership.memberId, stage]);
   return <div className="cafe-loyalty-sheet-wrap" role="presentation">
     <button className="cafe-loyalty-backdrop" type="button" aria-label="Close rewards" onClick={onClose} />
     <section className="cafe-loyalty-sheet" role="dialog" aria-modal="true" aria-labelledby="cafe-loyalty-sheet-title">
@@ -1822,7 +1837,10 @@ function CafeLoyaltySheet({
         <h2 id="cafe-loyalty-sheet-title">Join {programName}</h2>
         <p>Enter your phone number to collect stamps and keep one card with {cafeName}.</p>
         <label>Mobile number
-          <input autoFocus value={phone} onChange={(event) => onPhoneChange(event.target.value)} type="tel" inputMode="tel" autoComplete="tel" placeholder="9812345678" required />
+          <span className="cafe-loyalty-phone-field">
+            <span className="cafe-loyalty-country" aria-label="Nepal country code">🇳🇵 <b>+977</b></span>
+            <input autoFocus value={phone} onChange={(event) => onPhoneChange(event.target.value)} type="tel" inputMode="tel" autoComplete="tel-national" placeholder="9812345678" required />
+          </span>
         </label>
         <button className="cafe-primary" type="submit" disabled={joining}>{joining ? "Opening your card…" : "Continue"}</button>
         <small>Already a member? Enter the same number to open your card.</small>
@@ -1836,7 +1854,15 @@ function CafeLoyaltySheet({
         </div>
         <div className="cafe-loyalty-member-id"><small>Member ID</small><strong>{activeMembership.memberId}</strong></div>
         <p className="cafe-loyalty-card-note">Show this card at {cafeName} when you collect a stamp.</p>
-        <small className="cafe-loyalty-wallet-note">Apple Wallet and Google Wallet support will be added to this card next.</small>
+        <div className="cafe-loyalty-wallet-row">
+          <div className="cafe-loyalty-qr">{qrImage ? <img src={qrImage} alt={`Rewards QR code for ${activeMembership.memberId}`} /> : <span>Preparing QR…</span>}</div>
+          <div className="cafe-loyalty-wallet-actions">
+            <p>Scan at {cafeName} to collect a stamp.</p>
+            <button type="button" disabled title="Wallet pass setup is coming next"><FaApple aria-hidden="true" /> Add to Apple Wallet</button>
+            <button type="button" disabled title="Wallet pass setup is coming next"><FaGoogle aria-hidden="true" /> Add to Google Wallet</button>
+          </div>
+        </div>
+        <small className="cafe-loyalty-wallet-note">Wallet passes will be available after the Apple and Google pass setup is complete.</small>
       </div>}
     </section>
   </div>;
