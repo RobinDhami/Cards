@@ -183,10 +183,14 @@
 @media (max-width:640px) {
   .manage-app--hospitality .manage-header { position:relative; min-height:124px; padding-bottom:66px; }
   .manage-app--hospitality .manage-title { min-width:0; padding-right:160px; }
-  .manage-app--hospitality .manage-header-actions { position:absolute; top:18px; right:12px; display:grid; width:calc(100% - 24px); grid-template-columns:minmax(0,1fr) auto auto auto; gap:7px; }
+  .manage-app--hospitality .manage-menu { position:relative; z-index:2; }
+  .manage-app--hospitality .manage-header-actions { position:absolute; top:18px; right:12px; display:grid; width:calc(100% - 24px); grid-template-columns:minmax(0,1fr) auto auto auto; gap:7px; pointer-events:none; }
   .manage-app--hospitality .manage-header-actions .hospitality-notification-control { grid-column:2; }
   .manage-app--hospitality .manage-header-actions .dashboard-header-tools { grid-column:3; }
   .manage-app--hospitality .manage-header-actions .hospitality-theme-toggle { grid-column:4; }
   .manage-app--hospitality .manage-header-actions > .manage-icon-button { display:grid; }
   .manage-app--hospitality .manage-header-actions > .manage-button { width:100%; grid-column:1/-1; justify-self:stretch; }
+  .manage-app--hospitality .manage-header-actions > *,
+  .manage-app--hospitality .manage-header-actions .dashboard-header-tools,
+  .manage-app--hospitality .manage-header-actions .hospitality-notification-control { pointer-events:auto; }
 }
