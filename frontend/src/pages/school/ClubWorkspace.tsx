@@ -11,6 +11,7 @@ import Search from 'lucide-react/dist/esm/icons/search.js'
 import Users from 'lucide-react/dist/esm/icons/users.js'
 import { Field, FormSection, SelectInput, TextArea, TextInput, Toggle } from '../../components/manage/FormControls'
 import { ManageShell } from '../../components/manage/ManageShell'
+import { DashboardHeaderTools } from '../../components/manage/DashboardHeaderTools'
 import { apiFetch, backendHref, displayError, jsonBody, queryString } from '../../lib/api'
 import { schoolWorkspaceNav } from './schoolWorkspaceNav'
 import './ClubWorkspace.css'
@@ -28,7 +29,8 @@ function clubRoot() { return `/dashboard/organizations/${schoolId()}/club` }
 
 function ClubShell({ shell, title, subtitle, children }: { shell: Shell; title: string; subtitle: string; children: ReactNode }) {
   const school = shell.currentSchool
-  return <ManageShell brand={school?.name || 'Club'} brandDetail="Club administration" logo={school?.logo} nav={schoolWorkspaceNav(school?.id, shell.isSuperAdmin, 'club')} title={title} subtitle={subtitle} userName={shell.user.displayName} userRole={shell.isSuperAdmin ? 'Platform administrator' : 'Club manager'} accent={school?.themePrimary || '#00767a'} schoolOptions={shell.isSuperAdmin ? shell.schools : undefined} selectedSchool={school?.id ?? null} onSchoolChange={(id) => { window.location.href = `/dashboard/organizations/${id}/club/` }}>{children}</ManageShell>
+  const navigation = schoolWorkspaceNav(school?.id, shell.isSuperAdmin, 'club')
+  return <ManageShell brand={school?.name || 'Club'} brandDetail="Club administration" logo={school?.logo} nav={navigation} title={title} subtitle={subtitle} userName={shell.user.displayName} userRole={shell.isSuperAdmin ? 'Platform administrator' : 'Club manager'} accent={school?.themePrimary || '#00767a'} schoolOptions={shell.isSuperAdmin ? shell.schools : undefined} selectedSchool={school?.id ?? null} onSchoolChange={(id) => { window.location.href = `/dashboard/organizations/${id}/club/` }} actions={school ? <DashboardHeaderTools nav={navigation} organizationId={school.id} enableSupport={!shell.isSuperAdmin} /> : null}>{children}</ManageShell>
 }
 
 function useClubShell() {

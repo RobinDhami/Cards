@@ -52,6 +52,7 @@ from vcards.club_serializers import (
     ClubProfileSettingsSerializer, ClubSocialLinkSerializer,
 )
 from vcards.organization_modules import IMPORT_COLUMN_LABELS, identifier_label, normalize_import_column, organization_module
+from vcards.organization_access import ROLE_CAPABILITIES, accessible_organizations, organization_role
 from vcards.usernames import create_organization_member, validate_member_username
 from vcards.platform_access import (
     PLATFORM_MODULES,
@@ -126,6 +127,10 @@ def _platform_ticket_payload(ticket):
         'priority': ticket.priority,
         'status': ticket.status,
         'requester': requester.get_full_name().strip() or requester.username if requester else 'Deleted user',
+        'organization': {
+            'id': ticket.organization_id,
+            'name': ticket.organization.name,
+        } if ticket.organization_id else None,
         'createdAt': ticket.created_at.isoformat(),
         'updatedAt': ticket.updated_at.isoformat(),
     }
@@ -719,7 +724,7 @@ def platform_staff_api(request):
     return JsonResponse({'ok': True, 'staffMember': _platform_staff_payload(user)}, status=201)
 
 
-@require_http_methods(['GET', 'POST'])
+@require_http_methods(['GET'])
 def platform_tickets_api(request):
     access_error = _platform_tickets_access_error(request)
     if access_error:
@@ -727,7 +732,7 @@ def platform_tickets_api(request):
 
     if request.method == 'GET':
         status = str(request.GET.get('status') or '').strip()
-        tickets = PlatformSupportTicket.objects.select_related('requester')
+        tickets = PlatformSupportTicket.objects.select_related('requester', 'organization')
         if status in dict(PlatformSupportTicket.STATUS_CHOICES):
             tickets = tickets.filter(status=status)
         return JsonResponse({
@@ -737,23 +742,47 @@ def platform_tickets_api(request):
             'platformAccess': platform_access_payload(request.user),
         })
 
+
+
+@require_http_methods(['GET', 'POST'])
+def organization_tickets_api(request, organization_id):
+    if not request.user.is_authenticated:
+        return _json_error('Sign in to access support tickets.', status=401)
+    organization = accessible_organizations(request.user).filter(pk=organization_id).first()
+    if not organization:
+        return _json_error('You do not have access to this organization.', status=403)
+
+    if request.method == 'GET':
+        tickets = PlatformSupportTicket.objects.select_related('requester', 'organization').filter(organization=organization)
+        return JsonResponse({
+            'ok': True,
+            'tickets': [_platform_ticket_payload(ticket) for ticket in tickets],
+            'organization': {
+                'id': organization.id,
+                'name': organization.name,
+                'logo': _file_url(organization.logo),
+                'organizationType': organization.organization_type,
+                'themePrimary': organization.theme_primary,
+            },
+            'isSuperAdmin': request.user.is_superuser,
+            'capabilities': sorted(ROLE_CAPABILITIES.get(organization_role(request.user, organization), set())),
+            'user': {'displayName': request.user.get_full_name().strip() or request.user.username},
+        })
+
     payload = _json_body(request)
     subject = str(payload.get('subject') or '').strip()
     message = str(payload.get('message') or '').strip()
     category = str(payload.get('category') or 'technical').strip()
     priority = str(payload.get('priority') or 'normal').strip()
     if not subject or not message:
-        return _json_error('Add a subject and description before raising the ticket.', errors={
-            'subject': ['Required'] if not subject else [],
-            'message': ['Required'] if not message else [],
-        })
+        return _json_error('Add a subject and description before raising the ticket.')
     if category not in dict(PlatformSupportTicket.CATEGORY_CHOICES):
         category = 'other'
     if priority not in dict(PlatformSupportTicket.PRIORITY_CHOICES):
         priority = 'normal'
     ticket = PlatformSupportTicket.objects.create(
-        requester=request.user, subject=subject[:180], message=message,
-        category=category, priority=priority,
+        organization=organization, requester=request.user, subject=subject[:180],
+        message=message, category=category, priority=priority,
     )
     return JsonResponse({'ok': True, 'ticket': _platform_ticket_payload(ticket)}, status=201)
 

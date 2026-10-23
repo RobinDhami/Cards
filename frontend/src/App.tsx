@@ -7,6 +7,7 @@ const PlatformSettings = lazy(() => import('./pages/dashboard/PlatformSettings')
 const PlatformActivity = lazy(() => import('./pages/dashboard/PlatformInsights').then((module) => ({ default: module.PlatformActivity })))
 const PlatformReports = lazy(() => import('./pages/dashboard/PlatformInsights').then((module) => ({ default: module.PlatformReports })))
 const PlatformTickets = lazy(() => import('./pages/dashboard/PlatformTickets').then((module) => ({ default: module.PlatformTickets })))
+const OrganizationSupportTickets = lazy(() => import('./pages/dashboard/OrganizationSupportTickets').then((module) => ({ default: module.OrganizationSupportTickets })))
 const CardOperations = lazy(() => import('./pages/dashboard/CardOperations').then((module) => ({ default: module.CardOperations })))
 const PublicProfessionalProfile = lazy(() => import('./pages/profiles/PublicProfessionalProfile').then((module) => ({ default: module.PublicProfessionalProfile })))
 const LoginPage = lazy(() => import('./pages/auth/LoginPage').then((module) => ({ default: module.LoginPage })))
@@ -170,6 +171,10 @@ function AppRoutes() {
 
   if (path === '/dashboard/tickets/' || path === '/dashboard/tickets') {
     return <PlatformTickets />
+  }
+
+  if (/^\/dashboard\/organizations\/\d+\/support\/?$/.test(path)) {
+    return <OrganizationSupportTickets />
   }
 
   if (path === '/dashboard/reports/' || path === '/dashboard/reports') {

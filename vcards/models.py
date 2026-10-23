@@ -48,6 +48,7 @@ class PlatformSupportTicket(models.Model):
         ('resolved', 'Resolved'),
     ]
 
+    organization = models.ForeignKey('College', on_delete=models.CASCADE, null=True, blank=True, related_name='support_tickets')
     requester = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='platform_support_tickets')
     subject = models.CharField(max_length=180)
     message = models.TextField()

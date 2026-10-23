@@ -11,6 +11,7 @@ import Settings from "lucide-react/dist/esm/icons/settings.js";
 import Trash2 from "lucide-react/dist/esm/icons/trash-2.js";
 import Users from "lucide-react/dist/esm/icons/users.js";
 import { ManageShell } from "../../components/manage/ManageShell";
+import { DashboardHeaderTools } from "../../components/manage/DashboardHeaderTools";
 import { apiFetch, displayError, jsonBody } from "../../lib/api";
 import { schoolWorkspaceNav } from "../school/schoolWorkspaceNav";
 import "./HospitalitySettings.css";
@@ -23,7 +24,7 @@ type SettingsPayload = {
   team?: TeamMember[];
 };
 
-const tabs = ["General", "Team access", "Notifications", "Integrations", "Subscription", "Advanced"] as const;
+const tabs = ["General", "Staff & Access", "Notifications", "Integrations", "Subscription", "Advanced"] as const;
 type Tab = (typeof tabs)[number];
 const roles: Array<{ value: Role; label: string; detail: string }> = [
   { value: "owner", label: "Owner", detail: "Full control, including team access and internal settings." },
@@ -56,7 +57,7 @@ export function HospitalitySettingsPage() {
   useEffect(() => { void load(); }, [load]);
 
   const owner = Boolean(payload?.shell.isSuperAdmin || payload?.shell.role === "owner");
-  const visibleTabs = useMemo(() => tabs.filter((item) => owner || !["Team access", "Advanced"].includes(item)), [owner]);
+  const visibleTabs = useMemo(() => tabs.filter((item) => owner || !["Staff & Access", "Advanced"].includes(item)), [owner]);
   useEffect(() => { if (!visibleTabs.includes(tab)) setTab("General"); }, [tab, visibleTabs]);
 
   async function request(data: Record<string, unknown>, method = "PATCH") {
@@ -78,6 +79,7 @@ export function HospitalitySettingsPage() {
   if (!payload) return <div className="manage-state">{error || "Loading settings…"}</div>;
   const { shell, settings } = payload;
   const school = shell.currentSchool;
+  const navigation = schoolWorkspaceNav(school.id, shell.isSuperAdmin, "hospitality", shell.capabilities);
   const changeRole = (member: TeamMember, role: Role) => void request({ action: "role", id: member.id, role });
   const removeMember = (member: TeamMember) => {
     if (!window.confirm(`Remove ${member.name} from this dashboard?`)) return;
@@ -87,13 +89,14 @@ export function HospitalitySettingsPage() {
   return <ManageShell
     brand={school.name} brandDetail={shell.isSuperAdmin ? "Platform administrator · Organization workspace" : "Hospitality organization"}
     logo={school.logo || undefined} className="manage-app--hospitality"
-    nav={schoolWorkspaceNav(school.id, shell.isSuperAdmin, "hospitality", shell.capabilities)}
+    nav={navigation}
     title="Settings"
     userName={shell.user.displayName} userRole={shell.isSuperAdmin ? "Platform administrator" : roles.find((role) => role.value === shell.role)?.label || "Organization member"}
     accent="#145fe2" showNotifications={false}
     schoolOptions={shell.schools.length > 1 ? shell.schools : undefined} selectedSchool={school.id}
     workspaceSelectorLabel="Organization workspace"
     onSchoolChange={(schoolId) => { window.location.href = `/dashboard/organizations/${schoolId}/settings/`; }}
+    actions={<DashboardHeaderTools nav={navigation} organizationId={school.id} enableSupport={!shell.isSuperAdmin} />}
   >
     <div className="hospitality-settings">
       {error ? <div className="manage-alert school-message" role="alert">{error}</div> : null}
@@ -108,7 +111,7 @@ export function HospitalitySettingsPage() {
         <div className="hospitality-role-grid">{roles.map((role) => <article key={role.value} className={shell.role === role.value ? "is-current" : ""}><strong>{role.label}</strong><p>{role.detail}</p>{shell.role === role.value ? <small>Current role</small> : null}</article>)}</div>
       </section> : null}
 
-      {tab === "Team access" && owner ? <section className="hospitality-settings-layout">
+      {tab === "Staff & Access" && owner ? <section className="hospitality-settings-layout">
         <article className="manage-card hospitality-settings-card"><div className="hospitality-section-title"><div><h2>Dashboard team</h2></div></div>
           <form className="hospitality-invite" onSubmit={invite}><label>Email address<input type="email" value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} required placeholder="person@example.com" /></label><label>Role<select value={inviteRole} onChange={(event) => setInviteRole(event.target.value as Role)}>{roles.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}</select></label><button className="manage-button is-primary" disabled={saving}><Plus size={15} />Invite</button></form>
           <div className="hospitality-team-table" role="table"><div role="row" className="hospitality-team-head"><span>Name</span><span>Email</span><span>Role</span><span>Status</span><span>Actions</span></div>{(payload.team || []).map((member) => <div role="row" key={member.id}><strong>{member.name}{member.isCurrentUser ? <small> You</small> : null}</strong><span>{member.email}</span><select aria-label={`${member.name} role`} value={member.role} onChange={(event) => changeRole(member, event.target.value as Role)} disabled={saving}><option value="owner">Owner</option><option value="manager">Manager</option><option value="menu_editor">Menu editor</option></select><em className={member.status === "active" ? "is-active" : ""}>{member.status === "active" ? "Active" : "Invited"}</em><button type="button" className="manage-button is-danger" onClick={() => removeMember(member)} disabled={saving}><Trash2 size={14} />Remove</button></div>)}</div>

@@ -41,7 +41,7 @@ function StaffPreview({ staff, organizationName, organizationId, logo }: { staff
         <div className="hospitality-staff-contact-preview">{staff.links.filter((link) => link.is_active !== false).map((link) => <span key={`${link.link_type}-${link.value}`}><LinkIcon size={13} />{link.label}</span>)}</div>
       </div>
     </div>
-    <p className="hospitality-access-note"><Settings size={16} /> Dashboard access is managed separately in <a href={`/dashboard/organizations/${organizationId}/settings/`}>Settings → Team access</a>.</p>
+    <p className="hospitality-access-note"><Settings size={16} /> Dashboard access is managed in <a href={`/dashboard/organizations/${organizationId}/settings/`}>Settings → Staff & Access</a>.</p>
   </aside>
 }
 

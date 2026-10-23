@@ -27,6 +27,7 @@ import {
   TextInput,
 } from '../../components/manage/FormControls'
 import { ManageShell } from '../../components/manage/ManageShell'
+import { DashboardHeaderTools } from '../../components/manage/DashboardHeaderTools'
 import { apiFetch, backendHref, displayError, jsonBody, queryString } from '../../lib/api'
 import { schoolWorkspaceNav, withSchool } from './schoolWorkspaceNav'
 import { dashboardMetrics, moduleConfig } from './organizationModuleConfig'
@@ -148,12 +149,13 @@ function SchoolShell({
   children: ReactNode
 }) {
   const school = shell.currentSchool
+  const navigation = schoolWorkspaceNav(school?.id, shell.isSuperAdmin, school?.organizationType)
   return (
     <ManageShell
       brand={school?.name || 'Tap2Connect'}
       brandDetail={school ? (shell.isSuperAdmin ? 'Super Admin · Organization workspace' : 'Organization administration') : 'Platform administration'}
       logo={school?.logo || brandLogo}
-      nav={schoolWorkspaceNav(school?.id, shell.isSuperAdmin, school?.organizationType)}
+      nav={navigation}
       title={title}
       subtitle={subtitle}
       userName={shell.user.displayName}
@@ -168,6 +170,7 @@ function SchoolShell({
         <>
           {shell.isSuperAdmin && school ? <span className="school-super-admin-context">Viewing as Super Admin</span> : null}
           {!shell.isSuperAdmin && school ? <span className="school-workspace-label">{school.name}</span> : null}
+          {school ? <DashboardHeaderTools nav={navigation} organizationId={school.id} enableSupport={!shell.isSuperAdmin} /> : null}
           {actions}
         </>
       )}

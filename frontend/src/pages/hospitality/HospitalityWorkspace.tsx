@@ -38,6 +38,7 @@ import {
   TextArea,
 } from "../../components/manage/FormControls";
 import { ManageShell } from "../../components/manage/ManageShell";
+import { DashboardHeaderTools } from "../../components/manage/DashboardHeaderTools";
 import { apiFetch, displayError, jsonBody, queryString } from "../../lib/api";
 import { schoolWorkspaceNav } from "../school/schoolWorkspaceNav";
 import { HospitalityOverview } from "./HospitalityOverview";
@@ -291,6 +292,7 @@ function VenueShell({
 }) {
   const school = shell.currentSchool;
   const details = hospitalitySectionDetails[section];
+  const navigation = schoolWorkspaceNav(school?.id, shell.isSuperAdmin, "hospitality", shell.capabilities);
   const [darkTheme, setDarkTheme] = useState(() => window.localStorage.getItem("tap2connect:hospitality-theme") !== "light");
   const toggleTheme = () => setDarkTheme((current) => {
     const next = !current;
@@ -302,7 +304,7 @@ function VenueShell({
       brand={school?.name || "Hospitality"}
       logo={school?.logo}
       className={`manage-app--hospitality ${darkTheme ? "manage-app--hospitality-theme-dark" : "manage-app--hospitality-theme-light"}`}
-      nav={schoolWorkspaceNav(school?.id, shell.isSuperAdmin, "hospitality", shell.capabilities)}
+      nav={navigation}
       title={details.title}
       subtitle={details.subtitle}
       userName={shell.user.displayName}
@@ -317,6 +319,7 @@ function VenueShell({
       }}
       actions={
         <>
+          {school?.id ? <DashboardHeaderTools nav={navigation} organizationId={school.id} enableSupport={!shell.isSuperAdmin} /> : null}
           <button type="button" className="manage-icon-button hospitality-theme-toggle" onClick={toggleTheme} aria-label={darkTheme ? "Use light theme" : "Use dark theme"} title={darkTheme ? "Use light theme" : "Use dark theme"}>
             {darkTheme ? <Sun size={16} /> : <Moon size={16} />}
           </button>

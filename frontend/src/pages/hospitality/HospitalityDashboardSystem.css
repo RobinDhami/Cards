@@ -109,6 +109,7 @@
 .manage-app--hospitality .hospitality-analytics-empty { color: #94a3b8; }
 .manage-app--hospitality .hospitality-theme-toggle { border-color: rgba(148,163,184,.28); background: #273449; color: #fbbf24; }
 .manage-app--hospitality .manage-header-actions > .manage-icon-button { border-color: rgba(148,163,184,.28); background: #273449; color: #cbd5e1; }
+.manage-app--hospitality .dashboard-header-tools .manage-icon-button { border-color: rgba(148,163,184,.28); background: #273449; color: #cbd5e1; }
 
 /* The theme control returns the work surface to the light slate palette without changing the sidebar. */
 .manage-app--hospitality-theme-light {
@@ -140,3 +141,4 @@
 .manage-app--hospitality-theme-light :is(.manage-button, .manage-icon-button, .category-row-actions > button,
   .hospitality-menu-rail > button, .hospitality-menu-filters button, .feedback-status-tabs button) { border-color: #cbd5e1; background: #fff; color: #334155; }
 .manage-app--hospitality-theme-light .hospitality-theme-toggle { background: #fff; color: #475569; }
+.manage-app--hospitality-theme-light .dashboard-header-tools .manage-icon-button { border-color:#cbd5e1; background:#fff; color:#334155; }

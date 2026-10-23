@@ -482,19 +482,23 @@ class PlatformStaffAccessTests(TestCase):
             ['overview', 'organizations', 'members', 'professionals', 'templates', 'cards', 'card_operations', 'activity', 'tickets', 'reports', 'settings'],
         )
 
-    def test_super_admin_can_create_and_update_platform_tickets(self):
+    def test_organization_can_raise_ticket_and_super_admin_can_update_it(self):
         super_admin = User.objects.create_superuser('ticket.platform.admin', password=self.password)
-        self.client.force_login(super_admin)
+        organization_admin = User.objects.create_user('ticket.organization.admin', password=self.password)
+        organization = College.objects.create(name='Ticket Organization', organization_type='hospitality', admin_user=organization_admin)
+        self.client.force_login(organization_admin)
 
         create_response = self.client.post(
-            reverse('react_platform_tickets_api'),
+            reverse('organization_support_tickets_api', args=[organization.id]),
             data=json.dumps({'subject': 'Support test', 'message': 'The platform needs attention.', 'category': 'technical', 'priority': 'high'}),
             content_type='application/json',
         )
 
         self.assertEqual(create_response.status_code, 201)
         ticket = PlatformSupportTicket.objects.get(subject='Support test')
-        self.assertEqual(ticket.requester, super_admin)
+        self.assertEqual(ticket.requester, organization_admin)
+        self.assertEqual(ticket.organization, organization)
+        self.client.force_login(super_admin)
         update_response = self.client.patch(
             reverse('react_platform_ticket_detail_api', args=[ticket.id]),
             data=json.dumps({'status': 'in_progress'}),
@@ -508,6 +512,21 @@ class PlatformStaffAccessTests(TestCase):
         self.client.force_login(self.template_user)
         response = self.client.get(reverse('react_platform_tickets_api'))
         self.assertEqual(response.status_code, 403)
+
+    def test_organization_cannot_read_another_organizations_tickets(self):
+        first_admin = User.objects.create_user('first.organization.admin', password=self.password)
+        second_admin = User.objects.create_user('second.organization.admin', password=self.password)
+        first = College.objects.create(name='First Organization', admin_user=first_admin)
+        second = College.objects.create(name='Second Organization', admin_user=second_admin)
+        PlatformSupportTicket.objects.create(organization=second, requester=second_admin, subject='Private request', message='Only the second organization should see this.')
+        self.client.force_login(first_admin)
+
+        denied = self.client.get(reverse('organization_support_tickets_api', args=[second.id]))
+        allowed = self.client.get(reverse('organization_support_tickets_api', args=[first.id]))
+
+        self.assertEqual(denied.status_code, 403)
+        self.assertEqual(allowed.status_code, 200)
+        self.assertEqual(allowed.json()['tickets'], [])
 
     def test_template_staff_platform_login_redirects_to_template_studio(self):
         response = self._platform_login()
