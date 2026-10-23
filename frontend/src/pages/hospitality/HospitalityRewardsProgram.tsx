@@ -21,7 +21,7 @@ const blankProgram: RewardsProgram = {
   minimumOrderAmount: '0.00',
   maxRedemptionPercent: '20.00',
   rewardLabel: 'Rewards balance',
-  expiryDays: null,
+  expiryDays: 180,
 }
 
 export function HospitalityRewardsProgram({ organizationId }: { organizationId: number }) {

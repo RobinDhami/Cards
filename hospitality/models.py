@@ -56,7 +56,7 @@ class VenueRewardsProgram(models.Model):
     minimum_order_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), validators=[MinValueValidator(Decimal('0.00'))])
     max_redemption_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('20.00'), validators=[MinValueValidator(Decimal('0.00')), MaxValueValidator(Decimal('100.00'))])
     reward_label = models.CharField(max_length=80, default='Rewards balance')
-    expiry_days = models.PositiveIntegerField(blank=True, null=True, validators=[MinValueValidator(1), MaxValueValidator(3650)])
+    expiry_days = models.PositiveIntegerField(blank=True, null=True, default=180, validators=[MinValueValidator(1), MaxValueValidator(3650)])
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -73,6 +73,7 @@ class VenueLoyaltyMembership(models.Model):
     reward_balance = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), validators=[MinValueValidator(Decimal('0.00'))])
     lifetime_rewards_earned = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), validators=[MinValueValidator(Decimal('0.00'))])
     lifetime_rewards_redeemed = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), validators=[MinValueValidator(Decimal('0.00'))])
+    last_activity_at = models.DateTimeField(blank=True, null=True)
     rewards_redeemed = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -88,6 +89,26 @@ class VenueLoyaltyMembership(models.Model):
 
     def __str__(self):
         return f'{self.venue.organization.name} · {self.customer.phone_e164}'
+
+
+class VenueRewardsTransaction(models.Model):
+    EARN = 'earn'
+    REDEEM = 'redeem'
+    EXPIRE = 'expire'
+    TRANSACTION_TYPES = [(EARN, 'Reward earned'), (REDEEM, 'Reward redeemed'), (EXPIRE, 'Rewards expired')]
+    venue = models.ForeignKey(VenueProfile, on_delete=models.CASCADE, related_name='rewards_transactions')
+    membership = models.ForeignKey(VenueLoyaltyMembership, on_delete=models.CASCADE, related_name='rewards_transactions')
+    transaction_type = models.CharField(max_length=12, choices=TRANSACTION_TYPES)
+    reward_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    balance_after = models.DecimalField(max_digits=12, decimal_places=2)
+    order_amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+    receipt_reference = models.CharField(max_length=120, blank=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, related_name='venue_rewards_transactions')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['venue', 'created_at'], name='hospitality_venue_r_b1ca9f_idx'), models.Index(fields=['membership', 'created_at'], name='hospitality_venue_l_b3fe5a_idx')]
 
 
 class VenueMenuCategory(models.Model):
