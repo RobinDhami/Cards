@@ -8,6 +8,7 @@ import CreditCard from 'lucide-react/dist/esm/icons/credit-card.js'
 import Eye from 'lucide-react/dist/esm/icons/eye.js'
 import LinkIcon from 'lucide-react/dist/esm/icons/link.js'
 import MoreHorizontal from 'lucide-react/dist/esm/icons/more-horizontal.js'
+import Pencil from 'lucide-react/dist/esm/icons/pencil.js'
 import Plus from 'lucide-react/dist/esm/icons/plus.js'
 import QrCode from 'lucide-react/dist/esm/icons/qr-code.js'
 import Search from 'lucide-react/dist/esm/icons/search.js'
@@ -148,7 +149,7 @@ export function HospitalityStaffCards({ organizationId, organizationName, logo }
         <div className="hospitality-staff-table-head"><span>Name</span><span>Position</span><span>Status</span><span>Assigned card</span><span>Actions</span></div>
         {filtered.map((staff) => <article className={`hospitality-staff-row${selectedId === staff.id ? ' is-selected' : ''}`} key={staff.id} onClick={() => setSelectedId(staff.id)}>
           <div className="hospitality-staff-person">{staff.photo ? <img src={staff.photo} alt="" /> : <span>{initials(staff.name)}</span>}<strong>{staff.name}</strong></div><span>{staff.position || '—'}</span><span className={`hospitality-profile-status${staff.isActive ? ' is-active' : ''}`}>{staff.isActive ? 'Active' : 'Draft'}</span><span>{staff.assignedCard?.label || 'Not assigned'}</span>
-          <div className="hospitality-staff-actions"><button type="button" onClick={(event) => { event.stopPropagation(); editStaff(staff) }}>Edit</button><a href={staff.publicUrl} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}><Eye size={14} /> Preview</a><button type="button" title={staff.isActive ? 'Deactivate profile and card' : 'Activate profile'} onClick={(event) => { event.stopPropagation(); void setActive(staff) }}><MoreHorizontal size={16} /></button></div>
+          <div className="hospitality-staff-actions"><button type="button" aria-label={`Edit ${staff.name}`} title="Edit" onClick={(event) => { event.stopPropagation(); editStaff(staff) }}><Pencil size={14} /></button><a href={staff.publicUrl} target="_blank" rel="noreferrer" aria-label={`Preview ${staff.name}`} title="Preview" onClick={(event) => event.stopPropagation()}><Eye size={14} /></a><button type="button" aria-label={staff.isActive ? 'Deactivate profile and card' : 'Activate profile'} title={staff.isActive ? 'Deactivate profile and card' : 'Activate profile'} onClick={(event) => { event.stopPropagation(); void setActive(staff) }}><MoreHorizontal size={16} /></button></div>
           <div className="hospitality-card-assignment" onClick={(event) => event.stopPropagation()}>{staff.assignedCard ? <button type="button" onClick={() => void unassign(staff.assignedCard!.assignmentId)}>Unassign {staff.assignedCard.label}</button> : data.availableCards.length ? <SelectInput aria-label={`Assign a card to ${staff.name}`} value="" onChange={(event) => void assignCard('staff', staff.id, Number(event.target.value))}><option value="">Assign card…</option>{data.availableCards.map((card) => <option key={card.id} value={card.id}>{card.label}</option>)}</SelectInput> : null}</div>
         </article>)}
         {!filtered.length ? <div className="hospitality-staff-empty"><Contact size={24} /><strong>No staff profiles found</strong><p>Add a public staff profile or change the search filters.</p></div> : null}
