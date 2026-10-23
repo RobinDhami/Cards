@@ -4,11 +4,12 @@ import Building2 from 'lucide-react/dist/esm/icons/building-2.js'
 import Boxes from 'lucide-react/dist/esm/icons/boxes.js'
 import LayoutDashboard from 'lucide-react/dist/esm/icons/layout-dashboard.js'
 import LayoutTemplate from 'lucide-react/dist/esm/icons/layout-template.js'
+import LifeBuoy from 'lucide-react/dist/esm/icons/life-buoy.js'
 import Settings from 'lucide-react/dist/esm/icons/settings.js'
 import UserRound from 'lucide-react/dist/esm/icons/user-round.js'
 import type { ShellNavItem } from './ManageShell'
 
-export type PlatformModule = 'overview' | 'organizations' | 'members' | 'professionals' | 'templates' | 'cards' | 'card_operations' | 'activity' | 'reports' | 'settings'
+export type PlatformModule = 'overview' | 'organizations' | 'members' | 'professionals' | 'templates' | 'cards' | 'card_operations' | 'activity' | 'tickets' | 'reports' | 'settings'
 
 const platformItems: Array<Omit<ShellNavItem, 'active'> & { module: PlatformModule }> = [
   { module: 'overview', label: 'Overview', href: '/dashboard/', icon: LayoutDashboard },
@@ -17,6 +18,7 @@ const platformItems: Array<Omit<ShellNavItem, 'active'> & { module: PlatformModu
   { module: 'templates', label: 'Templates', href: '/dashboard/templates/', icon: LayoutTemplate },
   { module: 'card_operations', label: 'Card Operations', href: '/dashboard/card-operations/', icon: Boxes },
   { module: 'activity', label: 'Activity', href: '/dashboard/activity/', icon: Activity },
+  { module: 'tickets', label: 'Tickets', href: '/dashboard/tickets/', icon: LifeBuoy },
   { module: 'reports', label: 'Reports', href: '/dashboard/reports/', icon: BarChart3 },
   { module: 'settings', label: 'Settings', href: '/dashboard/settings/', icon: Settings },
 ]

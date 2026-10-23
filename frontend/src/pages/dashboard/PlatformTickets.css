@@ -1,0 +1,33 @@
+.platform-tickets-page { display: grid; gap: 12px; max-width: 1280px; color: #0f172a; }
+.platform-ticket-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #64748b; font-size: 12px; }
+.platform-ticket-tabs { display: flex; gap: 4px; }
+.platform-ticket-tabs button { border: 0; border-bottom: 2px solid transparent; background: transparent; padding: 8px 10px; color: #64748b; font: 500 13px/1 system-ui, sans-serif; cursor: pointer; }
+.platform-ticket-tabs button.is-active { border-color: #0b4bcb; color: #0f172a; }
+.platform-ticket-list { overflow: hidden; padding: 0; }
+.platform-ticket-head, .platform-ticket-row { display: grid; grid-template-columns: minmax(280px, 2.3fr) minmax(100px, .75fr) minmax(100px, .7fr) minmax(120px, .85fr) 90px; gap: 16px; align-items: center; padding: 12px 16px; }
+.platform-ticket-head { border-bottom: 1px solid #e2e8f0; background: #f8fafc; color: #64748b; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.platform-ticket-row { min-height: 70px; border-bottom: 1px solid #e9eef5; font-size: 13px; }
+.platform-ticket-row:last-child { border-bottom: 0; }
+.platform-ticket-row strong, .platform-ticket-row small, .platform-ticket-row em { display: block; }
+.platform-ticket-row strong { font-size: 14px; font-weight: 600; }
+.platform-ticket-row small { margin-top: 3px; overflow: hidden; color: #64748b; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.platform-ticket-row em { margin-top: 4px; color: #94a3b8; font-size: 11px; font-style: normal; }
+.platform-ticket-row > span { color: #475569; font-size: 12px; text-transform: capitalize; }
+.platform-ticket-row select { height: 30px; border: 1px solid #dbe3ee; border-radius: 4px; background: #fff; padding: 0 8px; color: #334155; font: 500 12px system-ui, sans-serif; }
+.platform-ticket-row time { color: #64748b; font-size: 12px; white-space: nowrap; }
+.platform-ticket-empty { display: grid; min-height: 220px; place-content: center; gap: 8px; color: #64748b; font-size: 13px; text-align: center; }
+.platform-ticket-empty svg { margin: auto; color: #94a3b8; }
+.platform-ticket-error { border: 1px solid #fecaca; border-radius: 6px; background: #fef2f2; padding: 10px 12px; color: #b91c1c; font-size: 13px; }
+.platform-ticket-modal-backdrop, .platform-search-dialog-backdrop { position: fixed; z-index: 30; inset: 0; display: grid; place-items: start center; background: rgba(15, 23, 42, .36); padding: 12vh 16px 16px; }
+.platform-ticket-modal { width: min(100%, 480px); border: 1px solid #dbe3ee; border-radius: 8px; background: #fff; padding: 18px; box-shadow: 0 18px 42px rgba(15, 23, 42, .18); }
+.platform-ticket-modal header, .platform-ticket-modal footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.platform-ticket-modal header { margin-bottom: 16px; }
+.platform-ticket-modal h2 { margin: 0; font-size: 16px; }
+.platform-ticket-modal p { margin: 3px 0 0; color: #64748b; font-size: 12px; }
+.platform-ticket-modal header button, .platform-ticket-modal footer button:not(.manage-primary-action) { border: 1px solid #dbe3ee; border-radius: 4px; background: #fff; padding: 7px 10px; color: #334155; font: 500 13px system-ui, sans-serif; cursor: pointer; }
+.platform-ticket-modal header button { display: grid; padding: 6px; }
+.platform-ticket-modal label { display: grid; gap: 5px; margin-top: 12px; color: #334155; font-size: 12px; font-weight: 500; }
+.platform-ticket-modal input, .platform-ticket-modal select, .platform-ticket-modal textarea { width: 100%; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; padding: 8px; color: #0f172a; font: 14px system-ui, sans-serif; }
+.platform-ticket-modal textarea { min-height: 96px; resize: vertical; }
+.platform-ticket-modal footer { justify-content: flex-end; margin-top: 16px; }
+@media (max-width: 760px) { .platform-ticket-head { display: none; } .platform-ticket-row { grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; } .platform-ticket-row > div { grid-column: 1 / -1; } .platform-ticket-row time { text-align: right; } }

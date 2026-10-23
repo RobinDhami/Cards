@@ -10,6 +10,7 @@ PLATFORM_MODULES = OrderedDict([
     ('cards', {'label': 'Cards', 'destination': '/dashboard/print/'}),
     ('card_operations', {'label': 'Card Operations', 'destination': '/dashboard/card-operations/'}),
     ('activity', {'label': 'Activity', 'destination': '/dashboard/activity/'}),
+    ('tickets', {'label': 'Tickets', 'destination': '/dashboard/tickets/'}),
     ('reports', {'label': 'Reports', 'destination': '/dashboard/reports/'}),
     ('settings', {'label': 'Settings', 'destination': '/dashboard/settings/'}),
 ])
@@ -31,7 +32,7 @@ def get_allowed_platform_modules(user):
     return [
         module
         for module in PLATFORM_MODULES
-        if user.has_perm(platform_permission_name(module))
+        if module != 'tickets' and user.has_perm(platform_permission_name(module))
     ]
 
 
@@ -39,7 +40,7 @@ def has_platform_module_access(user, module):
     return bool(
         user.is_authenticated
         and module in PLATFORM_MODULES
-        and (user.is_superuser or user.has_perm(platform_permission_name(module)))
+        and (user.is_superuser or (module != 'tickets' and user.has_perm(platform_permission_name(module))))
     )
 
 
@@ -81,6 +82,8 @@ def required_platform_module_for_path(path):
         return 'card_operations'
     if normalized == '/dashboard/activity':
         return 'activity'
+    if normalized == '/dashboard/tickets':
+        return 'tickets'
     if normalized == '/dashboard/reports':
         return 'reports'
     if normalized.startswith('/dashboard/settings'):

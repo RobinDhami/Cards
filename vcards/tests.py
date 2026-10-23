@@ -13,7 +13,7 @@ from openpyxl import load_workbook
 
 from card_designer.models import CardTemplate, CardTemplateVersion
 from professional_cards.models import ProfessionalProfile
-from vcards.models import CardBatch, CardBatchCard, College, ProfileActivity, Skill, StudentCard, StudentProfile
+from vcards.models import CardBatch, CardBatchCard, College, PlatformSupportTicket, ProfileActivity, Skill, StudentCard, StudentProfile
 
 
 class StudentDigitalCardTestMixin:
@@ -479,8 +479,35 @@ class PlatformStaffAccessTests(TestCase):
         self.assertEqual(response.json()['redirectPath'], '/dashboard/')
         self.assertEqual(
             response.json()['platformAccess']['allowedModules'],
-            ['overview', 'organizations', 'members', 'professionals', 'templates', 'cards', 'card_operations', 'activity', 'reports', 'settings'],
+            ['overview', 'organizations', 'members', 'professionals', 'templates', 'cards', 'card_operations', 'activity', 'tickets', 'reports', 'settings'],
         )
+
+    def test_super_admin_can_create_and_update_platform_tickets(self):
+        super_admin = User.objects.create_superuser('ticket.platform.admin', password=self.password)
+        self.client.force_login(super_admin)
+
+        create_response = self.client.post(
+            reverse('react_platform_tickets_api'),
+            data=json.dumps({'subject': 'Support test', 'message': 'The platform needs attention.', 'category': 'technical', 'priority': 'high'}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(create_response.status_code, 201)
+        ticket = PlatformSupportTicket.objects.get(subject='Support test')
+        self.assertEqual(ticket.requester, super_admin)
+        update_response = self.client.patch(
+            reverse('react_platform_ticket_detail_api', args=[ticket.id]),
+            data=json.dumps({'status': 'in_progress'}),
+            content_type='application/json',
+        )
+        self.assertEqual(update_response.status_code, 200)
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.status, 'in_progress')
+
+    def test_platform_ticket_access_is_super_admin_only(self):
+        self.client.force_login(self.template_user)
+        response = self.client.get(reverse('react_platform_tickets_api'))
+        self.assertEqual(response.status_code, 403)
 
     def test_template_staff_platform_login_redirects_to_template_studio(self):
         response = self._platform_login()

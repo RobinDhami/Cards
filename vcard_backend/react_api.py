@@ -45,7 +45,7 @@ from professional_cards.views import (
 from vcards.models import (
     CardBatch, CardBatchCard, ClubMemberProfile, ClubMemberSocialLink,
     ClubProfileSettings, ClubSocialLink, ClubEvent, College, ProfileActivity, Skill,
-    StudentCard, StudentProfile,
+    StudentCard, StudentProfile, PlatformSupportTicket,
 )
 from vcards.club_serializers import (
     ClubMemberProfileSerializer, ClubMemberSocialLinkSerializer,
@@ -106,6 +106,29 @@ def _json_body(request):
         except (json.JSONDecodeError, UnicodeDecodeError):
             return {}
     return request.POST
+
+
+def _platform_tickets_access_error(request):
+    if not request.user.is_authenticated:
+        return _json_error('Sign in to access support tickets.', status=401)
+    if not request.user.is_superuser:
+        return _json_error('Only Super Admins can access platform tickets.', status=403)
+    return None
+
+
+def _platform_ticket_payload(ticket):
+    requester = ticket.requester
+    return {
+        'id': ticket.id,
+        'subject': ticket.subject,
+        'message': ticket.message,
+        'category': ticket.category,
+        'priority': ticket.priority,
+        'status': ticket.status,
+        'requester': requester.get_full_name().strip() or requester.username if requester else 'Deleted user',
+        'createdAt': ticket.created_at.isoformat(),
+        'updatedAt': ticket.updated_at.isoformat(),
+    }
 
 
 def _bool(value, default=False):
@@ -186,7 +209,7 @@ def _require_platform_admin(request):
 
 
 PLATFORM_STAFF_ASSIGNABLE_MODULES = tuple(
-    module for module in PLATFORM_MODULES if module not in {'members', 'cards'}
+    module for module in PLATFORM_MODULES if module not in {'members', 'cards', 'tickets'}
 )
 
 
@@ -694,6 +717,67 @@ def platform_staff_api(request):
     except IntegrityError:
         return _json_error('A user with this username already exists.')
     return JsonResponse({'ok': True, 'staffMember': _platform_staff_payload(user)}, status=201)
+
+
+@require_http_methods(['GET', 'POST'])
+def platform_tickets_api(request):
+    access_error = _platform_tickets_access_error(request)
+    if access_error:
+        return access_error
+
+    if request.method == 'GET':
+        status = str(request.GET.get('status') or '').strip()
+        tickets = PlatformSupportTicket.objects.select_related('requester')
+        if status in dict(PlatformSupportTicket.STATUS_CHOICES):
+            tickets = tickets.filter(status=status)
+        return JsonResponse({
+            'ok': True,
+            'tickets': [_platform_ticket_payload(ticket) for ticket in tickets],
+            'user': {'displayName': request.user.get_full_name().strip() or request.user.username, 'roleLabel': 'Super Admin'},
+            'platformAccess': platform_access_payload(request.user),
+        })
+
+    payload = _json_body(request)
+    subject = str(payload.get('subject') or '').strip()
+    message = str(payload.get('message') or '').strip()
+    category = str(payload.get('category') or 'technical').strip()
+    priority = str(payload.get('priority') or 'normal').strip()
+    if not subject or not message:
+        return _json_error('Add a subject and description before raising the ticket.', errors={
+            'subject': ['Required'] if not subject else [],
+            'message': ['Required'] if not message else [],
+        })
+    if category not in dict(PlatformSupportTicket.CATEGORY_CHOICES):
+        category = 'other'
+    if priority not in dict(PlatformSupportTicket.PRIORITY_CHOICES):
+        priority = 'normal'
+    ticket = PlatformSupportTicket.objects.create(
+        requester=request.user, subject=subject[:180], message=message,
+        category=category, priority=priority,
+    )
+    return JsonResponse({'ok': True, 'ticket': _platform_ticket_payload(ticket)}, status=201)
+
+
+@require_http_methods(['PATCH'])
+def platform_ticket_detail_api(request, ticket_id):
+    access_error = _platform_tickets_access_error(request)
+    if access_error:
+        return access_error
+    ticket = get_object_or_404(PlatformSupportTicket, pk=ticket_id)
+    payload = _json_body(request)
+    status = str(payload.get('status') or '').strip()
+    priority = str(payload.get('priority') or '').strip()
+    fields = []
+    if status in dict(PlatformSupportTicket.STATUS_CHOICES):
+        ticket.status = status
+        fields.append('status')
+    if priority in dict(PlatformSupportTicket.PRIORITY_CHOICES):
+        ticket.priority = priority
+        fields.append('priority')
+    if not fields:
+        return _json_error('Choose a valid ticket status or priority.')
+    ticket.save(update_fields=[*fields, 'updated_at'])
+    return JsonResponse({'ok': True, 'ticket': _platform_ticket_payload(ticket)})
 
 
 @require_http_methods(['PATCH', 'POST'])

@@ -4,6 +4,10 @@ import BadgeCheck from 'lucide-react/dist/esm/icons/badge-check.js'
 import Building2 from 'lucide-react/dist/esm/icons/building-2.js'
 import CreditCard from 'lucide-react/dist/esm/icons/credit-card.js'
 import LayoutTemplate from 'lucide-react/dist/esm/icons/layout-template.js'
+import LifeBuoy from 'lucide-react/dist/esm/icons/life-buoy.js'
+import Plus from 'lucide-react/dist/esm/icons/plus.js'
+import Search from 'lucide-react/dist/esm/icons/search.js'
+import X from 'lucide-react/dist/esm/icons/x.js'
 import UserPlus from 'lucide-react/dist/esm/icons/user-plus.js'
 import Users from 'lucide-react/dist/esm/icons/users.js'
 import { ManageShell } from '../../components/manage/ManageShell'
@@ -313,6 +317,52 @@ function PlatformOverview({ data }: { data: DashboardData }) {
   )
 }
 
+const platformSearchItems = [
+  { label: 'Overview', href: '/dashboard/' },
+  { label: 'Organizations', href: '/dashboard/schools/' },
+  { label: 'Profiles', href: '/dashboard/professional-cards/' },
+  { label: 'Templates', href: '/dashboard/templates/' },
+  { label: 'Card Operations', href: '/dashboard/card-operations/' },
+  { label: 'Activity', href: '/dashboard/activity/' },
+  { label: 'Tickets', href: '/dashboard/tickets/' },
+  { label: 'Reports', href: '/dashboard/reports/' },
+  { label: 'Settings', href: '/dashboard/settings/' },
+]
+
+function PlatformHeaderTools() {
+  const [supportOpen, setSupportOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const matches = platformSearchItems.filter((item) => item.label.toLowerCase().includes(query.trim().toLowerCase()))
+
+  return (
+    <div className="platform-header-tools">
+      <button type="button" className="manage-icon-button" aria-label="Search dashboard" title="Search dashboard" onClick={() => setSearchOpen(true)}><Search size={17} /></button>
+      <div className="platform-support-control">
+        <button type="button" className="manage-icon-button" aria-label="Support" title="Support" aria-expanded={supportOpen} onClick={() => setSupportOpen((open) => !open)}><LifeBuoy size={17} /></button>
+        {supportOpen ? (
+          <div className="platform-support-popover" role="dialog" aria-label="Support options">
+            <strong>Support</strong>
+            <a href="/dashboard/tickets/?new=1"><Plus size={15} />Raise ticket</a>
+            <a href="/dashboard/tickets/"><LifeBuoy size={15} />View tickets</a>
+          </div>
+        ) : null}
+      </div>
+      {searchOpen ? (
+        <div className="platform-search-dialog-backdrop" role="presentation" onMouseDown={() => setSearchOpen(false)}>
+          <section className="platform-search-dialog" role="dialog" aria-modal="true" aria-label="Search dashboard" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="platform-search-input"><Search size={17} /><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search dashboard" /><button type="button" aria-label="Close search" onClick={() => setSearchOpen(false)}><X size={16} /></button></div>
+            <div className="platform-search-results">
+              {matches.map((item) => <a href={item.href} key={item.href}>{item.label}</a>)}
+              {matches.length === 0 ? <span>No matching sections.</span> : null}
+            </div>
+          </section>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 export function DashboardHome() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [error, setError] = useState('')
@@ -363,6 +413,7 @@ export function DashboardHome() {
       userName={data.user.displayName}
       userRole={data.user.roleLabel}
       accent={school?.themePrimary || '#0b4bcb'}
+      actions={data.isSuperAdmin ? <PlatformHeaderTools /> : undefined}
     >
       <div className="dashboard-page dashboard-overview-page"><PlatformOverview data={data} /></div>
     </ManageShell>

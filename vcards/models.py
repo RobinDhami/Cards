@@ -24,9 +24,44 @@ class PlatformAccess(User):
             ('access_platform_cards', 'Can access platform cards'),
             ('access_platform_card_operations', 'Can access platform card operations'),
             ('access_platform_activity', 'Can access platform activity'),
+            ('access_platform_tickets', 'Can access platform support tickets'),
             ('access_platform_reports', 'Can access platform reports'),
             ('access_platform_settings', 'Can access platform settings'),
         ]
+
+
+class PlatformSupportTicket(models.Model):
+    CATEGORY_CHOICES = [
+        ('technical', 'Technical issue'),
+        ('account', 'Account access'),
+        ('billing', 'Billing'),
+        ('other', 'Other'),
+    ]
+    PRIORITY_CHOICES = [
+        ('low', 'Low'),
+        ('normal', 'Normal'),
+        ('high', 'High'),
+    ]
+    STATUS_CHOICES = [
+        ('open', 'Open'),
+        ('in_progress', 'In progress'),
+        ('resolved', 'Resolved'),
+    ]
+
+    requester = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='platform_support_tickets')
+    subject = models.CharField(max_length=180)
+    message = models.TextField()
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='technical')
+    priority = models.CharField(max_length=12, choices=PRIORITY_CHOICES, default='normal')
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default='open')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at', '-id']
+
+    def __str__(self):
+        return f'#{self.id} {self.subject}'
 
 
 class CardBatch(models.Model):

@@ -6,6 +6,7 @@ const DashboardHome = lazy(() => import('./pages/dashboard/DashboardHome').then(
 const PlatformSettings = lazy(() => import('./pages/dashboard/PlatformSettings').then((module) => ({ default: module.PlatformSettings })))
 const PlatformActivity = lazy(() => import('./pages/dashboard/PlatformInsights').then((module) => ({ default: module.PlatformActivity })))
 const PlatformReports = lazy(() => import('./pages/dashboard/PlatformInsights').then((module) => ({ default: module.PlatformReports })))
+const PlatformTickets = lazy(() => import('./pages/dashboard/PlatformTickets').then((module) => ({ default: module.PlatformTickets })))
 const CardOperations = lazy(() => import('./pages/dashboard/CardOperations').then((module) => ({ default: module.CardOperations })))
 const PublicProfessionalProfile = lazy(() => import('./pages/profiles/PublicProfessionalProfile').then((module) => ({ default: module.PublicProfessionalProfile })))
 const LoginPage = lazy(() => import('./pages/auth/LoginPage').then((module) => ({ default: module.LoginPage })))
@@ -165,6 +166,10 @@ function AppRoutes() {
 
   if (path === '/dashboard/activity/' || path === '/dashboard/activity') {
     return <PlatformActivity />
+  }
+
+  if (path === '/dashboard/tickets/' || path === '/dashboard/tickets') {
+    return <PlatformTickets />
   }
 
   if (path === '/dashboard/reports/' || path === '/dashboard/reports') {
