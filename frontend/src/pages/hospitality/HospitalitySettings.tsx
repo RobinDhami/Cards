@@ -6,14 +6,18 @@ import ExternalLink from "lucide-react/dist/esm/icons/external-link.js";
 import KeyRound from "lucide-react/dist/esm/icons/key-round.js";
 import LoaderCircle from "lucide-react/dist/esm/icons/loader-circle.js";
 import Mail from "lucide-react/dist/esm/icons/mail.js";
+import Moon from "lucide-react/dist/esm/icons/moon.js";
 import Plus from "lucide-react/dist/esm/icons/plus.js";
 import Settings from "lucide-react/dist/esm/icons/settings.js";
+import Sun from "lucide-react/dist/esm/icons/sun.js";
 import Trash2 from "lucide-react/dist/esm/icons/trash-2.js";
 import Users from "lucide-react/dist/esm/icons/users.js";
 import { ManageShell } from "../../components/manage/ManageShell";
 import { DashboardHeaderTools } from "../../components/manage/DashboardHeaderTools";
 import { apiFetch, displayError, jsonBody } from "../../lib/api";
 import { schoolWorkspaceNav } from "../school/schoolWorkspaceNav";
+import "./HospitalityWorkspace.css";
+import "./HospitalityDashboardSystem.css";
 import "./HospitalitySettings.css";
 
 type Role = "owner" | "manager" | "menu_editor";
@@ -46,6 +50,12 @@ export function HospitalitySettingsPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<Role>("manager");
   const [organizationCode, setOrganizationCode] = useState("");
+  const [darkTheme, setDarkTheme] = useState(() => window.localStorage.getItem("tap2connect:hospitality-theme") !== "light");
+  const toggleTheme = () => setDarkTheme((current) => {
+    const next = !current;
+    window.localStorage.setItem("tap2connect:hospitality-theme", next ? "dark" : "light");
+    return next;
+  });
 
   const load = useCallback(async () => {
     try {
@@ -88,7 +98,7 @@ export function HospitalitySettingsPage() {
 
   return <ManageShell
     brand={school.name} brandDetail={shell.isSuperAdmin ? "Platform administrator · Organization workspace" : "Hospitality organization"}
-    logo={school.logo || undefined} className="manage-app--hospitality"
+    logo={school.logo || undefined} className={`manage-app--hospitality ${darkTheme ? "manage-app--hospitality-theme-dark" : "manage-app--hospitality-theme-light"}`}
     nav={navigation}
     title="Settings"
     userName={shell.user.displayName} userRole={shell.isSuperAdmin ? "Platform administrator" : roles.find((role) => role.value === shell.role)?.label || "Organization member"}
@@ -96,7 +106,7 @@ export function HospitalitySettingsPage() {
     schoolOptions={shell.schools.length > 1 ? shell.schools : undefined} selectedSchool={school.id}
     workspaceSelectorLabel="Organization workspace"
     onSchoolChange={(schoolId) => { window.location.href = `/dashboard/organizations/${schoolId}/settings/`; }}
-    actions={<DashboardHeaderTools nav={navigation} organizationId={school.id} enableSupport={!shell.isSuperAdmin} />}
+    actions={<><DashboardHeaderTools nav={navigation} organizationId={school.id} enableSupport canRaiseSupport={!shell.isSuperAdmin} /><button type="button" className="manage-icon-button hospitality-theme-toggle" onClick={toggleTheme} aria-label={darkTheme ? "Use light theme" : "Use dark theme"} title={darkTheme ? "Use light theme" : "Use dark theme"}>{darkTheme ? <Sun size={16} /> : <Moon size={16} />}</button></>}
   >
     <div className="hospitality-settings">
       {error ? <div className="manage-alert school-message" role="alert">{error}</div> : null}

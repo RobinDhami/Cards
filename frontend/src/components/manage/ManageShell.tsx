@@ -183,7 +183,6 @@ export function ManageShell({
                 <ChevronDown size={14} aria-hidden="true" />
               </label>
             ) : null}
-            {actions}
             {!showNotifications ? null : notificationsHref ? (
               <a className="manage-icon-button" href={notificationsHref} title="Notifications" aria-label="Notifications">
                 <Bell size={17} />
@@ -193,6 +192,7 @@ export function ManageShell({
                 <Bell size={17} />
               </button>
             )}
+            {actions}
           </div>
         </header>
         <div className="manage-content">{children}</div>

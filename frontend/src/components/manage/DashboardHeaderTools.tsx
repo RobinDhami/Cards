@@ -1,7 +1,8 @@
 import { useDeferredValue, useMemo, useState } from 'react'
-import LifeBuoy from 'lucide-react/dist/esm/icons/life-buoy.js'
+import Headphones from 'lucide-react/dist/esm/icons/headphones.js'
 import Plus from 'lucide-react/dist/esm/icons/plus.js'
 import Search from 'lucide-react/dist/esm/icons/search.js'
+import Ticket from 'lucide-react/dist/esm/icons/ticket.js'
 import X from 'lucide-react/dist/esm/icons/x.js'
 import type { ShellNavItem } from './ManageShell'
 import './DashboardHeaderTools.css'
@@ -33,10 +34,12 @@ export function DashboardHeaderTools({
   nav,
   organizationId,
   enableSupport = false,
+  canRaiseSupport = true,
 }: {
   nav: ShellNavItem[]
   organizationId?: number
   enableSupport?: boolean
+  canRaiseSupport?: boolean
 }) {
   const [supportOpen, setSupportOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -58,8 +61,8 @@ export function DashboardHeaderTools({
       <button type="button" className="manage-icon-button" aria-label="Search dashboard" title="Search dashboard" onClick={() => setSearchOpen(true)}><Search size={17} /></button>
       {enableSupport && supportHref ? (
         <div className="dashboard-support-control">
-          <button type="button" className="manage-icon-button" aria-label="Support" title="Support" aria-expanded={supportOpen} onClick={() => setSupportOpen((open) => !open)}><LifeBuoy size={17} /></button>
-          {supportOpen ? <div className="dashboard-support-popover" role="dialog" aria-label="Support options"><strong>Support</strong><a href={`${supportHref}?new=1`}><Plus size={15} />Raise ticket</a><a href={supportHref}><LifeBuoy size={15} />View tickets</a></div> : null}
+          <button type="button" className="manage-icon-button" aria-label="Support" title="Support" aria-expanded={supportOpen} onClick={() => setSupportOpen((open) => !open)}><Headphones size={17} /></button>
+          {supportOpen ? <div className="dashboard-support-popover" role="dialog" aria-label="Support options"><strong>Support</strong>{canRaiseSupport ? <a href={`${supportHref}?new=1`}><Plus size={15} />Raise ticket</a> : null}<a href={supportHref}><Ticket size={15} />View tickets</a></div> : null}
         </div>
       ) : null}
       {searchOpen ? (

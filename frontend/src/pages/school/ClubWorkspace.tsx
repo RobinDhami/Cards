@@ -30,7 +30,7 @@ function clubRoot() { return `/dashboard/organizations/${schoolId()}/club` }
 function ClubShell({ shell, title, subtitle, children }: { shell: Shell; title: string; subtitle: string; children: ReactNode }) {
   const school = shell.currentSchool
   const navigation = schoolWorkspaceNav(school?.id, shell.isSuperAdmin, 'club')
-  return <ManageShell brand={school?.name || 'Club'} brandDetail="Club administration" logo={school?.logo} nav={navigation} title={title} subtitle={subtitle} userName={shell.user.displayName} userRole={shell.isSuperAdmin ? 'Platform administrator' : 'Club manager'} accent={school?.themePrimary || '#00767a'} schoolOptions={shell.isSuperAdmin ? shell.schools : undefined} selectedSchool={school?.id ?? null} onSchoolChange={(id) => { window.location.href = `/dashboard/organizations/${id}/club/` }} actions={school ? <DashboardHeaderTools nav={navigation} organizationId={school.id} enableSupport={!shell.isSuperAdmin} /> : null}>{children}</ManageShell>
+  return <ManageShell brand={school?.name || 'Club'} brandDetail="Club administration" logo={school?.logo} nav={navigation} title={title} subtitle={subtitle} userName={shell.user.displayName} userRole={shell.isSuperAdmin ? 'Platform administrator' : 'Club manager'} accent={school?.themePrimary || '#00767a'} schoolOptions={shell.isSuperAdmin ? shell.schools : undefined} selectedSchool={school?.id ?? null} onSchoolChange={(id) => { window.location.href = `/dashboard/organizations/${id}/club/` }} actions={school ? <DashboardHeaderTools nav={navigation} organizationId={school.id} enableSupport canRaiseSupport={!shell.isSuperAdmin} /> : null}>{children}</ManageShell>
 }
 
 function useClubShell() {

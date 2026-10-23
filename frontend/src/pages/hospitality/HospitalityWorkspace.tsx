@@ -319,7 +319,7 @@ function VenueShell({
       }}
       actions={
         <>
-          {school?.id ? <DashboardHeaderTools nav={navigation} organizationId={school.id} enableSupport={!shell.isSuperAdmin} /> : null}
+          {school?.id ? <DashboardHeaderTools nav={navigation} organizationId={school.id} enableSupport canRaiseSupport={!shell.isSuperAdmin} /> : null}
           <button type="button" className="manage-icon-button hospitality-theme-toggle" onClick={toggleTheme} aria-label={darkTheme ? "Use light theme" : "Use dark theme"} title={darkTheme ? "Use light theme" : "Use dark theme"}>
             {darkTheme ? <Sun size={16} /> : <Moon size={16} />}
           </button>

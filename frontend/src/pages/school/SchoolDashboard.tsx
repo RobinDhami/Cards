@@ -170,7 +170,7 @@ function SchoolShell({
         <>
           {shell.isSuperAdmin && school ? <span className="school-super-admin-context">Viewing as Super Admin</span> : null}
           {!shell.isSuperAdmin && school ? <span className="school-workspace-label">{school.name}</span> : null}
-          {school ? <DashboardHeaderTools nav={navigation} organizationId={school.id} enableSupport={!shell.isSuperAdmin} /> : null}
+          {school ? <DashboardHeaderTools nav={navigation} organizationId={school.id} enableSupport canRaiseSupport={!shell.isSuperAdmin} /> : null}
           {actions}
         </>
       )}
