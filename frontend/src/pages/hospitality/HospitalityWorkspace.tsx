@@ -50,6 +50,7 @@ import { HospitalityRewardsMembers } from "./HospitalityRewardsMembers";
 import { HospitalityOperationalActivity } from "./HospitalityOperationalActivity";
 import googleGLogo from "./google-g.svg";
 import "./HospitalityWorkspace.css";
+import "./HospitalityDashboardSystem.css";
 import "./PublicCafeProfile.css";
 
 export type Venue = {
@@ -266,46 +267,17 @@ function hospitalityAdminSection(): HospitalityAdminSection {
 
 const hospitalitySectionDetails: Record<
   HospitalityAdminSection,
-  { title: string; subtitle: string }
+  { title: string; subtitle?: string }
 > = {
-  overview: {
-    title: "Overview",
-    subtitle: "Your business at a glance.",
-  },
-  profile: {
-    title: "Business Profile",
-    subtitle:
-      "Manage the information and social links shown on the public Home page.",
-  },
-  menu: {
-    title: "Menu",
-    subtitle: "Manage categories, items, prices, offers, and today’s specials.",
-  },
-  feedback: {
-    title: "Feedback",
-    subtitle: "Review ratings and anonymous feedback submitted by customers.",
-  },
-  staff: {
-    title: "Staff & Cards",
-    subtitle: "Manage public staff profiles, physical NFC cards, and tracked QR touchpoints.",
-  },
-  loyalty: {
-    title: "Rewards program",
-    subtitle: "Set how customers earn and redeem rewards on qualifying orders.",
-  },
-  members: {
-    title: "Loyalty members",
-    subtitle: "Find phone-based members, balances, and rewards activity.",
-  },
-  activity: {
-    title: "Business activity",
-    subtitle: "A record of dashboard changes made by your team.",
-  },
-  analytics: {
-    title: "Analytics",
-    subtitle:
-      "See how customers engage with the profile, menu, ratings, and social links.",
-  },
+  overview: { title: "Overview" },
+  profile: { title: "Business Profile" },
+  menu: { title: "Menu" },
+  feedback: { title: "Feedback" },
+  staff: { title: "Staff & Cards" },
+  loyalty: { title: "Rewards program" },
+  members: { title: "Loyalty members" },
+  activity: { title: "Business activity" },
+  analytics: { title: "Analytics" },
 };
 
 function VenueShell({

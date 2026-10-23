@@ -1,14 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3.js'
 import CalendarDays from 'lucide-react/dist/esm/icons/calendar-days.js'
-import Eye from 'lucide-react/dist/esm/icons/eye.js'
+import ArrowDownRight from 'lucide-react/dist/esm/icons/arrow-down-right.js'
+import ArrowUpRight from 'lucide-react/dist/esm/icons/arrow-up-right.js'
 import FileText from 'lucide-react/dist/esm/icons/file-text.js'
-import MessageSquare from 'lucide-react/dist/esm/icons/message-square.js'
-import MousePointerClick from 'lucide-react/dist/esm/icons/mouse-pointer-click.js'
-import Users from 'lucide-react/dist/esm/icons/users.js'
-import Utensils from 'lucide-react/dist/esm/icons/utensils.js'
 import { apiFetch, displayError, queryString } from '../../lib/api'
-import { MetricCard } from './HospitalityOverview'
 import './HospitalityAnalytics.css'
 
 type Metrics = { profileViews: number; menuOpens: number; menuItemDetailViews: number; linkClicks: number; googleReviewClicks: number; feedbackSubmissions: number; estimatedUniqueVisitors: number | null }
@@ -56,6 +52,19 @@ function HorizontalBars({ rows }: { rows: AnalyticsData['linkDestinations'] }) {
   return <div className="hospitality-analytics-bars">{rows.map((row) => <div key={row.destination}><span>{row.destination.replaceAll('_', ' ')}</span><i><b style={{ width: `${(row.count / max) * 100}%` }} /></i><strong>{row.count}</strong></div>)}</div>
 }
 
+function AnalyticsStatCard({ label, value, previous, tint, note }: { label: string; value: number; previous: number; tint: string; note?: string }) {
+  const change = previous > 0 ? Math.round(((value - previous) / previous) * 100) : 0
+  const isPositive = change >= 0
+  const TrendIcon = isPositive ? ArrowUpRight : ArrowDownRight
+  const path = isPositive ? '2,20 11,15 18,17 27,8 38,11 48,3' : '2,4 11,9 18,7 27,15 38,12 48,20'
+  return <article className={`hospitality-analytics-stat is-${tint}`}>
+    <span>{label}</span>
+    <strong>{value.toLocaleString()}</strong>
+    <div className="hospitality-analytics-stat-trend"><svg viewBox="0 0 50 24" aria-hidden="true"><polyline points={path} /></svg><TrendIcon size={14} /><b>{Math.abs(change)}%</b><em>vs previous period</em></div>
+    {note ? <small>{note}</small> : null}
+  </article>
+}
+
 export function HospitalityAnalytics({ organizationId }: { organizationId: number }) {
   const [preset, setPreset] = useState('last_7_days')
   const [start, setStart] = useState('')
@@ -73,20 +82,18 @@ export function HospitalityAnalytics({ organizationId }: { organizationId: numbe
       .finally(() => setLoading(false))
   }, [organizationId, preset, start, end, rangeQuery])
   const metricRows = data ? [
-    { label: 'Profile views', value: data.metrics.profileViews, previous: data.previousMetrics.profileViews, icon: Eye, tint: 'blue' },
-    { label: 'Menu opens', value: data.metrics.menuOpens, previous: data.previousMetrics.menuOpens, icon: Utensils, tint: 'green' },
-    { label: 'Google review clicks', value: data.metrics.googleReviewClicks, previous: data.previousMetrics.googleReviewClicks, icon: MousePointerClick, tint: 'amber', note: 'Clicks only · not posted reviews' },
-    { label: 'Feedback submitted', value: data.metrics.feedbackSubmissions, previous: data.previousMetrics.feedbackSubmissions, icon: MessageSquare, tint: 'violet' },
+    { label: 'Profile views', value: data.metrics.profileViews, previous: data.previousMetrics.profileViews, tint: 'blue' },
+    { label: 'Menu opens', value: data.metrics.menuOpens, previous: data.previousMetrics.menuOpens, tint: 'green' },
+    { label: 'Google review clicks', value: data.metrics.googleReviewClicks, previous: data.previousMetrics.googleReviewClicks, tint: 'amber', note: 'Clicks only · not posted reviews' },
+    { label: 'Feedback submitted', value: data.metrics.feedbackSubmissions, previous: data.previousMetrics.feedbackSubmissions, tint: 'red' },
   ] : []
   return <div className="hospitality-analytics-page">
-    <header className="hospitality-analytics-heading"><div><h2>Analytics</h2><p>Customer engagement with your public digital profile.</p></div><div className="hospitality-analytics-range"><CalendarDays size={17} /><label><span className="sr-only">Analytics date range</span><select value={preset} onChange={(event) => setPreset(event.target.value)}>{presets.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label>{preset === 'custom' ? <><label><span className="sr-only">Start date</span><input type="date" value={start} onChange={(event) => setStart(event.target.value)} /></label><label><span className="sr-only">End date</span><input type="date" value={end} onChange={(event) => setEnd(event.target.value)} /></label></> : null}</div></header>
+    <header className="hospitality-analytics-heading"><div className="hospitality-analytics-range"><CalendarDays size={17} /><label><span className="sr-only">Analytics date range</span><select value={preset} onChange={(event) => setPreset(event.target.value)}>{presets.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label>{preset === 'custom' ? <><label><span className="sr-only">Start date</span><input type="date" value={start} onChange={(event) => setStart(event.target.value)} /></label><label><span className="sr-only">End date</span><input type="date" value={end} onChange={(event) => setEnd(event.target.value)} /></label></> : null}</div></header>
     {error ? <div className="manage-alert" role="alert">{error}</div> : null}
     {loading && !data ? <div className="hospitality-analytics-empty" role="status">Loading analytics…</div> : null}
-    {data ? <><div className={`hospitality-metric-grid${loading ? ' is-refreshing' : ''}`} aria-busy={loading}>{metricRows.map((metric) => <MetricCard key={metric.label} {...metric} />)}</div>
-      <section className="hospitality-analytics-unique"><Users size={18} /><div><strong>{data.metrics.estimatedUniqueVisitors === null ? 'Estimate unavailable' : data.metrics.estimatedUniqueVisitors.toLocaleString()} estimated unique visitors</strong><p>{data.definitions.estimatedUniqueVisitors}</p></div></section>
-      <div className="hospitality-analytics-layout"><section className="hospitality-analytics-panel is-trend"><header><div><h3>Daily visitor trend</h3><p>Profile views and menu opens · {data.range.timezone}</p></div><div className="hospitality-analytics-legend"><span><i className="is-profile" />Profile views</span><span><i className="is-menu" />Menu opens</span></div></header><TrendChart rows={data.daily} /></section><section className="hospitality-analytics-panel"><header><div><h3>Link clicks by destination</h3><p>Includes Google review button clicks.</p></div></header><HorizontalBars rows={data.linkDestinations} /></section></div>
-      <div className="hospitality-analytics-layout"><section className="hospitality-analytics-panel"><header><div><h3>Top viewed menu items</h3><p>Detail views show customer interest, not orders or sales.</p></div><FileText size={18} /></header>{data.menuItems.length ? <ol className="hospitality-analytics-ranking">{data.menuItems.map((item) => <li key={item.name}><span>{item.name}</span><strong>{item.count}</strong></li>)}</ol> : <div className="hospitality-analytics-empty">No menu-item detail views have been recorded in this date range.</div>}</section><section className="hospitality-analytics-panel"><header><div><h3>Touchpoint activity</h3><p>Only named QR or NFC touchpoints with tracked activity.</p></div><BarChart3 size={18} /></header>{data.touchpointActivity.length ? <div className="hospitality-touchpoint-table"><div className="hospitality-touchpoint-head"><span>Touchpoint</span><span>Profile</span><span>Menu</span><span>Links</span><span>Feedback</span></div>{data.touchpointActivity.map((touchpoint) => <div key={touchpoint.source}><strong>{touchpoint.name}</strong><span>{touchpoint.profileViews}</span><span>{touchpoint.menuOpens}</span><span>{touchpoint.linkClicks}</span><span>{touchpoint.feedbackSubmissions}</span></div>)}</div> : <div className="hospitality-analytics-empty">No named touchpoint activity has been recorded in this date range.</div>}</section></div>
-      <p className="hospitality-analytics-disclaimer">{data.definitions.profileViews} {data.definitions.googleReviewClicks} Imported Google reviews, if connected later, remain separate from Tap2Connect feedback and are never attributed to individual NFC visitors.</p>
+    {data ? <><div className={`hospitality-analytics-stat-grid${loading ? ' is-refreshing' : ''}`} aria-busy={loading}>{metricRows.map((metric) => <AnalyticsStatCard key={metric.label} {...metric} />)}</div>
+      <div className="hospitality-analytics-layout"><section className="hospitality-analytics-panel is-trend"><header><div><h3>Daily visitor trend</h3></div><div className="hospitality-analytics-legend"><span><i className="is-profile" />Profile views</span><span><i className="is-menu" />Menu opens</span></div></header><TrendChart rows={data.daily} /></section><section className="hospitality-analytics-panel"><header><div><h3>Link clicks by destination</h3></div></header><HorizontalBars rows={data.linkDestinations} /></section></div>
+      <div className="hospitality-analytics-layout"><section className="hospitality-analytics-panel"><header><div><h3>Top viewed menu items</h3></div><FileText size={18} /></header>{data.menuItems.length ? <ol className="hospitality-analytics-ranking">{data.menuItems.map((item) => <li key={item.name}><span>{item.name}</span><strong>{item.count}</strong></li>)}</ol> : <div className="hospitality-analytics-empty">No menu-item views yet.</div>}</section><section className="hospitality-analytics-panel"><header><div><h3>Touchpoint activity</h3></div><BarChart3 size={18} /></header>{data.touchpointActivity.length ? <div className="hospitality-touchpoint-table"><div className="hospitality-touchpoint-head"><span>Touchpoint</span><span>Profile</span><span>Menu</span><span>Links</span><span>Feedback</span></div>{data.touchpointActivity.map((touchpoint) => <div key={touchpoint.source}><strong>{touchpoint.name}</strong><span>{touchpoint.profileViews}</span><span>{touchpoint.menuOpens}</span><span>{touchpoint.linkClicks}</span><span>{touchpoint.feedbackSubmissions}</span></div>)}</div> : <div className="hospitality-analytics-empty">No touchpoint activity yet.</div>}</section></div>
     </> : null}
   </div>
 }
