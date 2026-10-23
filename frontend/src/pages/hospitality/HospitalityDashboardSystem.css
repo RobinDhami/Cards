@@ -107,3 +107,36 @@
 .manage-app--hospitality .hospitality-overview-empty,
 .manage-app--hospitality .hospitality-chart-empty,
 .manage-app--hospitality .hospitality-analytics-empty { color: #94a3b8; }
+.manage-app--hospitality .hospitality-theme-toggle { border-color: rgba(148,163,184,.28); background: #273449; color: #fbbf24; }
+.manage-app--hospitality .manage-header-actions > .manage-icon-button { border-color: rgba(148,163,184,.28); background: #273449; color: #cbd5e1; }
+
+/* The theme control returns the work surface to the light slate palette without changing the sidebar. */
+.manage-app--hospitality-theme-light {
+  --manage-page: #f5f8fc;
+  --manage-surface: #fff;
+  --manage-ink: #0f172a;
+  --manage-muted: #475569;
+  --manage-line: rgba(0,0,0,.08);
+  background: #f5f8fc;
+  color-scheme: light;
+  color: #0f172a;
+}
+.manage-app--hospitality-theme-light > .manage-main,
+.manage-app--hospitality-theme-light .manage-header { background: #f5f8fc; }
+.manage-app--hospitality-theme-light .manage-title h1,
+.manage-app--hospitality-theme-light .manage-content :is(h1,h2,h3,strong) { color: #0f172a; }
+.manage-app--hospitality-theme-light .manage-title p,
+.manage-app--hospitality-theme-light .manage-content :is(p,small,.manage-muted) { color: #64748b; }
+.manage-app--hospitality-theme-light :is(.manage-card, .hospitality-overview-panel, .hospitality-activity-summary,
+  .hospitality-readiness, .hospitality-attention-panel, .hospitality-feedback-card, .feedback-inbox,
+  .feedback-detail, .feedback-google-separate, .hospitality-analytics-panel, .hospitality-menu-rail,
+  .hospitality-menu-table-panel, .category-management-panel, .business-profile-form-card,
+  .business-profile-preview-panel, .hospitality-settings-card, .rewards-program-form,
+  .rewards-program-preview, .rewards-member-table-card, .operational-activity__list,
+  .operational-activity__intro) { border-color: rgba(0,0,0,.08) !important; background: #fff !important; color: #334155; }
+.manage-app--hospitality-theme-light :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea, .form-control,
+  .manage-school-select select, .hospitality-menu-toolbar > label, .feedback-filters select,
+  .feedback-detail-form select, .feedback-detail-form textarea) { border-color: #cbd5e1 !important; background: #fff !important; color: #0f172a !important; }
+.manage-app--hospitality-theme-light :is(.manage-button, .manage-icon-button, .category-row-actions > button,
+  .hospitality-menu-rail > button, .hospitality-menu-filters button, .feedback-status-tabs button) { border-color: #cbd5e1; background: #fff; color: #334155; }
+.manage-app--hospitality-theme-light .hospitality-theme-toggle { background: #fff; color: #475569; }

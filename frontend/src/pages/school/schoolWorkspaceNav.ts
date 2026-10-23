@@ -38,13 +38,12 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
         { label: 'Staff & Cards', href: `${hospitalityRoot}/?tab=staff`, icon: Users, active: path.startsWith(hospitalityRoot) && section === 'staff' },
         { label: 'Rewards', href: `${hospitalityRoot}/?tab=loyalty`, icon: Gift, active: path.startsWith(hospitalityRoot) && section === 'loyalty' },
         { label: 'Members', href: `${hospitalityRoot}/?tab=members`, icon: Users, active: path.startsWith(hospitalityRoot) && section === 'members' },
-        { label: 'Activity', href: `${hospitalityRoot}/?tab=activity`, icon: LayoutList, active: path.startsWith(hospitalityRoot) && section === 'activity' },
         { label: 'Analytics', href: `${hospitalityRoot}/?tab=analytics`, icon: BarChart3, active: path.startsWith(hospitalityRoot) && section === 'analytics' },
         { label: 'Settings', href: `${workspaceRoot}/settings/`, icon: Settings, active: path.includes('/settings') },
       ]
       const capabilityFor: Record<string, string> = {
         Overview: 'overview', 'Business Profile': 'profile', Menu: 'menu', Feedback: 'feedback',
-        'Staff & Cards': 'staff', Rewards: 'settings', Members: 'staff', Activity: 'settings', Analytics: 'analytics', Settings: 'settings',
+        'Staff & Cards': 'staff', Rewards: 'settings', Members: 'staff', Analytics: 'analytics', Settings: 'settings',
       }
       return capabilities ? items.filter((item) => capabilities.includes(capabilityFor[item.label])) : items
     }

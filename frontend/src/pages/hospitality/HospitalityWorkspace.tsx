@@ -4,6 +4,8 @@ import { create } from "zustand";
 import QRCode from "qrcode";
 import MessageSquare from "lucide-react/dist/esm/icons/message-square.js";
 import Eye from "lucide-react/dist/esm/icons/eye.js";
+import Moon from "lucide-react/dist/esm/icons/moon.js";
+import Sun from "lucide-react/dist/esm/icons/sun.js";
 import ExternalLink from "lucide-react/dist/esm/icons/external-link.js";
 import ImageIcon from "lucide-react/dist/esm/icons/image.js";
 import MoreHorizontal from "lucide-react/dist/esm/icons/more-horizontal.js";
@@ -47,7 +49,6 @@ import { HospitalityStaffCards } from "./HospitalityStaffCards";
 import { HospitalityAnalytics } from "./HospitalityAnalytics";
 import { HospitalityRewardsProgram } from "./HospitalityRewardsProgram";
 import { HospitalityRewardsMembers } from "./HospitalityRewardsMembers";
-import { HospitalityOperationalActivity } from "./HospitalityOperationalActivity";
 import googleGLogo from "./google-g.svg";
 import "./HospitalityWorkspace.css";
 import "./HospitalityDashboardSystem.css";
@@ -248,7 +249,7 @@ type HospitalityShell = {
   schools: Array<{ id: number; name: string }>;
   user: { displayName: string };
 };
-type HospitalityAdminSection = "overview" | "profile" | "menu" | "feedback" | "staff" | "loyalty" | "members" | "activity" | "analytics";
+type HospitalityAdminSection = "overview" | "profile" | "menu" | "feedback" | "staff" | "loyalty" | "members" | "analytics";
 
 function organizationId() {
   return Number(
@@ -258,7 +259,7 @@ function organizationId() {
 
 function hospitalityAdminSection(): HospitalityAdminSection {
   const section = new URLSearchParams(window.location.search).get("tab");
-  return section === "profile" || section === "menu" || section === "feedback" || section === "staff" || section === "loyalty" || section === "members" || section === "activity" || section === "analytics"
+  return section === "profile" || section === "menu" || section === "feedback" || section === "staff" || section === "loyalty" || section === "members" || section === "analytics"
     ? section
     : "overview";
 }
@@ -274,7 +275,6 @@ const hospitalitySectionDetails: Record<
   staff: { title: "Staff & Cards" },
   loyalty: { title: "Rewards program" },
   members: { title: "Loyalty members" },
-  activity: { title: "Business activity" },
   analytics: { title: "Analytics" },
 };
 
@@ -291,18 +291,24 @@ function VenueShell({
 }) {
   const school = shell.currentSchool;
   const details = hospitalitySectionDetails[section];
+  const [darkTheme, setDarkTheme] = useState(() => window.localStorage.getItem("tap2connect:hospitality-theme") !== "light");
+  const toggleTheme = () => setDarkTheme((current) => {
+    const next = !current;
+    window.localStorage.setItem("tap2connect:hospitality-theme", next ? "dark" : "light");
+    return next;
+  });
   return (
     <ManageShell
       brand={school?.name || "Hospitality"}
       logo={school?.logo}
-      className="manage-app--hospitality"
+      className={`manage-app--hospitality ${darkTheme ? "manage-app--hospitality-theme-dark" : "manage-app--hospitality-theme-light"}`}
       nav={schoolWorkspaceNav(school?.id, shell.isSuperAdmin, "hospitality", shell.capabilities)}
       title={details.title}
       subtitle={details.subtitle}
       userName={shell.user.displayName}
       userRole=""
       accent="#2563eb"
-      showNotifications={false}
+      showNotifications
       schoolOptions={shell.schools.length > 1 ? shell.schools : undefined}
       selectedSchool={school?.id ?? null}
       workspaceSelectorLabel="Organization workspace"
@@ -311,6 +317,9 @@ function VenueShell({
       }}
       actions={
         <>
+          <button type="button" className="manage-icon-button hospitality-theme-toggle" onClick={toggleTheme} aria-label={darkTheme ? "Use light theme" : "Use dark theme"} title={darkTheme ? "Use light theme" : "Use dark theme"}>
+            {darkTheme ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
           <a
             className="manage-button is-primary"
             href={`/venue/${publicIdentifier}/?preview=dashboard`}
@@ -1164,7 +1173,7 @@ function HospitalityAdminPanel() {
   useEffect(() => {
     if (!shell) return;
     const capabilityFor: Record<HospitalityAdminSection, string> = {
-      overview: "overview", profile: "profile", menu: "menu", feedback: "feedback", staff: "staff", loyalty: "settings", members: "staff", activity: "settings", analytics: "analytics",
+      overview: "overview", profile: "profile", menu: "menu", feedback: "feedback", staff: "staff", loyalty: "settings", members: "staff", analytics: "analytics",
     };
     if (!shell.capabilities.includes(capabilityFor[activeTab])) {
       window.location.replace(`/dashboard/organizations/${id}/hospitality/?tab=menu`);
@@ -1383,7 +1392,6 @@ function HospitalityAdminPanel() {
       {activeTab === "staff" ? <HospitalityStaffCards organizationId={id} organizationName={venue.organization.name} logo={venue.venue.logo} /> : null}
       {activeTab === "loyalty" ? <HospitalityRewardsProgram organizationId={id} /> : null}
       {activeTab === "members" ? <HospitalityRewardsMembers organizationId={id} /> : null}
-      {activeTab === "activity" ? <HospitalityOperationalActivity organizationId={id} /> : null}
       <div hidden>
         {venue && legacyProfileEnabled ? (
           <div className="hospitality-profile-grid">
