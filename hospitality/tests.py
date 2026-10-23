@@ -9,7 +9,7 @@ from django.utils import timezone
 from datetime import timedelta
 
 from vcards.models import CardBatch, CardBatchCard, College, OrganizationTeamMember
-from .models import LoyaltyCustomer, VenueAnalyticsEvent, VenueCardAssignment, VenueFeedback, VenueLink, VenueLoyaltyMembership, VenueMenuCategory, VenueMenuItem, VenueMenuItemVariant, VenueProfile, VenueStaffProfile, VenueTouchpoint
+from .models import LoyaltyCustomer, VenueAnalyticsEvent, VenueCardAssignment, VenueFeedback, VenueLink, VenueLoyaltyMembership, VenueMenuCategory, VenueMenuItem, VenueMenuItemVariant, VenueProfile, VenueRewardsProgram, VenueStaffProfile, VenueTouchpoint
 
 
 class HospitalityWorkspaceTests(TestCase):
@@ -69,6 +69,23 @@ class HospitalityWorkspaceTests(TestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertIn('last owner', response.json()['error'])
+
+    def test_owner_can_configure_spend_rewards_program(self):
+        self.client.force_login(self.user)
+        response = self.client.patch(
+            f'/api/organizations/{self.org.pk}/venue/settings/',
+            data=json.dumps({
+                'action': 'rewards_program', 'isActive': True, 'rewardRatePercent': '5',
+                'minimumOrderAmount': '500', 'maxRedemptionPercent': '20',
+                'rewardLabel': 'Jyapu rewards', 'expiryDays': 180,
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        program = VenueRewardsProgram.objects.get(venue=self.venue)
+        self.assertTrue(program.is_active)
+        self.assertEqual(str(program.minimum_order_amount), '500.00')
+        self.assertEqual(response.json()['rewardsProgram']['rewardLabel'], 'Jyapu rewards')
 
     def test_business_profile_save_is_atomic_and_updates_public_payload(self):
         self.client.force_login(self.user)

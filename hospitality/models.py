@@ -48,12 +48,31 @@ class LoyaltyCustomer(models.Model):
         return self.phone_e164
 
 
+class VenueRewardsProgram(models.Model):
+    """Owner-controlled spend rewards configuration for one hospitality venue."""
+    venue = models.OneToOneField(VenueProfile, on_delete=models.CASCADE, related_name='rewards_program')
+    is_active = models.BooleanField(default=False)
+    reward_rate_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('5.00'), validators=[MinValueValidator(Decimal('0.01')), MaxValueValidator(Decimal('100.00'))])
+    minimum_order_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), validators=[MinValueValidator(Decimal('0.00'))])
+    max_redemption_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('20.00'), validators=[MinValueValidator(Decimal('0.00')), MaxValueValidator(Decimal('100.00'))])
+    reward_label = models.CharField(max_length=80, default='Rewards balance')
+    expiry_days = models.PositiveIntegerField(blank=True, null=True, validators=[MinValueValidator(1), MaxValueValidator(3650)])
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.venue.organization.name} rewards'
+
+
 class VenueLoyaltyMembership(models.Model):
     venue = models.ForeignKey(VenueProfile, on_delete=models.CASCADE, related_name='loyalty_memberships')
     customer = models.ForeignKey(LoyaltyCustomer, on_delete=models.CASCADE, related_name='loyalty_memberships')
     public_identifier = models.CharField(max_length=64, unique=True, default=public_identifier, editable=False)
     stamp_count = models.PositiveSmallIntegerField(default=0)
     stamp_goal = models.PositiveSmallIntegerField(default=5, validators=[MinValueValidator(1), MaxValueValidator(50)])
+    reward_balance = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), validators=[MinValueValidator(Decimal('0.00'))])
+    lifetime_rewards_earned = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), validators=[MinValueValidator(Decimal('0.00'))])
+    lifetime_rewards_redeemed = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), validators=[MinValueValidator(Decimal('0.00'))])
     rewards_redeemed = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

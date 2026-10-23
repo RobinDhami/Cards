@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from .models import (
     LoyaltyCustomer, VenueAnalyticsEvent, VenueCardAssignment, VenueFeedback, VenueLink,
-    VenueLoyaltyMembership,
+    VenueLoyaltyMembership, VenueRewardsProgram,
     VenueMenuCategory, VenueMenuItem, VenueProfile, VenueStaffLink,
     VenueStaffProfile, VenueTouchpoint,
 )
@@ -63,6 +63,13 @@ class VenueLoyaltyMembershipAdmin(admin.ModelAdmin):
     list_filter = ('is_active', 'stamp_goal')
     search_fields = ('venue__organization__name', 'customer__phone_e164', 'public_identifier')
     readonly_fields = ('public_identifier', 'created_at', 'updated_at')
+
+
+@admin.register(VenueRewardsProgram)
+class VenueRewardsProgramAdmin(admin.ModelAdmin):
+    list_display = ('venue', 'is_active', 'reward_rate_percent', 'minimum_order_amount', 'max_redemption_percent', 'updated_at')
+    list_filter = ('is_active',)
+    search_fields = ('venue__organization__name',)
 
 
 admin.site.register(VenueStaffProfile)

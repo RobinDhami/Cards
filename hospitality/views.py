@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import json
 import re
+from decimal import Decimal, InvalidOperation
 from datetime import date, datetime, time, timedelta
 from urllib.parse import urlparse
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -21,8 +22,8 @@ from django.utils.text import slugify
 from .models import (
     LoyaltyCustomer, VenueAnalyticsEvent, VenueCardAssignment, VenueFeedback,
     VenueLink, VenueLoyaltyMembership, VenueMenuCategory, VenueMenuItem,
-    VenueMenuItemVariant, VenueProfile, VenueStaffLink, VenueStaffProfile,
-    VenueTouchpoint,
+    VenueMenuItemVariant, VenueProfile, VenueRewardsProgram, VenueStaffLink,
+    VenueStaffProfile, VenueTouchpoint,
 )
 from django.contrib.auth import get_user_model
 from vcards.models import CardBatchCard, College, OrganizationNotificationPreference, OrganizationTeamMember
@@ -192,6 +193,17 @@ def _loyalty_membership_payload(membership):
         'stampGoal': membership.stamp_goal,
         'rewardsRedeemed': membership.rewards_redeemed,
         'isActive': membership.is_active,
+    }
+
+
+def _rewards_program_payload(program):
+    return {
+        'isActive': program.is_active,
+        'rewardRatePercent': str(program.reward_rate_percent),
+        'minimumOrderAmount': str(program.minimum_order_amount),
+        'maxRedemptionPercent': str(program.max_redemption_percent),
+        'rewardLabel': program.reward_label,
+        'expiryDays': program.expiry_days,
     }
 
 
@@ -405,10 +417,32 @@ def venue_settings_api(request, organization_id):
             'organizationCode': organization.organization_code or '',
         }}
         if role == 'owner' or request.user.is_superuser:
+            venue, _ = VenueProfile.objects.get_or_create(organization=organization)
+            program, _ = VenueRewardsProgram.objects.get_or_create(venue=venue)
+            response['rewardsProgram'] = _rewards_program_payload(program)
             response['team'] = [{**_team_payload(member), 'isCurrentUser': member.user_id == request.user.id} for member in organization.team_members.select_related('user').all()]
         return JsonResponse(response)
     if request.method == 'PATCH':
         data = _body(request) or {}
+        if data.get('action') == 'rewards_program':
+            if role != 'owner' and not request.user.is_superuser:
+                return JsonResponse({'error': 'Only owners can update the rewards program.'}, status=403)
+            venue, _ = VenueProfile.objects.get_or_create(organization=organization)
+            program, _ = VenueRewardsProgram.objects.get_or_create(venue=venue)
+            try:
+                program.is_active = bool(data.get('isActive', program.is_active))
+                program.reward_rate_percent = Decimal(str(data.get('rewardRatePercent', program.reward_rate_percent)))
+                program.minimum_order_amount = Decimal(str(data.get('minimumOrderAmount', program.minimum_order_amount)))
+                program.max_redemption_percent = Decimal(str(data.get('maxRedemptionPercent', program.max_redemption_percent)))
+                program.reward_label = str(data.get('rewardLabel', program.reward_label)).strip() or 'Rewards balance'
+                expiry = data.get('expiryDays', program.expiry_days)
+                program.expiry_days = int(expiry) if expiry not in (None, '', 0, '0') else None
+                program.full_clean()
+                program.save()
+            except (InvalidOperation, TypeError, ValueError, ValidationError) as error:
+                messages = getattr(error, 'messages', [str(error)])
+                return JsonResponse({'error': '; '.join(messages)}, status=400)
+            return JsonResponse({'ok': True, 'rewardsProgram': _rewards_program_payload(program)})
         if data.get('action') == 'notifications':
             preference, _ = OrganizationNotificationPreference.objects.get_or_create(organization=organization, user=request.user)
             for api_key, field in {'newFeedbackEmail': 'new_feedback_email', 'lowRatingFeedbackEmail': 'low_rating_feedback_email', 'weeklySummaryEmail': 'weekly_summary_email'}.items():

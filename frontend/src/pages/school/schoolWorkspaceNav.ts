@@ -12,6 +12,7 @@ import Users from 'lucide-react/dist/esm/icons/users.js'
 import Palette from 'lucide-react/dist/esm/icons/palette.js'
 import Info from 'lucide-react/dist/esm/icons/info.js'
 import Store from 'lucide-react/dist/esm/icons/store.js'
+import Gift from 'lucide-react/dist/esm/icons/gift.js'
 import { queryString } from '../../lib/api'
 import { platformNavigation } from '../../components/manage/platformNavigation'
 import { workspaceMemberNavigation } from './organizationModuleConfig'
@@ -35,12 +36,13 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
         { label: 'Menu', href: `${hospitalityRoot}/?tab=menu`, icon: Utensils, active: path.startsWith(hospitalityRoot) && section === 'menu' },
         { label: 'Feedback', href: `${hospitalityRoot}/?tab=feedback`, icon: MessageSquare, active: path.startsWith(hospitalityRoot) && section === 'feedback' },
         { label: 'Staff & Cards', href: `${hospitalityRoot}/?tab=staff`, icon: Users, active: path.startsWith(hospitalityRoot) && section === 'staff' },
+        { label: 'Rewards', href: `${hospitalityRoot}/?tab=loyalty`, icon: Gift, active: path.startsWith(hospitalityRoot) && section === 'loyalty' },
         { label: 'Analytics', href: `${hospitalityRoot}/?tab=analytics`, icon: BarChart3, active: path.startsWith(hospitalityRoot) && section === 'analytics' },
         { label: 'Settings', href: `${workspaceRoot}/settings/`, icon: Settings, active: path.includes('/settings') },
       ]
       const capabilityFor: Record<string, string> = {
         Overview: 'overview', 'Business Profile': 'profile', Menu: 'menu', Feedback: 'feedback',
-        'Staff & Cards': 'staff', Analytics: 'analytics', Settings: 'settings',
+        'Staff & Cards': 'staff', Rewards: 'settings', Analytics: 'analytics', Settings: 'settings',
       }
       return capabilities ? items.filter((item) => capabilities.includes(capabilityFor[item.label])) : items
     }
