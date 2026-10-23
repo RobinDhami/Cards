@@ -34,3 +34,76 @@
 .manage-app--hospitality .menu-table-price,
 .manage-app--hospitality .hospitality-analytics-stat strong,
 .manage-app--hospitality .feedback-metrics strong { font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
+
+/* Soft dark workspace: keep the sidebar deepest and the working surface lighter. */
+.manage-app--hospitality {
+  --manage-page: #111827;
+  --manage-surface: #1f2937;
+  --manage-ink: #f8fafc;
+  --manage-muted: #94a3b8;
+  --manage-line: rgba(148, 163, 184, .22);
+  --manage-accent: #3b82f6;
+  color-scheme: dark;
+  background: #111827;
+  color: #f8fafc;
+}
+.manage-app--hospitality > .manage-main { background: #111827; }
+.manage-app--hospitality .manage-header { border-bottom-color: rgba(148,163,184,.18); background: #111827; }
+.manage-app--hospitality .manage-title h1,
+.manage-app--hospitality .manage-content h1,
+.manage-app--hospitality .manage-content h2,
+.manage-app--hospitality .manage-content h3,
+.manage-app--hospitality .manage-content strong { color: #f8fafc; }
+.manage-app--hospitality .manage-title p,
+.manage-app--hospitality .manage-content p,
+.manage-app--hospitality .manage-content small,
+.manage-app--hospitality .manage-muted { color: #94a3b8; }
+.manage-app--hospitality :is(.manage-card, .hospitality-overview-panel, .hospitality-activity-summary,
+  .hospitality-readiness, .hospitality-attention-panel, .hospitality-feedback-card,
+  .feedback-inbox, .feedback-detail, .feedback-google-separate, .hospitality-analytics-panel,
+  .hospitality-menu-rail, .hospitality-menu-table-panel, .category-management-panel,
+  .business-profile-form-card, .business-profile-preview-panel, .hospitality-settings-card,
+  .rewards-program-form, .rewards-program-preview, .rewards-member-table-card,
+  .operational-activity__list, .operational-activity__intro) {
+  border-color: rgba(148,163,184,.2) !important;
+  background: #1f2937 !important;
+  color: #e2e8f0;
+  box-shadow: none !important;
+}
+.manage-app--hospitality :is(.hospitality-readiness, .hospitality-attention-panel) { background: #243244 !important; }
+.manage-app--hospitality :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea,
+  .form-control, .manage-school-select select, .hospitality-menu-toolbar > label,
+  .feedback-filters select, .feedback-detail-form select, .feedback-detail-form textarea) {
+  border-color: rgba(148,163,184,.28) !important;
+  background: #111827 !important;
+  color: #f8fafc !important;
+}
+.manage-app--hospitality :is(.manage-button, .manage-icon-button, .category-row-actions > button,
+  .hospitality-menu-rail > button, .hospitality-menu-filters button, .feedback-status-tabs button) {
+  border-color: rgba(148,163,184,.26);
+  background: #273449;
+  color: #e2e8f0;
+}
+.manage-app--hospitality :is(.manage-button.is-primary, .manage-header-actions .manage-button,
+  .hospitality-readiness .manage-button.is-primary) { border-color: #2563eb; background: #2563eb; color: #fff; }
+.manage-app--hospitality :is(.manage-button.is-primary:hover, .manage-header-actions .manage-button:hover) { background: #3b82f6; }
+.manage-app--hospitality :is(th, .menu-table-head, .hospitality-menu-table-head, .category-management-head,
+  .hospitality-team-head, .hospitality-touchpoint-head) { background: #172235; color: #cbd5e1; }
+.manage-app--hospitality :is(.menu-list-row, .category-management-row, .hospitality-menu-row,
+  .feedback-row, .hospitality-feedback-list article, .hospitality-team-table > div) { border-color: rgba(148,163,184,.15); }
+.manage-app--hospitality :is(.hospitality-menu-rail > button.is-active, .hospitality-menu-filters button.is-active,
+  .feedback-status-tabs button.is-active) { background: #1d4ed8; color: #fff; }
+.manage-app--hospitality :is(.hospitality-chart-gridline, .hospitality-chart-labels) { color: #64748b; }
+.manage-app--hospitality .hospitality-overview-heading h2,
+.manage-app--hospitality .hospitality-overview-panel > header h2,
+.manage-app--hospitality .hospitality-attention-panel h2,
+.manage-app--hospitality .hospitality-activity-summary h2 { color: #f8fafc; }
+.manage-app--hospitality .hospitality-activity-summary article { border-color: rgba(148,163,184,.15); }
+.manage-app--hospitality .hospitality-readiness h2 { color: #dbeafe; }
+.manage-app--hospitality .hospitality-readiness-progress span,
+.manage-app--hospitality .hospitality-readiness-progress strong { color: #cbd5e1; }
+.manage-app--hospitality .hospitality-quick-action { border-color: rgba(148,163,184,.2); background: #273449; color: #e2e8f0; }
+.manage-app--hospitality .hospitality-quick-action:hover { background: #334155; }
+.manage-app--hospitality .hospitality-overview-empty,
+.manage-app--hospitality .hospitality-chart-empty,
+.manage-app--hospitality .hospitality-analytics-empty { color: #94a3b8; }
