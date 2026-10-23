@@ -8,6 +8,7 @@ import Copy from 'lucide-react/dist/esm/icons/copy.js'
 import CookingPot from 'lucide-react/dist/esm/icons/cooking-pot.js'
 import Eye from 'lucide-react/dist/esm/icons/eye.js'
 import Grid2X2 from 'lucide-react/dist/esm/icons/grid-2x2.js'
+import MoreHorizontal from 'lucide-react/dist/esm/icons/more-horizontal.js'
 import Pencil from 'lucide-react/dist/esm/icons/pencil.js'
 import Plus from 'lucide-react/dist/esm/icons/plus.js'
 import Search from 'lucide-react/dist/esm/icons/search.js'
@@ -31,6 +32,7 @@ type MenuItem = {
   offer_starts_at: string; offer_ends_at: string; price_variants: PriceVariant[]
 }
 type Draft = Omit<MenuItem, 'id' | 'image' | 'display_order'> & { id?: number; image: File | null; currentImage: string; removeImage: boolean }
+type MenuTab = 'categories' | 'items' | 'specials' | 'offers'
 
 const emptyDraft = (categoryId = 0): Draft => ({
   category_id: categoryId, name: '', description: '', price: '', original_price: '', offer_label: '',
@@ -83,7 +85,11 @@ export function HospitalityMenuManagement({ organizationId, publicIdentifier }: 
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [availability, setAvailability] = useState('all')
   const [publication, setPublication] = useState('all')
-  const [attributeFilter, setAttributeFilter] = useState<'all' | 'special' | 'offer'>('all')
+  const [menuTab, setMenuTab] = useState<MenuTab>('categories')
+  const [categoryQuery, setCategoryQuery] = useState('')
+  const [categoryStatus, setCategoryStatus] = useState<'all' | 'visible' | 'hidden'>('all')
+  const [categoryActionsId, setCategoryActionsId] = useState<number | null>(null)
+  const [showCategoryCreate, setShowCategoryCreate] = useState(false)
   const [selected, setSelected] = useState<number[]>([])
   const [draft, setDraft] = useState<Draft | null>(null)
   const [saving, setSaving] = useState(false)
@@ -126,11 +132,19 @@ export function HospitalityMenuManagement({ organizationId, publicIdentifier }: 
       if (availability === 'sold-out' && item.is_available) return false
       if (publication === 'published' && !item.is_published) return false
       if (publication === 'unpublished' && item.is_published) return false
-      if (attributeFilter === 'special' && !item.is_today_special) return false
-      if (attributeFilter === 'offer' && !item.is_offer) return false
+      if (menuTab === 'specials' && !item.is_today_special) return false
+      if (menuTab === 'offers' && !item.is_offer) return false
       return !normalized || item.name.toLowerCase().includes(normalized) || (categoryNames.get(item.category_id) || '').toLowerCase().includes(normalized)
     })
-  }, [attributeFilter, availability, categoryFilter, categoryNames, items, publication, query])
+  }, [availability, categoryFilter, categoryNames, items, menuTab, publication, query])
+  const visibleCategories = useMemo(() => {
+    const normalized = categoryQuery.trim().toLowerCase()
+    return categories.filter((category) => {
+      if (categoryStatus === 'visible' && !category.is_active) return false
+      if (categoryStatus === 'hidden' && category.is_active) return false
+      return !normalized || category.name.toLowerCase().includes(normalized)
+    })
+  }, [categories, categoryQuery, categoryStatus])
 
   function validationMessage(value: Draft) {
     if (!value.name.trim()) return 'Item name is required.'
@@ -237,6 +251,15 @@ export function HospitalityMenuManagement({ organizationId, publicIdentifier }: 
     } catch (reason) { setError(displayError(reason)) }
   }
 
+  async function patchCategory(category: Category, values: Partial<Category>) {
+    setError('')
+    try {
+      await apiFetch(`/api/organizations/${organizationId}/venue/menu/categories/`, { method: 'PATCH', body: jsonBody({ id: category.id, ...values }) })
+      setCategoryActionsId(null)
+      await load()
+    } catch (reason) { setError(displayError(reason)) }
+  }
+
   async function deleteCategory() {
     if (!deletingCategory) return
     try {
@@ -251,13 +274,17 @@ export function HospitalityMenuManagement({ organizationId, publicIdentifier }: 
     <section className={`menu-management${draft ? ' is-editing' : ''}`}>
       <header className="menu-management-actions">
         <div className="menu-attribute-tabs" role="tablist" aria-label="Menu filters">
-          {([['all', 'All items'], ['special', "Today's specials"], ['offer', 'Offers']] as const).map(([key, label]) => <button type="button" role="tab" aria-selected={attributeFilter === key} className={attributeFilter === key ? 'is-active' : ''} onClick={() => setAttributeFilter(key)} key={key}>{label}</button>)}
+          {([['categories', 'Categories'], ['items', 'Items'], ['specials', 'Specials'], ['offers', 'Offers']] as const).map(([key, label]) => <button type="button" role="tab" aria-selected={menuTab === key} className={menuTab === key ? 'is-active' : ''} onClick={() => { setMenuTab(key); setSelected([]) }} key={key}>{label}</button>)}
         </div>
-        <div><a className="manage-button menu-icon-action" href={`/venue/${publicIdentifier}/?tab=menu`} target="_blank" rel="noreferrer" aria-label="Preview menu" title="Preview menu"><Eye size={15} /></a><button type="button" className="manage-button is-primary" disabled={!categories.length} onClick={() => setDraft(emptyDraft(categories[0]?.id))}><Plus size={15} /> Add item</button></div>
+        <div>{menuTab === 'categories' ? <button type="button" className="manage-button is-primary" onClick={() => { setShowCategoryCreate(true); setEditingCategory(null) }}><Plus size={15} /> Add category</button> : <><a className="manage-button menu-icon-action" href={`/venue/${publicIdentifier}/?tab=menu`} target="_blank" rel="noreferrer" aria-label="Preview menu" title="Preview menu"><Eye size={15} /></a><button type="button" className="manage-button is-primary" disabled={!categories.length} onClick={() => setDraft(emptyDraft(categories[0]?.id))}><Plus size={15} /> Add item</button></>}</div>
       </header>
       {error ? <div className="manage-alert" role="alert">{error}</div> : null}
       {notice ? <div className="manage-alert is-success" role="status">{notice}</div> : null}
-      <div className="menu-management-grid">
+      {menuTab === 'categories' ? <section className="category-management-panel">
+        {showCategoryCreate ? <form className="category-create-inline" onSubmit={(event) => { void saveCategory(event); setShowCategoryCreate(false) }}><TextInput autoFocus aria-label="Category name" value={categoryName} onChange={(event) => setCategoryName(event.target.value)} placeholder="Category name" /><button className="manage-button is-primary" disabled={!categoryName.trim()}>Save category</button><button type="button" className="manage-button" onClick={() => { setShowCategoryCreate(false); setCategoryName('') }}>Cancel</button></form> : null}
+        <div className="category-management-toolbar"><label><Search size={17} /><input value={categoryQuery} onChange={(event) => setCategoryQuery(event.target.value)} placeholder="Search categories..." /></label><SelectInput aria-label="Filter category status" value={categoryStatus} onChange={(event) => setCategoryStatus(event.target.value as 'all' | 'visible' | 'hidden')}><option value="all">All status</option><option value="visible">Visible</option><option value="hidden">Hidden</option></SelectInput></div>
+        <div className="category-management-table"><div className="category-management-head"><span>Category</span><span>Items</span><span>Status</span><span>Actions</span></div>{visibleCategories.map((category, index) => { const CategoryIcon = categoryIcon(category.name); const itemCount = counts.get(category.id) || 0; const actionsOpen = categoryActionsId === category.id; return <article className="category-management-row" key={category.id}><div className="category-management-identity"><span className={`category-icon category-icon--${category.slug}`}><CategoryIcon size={24} /></span>{editingCategory?.id === category.id ? <form onSubmit={saveCategory}><TextInput autoFocus value={editingCategory.name} onChange={(event) => setEditingCategory({ ...editingCategory, name: event.target.value })} /><button type="submit" className="manage-button is-primary">Save</button><button type="button" className="manage-button" onClick={() => setEditingCategory(null)}>Cancel</button></form> : <strong>{category.name}</strong>}</div><span className="category-items-count">{itemCount} {itemCount === 1 ? 'item' : 'items'}</span><button type="button" className={`category-visibility${category.is_active ? '' : ' is-hidden'}`} onClick={() => void patchCategory(category, { is_active: !category.is_active })}><i />{category.is_active ? 'Visible' : 'Hidden'}</button><div className="category-row-actions"><button type="button" aria-label={`Edit ${category.name}`} title="Edit category" onClick={() => setEditingCategory(category)}><Pencil size={18} /></button><button type="button" aria-label={`More actions for ${category.name}`} title="More actions" onClick={() => setCategoryActionsId(actionsOpen ? null : category.id)}><MoreHorizontal size={19} /></button>{actionsOpen ? <div className="category-more-menu"><button type="button" onClick={() => void patchCategory(category, { is_active: !category.is_active })}>{category.is_active ? 'Hide category' : 'Show category'}</button><button type="button" disabled={index === 0} onClick={() => void moveCategory(category, -1)}>Move up</button><button type="button" disabled={index === visibleCategories.length - 1} onClick={() => void moveCategory(category, 1)}>Move down</button><button type="button" className="is-danger" onClick={() => { setDeletingCategory(category); setMoveTarget(''); setCategoryActionsId(null) }}>Delete</button></div> : null}</div></article>})}{!visibleCategories.length ? <div className="category-management-empty">No categories found.</div> : null}</div>
+      </section> : <div className="menu-management-grid menu-management-grid--items">
         <aside className="menu-category-panel">
           <header><h2>Categories</h2><span>{items.length} items</span></header>
           <button type="button" className={categoryFilter === 'all' ? 'is-active' : ''} onClick={() => setCategoryFilter('all')}><Grid2X2 size={19} /><strong>All items</strong><span>{items.length}</span></button>
@@ -287,7 +314,7 @@ export function HospitalityMenuManagement({ organizationId, publicIdentifier }: 
             {!visibleItems.length ? <div className="menu-list-empty"><Utensils size={23} /><strong>No menu items found</strong><p>Adjust the filters or add an item.</p></div> : null}
           </div>
         </div>
-      </div>
+      </div>}
       {deletingCategory ? <div className="menu-confirm" role="dialog" aria-modal="true" aria-labelledby="delete-category-title"><div><h2 id="delete-category-title">Delete {deletingCategory.name}?</h2>{(counts.get(deletingCategory.id) || 0) > 0 ? <><p>This category contains {counts.get(deletingCategory.id)} item(s). Choose where to move them first.</p><Field label="Move items to"><SelectInput value={moveTarget} onChange={(event) => setMoveTarget(event.target.value)}><option value="">Choose another category</option>{categories.filter((category) => category.id !== deletingCategory.id).map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}</SelectInput></Field></> : <p>The empty category will be removed.</p>}<footer><button type="button" className="manage-button" onClick={() => setDeletingCategory(null)}>Cancel</button><button type="button" className="manage-button is-primary" disabled={(counts.get(deletingCategory.id) || 0) > 0 && !moveTarget} onClick={() => void deleteCategory()}>Delete category</button></footer></div></div> : null}
       {deletingItem ? <div className="menu-confirm" role="dialog" aria-modal="true" aria-labelledby="delete-item-title"><div><h2 id="delete-item-title">Delete {deletingItem.name}?</h2><p>This removes the item from the dashboard and public menu. This action cannot be undone.</p><footer><button type="button" className="manage-button" onClick={() => setDeletingItem(null)}>Cancel</button><button type="button" className="manage-button is-primary" onClick={() => void removeItem()}>Delete item</button></footer></div></div> : null}
       {draft ? <><button type="button" className="menu-drawer-backdrop" aria-label="Close item editor" onClick={() => setDraft(null)} /><aside className="menu-item-drawer" role="dialog" aria-modal="true" aria-labelledby="menu-item-editor-title"><header><div><h2 id="menu-item-editor-title">{draft.id ? 'Edit item' : 'Add item'}</h2><p>{draft.id ? 'Update this menu item.' : 'Create a new menu item.'}</p></div><button type="button" aria-label="Close item editor" onClick={() => setDraft(null)}><X size={20} /></button></header><form onSubmit={saveItem}><div className="menu-drawer-fields">
