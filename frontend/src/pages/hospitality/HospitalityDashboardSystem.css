@@ -194,3 +194,54 @@
   .manage-app--hospitality .manage-header-actions .dashboard-header-tools,
   .manage-app--hospitality .manage-header-actions .hospitality-notification-control { pointer-events:auto; }
 }
+
+/* Menu management has its own dense table markup. Keep it readable and contained
+   when the hospitality workspace is in dark mode or viewed on a phone. */
+.manage-app--hospitality-theme-dark .menu-management-actions { border-bottom-color: rgba(148,163,184,.2); }
+.manage-app--hospitality-theme-dark .menu-attribute-tabs button { color: #94a3b8; }
+.manage-app--hospitality-theme-dark .menu-attribute-tabs button.is-active { border-bottom-color: #60a5fa; color: #93c5fd; }
+.manage-app--hospitality-theme-dark :is(.menu-category-panel,.menu-list-panel,.category-management-panel) { border-color: rgba(148,163,184,.2); background: #1f2937; color: #e2e8f0; }
+.manage-app--hospitality-theme-dark :is(.menu-category-panel h2,.menu-category-panel>button,.menu-category-row>button,.menu-list-identity strong,.category-management-row,.category-management-identity strong) { color: #f8fafc; }
+.manage-app--hospitality-theme-dark :is(.menu-category-panel header span,.menu-list-identity small,.category-items-count) { color: #94a3b8; }
+.manage-app--hospitality-theme-dark :is(.menu-list-toolbar>label,.menu-category-create,.category-create-inline) { border-color: rgba(148,163,184,.28); background: #111827; color: #cbd5e1; }
+.manage-app--hospitality-theme-dark .menu-list-toolbar input,
+.manage-app--hospitality-theme-dark .menu-list-toolbar input::placeholder { color: #e2e8f0; }
+.manage-app--hospitality-theme-dark :is(.menu-list-head,.category-management-head) { background: #172235; color: #cbd5e1; }
+.manage-app--hospitality-theme-dark :is(.menu-list-row,.category-management-row) { border-color: rgba(148,163,184,.15); }
+.manage-app--hospitality-theme-dark .menu-row-actions button { border: 1px solid rgba(148,163,184,.2); background: #273449; color: #cbd5e1; }
+.manage-app--hospitality-theme-dark .menu-list-identity>img,
+.manage-app--hospitality-theme-dark .menu-list-identity>span { background: #273449; }
+
+@media (max-width:640px) {
+  .menu-management-actions { align-items: stretch; gap: 10px; margin-bottom: 12px; }
+  .menu-management-actions > .menu-attribute-tabs { width: 100%; gap: 24px; overflow-x: auto; padding-bottom: 0; }
+  .menu-management-actions > div:last-child { width: 100%; justify-content: flex-end; padding-bottom: 0; }
+  .menu-management-actions > div:last-child .manage-button { display: inline-flex; }
+  .menu-management-grid.menu-management-grid--items { grid-template-columns: 1fr; }
+  .menu-management-grid--items .menu-category-panel { display: none; }
+  .menu-list-panel { min-width: 0; overflow: hidden; }
+  .menu-list-toolbar { grid-template-columns: 1fr; gap: 8px; padding: 10px; }
+  .menu-list-toolbar > label,
+  .menu-list-toolbar select { width: 100%; min-width: 0; min-height: 40px; }
+  .menu-list-table { min-width: 0; }
+  .menu-list-head { display: none; }
+  .menu-list-row { grid-template-columns: 22px minmax(0,1fr); min-height: 0; gap: 8px; padding: 10px; }
+  .menu-list-row > :nth-child(3),
+  .menu-list-row > b,
+  .menu-list-row > .menu-status,
+  .menu-list-row > .menu-switch { display: none; }
+  .menu-list-identity { gap: 10px; }
+  .menu-list-identity > img,
+  .menu-list-identity > span { width: 54px; height: 54px; }
+  .menu-list-identity strong { font-size: 14px; }
+  .menu-list-identity small { font-size: 11px; }
+  .menu-row-actions { grid-column: 2; min-width: 0; justify-content: flex-start; gap: 6px; border-top: 1px solid #edf1f5; padding-top: 8px; }
+  .menu-row-actions button { width: 32px; height: 32px; }
+  .manage-app--hospitality-theme-dark .menu-row-actions { border-top-color: rgba(148,163,184,.15); }
+  .category-management-toolbar { grid-template-columns: 1fr; gap: 8px; padding: 12px; }
+  .category-management-head { display: none; }
+  .category-management-row { grid-template-columns: minmax(0,1fr) auto; gap: 10px; min-height: 64px; padding: 10px 12px; }
+  .category-management-row > .category-items-count { grid-column: 1; grid-row: 2; }
+  .category-management-row > .category-visibility { grid-column: 2; grid-row: 1; }
+  .category-management-row > .category-row-actions { grid-column: 2; grid-row: 2; }
+}
