@@ -294,22 +294,13 @@ function VenueShell({
   return (
     <ManageShell
       brand={school?.name || "Hospitality"}
-      brandDetail={
-        shell.isSuperAdmin
-          ? "Super Admin · Organization workspace"
-          : "Organization administration"
-      }
       logo={school?.logo}
       className="manage-app--hospitality"
       nav={schoolWorkspaceNav(school?.id, shell.isSuperAdmin, "hospitality", shell.capabilities)}
       title={details.title}
       subtitle={details.subtitle}
       userName={shell.user.displayName}
-      userRole={
-        shell.isSuperAdmin
-          ? "Platform administrator"
-          : shell.role === "menu_editor" ? "Menu editor" : shell.role === "manager" ? "Manager" : "Organization owner"
-      }
+      userRole=""
       accent="#2563eb"
       showNotifications={false}
       schoolOptions={shell.schools.length > 1 ? shell.schools : undefined}

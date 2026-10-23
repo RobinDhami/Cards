@@ -99,7 +99,7 @@ export function ManageShell({
         ) : null}
         <span>
           <strong>{brand}</strong>
-          <small>{brandDetail}</small>
+          {brandDetail ? <small>{brandDetail}</small> : null}
         </span>
       </div>
       <nav className="manage-nav" aria-label={`${brand} navigation`}>
@@ -122,7 +122,7 @@ export function ManageShell({
         <span className="manage-avatar">{userName.slice(0, 2).toUpperCase()}</span>
         <span>
           <strong>{userName}</strong>
-          <small>{userRole}</small>
+          {userRole ? <small>{userRole}</small> : null}
         </span>
         <a className="manage-account-switch" href="/workspaces/" title="Switch workspace" aria-label="Switch workspace">
           <PanelsTopLeft size={16} />
