@@ -340,7 +340,7 @@ function VenueShell({
           ? "Platform administrator"
           : shell.role === "menu_editor" ? "Menu editor" : shell.role === "manager" ? "Manager" : "Organization owner"
       }
-      accent={school?.themePrimary || "#0b5d4b"}
+      accent="#2563eb"
       showNotifications={false}
       schoolOptions={shell.schools.length > 1 ? shell.schools : undefined}
       selectedSchool={school?.id ?? null}
