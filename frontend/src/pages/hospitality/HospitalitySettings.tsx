@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import Bell from "lucide-react/dist/esm/icons/bell.js";
 import Check from "lucide-react/dist/esm/icons/check.js";
+import Eye from "lucide-react/dist/esm/icons/eye.js";
 import ExternalLink from "lucide-react/dist/esm/icons/external-link.js";
 import KeyRound from "lucide-react/dist/esm/icons/key-round.js";
 import LoaderCircle from "lucide-react/dist/esm/icons/loader-circle.js";
@@ -24,7 +25,7 @@ import "./HospitalityDashboardSystem.css";
 type Role = "owner" | "manager" | "menu_editor";
 type TeamMember = { id: number; name: string; email: string; role: Role; status: "active" | "invited"; isCurrentUser: boolean };
 type SettingsPayload = {
-  shell: { isSuperAdmin: boolean; role: Role; capabilities: string[]; currentSchool: { id: number; name: string; logo: string | null; organizationType: string }; schools: Array<{ id: number; name: string }>; user: { displayName: string } };
+  shell: { isSuperAdmin: boolean; role: Role; capabilities: string[]; currentSchool: { id: number; name: string; logo: string | null; organizationType: string; publicIdentifier: string }; schools: Array<{ id: number; name: string }>; user: { displayName: string } };
   settings: { notifications: { newFeedbackEmail: boolean; lowRatingFeedbackEmail: boolean; weeklySummaryEmail: boolean }; organizationCode: string };
   team?: TeamMember[];
 };
@@ -107,7 +108,7 @@ export function HospitalitySettingsPage() {
     schoolOptions={shell.schools.length > 1 ? shell.schools : undefined} selectedSchool={school.id}
     workspaceSelectorLabel="Organization workspace"
     onSchoolChange={(schoolId) => { window.location.href = `/dashboard/organizations/${schoolId}/settings/`; }}
-    actions={<><HospitalityActivityNotifications organizationId={school.id} /><DashboardHeaderTools nav={navigation} organizationId={school.id} enableSupport canRaiseSupport={!shell.isSuperAdmin} /><button type="button" className="manage-icon-button hospitality-theme-toggle" onClick={toggleTheme} aria-label={darkTheme ? "Use light theme" : "Use dark theme"} title={darkTheme ? "Use light theme" : "Use dark theme"}>{darkTheme ? <Sun size={16} /> : <Moon size={16} />}</button></>}
+    actions={<><HospitalityActivityNotifications organizationId={school.id} /><DashboardHeaderTools nav={navigation} organizationId={school.id} enableSupport canRaiseSupport={!shell.isSuperAdmin} /><button type="button" className="manage-icon-button hospitality-theme-toggle" onClick={toggleTheme} aria-label={darkTheme ? "Use light theme" : "Use dark theme"} title={darkTheme ? "Use light theme" : "Use dark theme"}>{darkTheme ? <Sun size={16} /> : <Moon size={16} />}</button><a className="manage-button is-primary" href={`/venue/${school.publicIdentifier}/?preview=dashboard`} target="_blank" rel="noreferrer"><Eye size={14} />Preview profile</a></>}
   >
     <div className="hospitality-settings">
       {error ? <div className="manage-alert school-message" role="alert">{error}</div> : null}

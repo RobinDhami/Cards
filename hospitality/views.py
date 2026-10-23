@@ -550,11 +550,12 @@ def _team_payload(member):
 
 def _hospitality_shell(request, organization, role):
     organizations = accessible_organizations(request.user).filter(organization_type='hospitality').order_by('name')
+    venue, _ = VenueProfile.objects.get_or_create(organization=organization)
     return {
         'isSuperAdmin': request.user.is_superuser,
         'role': role,
         'capabilities': sorted({'overview', 'profile', 'menu', 'feedback', 'staff', 'analytics', 'settings', 'team'} & ({'overview', 'profile', 'menu', 'feedback', 'staff', 'analytics', 'settings', 'team'} if request.user.is_superuser else ROLE_CAPABILITIES.get(role, set()))),
-        'currentSchool': {'id': organization.pk, 'name': organization.name, 'logo': _file_url(request, organization.logo), 'organizationType': organization.organization_type, 'themePrimary': organization.theme_primary},
+        'currentSchool': {'id': organization.pk, 'name': organization.name, 'logo': _file_url(request, organization.logo), 'organizationType': organization.organization_type, 'themePrimary': organization.theme_primary, 'publicIdentifier': venue.public_identifier},
         'schools': [{'id': item.pk, 'name': item.name} for item in organizations],
         'user': {'displayName': request.user.get_full_name().strip() or request.user.username},
     }
