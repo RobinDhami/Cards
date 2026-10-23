@@ -198,6 +198,16 @@
 /* Keep catalog tables usable on narrow screens: the table scrolls, while the
    page and its controls stay within the viewport. */
 @media (max-width:640px) {
+  .manage-app--hospitality,
+  .manage-app--hospitality > .manage-main,
+  .manage-app--hospitality .manage-content,
+  .manage-app--hospitality .menu-management,
+  .manage-app--hospitality .menu-management-grid,
+  .manage-app--hospitality .menu-list-panel,
+  .manage-app--hospitality .category-management-panel { width: 100%; max-width: 100%; min-width: 0; }
+  .manage-app--hospitality,
+  .manage-app--hospitality > .manage-main,
+  .manage-app--hospitality .manage-content { overflow-x: hidden; }
   .menu-management-grid--items .menu-category-panel { display: none; }
   .menu-list-panel { overflow-x: auto; overflow-y: hidden; }
   .menu-list-table { min-width: 700px; }
