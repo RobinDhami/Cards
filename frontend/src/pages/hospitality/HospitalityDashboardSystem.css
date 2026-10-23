@@ -195,6 +195,38 @@
   .manage-app--hospitality .manage-header-actions .hospitality-notification-control { pointer-events:auto; }
 }
 
+/* Keep catalog tables usable on narrow screens: the table scrolls, while the
+   page and its controls stay within the viewport. */
+@media (max-width:640px) {
+  .menu-management-grid--items .menu-category-panel { display: none; }
+  .menu-list-panel { overflow-x: auto; overflow-y: hidden; }
+  .menu-list-table { min-width: 700px; }
+  .menu-list-head,
+  .menu-list-row { display: grid; grid-template-columns: 24px minmax(185px,1.3fr) 98px 124px 164px; gap: 8px; padding-inline: 12px; }
+  .menu-list-head { min-height: 38px; }
+  .menu-list-row { min-height: 68px; padding-block: 9px; }
+  .menu-list-row > :nth-child(3),
+  .menu-list-row > .menu-status,
+  .menu-list-row > .menu-switch { display: inline-flex; }
+  .menu-list-row > :nth-child(3),
+  .menu-list-row > .menu-switch { display: none; }
+  .menu-row-actions { grid-column: auto; min-width: 164px; flex-wrap: nowrap; border-top: 0; padding-top: 0; justify-content: flex-end; }
+  .menu-list-identity > img,
+  .menu-list-identity > span { width: 48px; height: 48px; }
+  .menu-list-identity strong { font-size: 12px; }
+  .menu-list-identity small { font-size: 10px; }
+
+  .category-management-panel { overflow-x: auto; }
+  .category-management-table { min-width: 650px; }
+  .category-management-head,
+  .category-management-row { display: grid; grid-template-columns: minmax(250px,1.4fr) 105px 140px 146px; gap: 12px; padding-inline: 16px; }
+  .category-management-head { min-height: 42px; }
+  .category-management-row { min-height: 68px; padding-block: 9px; }
+  .category-management-row > .category-items-count,
+  .category-management-row > .category-visibility,
+  .category-management-row > .category-row-actions { grid-column: auto; grid-row: auto; }
+}
+
 /* Menu management has its own dense table markup. Keep it readable and contained
    when the hospitality workspace is in dark mode or viewed on a phone. */
 .manage-app--hospitality-theme-dark .menu-management-actions { border-bottom-color: rgba(148,163,184,.2); }
