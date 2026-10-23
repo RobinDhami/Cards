@@ -2,11 +2,17 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import ArrowDown from 'lucide-react/dist/esm/icons/arrow-down.js'
 import ArrowUp from 'lucide-react/dist/esm/icons/arrow-up.js'
+import CakeSlice from 'lucide-react/dist/esm/icons/cake-slice.js'
+import Coffee from 'lucide-react/dist/esm/icons/coffee.js'
 import Copy from 'lucide-react/dist/esm/icons/copy.js'
+import CookingPot from 'lucide-react/dist/esm/icons/cooking-pot.js'
 import Eye from 'lucide-react/dist/esm/icons/eye.js'
+import Grid2X2 from 'lucide-react/dist/esm/icons/grid-2x2.js'
 import Pencil from 'lucide-react/dist/esm/icons/pencil.js'
 import Plus from 'lucide-react/dist/esm/icons/plus.js'
 import Search from 'lucide-react/dist/esm/icons/search.js'
+import Soup from 'lucide-react/dist/esm/icons/soup.js'
+import SunMedium from 'lucide-react/dist/esm/icons/sun-medium.js'
 import Tag from 'lucide-react/dist/esm/icons/tag.js'
 import Trash2 from 'lucide-react/dist/esm/icons/trash-2.js'
 import Utensils from 'lucide-react/dist/esm/icons/utensils.js'
@@ -47,6 +53,16 @@ function apiDateTime(value: string) {
 function npr(value: string) {
   const amount = Number(value)
   return Number.isFinite(amount) ? `NPR ${amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : value
+}
+
+function categoryIcon(name: string) {
+  const value = name.toLowerCase()
+  if (value.includes('dessert')) return CakeSlice
+  if (value.includes('breakfast')) return SunMedium
+  if (value.includes('snack')) return Soup
+  if (value.includes('main')) return CookingPot
+  if (value.includes('drink') || value.includes('beverage') || value.includes('coffee')) return Coffee
+  return Utensils
 }
 
 function itemDraft(item: MenuItem): Draft {
@@ -244,10 +260,10 @@ export function HospitalityMenuManagement({ organizationId, publicIdentifier }: 
       <div className="menu-management-grid">
         <aside className="menu-category-panel">
           <header><h2>Categories</h2><span>{items.length} items</span></header>
-          <button type="button" className={categoryFilter === 'all' ? 'is-active' : ''} onClick={() => setCategoryFilter('all')}><strong>All items</strong><span>{items.length}</span></button>
-          {categories.map((category, index) => <div className={`menu-category-row${categoryFilter === String(category.id) ? ' is-active' : ''}`} key={category.id}>
-            {editingCategory?.id === category.id ? <form onSubmit={saveCategory}><TextInput autoFocus value={editingCategory.name} onChange={(event) => setEditingCategory({ ...editingCategory, name: event.target.value })} /><button>Save</button><button type="button" onClick={() => setEditingCategory(null)}>Cancel</button></form> : <><button type="button" onClick={() => setCategoryFilter(String(category.id))}><strong>{category.name}</strong><span>{counts.get(category.id) || 0}</span></button><div><button type="button" disabled={index === 0} aria-label={`Move ${category.name} up`} onClick={() => void moveCategory(category, -1)}><ArrowUp size={13} /></button><button type="button" disabled={index === categories.length - 1} aria-label={`Move ${category.name} down`} onClick={() => void moveCategory(category, 1)}><ArrowDown size={13} /></button><button type="button" aria-label={`Rename ${category.name}`} onClick={() => setEditingCategory(category)}><Pencil size={13} /></button><button type="button" aria-label={`Delete ${category.name}`} onClick={() => { setDeletingCategory(category); setMoveTarget('') }}><Trash2 size={13} /></button></div></>}
-          </div>)}
+          <button type="button" className={categoryFilter === 'all' ? 'is-active' : ''} onClick={() => setCategoryFilter('all')}><Grid2X2 size={19} /><strong>All items</strong><span>{items.length}</span></button>
+          {categories.map((category, index) => { const CategoryIcon = categoryIcon(category.name); return (<div className={`menu-category-row${categoryFilter === String(category.id) ? ' is-active' : ''}`} key={category.id}>
+            {editingCategory?.id === category.id ? <form onSubmit={saveCategory}><TextInput autoFocus value={editingCategory.name} onChange={(event) => setEditingCategory({ ...editingCategory, name: event.target.value })} /><button>Save</button><button type="button" onClick={() => setEditingCategory(null)}>Cancel</button></form> : <><button type="button" onClick={() => setCategoryFilter(String(category.id))}><CategoryIcon size={19} /><strong>{category.name}</strong><span>{counts.get(category.id) || 0}</span></button><div><button type="button" disabled={index === 0} aria-label={`Move ${category.name} up`} title="Move up" onClick={() => void moveCategory(category, -1)}><ArrowUp size={13} /></button><button type="button" disabled={index === categories.length - 1} aria-label={`Move ${category.name} down`} title="Move down" onClick={() => void moveCategory(category, 1)}><ArrowDown size={13} /></button><button type="button" aria-label={`Rename ${category.name}`} title="Rename" onClick={() => setEditingCategory(category)}><Pencil size={13} /></button><button type="button" aria-label={`Delete ${category.name}`} title="Delete" onClick={() => { setDeletingCategory(category); setMoveTarget('') }}><Trash2 size={13} /></button></div></>}
+          </div>)} )}
           <form className="menu-add-category" onSubmit={saveCategory}><TextInput aria-label="New category name" value={categoryName} onChange={(event) => setCategoryName(event.target.value)} placeholder="New category" /><button className="manage-button" disabled={!categoryName.trim()}><Plus size={14} /> Add</button></form>
         </aside>
         <div className="menu-list-panel">
