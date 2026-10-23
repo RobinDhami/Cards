@@ -50,6 +50,7 @@ import { HospitalityStaffCards } from "./HospitalityStaffCards";
 import { HospitalityAnalytics } from "./HospitalityAnalytics";
 import { HospitalityRewardsProgram } from "./HospitalityRewardsProgram";
 import { HospitalityRewardsMembers } from "./HospitalityRewardsMembers";
+import { HospitalityActivityNotifications } from "./HospitalityActivityNotifications";
 import googleGLogo from "./google-g.svg";
 import "./HospitalityWorkspace.css";
 import "./HospitalityDashboardSystem.css";
@@ -310,7 +311,7 @@ function VenueShell({
       userName={shell.user.displayName}
       userRole=""
       accent="#2563eb"
-      showNotifications
+      showNotifications={false}
       schoolOptions={shell.schools.length > 1 ? shell.schools : undefined}
       selectedSchool={school?.id ?? null}
       workspaceSelectorLabel="Organization workspace"
@@ -319,6 +320,7 @@ function VenueShell({
       }}
       actions={
         <>
+          {school?.id ? <HospitalityActivityNotifications organizationId={school.id} /> : null}
           {school?.id ? <DashboardHeaderTools nav={navigation} organizationId={school.id} enableSupport canRaiseSupport={!shell.isSuperAdmin} /> : null}
           <button type="button" className="manage-icon-button hospitality-theme-toggle" onClick={toggleTheme} aria-label={darkTheme ? "Use light theme" : "Use dark theme"} title={darkTheme ? "Use light theme" : "Use dark theme"}>
             {darkTheme ? <Sun size={16} /> : <Moon size={16} />}

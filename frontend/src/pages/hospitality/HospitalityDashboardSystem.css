@@ -117,6 +117,30 @@
 .manage-app--hospitality-theme-dark .dashboard-search-results a { color:#e2e8f0; }
 .manage-app--hospitality-theme-dark .dashboard-support-popover a:hover,
 .manage-app--hospitality-theme-dark .dashboard-search-results a:hover { background:#273449; color:#fff; }
+.manage-app--hospitality-theme-dark .feedback-page { color:#e2e8f0; }
+.manage-app--hospitality-theme-dark .feedback-metrics article,
+.manage-app--hospitality-theme-dark :is(.feedback-inbox,.feedback-detail,.feedback-google-separate) { border-color:rgba(148,163,184,.2); background:#1f2937; }
+.manage-app--hospitality-theme-dark .feedback-filters,
+.manage-app--hospitality-theme-dark .feedback-detail>header,
+.manage-app--hospitality-theme-dark :is(.feedback-context,.feedback-contact,.feedback-no-contact) { border-color:rgba(148,163,184,.18); }
+.manage-app--hospitality-theme-dark .feedback-row { border-color:rgba(148,163,184,.15); background:#1f2937; }
+.manage-app--hospitality-theme-dark .feedback-row:hover { background:#273449; }
+.manage-app--hospitality-theme-dark .feedback-row.is-selected { background:#243244; box-shadow:inset 0 0 0 1px #3b82f6; }
+.manage-app--hospitality-theme-dark :is(.feedback-metrics strong,.feedback-row-copy strong,.feedback-detail blockquote,.feedback-detail-form label,.feedback-empty h2,.feedback-google-separate strong) { color:#f8fafc; }
+.manage-app--hospitality-theme-dark :is(.feedback-metrics small,.feedback-metrics p,.feedback-row-copy>span:last-child,.feedback-row-meta time,.feedback-context,.feedback-no-contact,.feedback-google-separate p) { color:#94a3b8; }
+.manage-app--hospitality-theme-dark .hospitality-settings-tabs { border-color:rgba(148,163,184,.18); }
+.manage-app--hospitality-theme-dark .hospitality-settings-tabs button { color:#94a3b8; }
+.manage-app--hospitality-theme-dark .hospitality-settings-tabs button.is-active { border-color:#60a5fa; color:#93c5fd; }
+.manage-app--hospitality-theme-dark .hospitality-settings-callout { border-color:#35547a; background:#172a43; color:#bfdbfe; }
+.manage-app--hospitality-theme-dark .hospitality-role-grid article,
+.manage-app--hospitality-theme-dark .hospitality-team-table,
+.manage-app--hospitality-theme-dark .hospitality-role-permissions>div,
+.manage-app--hospitality-theme-dark .hospitality-preference-list label { border-color:rgba(148,163,184,.18); }
+.manage-app--hospitality-theme-dark .hospitality-role-grid article.is-current { border-color:#3b82f6; background:#172a43; }
+.manage-app--hospitality-theme-dark :is(.hospitality-settings-heading h2,.hospitality-section-title h2,.hospitality-settings-card h2,.hospitality-invite label,.hospitality-advanced-form label,.hospitality-preference-list strong,.hospitality-unavailable strong) { color:#f8fafc; }
+.manage-app--hospitality-theme-dark :is(.hospitality-settings-heading p,.hospitality-section-title p,.hospitality-muted,.hospitality-role-grid p,.hospitality-role-permissions p,.hospitality-unavailable p,.hospitality-advanced-form p) { color:#94a3b8; }
+.manage-app--hospitality-theme-dark .hospitality-team-head,
+.manage-app--hospitality-theme-dark .hospitality-unavailable { border-color:rgba(148,163,184,.18); background:#172235; color:#cbd5e1; }
 
 /* The theme control returns the work surface to the light slate palette without changing the sidebar. */
 .manage-app--hospitality-theme-light {
@@ -159,5 +183,5 @@
 @media (max-width:640px) {
   .manage-app--hospitality .manage-header-actions { grid-template-columns:auto auto auto minmax(0,1fr); }
   .manage-app--hospitality .manage-header-actions > .manage-icon-button { display:grid; }
-  .manage-app--hospitality .manage-header-actions > .manage-button { justify-self:end; }
+  .manage-app--hospitality .manage-header-actions > .manage-button { width:100%; grid-column:1/-1; justify-self:stretch; }
 }

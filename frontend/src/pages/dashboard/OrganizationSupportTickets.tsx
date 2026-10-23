@@ -10,6 +10,7 @@ import { DashboardHeaderTools } from '../../components/manage/DashboardHeaderToo
 import { ManageShell } from '../../components/manage/ManageShell'
 import { apiFetch, displayError, jsonBody } from '../../lib/api'
 import { schoolWorkspaceNav } from '../school/schoolWorkspaceNav'
+import { HospitalityActivityNotifications } from '../hospitality/HospitalityActivityNotifications'
 import '../hospitality/HospitalityWorkspace.css'
 import '../hospitality/HospitalityDashboardSystem.css'
 import './PlatformTickets.css'
@@ -67,7 +68,7 @@ export function OrganizationSupportTickets() {
   })
 
   return (
-    <ManageShell brand={organization.name} logo={organization.logo || undefined} nav={navigation} title="Support" userName={data.user.displayName} userRole="" accent={organization.themePrimary || '#0b4bcb'} className={isHospitality ? `manage-app--hospitality ${darkTheme ? 'manage-app--hospitality-theme-dark' : 'manage-app--hospitality-theme-light'}` : ''} actions={<><DashboardHeaderTools nav={navigation} organizationId={organization.id} enableSupport canRaiseSupport={!data.isSuperAdmin} />{isHospitality ? <button type="button" className="manage-icon-button hospitality-theme-toggle" onClick={toggleTheme} aria-label={darkTheme ? 'Use light theme' : 'Use dark theme'} title={darkTheme ? 'Use light theme' : 'Use dark theme'}>{darkTheme ? <Sun size={16} /> : <Moon size={16} />}</button> : null}</>}>
+    <ManageShell brand={organization.name} logo={organization.logo || undefined} nav={navigation} title="Support" userName={data.user.displayName} userRole="" accent={organization.themePrimary || '#0b4bcb'} showNotifications={!isHospitality} className={isHospitality ? `manage-app--hospitality ${darkTheme ? 'manage-app--hospitality-theme-dark' : 'manage-app--hospitality-theme-light'}` : ''} actions={<>{isHospitality ? <HospitalityActivityNotifications organizationId={organization.id} /> : null}<DashboardHeaderTools nav={navigation} organizationId={organization.id} enableSupport canRaiseSupport={!data.isSuperAdmin} />{isHospitality ? <button type="button" className="manage-icon-button hospitality-theme-toggle" onClick={toggleTheme} aria-label={darkTheme ? 'Use light theme' : 'Use dark theme'} title={darkTheme ? 'Use light theme' : 'Use dark theme'}>{darkTheme ? <Sun size={16} /> : <Moon size={16} />}</button> : null}</>}>
       <div className="platform-tickets-page organization-support-page">
         {error ? <div className="platform-ticket-error" role="alert">{error}</div> : null}
         <div className="platform-ticket-toolbar"><span>{data.tickets.length} {data.tickets.length === 1 ? 'ticket' : 'tickets'}</span>{!data.isSuperAdmin ? <button type="button" className="manage-button is-primary" onClick={() => setShowForm(true)}><Plus size={16} />Raise ticket</button> : null}</div>

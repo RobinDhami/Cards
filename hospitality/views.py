@@ -521,7 +521,7 @@ def venue_rewards_transaction_api(request, organization_id):
 
 @require_http_methods(['GET'])
 def venue_operational_activity_api(request, organization_id):
-    venue = _venue_for(request, organization_id, 'settings')
+    venue = _venue_for(request, organization_id, 'overview')
     if not venue:
         return JsonResponse({'error': 'Not authorized.'}, status=403)
     rows = venue.operational_activity.select_related('actor').all()[:200]

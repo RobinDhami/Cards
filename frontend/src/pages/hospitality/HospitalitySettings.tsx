@@ -14,11 +14,12 @@ import Trash2 from "lucide-react/dist/esm/icons/trash-2.js";
 import Users from "lucide-react/dist/esm/icons/users.js";
 import { ManageShell } from "../../components/manage/ManageShell";
 import { DashboardHeaderTools } from "../../components/manage/DashboardHeaderTools";
+import { HospitalityActivityNotifications } from "./HospitalityActivityNotifications";
 import { apiFetch, displayError, jsonBody } from "../../lib/api";
 import { schoolWorkspaceNav } from "../school/schoolWorkspaceNav";
 import "./HospitalityWorkspace.css";
-import "./HospitalityDashboardSystem.css";
 import "./HospitalitySettings.css";
+import "./HospitalityDashboardSystem.css";
 
 type Role = "owner" | "manager" | "menu_editor";
 type TeamMember = { id: number; name: string; email: string; role: Role; status: "active" | "invited"; isCurrentUser: boolean };
@@ -106,7 +107,7 @@ export function HospitalitySettingsPage() {
     schoolOptions={shell.schools.length > 1 ? shell.schools : undefined} selectedSchool={school.id}
     workspaceSelectorLabel="Organization workspace"
     onSchoolChange={(schoolId) => { window.location.href = `/dashboard/organizations/${schoolId}/settings/`; }}
-    actions={<><DashboardHeaderTools nav={navigation} organizationId={school.id} enableSupport canRaiseSupport={!shell.isSuperAdmin} /><button type="button" className="manage-icon-button hospitality-theme-toggle" onClick={toggleTheme} aria-label={darkTheme ? "Use light theme" : "Use dark theme"} title={darkTheme ? "Use light theme" : "Use dark theme"}>{darkTheme ? <Sun size={16} /> : <Moon size={16} />}</button></>}
+    actions={<><HospitalityActivityNotifications organizationId={school.id} /><DashboardHeaderTools nav={navigation} organizationId={school.id} enableSupport canRaiseSupport={!shell.isSuperAdmin} /><button type="button" className="manage-icon-button hospitality-theme-toggle" onClick={toggleTheme} aria-label={darkTheme ? "Use light theme" : "Use dark theme"} title={darkTheme ? "Use light theme" : "Use dark theme"}>{darkTheme ? <Sun size={16} /> : <Moon size={16} />}</button></>}
   >
     <div className="hospitality-settings">
       {error ? <div className="manage-alert school-message" role="alert">{error}</div> : null}
