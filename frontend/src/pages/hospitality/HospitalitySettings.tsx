@@ -88,7 +88,7 @@ export function HospitalitySettingsPage() {
     brand={school.name} brandDetail={shell.isSuperAdmin ? "Platform administrator · Organization workspace" : "Hospitality organization"}
     logo={school.logo || undefined} className="manage-app--hospitality"
     nav={schoolWorkspaceNav(school.id, shell.isSuperAdmin, "hospitality", shell.capabilities)}
-    title="Settings" subtitle="Manage access, notifications, and internal workspace configuration."
+    title="Settings"
     userName={shell.user.displayName} userRole={shell.isSuperAdmin ? "Platform administrator" : roles.find((role) => role.value === shell.role)?.label || "Organization member"}
     accent="#145fe2" showNotifications={false}
     schoolOptions={shell.schools.length > 1 ? shell.schools : undefined} selectedSchool={school.id}
@@ -103,29 +103,28 @@ export function HospitalitySettingsPage() {
       </div>
 
       {tab === "General" ? <section className="manage-card hospitality-settings-card">
-        <div className="hospitality-settings-heading"><Settings size={20} /><div><h2>Workspace settings</h2><p>Public customer-facing information has one source of truth.</p></div></div>
-        <div className="hospitality-settings-callout"><strong>Business Profile owns public information.</strong><span>Name, address, contacts, social links, opening hours, colours, logo, and cover image are edited there so values are never duplicated.</span><a className="manage-button is-primary" href={`/dashboard/organizations/${school.id}/hospitality/?tab=profile`}>Open Business Profile <ExternalLink size={14} /></a></div>
+        <div className="hospitality-settings-heading"><Settings size={20} /><div><h2>Workspace settings</h2></div></div>
+        <div className="hospitality-settings-callout"><strong>Business Profile</strong><a className="manage-button is-primary" href={`/dashboard/organizations/${school.id}/hospitality/?tab=profile`}>Open Business Profile <ExternalLink size={14} /></a></div>
         <div className="hospitality-role-grid">{roles.map((role) => <article key={role.value} className={shell.role === role.value ? "is-current" : ""}><strong>{role.label}</strong><p>{role.detail}</p>{shell.role === role.value ? <small>Current role</small> : null}</article>)}</div>
       </section> : null}
 
       {tab === "Team access" && owner ? <section className="hospitality-settings-layout">
-        <article className="manage-card hospitality-settings-card"><div className="hospitality-section-title"><div><h2>Dashboard team</h2><p>Dashboard access is separate from public staff profiles.</p></div></div>
+        <article className="manage-card hospitality-settings-card"><div className="hospitality-section-title"><div><h2>Dashboard team</h2></div></div>
           <form className="hospitality-invite" onSubmit={invite}><label>Email address<input type="email" value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} required placeholder="person@example.com" /></label><label>Role<select value={inviteRole} onChange={(event) => setInviteRole(event.target.value as Role)}>{roles.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}</select></label><button className="manage-button is-primary" disabled={saving}><Plus size={15} />Invite</button></form>
-          <p className="hospitality-muted">Invitations become active for existing Tap2Connect accounts. Email delivery is not configured yet; invited people are shown honestly as pending.</p>
           <div className="hospitality-team-table" role="table"><div role="row" className="hospitality-team-head"><span>Name</span><span>Email</span><span>Role</span><span>Status</span><span>Actions</span></div>{(payload.team || []).map((member) => <div role="row" key={member.id}><strong>{member.name}{member.isCurrentUser ? <small> You</small> : null}</strong><span>{member.email}</span><select aria-label={`${member.name} role`} value={member.role} onChange={(event) => changeRole(member, event.target.value as Role)} disabled={saving}><option value="owner">Owner</option><option value="manager">Manager</option><option value="menu_editor">Menu editor</option></select><em className={member.status === "active" ? "is-active" : ""}>{member.status === "active" ? "Active" : "Invited"}</em><button type="button" className="manage-button is-danger" onClick={() => removeMember(member)} disabled={saving}><Trash2 size={14} />Remove</button></div>)}</div>
         </article>
         <aside className="manage-card hospitality-settings-card hospitality-role-permissions"><Users size={20} /><h2>Role permissions</h2>{roles.map((role) => <div key={role.value}><strong>{role.label}</strong><p>{role.detail}</p></div>)}</aside>
       </section> : null}
 
-      {tab === "Notifications" ? <section className="manage-card hospitality-settings-card"><div className="hospitality-settings-heading"><Bell size={20} /><div><h2>Email notifications</h2><p>Only supported email preferences are shown. Turning one on does not send an immediate email.</p></div></div><div className="hospitality-preference-list">{[
-        ["newFeedbackEmail", "New feedback", "Receive an email when a customer submits feedback."],
-        ["lowRatingFeedbackEmail", "Low-rating feedback", "Receive an email for feedback rated 3 stars or below."],
-        ["weeklySummaryEmail", "Weekly summary", "Receive a weekly summary when scheduled delivery is available."],
-      ].map(([key, label, detail]) => <label key={key}><span><Mail size={18} /><strong>{label}<small>{detail}</small></strong></span><input type="checkbox" checked={settings.notifications[key as keyof typeof settings.notifications]} onChange={(event) => void request({ action: "notifications", [key]: event.target.checked })} disabled={saving} /></label>)}</div></section> : null}
+      {tab === "Notifications" ? <section className="manage-card hospitality-settings-card"><div className="hospitality-settings-heading"><Bell size={20} /><div><h2>Email notifications</h2></div></div><div className="hospitality-preference-list">{[
+        ["newFeedbackEmail", "New feedback"],
+        ["lowRatingFeedbackEmail", "Low-rating feedback"],
+        ["weeklySummaryEmail", "Weekly summary"],
+      ].map(([key, label]) => <label key={key}><span><Mail size={18} /><strong>{label}</strong></span><input type="checkbox" checked={settings.notifications[key as keyof typeof settings.notifications]} onChange={(event) => void request({ action: "notifications", [key]: event.target.checked })} disabled={saving} /></label>)}</div></section> : null}
 
-      {tab === "Integrations" ? <section className="manage-card hospitality-settings-card"><h2>Integrations</h2><div className="hospitality-unavailable"><strong>Google Business Profile</strong><p>Unavailable — Google Business OAuth and review import are not configured for this site. Your customer-facing Google review link remains editable in Business Profile.</p></div></section> : null}
-      {tab === "Subscription" ? <section className="manage-card hospitality-settings-card"><h2>Subscription</h2><div className="hospitality-unavailable"><strong>Subscription management is unavailable</strong><p>Billing and subscription changes are not implemented in this dashboard. Contact Tap2Connect Nepal for account assistance.</p></div></section> : null}
-      {tab === "Advanced" && owner ? <section className="manage-card hospitality-settings-card"><div className="hospitality-settings-heading"><KeyRound size={20} /><div><h2>Advanced</h2><p>Internal identifiers and card-specific configuration only.</p></div></div><form className="hospitality-advanced-form" onSubmit={(event) => { event.preventDefault(); void request({ action: "organization_code", organizationCode }); }}><label>Organization code<input value={organizationCode} onChange={(event) => setOrganizationCode(event.target.value.toUpperCase())} maxLength={12} aria-describedby="organization-code-help" /></label><p id="organization-code-help">Used internally for organization administration. Public profile content remains in Business Profile.</p><button className="manage-button is-primary" disabled={saving}>{saving ? <LoaderCircle size={15} className="is-spinning" /> : <Check size={15} />}Save internal settings</button></form></section> : null}
+      {tab === "Integrations" ? <section className="manage-card hospitality-settings-card"><h2>Integrations</h2><div className="hospitality-unavailable"><strong>Google Business Profile</strong></div></section> : null}
+      {tab === "Subscription" ? <section className="manage-card hospitality-settings-card"><h2>Subscription</h2><div className="hospitality-unavailable"><strong>Subscription management is unavailable</strong></div></section> : null}
+      {tab === "Advanced" && owner ? <section className="manage-card hospitality-settings-card"><div className="hospitality-settings-heading"><KeyRound size={20} /><div><h2>Advanced</h2></div></div><form className="hospitality-advanced-form" onSubmit={(event) => { event.preventDefault(); void request({ action: "organization_code", organizationCode }); }}><label>Organization code<input value={organizationCode} onChange={(event) => setOrganizationCode(event.target.value.toUpperCase())} maxLength={12} /></label><button className="manage-button is-primary" disabled={saving}>{saving ? <LoaderCircle size={15} className="is-spinning" /> : <Check size={15} />}Save internal settings</button></form></section> : null}
     </div>
   </ManageShell>;
 }

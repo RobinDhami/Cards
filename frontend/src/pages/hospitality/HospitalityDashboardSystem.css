@@ -1,2 +1,36 @@
 /* Compact analytics cards shared by the hospitality dashboard. */
 .manage-app--hospitality .hospitality-analytics-heading{justify-content:flex-end}.manage-app--hospitality .hospitality-analytics-stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.manage-app--hospitality .hospitality-analytics-stat{display:grid;min-height:112px;align-content:start;gap:4px;border:1px solid transparent;border-radius:4px;padding:12px;color:#fff}.manage-app--hospitality .hospitality-analytics-stat.is-blue{background:#2563eb}.manage-app--hospitality .hospitality-analytics-stat.is-green{background:#15803d}.manage-app--hospitality .hospitality-analytics-stat.is-amber{background:#d97706}.manage-app--hospitality .hospitality-analytics-stat.is-red{background:#dc2626}.manage-app--hospitality .hospitality-analytics-stat>span{font-size:12px;font-weight:500}.manage-app--hospitality .hospitality-analytics-stat>strong{font-size:25px;line-height:1.1;font-variant-numeric:tabular-nums}.manage-app--hospitality .hospitality-analytics-stat-trend{display:flex;min-width:0;align-items:center;gap:3px;margin-top:auto;color:rgba(255,255,255,.9);font-size:10px}.manage-app--hospitality .hospitality-analytics-stat-trend svg{width:43px;height:20px;flex:none}.manage-app--hospitality .hospitality-analytics-stat-trend polyline{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.manage-app--hospitality .hospitality-analytics-stat-trend b{font-weight:600}.manage-app--hospitality .hospitality-analytics-stat-trend em{overflow:hidden;font-style:normal;text-overflow:ellipsis;white-space:nowrap}.manage-app--hospitality .hospitality-analytics-stat>small{color:rgba(255,255,255,.84);font-size:10px;line-height:1.3}.manage-app--hospitality .hospitality-analytics-stat-grid.is-refreshing{opacity:.65}.manage-app--hospitality .hospitality-analytics-page .hospitality-analytics-panel{border:.5px solid rgba(0,0,0,.08);border-radius:6px;box-shadow:none}.manage-app--hospitality .hospitality-analytics-page .hospitality-analytics-panel>header{margin-bottom:12px}.manage-app--hospitality .hospitality-analytics-page .hospitality-analytics-panel h3{font-size:14px;font-weight:600}.manage-app--hospitality .hospitality-analytics-page .hospitality-analytics-range{border-radius:4px;padding:4px 8px}.manage-app--hospitality .hospitality-analytics-page .hospitality-analytics-empty{min-height:120px;font-size:12px}@media(max-width:980px){.manage-app--hospitality .hospitality-analytics-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.manage-app--hospitality .hospitality-analytics-stat-grid{grid-template-columns:1fr}.manage-app--hospitality .hospitality-analytics-stat{min-height:100px}.manage-app--hospitality .hospitality-analytics-heading{justify-content:stretch}.manage-app--hospitality .hospitality-analytics-heading .hospitality-analytics-range{align-self:stretch}}
+
+/* Dashboard type scale: one compact hierarchy across every workspace. */
+.manage-app--hospitality,
+.manage-app--hospitality button,
+.manage-app--hospitality input,
+.manage-app--hospitality select,
+.manage-app--hospitality textarea { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.manage-app--hospitality { font-size: 14px; font-weight: 400; }
+.manage-app--hospitality .manage-title h1,
+.manage-app--hospitality .hospitality-page-header h1,
+.manage-app--hospitality .feedback-heading h1 { font-size: 18px; font-weight: 600; line-height: 1.25; }
+.manage-app--hospitality h2,
+.manage-app--hospitality .hospitality-section-title h2 { font-size: 16px; font-weight: 600; line-height: 1.3; }
+.manage-app--hospitality h3,
+.manage-app--hospitality .menu-table-item strong,
+.manage-app--hospitality .feedback-row-copy strong { font-size: 14px; font-weight: 600; line-height: 1.35; }
+.manage-app--hospitality .manage-button,
+.manage-app--hospitality .manage-tab,
+.manage-app--hospitality .hospitality-sidebar-nav a,
+.manage-app--hospitality .hospitality-sidebar-nav button,
+.manage-app--hospitality label,
+.manage-app--hospitality select { font-size: 13px; font-weight: 500; }
+.manage-app--hospitality small,
+.manage-app--hospitality .hospitality-muted,
+.manage-app--hospitality .feedback-row-meta,
+.manage-app--hospitality .hospitality-overview-empty { font-size: 12px; font-weight: 400; }
+.manage-app--hospitality .menu-table-head,
+.manage-app--hospitality .hospitality-team-head,
+.manage-app--hospitality .hospitality-touchpoint-head,
+.manage-app--hospitality th { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.manage-app--hospitality .numeric,
+.manage-app--hospitality .menu-table-price,
+.manage-app--hospitality .hospitality-analytics-stat strong,
+.manage-app--hospitality .feedback-metrics strong { font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }

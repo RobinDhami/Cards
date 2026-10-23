@@ -227,8 +227,6 @@ const itemHasReducedPrice = (item: Item) => {
   const current = Number(item.price);
   return itemIsOffer(item) && Number.isFinite(original) && Number.isFinite(current) && original > current;
 };
-// Kept while the older internal menu helpers remain in this module; the active
-// Analytics page owns its own, richer API contract.
 type LegacyAnalytics = {
   totals: Record<string, number>;
   feedback: { count: number; average: number; ratingBreakdown: Record<string, number> };

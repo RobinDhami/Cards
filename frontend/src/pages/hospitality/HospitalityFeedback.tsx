@@ -119,14 +119,14 @@ export function HospitalityFeedback({ organizationId, googleReviewUrl }: { organ
 
   return <div className="feedback-page">
     <header className="feedback-heading">
-      <div><h1>Customer Feedback</h1><p>Private feedback submitted through your profile</p></div>
+      <div><h1>Customer Feedback</h1></div>
     </header>
 
     {error ? <div className="manage-alert" role="alert">{error}</div> : null}
     <section className="feedback-metrics" aria-label="Feedback summary">
-      <article><span className="feedback-metric-icon is-blue"><MessageSquare size={21} /></span><div><small>Feedback received</small><strong>{summary.count}</strong><p>All private submissions</p></div></article>
-      <article><span className="feedback-metric-icon is-green"><Star size={21} /></span><div><small>Average feedback rating</small><strong>{summary.average === null ? 'No ratings yet' : `${Number(summary.average).toFixed(1)} / 5`}</strong><p>{summary.count ? `Based on ${summary.count} feedback` : 'Waiting for the first response'}</p></div></article>
-      <article><span className="feedback-metric-icon is-amber"><AlertTriangle size={21} /></span><div><small>Needs attention</small><strong>{summary.unresolved}</strong><p>New or in progress</p></div></article>
+      <article><span className="feedback-metric-icon is-blue"><MessageSquare size={21} /></span><div><small>Feedback received</small><strong>{summary.count}</strong></div></article>
+      <article><span className="feedback-metric-icon is-green"><Star size={21} /></span><div><small>Average rating</small><strong>{summary.average === null ? 'No ratings yet' : `${Number(summary.average).toFixed(1)} / 5`}</strong></div></article>
+      <article><span className="feedback-metric-icon is-amber"><AlertTriangle size={21} /></span><div><small>Needs attention</small><strong>{summary.unresolved}</strong></div></article>
     </section>
 
     <div className="feedback-workspace">
@@ -146,7 +146,7 @@ export function HospitalityFeedback({ organizationId, googleReviewUrl }: { organ
             <span className="feedback-row-copy"><strong>{entry.contact_name || 'Anonymous customer'}</strong><Stars rating={entry.rating} /><span>{entry.comment || 'Rating only; no message provided.'}</span></span>
             <span className="feedback-row-meta"><time dateTime={entry.created_at}>{feedbackDate(entry.created_at)}</time><em className={`is-${entry.status}`}>{statusLabels[entry.status]}</em></span>
           </button>) : <div className="feedback-empty">
-            <MessageSquare size={28} /><h2>{summary.count ? 'No feedback matches these filters' : 'No feedback yet'}</h2><p>{summary.count ? 'Try another rating, status, or date range.' : 'New anonymous customer submissions will appear here.'}</p>
+            <MessageSquare size={28} /><h2>{summary.count ? 'No feedback matches these filters' : 'No feedback yet'}</h2>
           </div>}
         </div>
       </section>
@@ -164,10 +164,10 @@ export function HospitalityFeedback({ organizationId, googleReviewUrl }: { organ
             <button className="manage-button is-primary" type="button" disabled={saving || note === selected.internal_note} onClick={() => void updateFeedback({ internal_note: note })}>{saving ? 'Saving…' : 'Save note'}</button>
             {notice ? <p className="feedback-notice" role="status">{notice}</p> : null}
           </div>
-          </> : <div className="feedback-empty"><LockKeyhole size={28} /><h2>Select feedback</h2><p>Choose a submission to review its private details.</p></div>}
+          </> : <div className="feedback-empty"><LockKeyhole size={28} /><h2>Select feedback</h2></div>}
         </aside>
         <aside className="feedback-google-separate">
-          <div><strong>Google reviews are separate</strong><p>Google review clicks are tracked independently and are not counted as private feedback.</p></div>
+          <div><strong>Google reviews</strong></div>
           {googleReviewUrl
             ? <a className="manage-button" href={googleReviewUrl} target="_blank" rel="noreferrer">Open Google review page</a>
             : <a className="manage-button" href={`/dashboard/organizations/${organizationId}/hospitality/?tab=profile`}>Add Google review link</a>}
