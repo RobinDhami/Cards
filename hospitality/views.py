@@ -1328,7 +1328,7 @@ def venue_overview_api(request, organization_id):
     if not request.user.is_superuser:
         organizations = organizations.filter(admin_user=request.user)
     setup = [
-        {'key': 'profile', 'label': 'Profile published',
+        {'key': 'profile', 'label': 'Profile details published',
          'complete': bool(venue.is_active and venue.description.strip() and (venue.organization.phone or venue.organization.email))},
         {'key': 'menu', 'label': 'Menu has items', 'complete': item_count > 0},
         {'key': 'feedback', 'label': 'Feedback form enabled', 'complete': venue.feedback_enabled},

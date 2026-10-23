@@ -528,7 +528,7 @@ class HospitalityWorkspaceTests(TestCase):
         self.assertEqual(len(payload['recentFeedback']), 2)
         self.assertNotIn('name', payload['recentFeedback'][0])
         self.assertEqual(payload['setup'], [
-            {'key': 'profile', 'label': 'Profile published', 'complete': False},
+            {'key': 'profile', 'label': 'Profile details published', 'complete': False},
             {'key': 'menu', 'label': 'Menu has items', 'complete': True},
             {'key': 'feedback', 'label': 'Feedback form enabled', 'complete': True},
         ])

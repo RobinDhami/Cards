@@ -175,10 +175,10 @@ export function HospitalityOverview({ organizationId, publicIdentifier, organiza
   const readyForCustomers = Boolean(data?.readiness.profileReady && data.readiness.menuItemCount > 0 && data.readiness.feedbackEnabled && qrDownloaded)
   const incompleteSteps = checklist.filter((step) => !step.complete)
   const stepActions: Record<string, { label: string; href?: string; onClick?: () => void }> = {
-    profile: { label: 'Edit business details', href: `/dashboard/organizations/${organizationId}/hospitality/?tab=profile` },
+    profile: { label: 'Complete profile', href: `/dashboard/organizations/${organizationId}/hospitality/?tab=profile` },
     menu: { label: 'Add menu item', href: `/dashboard/organizations/${organizationId}/hospitality/?tab=menu&action=add-item` },
     qr: { label: 'Download QR', onClick: () => setShareOpen(true) },
-    feedback: { label: 'Review profile settings', href: `/dashboard/organizations/${organizationId}/hospitality/?tab=profile` },
+    feedback: { label: 'Enable feedback', href: `/dashboard/organizations/${organizationId}/hospitality/?tab=profile` },
   }
 
   return (
@@ -197,7 +197,10 @@ export function HospitalityOverview({ organizationId, publicIdentifier, organiza
         <section className="hospitality-readiness">
           <div><h2>{readyForCustomers ? `${organizationName} is ready` : `Set up ${organizationName}`}</h2></div>
           <div className="hospitality-readiness-progress"><span>Pilot setup <strong>{doneCount} of {checklist.length} complete</strong></span><i><b style={{ width: `${progress}%` }} /></i></div>
-          <button type="button" className="manage-button is-primary" onClick={() => setShareOpen(true)}><QrCode size={15} />Share QR code</button>
+          <div className="hospitality-readiness-actions">
+            {!readyForCustomers && !data.readiness.profileReady ? <a className="manage-button" href={`/dashboard/organizations/${organizationId}/hospitality/?tab=profile`}><Check size={15} />Complete profile</a> : null}
+            <button type="button" className="manage-button is-primary" onClick={() => setShareOpen(true)}><QrCode size={15} />Share QR code</button>
+          </div>
         </section>
         <section className="hospitality-attention-panel">
           <header><div><h2>{incompleteSteps.length ? 'Needs attention' : 'Setup complete'}</h2></div></header>
