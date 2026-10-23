@@ -46,6 +46,8 @@ import { HospitalityFeedback } from "./HospitalityFeedback";
 import { HospitalityStaffCards } from "./HospitalityStaffCards";
 import { HospitalityAnalytics } from "./HospitalityAnalytics";
 import { HospitalityRewardsProgram } from "./HospitalityRewardsProgram";
+import { HospitalityRewardsMembers } from "./HospitalityRewardsMembers";
+import { HospitalityOperationalActivity } from "./HospitalityOperationalActivity";
 import googleGLogo from "./google-g.svg";
 import "./HospitalityWorkspace.css";
 import "./PublicCafeProfile.css";
@@ -247,7 +249,7 @@ type HospitalityShell = {
   schools: Array<{ id: number; name: string }>;
   user: { displayName: string };
 };
-type HospitalityAdminSection = "overview" | "profile" | "menu" | "feedback" | "staff" | "loyalty" | "analytics";
+type HospitalityAdminSection = "overview" | "profile" | "menu" | "feedback" | "staff" | "loyalty" | "members" | "activity" | "analytics";
 
 function organizationId() {
   return Number(
@@ -257,7 +259,7 @@ function organizationId() {
 
 function hospitalityAdminSection(): HospitalityAdminSection {
   const section = new URLSearchParams(window.location.search).get("tab");
-  return section === "profile" || section === "menu" || section === "feedback" || section === "staff" || section === "loyalty" || section === "analytics"
+  return section === "profile" || section === "menu" || section === "feedback" || section === "staff" || section === "loyalty" || section === "members" || section === "activity" || section === "analytics"
     ? section
     : "overview";
 }
@@ -290,6 +292,14 @@ const hospitalitySectionDetails: Record<
   loyalty: {
     title: "Rewards program",
     subtitle: "Set how customers earn and redeem rewards on qualifying orders.",
+  },
+  members: {
+    title: "Loyalty members",
+    subtitle: "Find phone-based members, balances, and rewards activity.",
+  },
+  activity: {
+    title: "Business activity",
+    subtitle: "A record of dashboard changes made by your team.",
   },
   analytics: {
     title: "Analytics",
@@ -1193,7 +1203,7 @@ function HospitalityAdminPanel() {
   useEffect(() => {
     if (!shell) return;
     const capabilityFor: Record<HospitalityAdminSection, string> = {
-      overview: "overview", profile: "profile", menu: "menu", feedback: "feedback", staff: "staff", loyalty: "settings", analytics: "analytics",
+      overview: "overview", profile: "profile", menu: "menu", feedback: "feedback", staff: "staff", loyalty: "settings", members: "staff", activity: "settings", analytics: "analytics",
     };
     if (!shell.capabilities.includes(capabilityFor[activeTab])) {
       window.location.replace(`/dashboard/organizations/${id}/hospitality/?tab=menu`);
@@ -1411,6 +1421,8 @@ function HospitalityAdminPanel() {
       {activeTab === "feedback" ? <HospitalityFeedback organizationId={id} googleReviewUrl={venue.venue.googleReviewUrl} /> : null}
       {activeTab === "staff" ? <HospitalityStaffCards organizationId={id} organizationName={venue.organization.name} logo={venue.venue.logo} /> : null}
       {activeTab === "loyalty" ? <HospitalityRewardsProgram organizationId={id} /> : null}
+      {activeTab === "members" ? <HospitalityRewardsMembers organizationId={id} /> : null}
+      {activeTab === "activity" ? <HospitalityOperationalActivity organizationId={id} /> : null}
       <div hidden>
         {venue && legacyProfileEnabled ? (
           <div className="hospitality-profile-grid">

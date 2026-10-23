@@ -111,6 +111,20 @@ class VenueRewardsTransaction(models.Model):
         indexes = [models.Index(fields=['venue', 'created_at'], name='hospitality_venue_r_b1ca9f_idx'), models.Index(fields=['membership', 'created_at'], name='hospitality_venue_l_b3fe5a_idx')]
 
 
+class VenueOperationalActivity(models.Model):
+    """Business-change audit trail; customer engagement remains in analytics."""
+    venue = models.ForeignKey(VenueProfile, on_delete=models.CASCADE, related_name='operational_activity')
+    event_type = models.CharField(max_length=48)
+    summary = models.CharField(max_length=240)
+    details = models.JSONField(default=dict, blank=True)
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, related_name='venue_operational_activity')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['venue', 'created_at'], name='hospitality_venue_o_a8b19f_idx')]
+
+
 class VenueMenuCategory(models.Model):
     venue = models.ForeignKey(VenueProfile, on_delete=models.CASCADE, related_name='menu_categories')
     name = models.CharField(max_length=120)

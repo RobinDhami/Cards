@@ -22,7 +22,8 @@ from django.utils.text import slugify
 from .models import (
     LoyaltyCustomer, VenueAnalyticsEvent, VenueCardAssignment, VenueFeedback,
     VenueLink, VenueLoyaltyMembership, VenueMenuCategory, VenueMenuItem,
-    VenueMenuItemVariant, VenueProfile, VenueRewardsProgram, VenueStaffLink,
+    VenueMenuItemVariant, VenueOperationalActivity, VenueProfile, VenueRewardsProgram,
+    VenueRewardsTransaction, VenueStaffLink,
     VenueStaffProfile, VenueTouchpoint,
 )
 from django.contrib.auth import get_user_model
@@ -207,6 +208,50 @@ def _rewards_program_payload(program):
     }
 
 
+def _record_operational_activity(venue, event_type, summary, request=None, details=None):
+    """Keep business changes separate from public engagement analytics."""
+    VenueOperationalActivity.objects.create(
+        venue=venue,
+        event_type=str(event_type)[:48],
+        summary=str(summary)[:240],
+        details=details or {},
+        actor=request.user if request and request.user.is_authenticated else None,
+    )
+
+
+def _expire_rewards_if_needed(membership, program):
+    if not program.expiry_days or not membership.reward_balance or not membership.last_activity_at:
+        return False
+    if membership.last_activity_at > timezone.now() - timedelta(days=program.expiry_days):
+        return False
+    amount = membership.reward_balance
+    membership.reward_balance = Decimal('0.00')
+    membership.save(update_fields=['reward_balance', 'updated_at'])
+    VenueRewardsTransaction.objects.create(
+        venue=membership.venue, membership=membership,
+        transaction_type=VenueRewardsTransaction.EXPIRE,
+        reward_amount=-amount, balance_after=Decimal('0.00'),
+    )
+    _record_operational_activity(membership.venue, 'rewards_expired', f'Rewards expired for {membership.customer.phone_e164}', details={'amount': str(amount)})
+    return True
+
+
+def _membership_payload(membership, program):
+    expires_at = None
+    if program.expiry_days and membership.last_activity_at and membership.reward_balance:
+        expires_at = membership.last_activity_at + timedelta(days=program.expiry_days)
+    return {
+        'memberId': membership.public_identifier,
+        'phone': membership.customer.phone_e164,
+        'rewardBalance': str(membership.reward_balance),
+        'lifetimeEarned': str(membership.lifetime_rewards_earned),
+        'lifetimeRedeemed': str(membership.lifetime_rewards_redeemed),
+        'lastActivityAt': membership.last_activity_at.isoformat() if membership.last_activity_at else None,
+        'expiresAt': expires_at.isoformat() if expires_at else None,
+        'isActive': membership.is_active,
+    }
+
+
 def _record_event(request, venue, event_type, target='', dedupe_seconds=3):
     if event_type not in dict(VenueAnalyticsEvent.EVENT_TYPES):
         return False
@@ -350,6 +395,8 @@ def venue_loyalty_join_api(request, public_identifier):
                 customer=customer,
                 defaults={'stamp_goal': 5},
             )
+            if created:
+                _record_operational_activity(venue, 'loyalty_member_joined', f'New loyalty member joined: {phone_e164}', details={'membershipId': membership.public_identifier})
     except IntegrityError:
         # A concurrent join for the same number can win the unique constraint.
         customer = LoyaltyCustomer.objects.filter(phone_e164=phone_e164).first()
@@ -367,6 +414,121 @@ def venue_loyalty_join_api(request, public_identifier):
         dedupe_seconds=0,
     )
     return JsonResponse({'ok': True, 'created': created, 'membership': _loyalty_membership_payload(membership)}, status=201 if created else 200)
+
+
+def _reward_decimal(data, key, label):
+    try:
+        value = Decimal(str(data.get(key, '')).strip())
+    except (InvalidOperation, TypeError, ValueError):
+        raise ValidationError(f'Enter a valid {label}.')
+    if value < 0:
+        raise ValidationError(f'{label.title()} cannot be negative.')
+    return value.quantize(Decimal('0.01'))
+
+
+@require_http_methods(['GET'])
+def venue_rewards_members_api(request, organization_id):
+    venue = _venue_for(request, organization_id, 'staff')
+    if not venue:
+        return JsonResponse({'error': 'Not authorized.'}, status=403)
+    program, _ = VenueRewardsProgram.objects.get_or_create(venue=venue)
+    rows = venue.loyalty_memberships.select_related('customer').order_by('-last_activity_at', '-created_at')
+    query = str(request.GET.get('q') or '').strip()
+    if query:
+        rows = rows.filter(Q(customer__phone_e164__icontains=query) | Q(public_identifier__icontains=query.replace('T2C-LOYALTY:', '')))
+    members = []
+    for membership in rows[:200]:
+        with transaction.atomic():
+            _expire_rewards_if_needed(membership, program)
+        membership.refresh_from_db()
+        members.append(_membership_payload(membership, program))
+    return JsonResponse({'program': _rewards_program_payload(program), 'members': members})
+
+
+@require_http_methods(['GET'])
+def venue_rewards_member_detail_api(request, organization_id, member_identifier):
+    venue = _venue_for(request, organization_id, 'staff')
+    if not venue:
+        return JsonResponse({'error': 'Not authorized.'}, status=403)
+    program, _ = VenueRewardsProgram.objects.get_or_create(venue=venue)
+    membership = get_object_or_404(VenueLoyaltyMembership.objects.select_related('customer'), venue=venue, public_identifier=member_identifier)
+    with transaction.atomic():
+        _expire_rewards_if_needed(membership, program)
+    membership.refresh_from_db()
+    transactions = membership.rewards_transactions.select_related('created_by').all()[:50]
+    return JsonResponse({'member': _membership_payload(membership, program), 'transactions': [{
+        'id': row.pk, 'type': row.transaction_type, 'amount': str(row.reward_amount), 'balanceAfter': str(row.balance_after),
+        'orderAmount': str(row.order_amount) if row.order_amount is not None else None, 'receiptReference': row.receipt_reference,
+        'createdAt': row.created_at.isoformat(), 'createdBy': (row.created_by.get_full_name().strip() or row.created_by.username) if row.created_by else 'System',
+    } for row in transactions]})
+
+
+@require_http_methods(['POST'])
+def venue_rewards_transaction_api(request, organization_id):
+    venue = _venue_for(request, organization_id, 'staff')
+    if not venue:
+        return JsonResponse({'error': 'Not authorized.'}, status=403)
+    data = _body(request)
+    if not isinstance(data, dict):
+        return JsonResponse({'error': 'Invalid JSON.'}, status=400)
+    action = str(data.get('action') or '')
+    if action not in {'earn', 'redeem'}:
+        return JsonResponse({'error': 'Choose whether to earn or redeem rewards.'}, status=400)
+    program, _ = VenueRewardsProgram.objects.get_or_create(venue=venue)
+    if not program.is_active:
+        return JsonResponse({'error': 'The rewards program is paused.'}, status=400)
+    try:
+        bill_amount = _reward_decimal(data, 'billAmount', 'bill amount')
+        requested_amount = _reward_decimal(data, 'rewardAmount', 'reward amount') if action == 'redeem' else None
+    except ValidationError as error:
+        return JsonResponse({'error': error.messages[0]}, status=400)
+    membership_id = str(data.get('memberId') or '').replace('T2C-LOYALTY:', '').strip()
+    receipt_reference = str(data.get('receiptReference') or '').strip()[:120]
+    try:
+        with transaction.atomic():
+            membership = VenueLoyaltyMembership.objects.select_for_update().select_related('customer').get(venue=venue, public_identifier=membership_id, is_active=True)
+            _expire_rewards_if_needed(membership, program)
+            membership.refresh_from_db()
+            if receipt_reference and VenueRewardsTransaction.objects.filter(venue=venue, receipt_reference=receipt_reference, transaction_type=action).exists():
+                return JsonResponse({'error': 'This receipt has already been used for this rewards action.'}, status=409)
+            if action == 'earn':
+                if bill_amount < program.minimum_order_amount:
+                    return JsonResponse({'error': f'Bills must be at least Rs. {program.minimum_order_amount} to earn rewards.'}, status=400)
+                amount = (bill_amount * program.reward_rate_percent / Decimal('100')).quantize(Decimal('0.01'))
+                membership.reward_balance += amount
+                membership.lifetime_rewards_earned += amount
+                summary = f'Added Rs. {amount} rewards for {membership.customer.phone_e164}'
+            else:
+                max_for_bill = (bill_amount * program.max_redemption_percent / Decimal('100')).quantize(Decimal('0.01'))
+                if not requested_amount or requested_amount <= 0:
+                    return JsonResponse({'error': 'Enter the rewards amount to redeem.'}, status=400)
+                if requested_amount > membership.reward_balance:
+                    return JsonResponse({'error': 'This member does not have enough rewards balance.'}, status=400)
+                if requested_amount > max_for_bill:
+                    return JsonResponse({'error': f'Redemption is limited to Rs. {max_for_bill} for this bill.'}, status=400)
+                amount = -requested_amount
+                membership.reward_balance += amount
+                membership.lifetime_rewards_redeemed += requested_amount
+                summary = f'Redeemed Rs. {requested_amount} rewards for {membership.customer.phone_e164}'
+            membership.last_activity_at = timezone.now()
+            membership.save(update_fields=['reward_balance', 'lifetime_rewards_earned', 'lifetime_rewards_redeemed', 'last_activity_at', 'updated_at'])
+            row = VenueRewardsTransaction.objects.create(venue=venue, membership=membership, transaction_type=action, reward_amount=amount, balance_after=membership.reward_balance, order_amount=bill_amount, receipt_reference=receipt_reference, created_by=request.user)
+            _record_operational_activity(venue, f'rewards_{action}', summary, request, {'membershipId': membership.public_identifier, 'billAmount': str(bill_amount), 'rewardAmount': str(abs(amount)), 'receiptReference': receipt_reference})
+    except VenueLoyaltyMembership.DoesNotExist:
+        return JsonResponse({'error': 'Member not found for this business.'}, status=404)
+    return JsonResponse({'ok': True, 'member': _membership_payload(membership, program), 'transaction': {'id': row.pk, 'amount': str(row.reward_amount), 'balanceAfter': str(row.balance_after)}})
+
+
+@require_http_methods(['GET'])
+def venue_operational_activity_api(request, organization_id):
+    venue = _venue_for(request, organization_id, 'settings')
+    if not venue:
+        return JsonResponse({'error': 'Not authorized.'}, status=403)
+    rows = venue.operational_activity.select_related('actor').all()[:200]
+    return JsonResponse({'activity': [{
+        'id': row.pk, 'type': row.event_type, 'summary': row.summary, 'details': row.details,
+        'createdAt': row.created_at.isoformat(), 'actor': (row.actor.get_full_name().strip() or row.actor.username) if row.actor else 'System',
+    } for row in rows]})
 
 
 def _venue_for(request, organization_id, capability='overview'):
@@ -442,6 +604,7 @@ def venue_settings_api(request, organization_id):
             except (InvalidOperation, TypeError, ValueError, ValidationError) as error:
                 messages = getattr(error, 'messages', [str(error)])
                 return JsonResponse({'error': '; '.join(messages)}, status=400)
+            _record_operational_activity(venue, 'rewards_program_updated', 'Updated rewards program rules', request, {'active': program.is_active, 'rewardRatePercent': str(program.reward_rate_percent), 'expiryDays': program.expiry_days})
             return JsonResponse({'ok': True, 'rewardsProgram': _rewards_program_payload(program)})
         if data.get('action') == 'notifications':
             preference, _ = OrganizationNotificationPreference.objects.get_or_create(organization=organization, user=request.user)
@@ -600,6 +763,7 @@ def venue_profile_manage_api(request, organization_id):
                     organization.twitter = social_values.get('x', social_values.get('twitter', ''))
                     sync_fields += ['facebook', 'instagram', 'linkedin', 'twitter']
                 organization.save(update_fields=sync_fields)
+                _record_operational_activity(venue, 'business_profile_updated', 'Updated business profile', request)
         except ValidationError as exc:
             return JsonResponse({'message': '; '.join(exc.messages)}, status=400)
     response = _payload(request, venue)
@@ -660,6 +824,7 @@ def venue_menu_categories_api(request, organization_id):
                 return JsonResponse({'message': 'Choose a different destination category.'}, status=400)
             category.items.update(category=target)
         category.delete()
+        _record_operational_activity(venue, 'menu_category_deleted', 'Deleted a menu category', request)
         return JsonResponse({'ok': True})
     category = get_object_or_404(VenueMenuCategory, pk=data.get('id'), venue=venue) if request.method == 'PATCH' else VenueMenuCategory(venue=venue)
     try:
@@ -668,6 +833,7 @@ def venue_menu_categories_api(request, organization_id):
         category.full_clean(); category.save()
     except ValidationError as exc:
         return JsonResponse({'message': _validation_message(exc)}, status=400)
+    _record_operational_activity(venue, 'menu_category_created' if request.method == 'POST' else 'menu_category_updated', f'{"Added" if request.method == "POST" else "Updated"} menu category: {category.name}', request)
     return JsonResponse({'id': category.pk, 'name': category.name, 'slug': category.slug}, status=201 if request.method == 'POST' else 200)
 
 
@@ -682,7 +848,9 @@ def venue_menu_items_api(request, organization_id):
     data = _body(request) if request.content_type.startswith('application/json') else request.POST
     data = data or {}
     if request.method == 'DELETE':
-        get_object_or_404(VenueMenuItem, pk=data.get('id'), venue=venue).delete()
+        deleted_item = get_object_or_404(VenueMenuItem, pk=data.get('id'), venue=venue)
+        deleted_name = deleted_item.name; deleted_item.delete()
+        _record_operational_activity(venue, 'menu_item_deleted', f'Deleted menu item: {deleted_name}', request)
         return JsonResponse({'ok': True})
     action = data.get('action')
     if action == 'bulk_availability':
@@ -745,6 +913,7 @@ def venue_menu_items_api(request, organization_id):
     except (ValidationError, ValueError) as exc:
         message = _validation_message(exc) if isinstance(exc, ValidationError) else str(exc)
         return JsonResponse({'message': message}, status=400)
+    _record_operational_activity(venue, 'menu_item_updated' if item_id else 'menu_item_created', f'{"Updated" if item_id else "Added"} menu item: {item.name}', request)
     return JsonResponse({'item': _menu_item_payload(request, item)}, status=200 if item_id else 201)
 
 
@@ -958,6 +1127,14 @@ def venue_staff_cards_manage_api(request, organization_id):
                 return JsonResponse({'error': 'Choose a valid staff or card action.'}, status=400)
     except ValidationError as exc:
         return JsonResponse({'error': '; '.join(exc.messages)}, status=400)
+
+    if request.method != 'GET':
+        activity_labels = {
+            'create_staff': 'Added a staff profile', 'update_staff': 'Updated a staff profile',
+            'create_touchpoint': 'Added a QR touchpoint', 'update_touchpoint': 'Updated a QR touchpoint',
+            'assign_card': 'Assigned an NFC card', 'unassign_card': 'Unassigned an NFC card',
+        }
+        _record_operational_activity(venue, f'staff_{action or "updated"}', activity_labels.get(action, 'Updated staff or card settings'), request)
 
     staff = venue.staff_profiles.prefetch_related('links').select_related('card_assignment__physical_card')
     touchpoints = venue.touchpoints.select_related('card_assignment__physical_card')
