@@ -1023,8 +1023,9 @@
 /* Shared PNG brand artwork is the single visual source used by the profile
    editor and the customer-facing overview. */
 .cafe-public .cafe-social-icon:has(.social-brand-image) {
-  overflow: hidden;
+  overflow: visible;
   border-color: transparent;
+  border-radius: 0;
   background: transparent;
   box-shadow: none;
 }
