@@ -62,7 +62,7 @@ export function DashboardHeaderTools({
       {enableSupport && supportHref ? (
         <div className="dashboard-support-control">
           <button type="button" className="manage-icon-button" aria-label="Support" title="Support" aria-expanded={supportOpen} onClick={() => setSupportOpen((open) => !open)}><Headphones size={17} /></button>
-          {supportOpen ? <div className="dashboard-support-popover" role="dialog" aria-label="Support options"><strong>Support</strong>{canRaiseSupport ? <a href={`${supportHref}?new=1`}><Plus size={15} />Raise ticket</a> : null}<a href={supportHref}><Ticket size={15} />View tickets</a></div> : null}
+          {supportOpen ? <div className="dashboard-support-popover" role="dialog" aria-label="Support options"><strong>Support</strong>{canRaiseSupport ? <a className="dashboard-support-action is-primary" href={`${supportHref}?new=1`}><Plus size={15} />Raise ticket</a> : null}<a className="dashboard-support-action is-secondary" href={supportHref}><Ticket size={15} />View tickets</a></div> : null}
         </div>
       ) : null}
       {searchOpen ? (

@@ -110,12 +110,8 @@
 .manage-app--hospitality-theme-dark .hospitality-theme-toggle { border-color: rgba(148,163,184,.28); background: #273449; color: #fbbf24; }
 .manage-app--hospitality-theme-dark .manage-header-actions > .manage-icon-button { border-color: rgba(148,163,184,.28); background: #273449; color: #cbd5e1; }
 .manage-app--hospitality-theme-dark .dashboard-header-tools .manage-icon-button { border-color: rgba(148,163,184,.28); background: #273449; color: #cbd5e1; }
-.manage-app--hospitality-theme-dark .dashboard-support-popover,
 .manage-app--hospitality-theme-dark .dashboard-search-dialog { border-color: rgba(148,163,184,.24); background:#1f2937; }
-.manage-app--hospitality-theme-dark .dashboard-support-popover strong,
-.manage-app--hospitality-theme-dark .dashboard-support-popover a,
 .manage-app--hospitality-theme-dark .dashboard-search-results a { color:#e2e8f0; }
-.manage-app--hospitality-theme-dark .dashboard-support-popover a:hover,
 .manage-app--hospitality-theme-dark .dashboard-search-results a:hover { background:#273449; color:#fff; }
 .manage-app--hospitality-theme-dark .feedback-page { color:#e2e8f0; }
 .manage-app--hospitality-theme-dark .feedback-metrics article,
