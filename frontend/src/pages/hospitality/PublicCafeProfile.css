@@ -1031,8 +1031,8 @@
 }
 .cafe-public .cafe-social-icon .social-brand-image {
   display: block;
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   object-fit: contain;
 }
 
@@ -1040,6 +1040,7 @@
   width: 44px;
   height: 44px;
 }
+.cafe-public .hospitality-links a:has(.social-brand-image) { overflow: visible; }
 
 /* Café rewards: a compact entry point and a wallet-ready card foundation. */
 .cafe-public .cafe-loyalty {
@@ -1172,6 +1173,6 @@
   .cafe-public .cafe-loyalty-wallet-row { grid-template-columns: 102px minmax(0, 1fr); gap: 10px; }
   .cafe-public .cafe-loyalty-qr { width: 102px; height: 102px; }
   .cafe-public .cafe-loyalty-wallet-actions button { font-size: 10px; }
-  .cafe-public .cafe-social-icon:has(.social-brand-image) { width: 40px; height: 40px; }
-  .cafe-public .cafe-social-icon .social-brand-image { width: 36px; height: 36px; }
+  .cafe-public .cafe-social-icon:has(.social-brand-image) { width: 44px; height: 44px; }
+  .cafe-public .cafe-social-icon .social-brand-image { width: 44px; height: 44px; }
 }
