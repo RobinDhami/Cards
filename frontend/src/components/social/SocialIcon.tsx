@@ -5,6 +5,7 @@ import { socialIconAssets } from './socialIconAssets'
 
 const imageIcons: Record<string, string> = {
   facebook: socialIconAssets.facebook,
+  email: socialIconAssets.email,
   google: socialIconAssets.googleReview,
   'google-review': socialIconAssets.googleReview,
   instagram: socialIconAssets.instagram,
