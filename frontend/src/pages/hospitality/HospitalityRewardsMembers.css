@@ -15,6 +15,9 @@
 .rewards-scanner__camera { position: relative; display: grid; min-height: 250px; margin: 16px 0 12px; overflow: hidden; place-items: center; border-radius: 12px; background: #0f172a; color: #fff; }.rewards-scanner__camera video { position: absolute; width: 100%; height: 100%; object-fit: cover; }.rewards-scanner__camera span { position: relative; z-index: 1; display: flex; align-items: center; gap: 7px; border: 1px solid rgba(255,255,255,.55); border-radius: 7px; padding: 7px 9px; background: rgba(15,23,42,.58); font-size: 12px; }.rewards-scanner__message { margin: 0 0 10px !important; color: #9a5a0b !important; }.rewards-scanner__sheet form { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; align-items: end; }.rewards-scanner__sheet label { display: grid; gap: 5px; color: #344054; font-size: 12px; font-weight: 700; }.rewards-scanner__sheet input { min-height: 38px; border: 1px solid #d9dee7; border-radius: 7px; padding: 0 10px; }
 @media (max-width: 600px) { .rewards-members { padding-bottom: 70px; }.rewards-members__toolbar .rewards-members__scan { position: fixed; z-index: 25; right: 14px; bottom: 14px; min-height: 48px; padding-inline: 18px; box-shadow: 0 10px 24px rgba(15,23,42,.24); }.rewards-scanner__sheet { padding: 18px 16px max(18px, env(safe-area-inset-bottom)); }.rewards-scanner__camera { min-height: 300px; }.rewards-scanner__sheet form { grid-template-columns: 1fr; }.rewards-scanner__sheet form .manage-button { width: 100%; justify-content: center; } }
 .rewards-members__toolbar { align-items: stretch; }
+.rewards-members__toolbar select { min-width: 164px; border: 1px solid #d9dee7; border-radius: 9px; background: #fff; padding: 0 32px 0 11px; color: #344054; font: inherit; }
+.rewards-whatsapp { display: inline-flex; width: fit-content; margin-top: 12px; align-items: center; gap: 7px; border-radius: 7px; background: #168a55; padding: 9px 11px; color: #fff; font-size: 12px; font-weight: 750; text-decoration: none; }
+.rewards-whatsapp:hover { background: #107345; }
 .rewards-members__toolbar label { position: relative; }
 .rewards-members__toolbar label > svg { flex: 0 0 auto; }
 .rewards-members__toolbar input { padding-right: 42px; }
@@ -23,6 +26,7 @@
 @media (max-width: 600px) {
   .rewards-members { padding-bottom: 96px; }
   .rewards-members__toolbar { display: block; }
+  .rewards-members__toolbar select { width: 100%; min-height: 42px; margin-top: 9px; }
   .rewards-members__toolbar label { min-height: 46px; border-radius: 9px; }
   .rewards-members__toolbar input { min-height: 46px; font-size: 14px; }
   .rewards-members__search { right: 8px; width: 34px; height: 34px; }

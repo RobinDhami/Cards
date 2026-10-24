@@ -248,6 +248,7 @@ def _membership_payload(membership, program):
         expires_at = membership.last_activity_at + timedelta(days=program.expiry_days)
     return {
         'memberId': membership.public_identifier,
+        'name': membership.customer.full_name,
         'phone': membership.customer.phone_e164,
         'rewardBalance': str(membership.reward_balance),
         'lifetimeEarned': str(membership.lifetime_rewards_earned),
@@ -399,10 +400,16 @@ def venue_loyalty_join_api(request, public_identifier):
         phone_e164 = _normalize_loyalty_phone(data.get('phone'))
     except ValidationError as error:
         return JsonResponse({'error': error.messages[0]}, status=400)
+    full_name = str(data.get('name') or '').strip()[:120]
+    if not full_name:
+        return JsonResponse({'error': 'Enter your name to join rewards.'}, status=400)
 
     try:
         with transaction.atomic():
-            customer, _ = LoyaltyCustomer.objects.get_or_create(phone_e164=phone_e164)
+            customer, customer_created = LoyaltyCustomer.objects.get_or_create(phone_e164=phone_e164, defaults={'full_name': full_name})
+            if not customer_created and full_name and customer.full_name != full_name:
+                customer.full_name = full_name
+                customer.save(update_fields=['full_name', 'updated_at'])
             membership, created = VenueLoyaltyMembership.objects.get_or_create(
                 venue=venue,
                 customer=customer,
@@ -448,7 +455,12 @@ def venue_rewards_members_api(request, organization_id):
     rows = venue.loyalty_memberships.select_related('customer').order_by('-last_activity_at', '-created_at')
     query = str(request.GET.get('q') or '').strip()
     if query:
-        rows = rows.filter(Q(customer__phone_e164__icontains=query) | Q(public_identifier__icontains=query.replace('T2C-LOYALTY:', '')))
+        rows = rows.filter(Q(customer__phone_e164__icontains=query) | Q(customer__full_name__icontains=query) | Q(public_identifier__icontains=query.replace('T2C-LOYALTY:', '')))
+    segment = str(request.GET.get('segment') or '').strip()
+    if segment == 'needs_visit':
+        rows = rows.filter(Q(last_activity_at__isnull=True) | Q(last_activity_at__lt=timezone.now() - timedelta(days=30)))
+    elif segment == 'not_redeemed':
+        rows = rows.filter(lifetime_rewards_redeemed=Decimal('0.00'))
     members = []
     for membership in rows[:200]:
         with transaction.atomic():

@@ -130,6 +130,7 @@ type CafeFeedbackDraft = {
 
 type LoyaltyMembership = {
   memberId: string;
+  name?: string;
   stampCount: number;
   stampGoal: number;
   rewardsRedeemed: number;
@@ -152,6 +153,7 @@ type PublicCafeUIState = {
   selectedMenuItem: Item | null;
   loyaltySheet: "closed" | "join" | "card";
   loyaltyPhone: string;
+  loyaltyName: string;
   joiningLoyalty: boolean;
   loyaltyMessage: string;
   loyaltyMembership: LoyaltyMembership | null;
@@ -166,6 +168,7 @@ type PublicCafeUIState = {
   setSelectedMenuItem: (selectedMenuItem: Item | null) => void;
   setLoyaltySheet: (loyaltySheet: "closed" | "join" | "card") => void;
   setLoyaltyPhone: (loyaltyPhone: string) => void;
+  setLoyaltyName: (loyaltyName: string) => void;
   setJoiningLoyalty: (joiningLoyalty: boolean) => void;
   setLoyaltyMessage: (loyaltyMessage: string) => void;
   setLoyaltyMembership: (loyaltyMembership: LoyaltyMembership | null) => void;
@@ -182,10 +185,11 @@ const usePublicCafeUIStore = create<PublicCafeUIState>((set) => ({
   selectedMenuItem: null,
   loyaltySheet: "closed",
   loyaltyPhone: "",
+  loyaltyName: "",
   joiningLoyalty: false,
   loyaltyMessage: "",
   loyaltyMembership: null,
-  reset: (source, activeTab) => set({ activeTab, feedback: newCafeFeedbackDraft(source), selectedCategory: null, menuSearch: "", shareMessage: "", sendingFeedback: false, feedbackMessage: "", selectedMenuItem: null, loyaltySheet: "closed", loyaltyPhone: "", joiningLoyalty: false, loyaltyMessage: "", loyaltyMembership: null }),
+  reset: (source, activeTab) => set({ activeTab, feedback: newCafeFeedbackDraft(source), selectedCategory: null, menuSearch: "", shareMessage: "", sendingFeedback: false, feedbackMessage: "", selectedMenuItem: null, loyaltySheet: "closed", loyaltyPhone: "", loyaltyName: "", joiningLoyalty: false, loyaltyMessage: "", loyaltyMembership: null }),
   setActiveTab: (activeTab) => set({ activeTab }),
   setFeedback: (feedback) => set({ feedback }),
   setSelectedCategory: (selectedCategory) => set({ selectedCategory }),
@@ -196,6 +200,7 @@ const usePublicCafeUIStore = create<PublicCafeUIState>((set) => ({
   setSelectedMenuItem: (selectedMenuItem) => set({ selectedMenuItem }),
   setLoyaltySheet: (loyaltySheet) => set({ loyaltySheet }),
   setLoyaltyPhone: (loyaltyPhone) => set({ loyaltyPhone }),
+  setLoyaltyName: (loyaltyName) => set({ loyaltyName }),
   setJoiningLoyalty: (joiningLoyalty) => set({ joiningLoyalty }),
   setLoyaltyMessage: (loyaltyMessage) => set({ loyaltyMessage }),
   setLoyaltyMembership: (loyaltyMembership) => set({ loyaltyMembership }),
@@ -1802,13 +1807,14 @@ const loyaltyPhoneCountries = [
 ] as const;
 
 function CafeLoyaltySheet({
-  cafeName, programName, programType, stampGoal, pointsToReward, phone, message, membership, joining, stage, onClose, onPhoneChange, onSubmit,
+  cafeName, programName, programType, stampGoal, pointsToReward, name, phone, message, membership, joining, stage, onClose, onPhoneChange, onNameChange, onSubmit,
 }: {
   cafeName: string;
   programName: string;
   programType: 'rewards' | 'points' | 'stamps';
   stampGoal: number;
   pointsToReward: number;
+  name: string;
   phone: string;
   message: string;
   membership: LoyaltyMembership | null;
@@ -1816,6 +1822,7 @@ function CafeLoyaltySheet({
   stage: "join" | "card";
   onClose: () => void;
   onPhoneChange: (phone: string) => void;
+  onNameChange: (name: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>, formattedPhone: string) => void;
 }) {
   const activeMembership = membership ?? { memberId: '', stampCount: 0, stampGoal, rewardsRedeemed: 0, rewardBalance: '0', isActive: true };
@@ -1843,7 +1850,8 @@ function CafeLoyaltySheet({
       {stage === "join" ? <form onSubmit={(event) => onSubmit(event, country.prefix ? `${country.prefix}${phone.replace(/\D/g, "")}` : phone)}>
         <span className="cafe-loyalty-sheet-icon" aria-hidden="true"><Coffee size={24} /></span>
         <h2 id="cafe-loyalty-sheet-title">Join {programName}</h2>
-        <p>Enter your phone number to join and keep one loyalty card with {cafeName}.</p>
+        <p>Enter your name and phone number to join and keep one loyalty card with {cafeName}.</p>
+        <label>Full name<input autoFocus value={name} onChange={(event) => onNameChange(event.target.value)} autoComplete="name" placeholder="Your name" required /></label>
         <label>Mobile number
           <span className="cafe-loyalty-phone-field">
             <select className="cafe-loyalty-country" aria-label="Country code" value={countryId} onChange={(event) => setCountryId(event.target.value as typeof countryId)}>
@@ -1894,6 +1902,7 @@ export function PublicHospitalityProfile() {
   const selectedMenuItem = usePublicCafeUIStore((state) => state.selectedMenuItem);
   const loyaltySheet = usePublicCafeUIStore((state) => state.loyaltySheet);
   const loyaltyPhone = usePublicCafeUIStore((state) => state.loyaltyPhone);
+  const loyaltyName = usePublicCafeUIStore((state) => state.loyaltyName);
   const joiningLoyalty = usePublicCafeUIStore((state) => state.joiningLoyalty);
   const loyaltyMessage = usePublicCafeUIStore((state) => state.loyaltyMessage);
   const loyaltyMembership = usePublicCafeUIStore((state) => state.loyaltyMembership);
@@ -1908,6 +1917,7 @@ export function PublicHospitalityProfile() {
   const setSelectedMenuItem = usePublicCafeUIStore((state) => state.setSelectedMenuItem);
   const setLoyaltySheet = usePublicCafeUIStore((state) => state.setLoyaltySheet);
   const setLoyaltyPhone = usePublicCafeUIStore((state) => state.setLoyaltyPhone);
+  const setLoyaltyName = usePublicCafeUIStore((state) => state.setLoyaltyName);
   const setJoiningLoyalty = usePublicCafeUIStore((state) => state.setJoiningLoyalty);
   const setLoyaltyMessage = usePublicCafeUIStore((state) => state.setLoyaltyMessage);
   const setLoyaltyMembership = usePublicCafeUIStore((state) => state.setLoyaltyMembership);
@@ -1983,7 +1993,7 @@ export function PublicHospitalityProfile() {
     try {
       const response = await apiFetch<{ created: boolean; membership: LoyaltyMembership }>(`/api/venue/${identifier}/loyalty/join/`, {
         method: "POST",
-        body: jsonBody({ phone: formattedPhone, source: touchpointSource, entry: entryChannel }),
+        body: jsonBody({ name: loyaltyName, phone: formattedPhone, source: touchpointSource, entry: entryChannel }),
       });
       setLoyaltyMembership(response.membership);
       setLoyaltyMessage(response.created ? "Your rewards card is ready." : "Welcome back — your rewards card is ready.");
@@ -2235,6 +2245,7 @@ export function PublicHospitalityProfile() {
         programType={loyaltyProgram.programType}
         stampGoal={loyaltyProgram.stampGoal}
         pointsToReward={loyaltyProgram.pointsToReward}
+        name={loyaltyName}
         phone={loyaltyPhone}
         message={loyaltyMessage}
         membership={loyaltyMembership}
@@ -2242,6 +2253,7 @@ export function PublicHospitalityProfile() {
         stage={loyaltySheet}
         onClose={() => setLoyaltySheet("closed")}
         onPhoneChange={setLoyaltyPhone}
+        onNameChange={setLoyaltyName}
         onSubmit={joinLoyalty}
       /> : null}
     </main>

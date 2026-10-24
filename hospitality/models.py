@@ -40,6 +40,7 @@ class VenueProfile(models.Model):
 
 class LoyaltyCustomer(models.Model):
     """A customer identity shared across hospitality venues by normalized phone."""
+    full_name = models.CharField(max_length=120, blank=True)
     phone_e164 = models.CharField(max_length=20, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
