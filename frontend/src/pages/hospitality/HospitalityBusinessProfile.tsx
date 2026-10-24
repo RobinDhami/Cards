@@ -8,6 +8,7 @@ import { SocialIcon } from '../../components/social/SocialIcon'
 import { Field, SelectInput, TextArea, TextInput } from '../../components/manage/FormControls'
 import { ImageAdjustInput } from '../../components/manage/ImageAdjustInput'
 import { apiFetch, displayError } from '../../lib/api'
+import { notify } from '../../lib/notices'
 import type { Venue } from './HospitalityWorkspace'
 import './HospitalityBusinessProfile.css'
 
@@ -157,6 +158,7 @@ export function HospitalityBusinessProfile({
       setDraft(structuredClone(saved)); setLogoFile(null); setCoverFile(null); setRemoveLogo(false); setRemoveCover(false); setScheduleTouched(false)
       setPhone(splitPhone(saved.venue.phone)); setWhatsapp(splitPhone(saved.venue.whatsapp))
       setStatus('saved'); setMessage('Business profile saved and published.')
+      notify({ kind: 'success', title: 'Profile saved', message: 'Your customer profile is updated and published.' })
       onSaved(saved)
     } catch (reason) {
       setStatus('error'); setMessage(displayError(reason))

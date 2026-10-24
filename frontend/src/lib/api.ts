@@ -1,6 +1,7 @@
 export type ApiErrorPayload = {
   ok?: boolean
   message?: string
+  error?: string
   errors?: Record<string, string[]>
 }
 
@@ -60,7 +61,7 @@ function responseFallbackMessage(status: number) {
   if ([502, 503, 504].includes(status)) {
     return 'The backend server is unavailable. Start Django on port 8000 and try again.'
   }
-  return `Request failed with status ${status}.`
+  return 'We could not complete that request. Please try again.'
 }
 
 async function readJsonPayload<T>(response: Response): Promise<T | null> {
@@ -152,8 +153,10 @@ export async function apiFetch<T>(
     : null
 
   if (!response.ok) {
+    const message = payload?.message ?? payload?.error ?? responseFallbackMessage(response.status)
+    notify({ kind: 'error', title: 'Could not complete that action', message })
     throw new ApiError(
-      payload?.message ?? responseFallbackMessage(response.status),
+      message,
       response.status,
       payload?.errors,
     )
@@ -181,3 +184,4 @@ export function displayError(error: unknown) {
   if (error instanceof Error) return error.message
   return 'Something went wrong. Please try again.'
 }
+import { notify } from './notices'

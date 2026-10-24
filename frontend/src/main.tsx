@@ -3,6 +3,7 @@ import './design-system/tokens.css'
 import './design-system/foundations.css'
 import './index.css'
 import App from './App.tsx'
+import { AppNotices } from './components/AppNotices.tsx'
 import { brandFavicon } from './lib/assets'
 
 const staleChunkReloadKey = 'tap2connect-stale-chunk-reload'
@@ -36,4 +37,4 @@ if (!rootElement) {
   throw new Error('React root element was not found.')
 }
 
-createRoot(rootElement).render(<App />)
+createRoot(rootElement).render(<><App /><AppNotices /></>)

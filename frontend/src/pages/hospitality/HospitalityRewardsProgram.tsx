@@ -4,6 +4,7 @@ import Save from 'lucide-react/dist/esm/icons/save.js'
 import ShieldCheck from 'lucide-react/dist/esm/icons/shield-check.js'
 import { Field, SelectInput, TextInput } from '../../components/manage/FormControls'
 import { apiFetch, displayError, jsonBody } from '../../lib/api'
+import { notify } from '../../lib/notices'
 import './HospitalityRewardsProgram.css'
 
 type ProgramType = 'rewards' | 'points' | 'stamps'
@@ -16,7 +17,7 @@ export function HospitalityRewardsProgram({ organizationId }: { organizationId: 
   const [status, setStatus] = useState<'loading' | 'saving' | 'saved' | 'error'>('loading'); const [message, setMessage] = useState('')
   const changed = useMemo(() => JSON.stringify(draft) !== JSON.stringify(saved), [draft, saved])
   useEffect(() => { let active = true; void apiFetch<{ rewardsProgram?: RewardsProgram }>(`/api/organizations/${organizationId}/venue/settings/`).then((payload) => { if (!active) return; const program = { ...blankProgram, ...(payload.rewardsProgram || {}) }; setSaved(program); setDraft(program); setStatus('saved') }).catch((reason) => { if (active) { setStatus('error'); setMessage(displayError(reason)) } }); return () => { active = false } }, [organizationId])
-  async function save() { if (!changed || status === 'saving') return; setStatus('saving'); setMessage(''); try { const response = await apiFetch<{ rewardsProgram: RewardsProgram }>(`/api/organizations/${organizationId}/venue/settings/`, { method: 'PATCH', body: jsonBody({ action: 'rewards_program', ...draft, expiryDays: draft.expiryDays || null }) }); const program = { ...blankProgram, ...response.rewardsProgram }; setSaved(program); setDraft(program); setStatus('saved'); setMessage('Loyalty program saved.') } catch (reason) { setStatus('error'); setMessage(displayError(reason)) } }
+  async function save() { if (!changed || status === 'saving') return; setStatus('saving'); setMessage(''); try { const response = await apiFetch<{ rewardsProgram: RewardsProgram }>(`/api/organizations/${organizationId}/venue/settings/`, { method: 'PATCH', body: jsonBody({ action: 'rewards_program', ...draft, expiryDays: draft.expiryDays || null }) }); const program = { ...blankProgram, ...response.rewardsProgram }; setSaved(program); setDraft(program); setStatus('saved'); setMessage('Loyalty program saved.'); notify({ kind: 'success', title: 'Loyalty program saved', message: 'Your changes are now active for customers and staff.' }) } catch (reason) { setStatus('error'); setMessage(displayError(reason)) } }
   if (status === 'loading') return <div className="manage-state">Loading loyalty program…</div>
   const copy = programCopy[draft.programType]
   return <section className="hospitality-rewards-program">
