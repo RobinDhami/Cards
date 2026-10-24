@@ -199,7 +199,7 @@ const usePublicCafeUIStore = create<PublicCafeUIState>((set) => ({
   setLoyaltyMessage: (loyaltyMessage) => set({ loyaltyMessage }),
   setLoyaltyMembership: (loyaltyMembership) => set({ loyaltyMembership }),
 }));
-type Link = { id: number; link_type: string; label: string; value: string; display_order?: number; is_active?: boolean; legacy?: boolean };
+type Link = { id: number; link_type: string; label: string; value: string; icon?: string; display_order?: number; is_active?: boolean; legacy?: boolean };
 type OrganizationContact = { address: string; phone: string; email: string; website: string; mapUrl: string };
 type Feedback = {
   id: number;
@@ -1769,8 +1769,8 @@ function openingScheduleRows(schedule: Venue["venue"]["openingSchedule"]) {
   });
 }
 
-function CafeSocialIcon({ type }: { type: string }) {
-  return <SocialIcon type={type} />;
+function CafeSocialIcon({ type, icon }: { type: string; icon?: string }) {
+  return <SocialIcon type={type} customIcon={icon} />;
 }
 
 function CafeLoyaltyPanel({ programName, stampGoal, onJoin }: { programName: string; stampGoal: number; onJoin: () => void }) {
@@ -2115,14 +2115,14 @@ export function PublicHospitalityProfile() {
             {scheduleEntries.length ? <dl><div className="cafe-weekly-hours-label">Weekly hours</div>{openingScheduleRows(venue.venue.openingSchedule).map((row) => <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl> : <p>{venue.venue.openingHours}</p>}
           </details> : <div className="cafe-simple-hours"><span aria-hidden="true" className={`cafe-hours-status ${hoursStatusClass}`} /><span><strong>{todayLabel}</strong><span>{todayHours}</span></span></div>) : null}
           {(venue.venue.email || venue.venue.whatsapp || venue.venue.website || venue.links.length > 0) ? <div className="cafe-connect"><div className="hospitality-links">
-            {venue.venue.whatsapp ? <a href={`https://wa.me/${venue.venue.whatsapp.replace(/\D/g, "")}`} onClick={() => track("social_click", "whatsapp")} target="_blank" rel="noreferrer"><span className="cafe-social-icon is-whatsapp"><CafeSocialIcon type="whatsapp" /></span>WhatsApp</a> : null}
+            {venue.venue.whatsapp && !socialLinks.some((link) => link.link_type === 'whatsapp') ? <a href={`https://wa.me/${venue.venue.whatsapp.replace(/\D/g, "")}`} onClick={() => track("social_click", "whatsapp")} target="_blank" rel="noreferrer"><span className="cafe-social-icon is-whatsapp"><CafeSocialIcon type="whatsapp" /></span>WhatsApp</a> : null}
             {socialLinks.map((link) => (
               <a href={link.value} key={link.id} onClick={() => track("social_click", `social_${link.link_type}`)} target="_blank" rel="noreferrer">
-                <span className={`cafe-social-icon is-${link.link_type}`}><CafeSocialIcon type={link.link_type} /></span>{link.label || link.link_type}
+                <span className={`cafe-social-icon is-${link.link_type}`}><CafeSocialIcon type={link.link_type} icon={link.icon} /></span>{link.label || link.link_type}
               </a>
             ))}
-            {venue.venue.website ? <a href={venue.venue.website} onClick={() => track("social_click", "website")} target="_blank" rel="noreferrer"><span className="cafe-social-icon is-website"><CafeSocialIcon type="website" /></span>Website</a> : null}
-            {venue.venue.email ? <a href={`mailto:${venue.venue.email}`}><span className="cafe-social-icon is-email"><CafeSocialIcon type="email" /></span>Email</a> : null}
+            {venue.venue.website && !socialLinks.some((link) => link.link_type === 'website') ? <a href={venue.venue.website} onClick={() => track("social_click", "website")} target="_blank" rel="noreferrer"><span className="cafe-social-icon is-website"><CafeSocialIcon type="website" /></span>Website</a> : null}
+            {venue.venue.email && !socialLinks.some((link) => link.link_type === 'email') ? <a href={`mailto:${venue.venue.email}`}><span className="cafe-social-icon is-email"><CafeSocialIcon type="email" /></span>Email</a> : null}
           </div></div> : null}
           {venue.feedbackEnabled ? <section className="cafe-feedback-section" aria-labelledby="cafe-feedback-title">
               <header>

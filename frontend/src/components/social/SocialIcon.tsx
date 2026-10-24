@@ -32,12 +32,13 @@ export const socialLabels: Record<string, string> = {
 type SocialIconProps = {
   type: string
   className?: string
+  customIcon?: string
   'aria-hidden'?: boolean
 }
 
-export function SocialIcon({ type, className, 'aria-hidden': ariaHidden = true }: SocialIconProps) {
+export function SocialIcon({ type, className, customIcon, 'aria-hidden': ariaHidden = true }: SocialIconProps) {
   const normalizedType = type.toLowerCase()
-  const imageSource = imageIcons[normalizedType]
+  const imageSource = customIcon || imageIcons[normalizedType]
 
   if (imageSource) {
     return <img className={`social-brand-image${className ? ` ${className}` : ''}`} src={imageSource} width="20" height="20" alt="" aria-hidden={ariaHidden} draggable={false} />

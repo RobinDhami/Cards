@@ -202,6 +202,7 @@ class VenueLink(models.Model):
     link_type = models.CharField(max_length=40)
     label = models.CharField(max_length=120)
     value = models.CharField(max_length=1000)
+    icon = models.TextField(blank=True, default='')
     display_order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
 

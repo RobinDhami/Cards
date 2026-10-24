@@ -43,6 +43,9 @@
 .business-social-list article { margin: 0; }
 .business-social-list article > .business-social-fields { grid-template-columns: 1fr; }
 .business-social-list article > .business-social-actions { margin: 0; }
+.business-add-link-panel { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-top: 12px; padding: 12px; border: 1px dashed #cbd7e5; border-radius: 10px; background: #f8fafc; }
+.business-add-link-fields { display: grid; grid-template-columns: 150px minmax(150px, 1fr) minmax(150px, 1fr); flex: 1; gap: 8px; min-width: 0; }
+.business-add-link-panel .manage-button { flex: 0 0 auto; white-space: nowrap; }
 .manage-app--hospitality-theme-dark .business-google-link,
 .manage-app--hospitality-theme-dark .business-social-list article { border-color: rgba(148,163,184,.2); background: #1f2937; }
 .manage-app--hospitality-theme-dark .business-google-link strong,
@@ -57,4 +60,7 @@
   .business-social-list article > .business-social-icon { grid-row: 1; }
   .business-social-visible { grid-column: 2; grid-row: 3; }
   .business-social-list article > .business-social-actions { grid-column: 3; grid-row: 3; }
+  .business-add-link-panel { align-items: stretch; flex-direction: column; }
+  .business-add-link-fields { grid-template-columns: 1fr; }
+  .business-add-link-panel .manage-button { justify-content: center; }
 }

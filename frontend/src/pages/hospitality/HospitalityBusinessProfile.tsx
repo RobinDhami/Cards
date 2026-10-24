@@ -24,6 +24,11 @@ const days = [
   ['thursday', 'Thursday'], ['friday', 'Friday'], ['saturday', 'Saturday'], ['sunday', 'Sunday'],
 ] as const
 const countries = [['+977', 'Nepal +977'], ['+91', 'India +91'], ['+1', 'US/Canada +1'], ['+44', 'UK +44'], ['+971', 'UAE +971'], ['+61', 'Australia +61']]
+const linkTypeOptions = [
+  ['tiktok', 'TikTok'], ['youtube', 'YouTube'], ['website', 'Website'],
+  ['email', 'Email'], ['whatsapp', 'WhatsApp'], ['facebook', 'Facebook'], ['instagram', 'Instagram'],
+] as const
+type NewLinkType = (typeof linkTypeOptions)[number][0] | 'custom'
 
 function completeSchedule(value: Venue['venue']['openingSchedule']): Schedule {
   return Object.fromEntries(days.map(([key]) => [key, value?.[key] || { closed: true, intervals: [] }]))
@@ -72,6 +77,10 @@ export function HospitalityBusinessProfile({
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [message, setMessage] = useState('')
   const [mobilePreview, setMobilePreview] = useState(false)
+  const [newLinkType, setNewLinkType] = useState<NewLinkType>('tiktok')
+  const [customAppName, setCustomAppName] = useState('')
+  const [customAppIcon, setCustomAppIcon] = useState('')
+  const [customAppUrl, setCustomAppUrl] = useState('')
   const logoPreview = useFilePreview(logoFile, initial.venue.logo, removeLogo)
   const coverPreview = useFilePreview(coverFile, initial.venue.coverImage, removeCover)
   const changed = useMemo(() => JSON.stringify(draft) !== JSON.stringify(initial)
@@ -108,6 +117,22 @@ export function HospitalityBusinessProfile({
       return { ...current, links }
     })
     setStatus('idle')
+  }
+
+  function addLink() {
+    const isCustom = newLinkType === 'custom'
+    const label = isCustom ? customAppName.trim() : linkTypeOptions.find(([value]) => value === newLinkType)?.[1] || newLinkType
+    const value = isCustom ? customAppUrl.trim() : ''
+    if (!label || !value) return
+    setDraft((current) => ({
+      ...current,
+      links: [...current.links, { id: 0, link_type: isCustom ? 'custom' : newLinkType, label, value, icon: isCustom ? customAppIcon.trim() : '', display_order: current.links.length, is_active: true }],
+    }))
+    setStatus('idle')
+    setNewLinkType('tiktok')
+    setCustomAppName('')
+    setCustomAppIcon('')
+    setCustomAppUrl('')
   }
 
   async function save(event: FormEvent) {
@@ -154,7 +179,7 @@ export function HospitalityBusinessProfile({
           {draft.venue.address ? <><dt>Location</dt><dd>{draft.venue.address}</dd></> : null}
           {fullPhone(phone.country, phone.number) ? <><dt>Phone</dt><dd>{fullPhone(phone.country, phone.number)}</dd></> : null}
         </dl>
-        <div className="business-profile-preview-links">{draft.links.filter((link) => link.is_active !== false).map((link, index) => <span key={link.id || index}><SocialIcon type={link.link_type} />{link.label || link.link_type}</span>)}</div>
+        <div className="business-profile-preview-links">{draft.links.filter((link) => link.is_active !== false).map((link, index) => <span key={link.id || index}><SocialIcon type={link.link_type} customIcon={link.icon} />{link.label || link.link_type}</span>)}</div>
       </div>
     </div>
   )
@@ -196,8 +221,11 @@ export function HospitalityBusinessProfile({
           {tab === 'links' ? <>
             <header><h2>Social links</h2><p>Add the channels you want customers to see on your profile.</p></header>
             <div className="business-google-link"><span className="business-social-icon is-google"><SocialIcon type="google" /></span><div><strong>Google review link</strong><TextInput aria-label="Google review link" type="url" value={draft.venue.googleReviewUrl} onChange={(event) => updateVenue('googleReviewUrl', event.target.value)} placeholder="Paste Google review link" /></div></div>
-            <div className="business-social-list">{draft.links.map((link, index) => <article key={link.id || `new-${index}`}><span className={`business-social-icon is-${link.link_type}`}><SocialIcon type={link.link_type} /></span><div className="business-social-fields"><strong>{socialLabels[link.link_type] || link.label || link.link_type}</strong><TextInput aria-label={`${link.label} URL`} type="url" required value={link.value} onChange={(event) => updateLink(index, { value: event.target.value })} placeholder="https://..." /></div><label className="business-social-visible"><input type="checkbox" checked={link.is_active !== false} onChange={(event) => updateLink(index, { is_active: event.target.checked })} /><span>Visible</span></label><div className="business-social-actions"><button type="button" disabled={index === 0} aria-label={`Move ${link.label} up`} title="Move up" onClick={() => moveLink(index, -1)}><ArrowUp size={14} /></button><button type="button" disabled={index === draft.links.length - 1} aria-label={`Move ${link.label} down`} title="Move down" onClick={() => moveLink(index, 1)}><ArrowDown size={14} /></button><button type="button" aria-label={`Remove ${link.label}`} title="Remove link" onClick={() => setDraft((current) => ({ ...current, links: current.links.filter((_, itemIndex) => itemIndex !== index) }))}><Trash2 size={14} /></button></div></article>)}</div>
-            <button type="button" className="manage-button" onClick={() => setDraft((current) => ({ ...current, links: [...current.links, { id: 0, link_type: 'instagram', label: 'Instagram', value: '', display_order: current.links.length, is_active: true }] }))}><Plus size={14} /> Add another link</button>
+            <div className="business-social-list">{draft.links.map((link, index) => <article key={link.id || `new-${index}`}><span className={`business-social-icon is-${link.link_type}`}><SocialIcon type={link.link_type} customIcon={link.icon} /></span><div className="business-social-fields"><strong>{socialLabels[link.link_type] || link.label || link.link_type}</strong><TextInput aria-label={`${link.label} URL`} type="url" required value={link.value} onChange={(event) => updateLink(index, { value: event.target.value })} placeholder="https://..." /></div><label className="business-social-visible"><input type="checkbox" checked={link.is_active !== false} onChange={(event) => updateLink(index, { is_active: event.target.checked })} /><span>Visible</span></label><div className="business-social-actions"><button type="button" disabled={index === 0} aria-label={`Move ${link.label} up`} title="Move up" onClick={() => moveLink(index, -1)}><ArrowUp size={14} /></button><button type="button" disabled={index === draft.links.length - 1} aria-label={`Move ${link.label} down`} title="Move down" onClick={() => moveLink(index, 1)}><ArrowDown size={14} /></button><button type="button" aria-label={`Remove ${link.label}`} title="Remove link" onClick={() => setDraft((current) => ({ ...current, links: current.links.filter((_, itemIndex) => itemIndex !== index) }))}><Trash2 size={14} /></button></div></article>)}</div>
+            <div className="business-add-link-panel">
+              <div className="business-add-link-fields"><SelectInput aria-label="Link type" value={newLinkType} onChange={(event) => setNewLinkType(event.target.value as NewLinkType)}><optgroup label="Built-in apps">{linkTypeOptions.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</optgroup><option value="custom">Custom app</option></SelectInput>{newLinkType === 'custom' ? <><TextInput aria-label="Custom app name" value={customAppName} onChange={(event) => setCustomAppName(event.target.value)} placeholder="App name" /><TextInput aria-label="Custom app icon URL" type="url" value={customAppIcon} onChange={(event) => setCustomAppIcon(event.target.value)} placeholder="Icon image URL" /></> : null}<TextInput aria-label="Link URL" type={newLinkType === 'email' ? 'text' : 'url'} value={customAppUrl} onChange={(event) => setCustomAppUrl(event.target.value)} placeholder={newLinkType === 'email' ? 'mailto:name@example.com' : 'https://...'} /></div>
+              <button type="button" className="manage-button" disabled={!customAppUrl.trim() || (newLinkType === 'custom' && !customAppName.trim())} onClick={addLink}><Plus size={14} /> {newLinkType === 'custom' ? 'Add your custom app' : 'Add link'}</button>
+            </div>
           </> : null}
           {tab === 'appearance' ? <>
             <header><h2>Appearance</h2><p>Choose accessible colours for the customer profile. Card design remains separate.</p></header>

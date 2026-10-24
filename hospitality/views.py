@@ -115,12 +115,12 @@ def _source_conflicts(venue):
 
 
 def _management_links(venue):
-    links = list(venue.links.order_by('display_order', 'id').values('id', 'link_type', 'label', 'value', 'display_order', 'is_active'))
+    links = list(venue.links.order_by('display_order', 'id').values('id', 'link_type', 'label', 'value', 'icon', 'display_order', 'is_active'))
     existing = {link['link_type'] for link in links}
     legacy = [('facebook', 'Facebook', venue.organization.facebook), ('instagram', 'Instagram', venue.organization.instagram), ('linkedin', 'LinkedIn', venue.organization.linkedin), ('x', 'X', venue.organization.twitter)]
     for link_type, label, value in legacy:
         if value and link_type not in existing:
-            links.append({'id': 0, 'link_type': link_type, 'label': label, 'value': value, 'display_order': len(links), 'is_active': True, 'legacy': True})
+            links.append({'id': 0, 'link_type': link_type, 'label': label, 'value': value, 'icon': '', 'display_order': len(links), 'is_active': True, 'legacy': True})
     return links
 
 
@@ -293,7 +293,7 @@ def _payload(request, venue):
                   'mapUrl': venue.organization.map_url or '', 'googleReviewUrl': venue.google_review_url,
                   'reservationUrl': venue.reservation_url, 'openingHours': venue.opening_hours,
                   'openingSchedule': venue.opening_schedule, 'whatsappSameAsPhone': venue.whatsapp_same_as_phone},
-        'links': list(venue.links.filter(is_active=True).order_by('display_order', 'id').values('id', 'link_type', 'label', 'value', 'display_order', 'is_active')),
+        'links': list(venue.links.filter(is_active=True).order_by('display_order', 'id').values('id', 'link_type', 'label', 'value', 'icon', 'display_order', 'is_active')),
         'rating': {'average': venue.feedback.aggregate(average=Avg('rating'))['average'] or 0, 'count': venue.feedback.count()},
         'categories': categories, 'feedbackEnabled': venue.feedback_enabled,
         'loyalty': {
@@ -738,13 +738,16 @@ def venue_profile_manage_api(request, organization_id):
                     for order, row in enumerate(links):
                         if not isinstance(row, dict):
                             raise ValidationError('Social link is invalid.')
-                        value = _web_url(row.get('value'), 'Social link')
+                        value = _safe_url(str(row.get('value') or '').strip())
                         label = str(row.get('label') or row.get('link_type') or '').strip()[:120]
                         link_type = str(row.get('link_type') or 'website').strip()[:40]
+                        icon = str(row.get('icon') or '').strip()[:500000]
+                        if icon and not icon.startswith('data:image/'):
+                            icon = _web_url(icon, 'Social icon')
                         link = venue.links.filter(pk=row.get('id')).first() if row.get('id') else VenueLink(venue=venue)
                         if link is None:
                             raise ValidationError('A social link no longer exists.')
-                        link.link_type, link.label, link.value = link_type, label, value
+                        link.link_type, link.label, link.value, link.icon = link_type, label, value, icon
                         link.display_order, link.is_active = order, bool(row.get('is_active', True))
                         link.full_clean(); link.save(); keep_ids.append(link.pk)
                     venue.links.exclude(pk__in=keep_ids).delete()
@@ -922,13 +925,13 @@ def venue_menu_items_api(request, organization_id):
 def venue_links_api(request, organization_id):
     venue = _venue_for(request, organization_id, 'profile')
     if not venue: return JsonResponse({'error': 'Not authorized.'}, status=403)
-    if request.method == 'GET': return JsonResponse({'links': list(venue.links.values('id', 'link_type', 'label', 'value', 'display_order', 'is_active'))})
+    if request.method == 'GET': return JsonResponse({'links': list(venue.links.values('id', 'link_type', 'label', 'value', 'icon', 'display_order', 'is_active'))})
     data = _body(request) or {}
     if request.method == 'DELETE':
         get_object_or_404(VenueLink, pk=data.get('id'), venue=venue).delete()
         return JsonResponse({'ok': True})
     link = get_object_or_404(VenueLink, pk=data.get('id'), venue=venue) if request.method == 'PATCH' else VenueLink(venue=venue)
-    for key in ('link_type', 'label', 'value', 'display_order', 'is_active'):
+    for key in ('link_type', 'label', 'value', 'icon', 'display_order', 'is_active'):
         if key in data: setattr(link, key, data[key])
     _safe_url(link.value)
     link.full_clean(); link.save()
