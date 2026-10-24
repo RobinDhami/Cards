@@ -1,5 +1,4 @@
 import type { ComponentType, SVGProps } from 'react'
-import { FaWhatsapp } from 'react-icons/fa6'
 import ExternalLink from 'lucide-react/dist/esm/icons/external-link.js'
 import Mail from 'lucide-react/dist/esm/icons/mail.js'
 import { socialIconAssets } from './socialIconAssets'
@@ -11,11 +10,11 @@ const imageIcons: Record<string, string> = {
   instagram: socialIconAssets.instagram,
   tiktok: socialIconAssets.tiktok,
   website: socialIconAssets.website,
+  whatsapp: socialIconAssets.whatsapp,
   youtube: socialIconAssets.youtube,
 }
 
 const fallbackIcons: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
-  whatsapp: FaWhatsapp,
   email: Mail,
 }
 
