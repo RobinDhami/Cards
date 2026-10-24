@@ -271,7 +271,7 @@ const hospitalitySectionDetails: Record<
   { title: string; subtitle?: string }
 > = {
   overview: { title: "Overview" },
-  profile: { title: "Business Profile" },
+  profile: { title: "Profile" },
   menu: { title: "Menu" },
   feedback: { title: "Feedback" },
   staff: { title: "Staff & Cards" },

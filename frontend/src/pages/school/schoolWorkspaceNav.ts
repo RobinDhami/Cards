@@ -32,7 +32,7 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
       const section = new URLSearchParams(search).get('tab') || 'overview'
       const items = [
         { label: 'Overview', href: `${hospitalityRoot}/?tab=overview`, icon: LayoutDashboard, active: path.startsWith(hospitalityRoot) && section === 'overview' },
-        { label: 'Business Profile', href: `${hospitalityRoot}/?tab=profile`, icon: Store, active: path.startsWith(hospitalityRoot) && section === 'profile' },
+        { label: 'Profile', href: `${hospitalityRoot}/?tab=profile`, icon: Store, active: path.startsWith(hospitalityRoot) && section === 'profile' },
         { label: 'Menu', href: `${hospitalityRoot}/?tab=menu`, icon: Utensils, active: path.startsWith(hospitalityRoot) && section === 'menu' },
         { label: 'Feedback', href: `${hospitalityRoot}/?tab=feedback`, icon: MessageSquare, active: path.startsWith(hospitalityRoot) && section === 'feedback' },
         { label: 'Staff & Cards', href: `${hospitalityRoot}/?tab=staff`, icon: Users, active: path.startsWith(hospitalityRoot) && section === 'staff' },
@@ -42,7 +42,7 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
         { label: 'Settings', href: `${workspaceRoot}/settings/`, icon: Settings, active: path.includes('/settings') },
       ]
       const capabilityFor: Record<string, string> = {
-        Overview: 'overview', 'Business Profile': 'profile', Menu: 'menu', Feedback: 'feedback',
+        Overview: 'overview', Profile: 'profile', Menu: 'menu', Feedback: 'feedback',
         'Staff & Cards': 'staff', Rewards: 'settings', Members: 'staff', Analytics: 'analytics', Settings: 'settings',
       }
       return capabilities ? items.filter((item) => capabilities.includes(capabilityFor[item.label])) : items

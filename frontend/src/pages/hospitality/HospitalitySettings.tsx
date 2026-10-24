@@ -119,7 +119,7 @@ export function HospitalitySettingsPage() {
 
       {tab === "General" ? <section className="manage-card hospitality-settings-card">
         <div className="hospitality-settings-heading"><Settings size={20} /><div><h2>Workspace settings</h2></div></div>
-        <div className="hospitality-settings-callout"><strong>Business Profile</strong><a className="manage-button is-primary" href={`/dashboard/organizations/${school.id}/hospitality/?tab=profile`}>Open Business Profile <ExternalLink size={14} /></a></div>
+        <div className="hospitality-settings-callout"><strong>Profile</strong><a className="manage-button is-primary" href={`/dashboard/organizations/${school.id}/hospitality/?tab=profile`}>Open Profile <ExternalLink size={14} /></a></div>
         <div className="hospitality-role-grid">{roles.map((role) => <article key={role.value} className={shell.role === role.value ? "is-current" : ""}><strong>{role.label}</strong><p>{role.detail}</p>{shell.role === role.value ? <small>Current role</small> : null}</article>)}</div>
       </section> : null}
 

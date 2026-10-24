@@ -2,3 +2,14 @@
 .manage-app--hospitality .business-profile-savebar{left:240px}.business-social-actions{flex-wrap:wrap}.business-profile-form-card{min-width:0}
 @media(max-width:1050px){.business-profile-layout{grid-template-columns:1fr}.business-profile-preview-panel{display:none}.business-profile-mobile-preview{display:inline-flex}.manage-app--hospitality .business-profile-savebar{left:0}.business-profile-toolbar{align-items:center}}
 @media(max-width:680px){.business-profile-form-card{padding:17px}.business-profile-toolbar nav{gap:17px}.business-profile-toolbar{align-items:flex-end}.business-hours-row{grid-template-columns:1fr 82px}.business-hours-row>div{grid-column:1/-1}.business-hours-row>div>span{display:grid;grid-template-columns:1fr auto 1fr auto}.business-hours-row input[type=time]{min-width:0;width:100%}.business-phone,.business-social-list article>div:first-child,.business-colours{grid-template-columns:1fr}.business-profile-savebar{padding:10px 14px}.business-profile-savebar>div span{max-width:190px}.business-profile-mobile-preview{font-size:0}.business-profile-mobile-preview svg{margin:0}}
+
+/* The editor is the source of truth; keep the duplicate live-preview card out
+   of the profile workspace while retaining the optional mobile preview modal. */
+.business-profile-layout { grid-template-columns: minmax(0, 1fr) !important; }
+.business-profile-layout > .business-profile-preview-panel { display: none !important; }
+.manage-app--hospitality .manage-header-actions .manage-button.is-primary,
+.manage-app--hospitality .manage-button.is-primary { background: #1d4ed8; border-color: #1d4ed8; }
+.manage-app--hospitality .manage-header-actions .manage-button.is-primary:hover,
+.manage-app--hospitality .manage-button.is-primary:hover { background: #1e40af; border-color: #1e40af; }
+.manage-app--hospitality-theme-dark .manage-header-actions .manage-button.is-primary,
+.manage-app--hospitality-theme-dark .manage-button.is-primary { background: #1d4ed8; border-color: #1d4ed8; }
