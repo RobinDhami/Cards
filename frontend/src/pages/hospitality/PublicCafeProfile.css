@@ -744,7 +744,7 @@
 .cafe-public .hospitality-public-hours .cafe-weekly-hours-label { padding-bottom: 8px; color: var(--cafe-muted); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
 
 /* Official social marks, with one compact neutral tile family. */
-.cafe-public .cafe-overview .cafe-connect { padding: 2px 0; border: 0; background: transparent; box-shadow: none; }
+.cafe-public .cafe-overview .cafe-connect { padding: 10px 0 2px; border: 0; background: transparent; box-shadow: none; }
 .cafe-public .hospitality-links { grid-auto-columns: calc((100% - 30px) / 4); gap: 10px; }
 .cafe-public .hospitality-links a { gap: 6px; color: var(--cafe-muted); font-size: 10px; font-weight: 600; }
 .cafe-public .cafe-social-icon {
@@ -1031,14 +1031,14 @@
 }
 .cafe-public .cafe-social-icon .social-brand-image {
   display: block;
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   object-fit: contain;
 }
 
 .cafe-public .cafe-social-icon:has(.social-brand-image) {
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
 }
 .cafe-public .hospitality-links a { overflow: visible; }
 
@@ -1173,6 +1173,6 @@
   .cafe-public .cafe-loyalty-wallet-row { grid-template-columns: 102px minmax(0, 1fr); gap: 10px; }
   .cafe-public .cafe-loyalty-qr { width: 102px; height: 102px; }
   .cafe-public .cafe-loyalty-wallet-actions button { font-size: 10px; }
-  .cafe-public .cafe-social-icon:has(.social-brand-image) { width: 34px; height: 34px; }
-  .cafe-public .cafe-social-icon .social-brand-image { width: 34px; height: 34px; }
+  .cafe-public .cafe-social-icon:has(.social-brand-image) { width: 28px; height: 28px; }
+  .cafe-public .cafe-social-icon .social-brand-image { width: 28px; height: 28px; }
 }
