@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { CSSProperties, FormEvent } from 'react'
-import ArrowDown from 'lucide-react/dist/esm/icons/arrow-down.js'
-import ArrowUp from 'lucide-react/dist/esm/icons/arrow-up.js'
 import Eye from 'lucide-react/dist/esm/icons/eye.js'
 import Plus from 'lucide-react/dist/esm/icons/plus.js'
 import Save from 'lucide-react/dist/esm/icons/save.js'
 import Trash2 from 'lucide-react/dist/esm/icons/trash-2.js'
 import X from 'lucide-react/dist/esm/icons/x.js'
-import { SocialIcon, socialLabels } from '../../components/social/SocialIcon'
+import { SocialIcon } from '../../components/social/SocialIcon'
 import { Field, SelectInput, TextArea, TextInput } from '../../components/manage/FormControls'
 import { ImageAdjustInput } from '../../components/manage/ImageAdjustInput'
 import { apiFetch, displayError } from '../../lib/api'
@@ -28,7 +26,6 @@ const linkTypeOptions = [
   ['tiktok', 'TikTok'], ['youtube', 'YouTube'], ['website', 'Website'],
   ['email', 'Email'], ['whatsapp', 'WhatsApp'], ['facebook', 'Facebook'], ['instagram', 'Instagram'],
 ] as const
-type NewLinkType = (typeof linkTypeOptions)[number][0] | 'custom'
 
 function completeSchedule(value: Venue['venue']['openingSchedule']): Schedule {
   return Object.fromEntries(days.map(([key]) => [key, value?.[key] || { closed: true, intervals: [] }]))
@@ -77,10 +74,10 @@ export function HospitalityBusinessProfile({
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [message, setMessage] = useState('')
   const [mobilePreview, setMobilePreview] = useState(false)
-  const [newLinkType, setNewLinkType] = useState<NewLinkType>('tiktok')
   const [customAppName, setCustomAppName] = useState('')
   const [customAppIcon, setCustomAppIcon] = useState('')
   const [customAppUrl, setCustomAppUrl] = useState('')
+  const [customAppOpen, setCustomAppOpen] = useState(false)
   const logoPreview = useFilePreview(logoFile, initial.venue.logo, removeLogo)
   const coverPreview = useFilePreview(coverFile, initial.venue.coverImage, removeCover)
   const changed = useMemo(() => JSON.stringify(draft) !== JSON.stringify(initial)
@@ -108,31 +105,34 @@ export function HospitalityBusinessProfile({
     setStatus('idle')
   }
 
-  function moveLink(index: number, direction: -1 | 1) {
-    const target = index + direction
-    if (target < 0 || target >= draft.links.length) return
+
+  function updateBuiltInLink(linkType: (typeof linkTypeOptions)[number][0], value: string) {
     setDraft((current) => {
-      const links = [...current.links]
-      ;[links[index], links[target]] = [links[target], links[index]]
-      return { ...current, links }
+      const index = current.links.findIndex((link) => link.link_type === linkType)
+      if (index < 0) {
+        if (!value.trim()) return current
+        const label = linkTypeOptions.find(([type]) => type === linkType)?.[1] || linkType
+        return { ...current, links: [...current.links, { id: 0, link_type: linkType, label, value, icon: '', display_order: current.links.length, is_active: true }] }
+      }
+      if (!value.trim()) return { ...current, links: current.links.filter((_, itemIndex) => itemIndex !== index) }
+      return { ...current, links: current.links.map((link, itemIndex) => itemIndex === index ? { ...link, value } : link) }
     })
     setStatus('idle')
   }
 
-  function addLink() {
-    const isCustom = newLinkType === 'custom'
-    const label = isCustom ? customAppName.trim() : linkTypeOptions.find(([value]) => value === newLinkType)?.[1] || newLinkType
-    const value = isCustom ? customAppUrl.trim() : ''
+  function addCustomApp() {
+    const label = customAppName.trim()
+    const value = customAppUrl.trim()
     if (!label || !value) return
     setDraft((current) => ({
       ...current,
-      links: [...current.links, { id: 0, link_type: isCustom ? 'custom' : newLinkType, label, value, icon: isCustom ? customAppIcon.trim() : '', display_order: current.links.length, is_active: true }],
+      links: [...current.links, { id: 0, link_type: 'custom', label, value, icon: customAppIcon.trim(), display_order: current.links.length, is_active: true }],
     }))
     setStatus('idle')
-    setNewLinkType('tiktok')
     setCustomAppName('')
     setCustomAppIcon('')
     setCustomAppUrl('')
+    setCustomAppOpen(false)
   }
 
   async function save(event: FormEvent) {
@@ -221,11 +221,9 @@ export function HospitalityBusinessProfile({
           {tab === 'links' ? <>
             <header><h2>Social links</h2><p>Add the channels you want customers to see on your profile.</p></header>
             <div className="business-google-link"><span className="business-social-icon is-google"><SocialIcon type="google" /></span><div><strong>Google review link</strong><TextInput aria-label="Google review link" type="url" value={draft.venue.googleReviewUrl} onChange={(event) => updateVenue('googleReviewUrl', event.target.value)} placeholder="Paste Google review link" /></div></div>
-            <div className="business-social-list">{draft.links.map((link, index) => <article key={link.id || `new-${index}`}><span className={`business-social-icon is-${link.link_type}`}><SocialIcon type={link.link_type} customIcon={link.icon} /></span><div className="business-social-fields"><strong>{socialLabels[link.link_type] || link.label || link.link_type}</strong><TextInput aria-label={`${link.label} URL`} type="url" required value={link.value} onChange={(event) => updateLink(index, { value: event.target.value })} placeholder="https://..." /></div><label className="business-social-visible"><input type="checkbox" checked={link.is_active !== false} onChange={(event) => updateLink(index, { is_active: event.target.checked })} /><span>Visible</span></label><div className="business-social-actions"><button type="button" disabled={index === 0} aria-label={`Move ${link.label} up`} title="Move up" onClick={() => moveLink(index, -1)}><ArrowUp size={14} /></button><button type="button" disabled={index === draft.links.length - 1} aria-label={`Move ${link.label} down`} title="Move down" onClick={() => moveLink(index, 1)}><ArrowDown size={14} /></button><button type="button" aria-label={`Remove ${link.label}`} title="Remove link" onClick={() => setDraft((current) => ({ ...current, links: current.links.filter((_, itemIndex) => itemIndex !== index) }))}><Trash2 size={14} /></button></div></article>)}</div>
-            <div className="business-add-link-panel">
-              <div className="business-add-link-fields"><SelectInput aria-label="Link type" value={newLinkType} onChange={(event) => setNewLinkType(event.target.value as NewLinkType)}><optgroup label="Built-in apps">{linkTypeOptions.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</optgroup><option value="custom">Custom app</option></SelectInput>{newLinkType === 'custom' ? <><TextInput aria-label="Custom app name" value={customAppName} onChange={(event) => setCustomAppName(event.target.value)} placeholder="App name" /><TextInput aria-label="Custom app icon URL" type="url" value={customAppIcon} onChange={(event) => setCustomAppIcon(event.target.value)} placeholder="Icon image URL" /></> : null}<TextInput aria-label="Link URL" type={newLinkType === 'email' ? 'text' : 'url'} value={customAppUrl} onChange={(event) => setCustomAppUrl(event.target.value)} placeholder={newLinkType === 'email' ? 'mailto:name@example.com' : 'https://...'} /></div>
-              <button type="button" className="manage-button" disabled={!customAppUrl.trim() || (newLinkType === 'custom' && !customAppName.trim())} onClick={addLink}><Plus size={14} /> {newLinkType === 'custom' ? 'Add your custom app' : 'Add link'}</button>
-            </div>
+            <div className="business-predefined-links">{linkTypeOptions.map(([linkType, label]) => { const link = draft.links.find((item) => item.link_type === linkType); return <article key={linkType}><span className={`business-social-icon is-${linkType}`}><SocialIcon type={linkType} /></span><div className="business-social-fields"><strong>{label}</strong><TextInput aria-label={`${label} URL`} type={linkType === 'email' ? 'text' : 'url'} value={link?.value || ''} onChange={(event) => updateBuiltInLink(linkType, event.target.value)} placeholder={linkType === 'email' ? 'mailto:name@example.com' : 'https://...'} /></div></article> })}</div>
+            {draft.links.filter((link) => link.link_type === 'custom').length ? <div className="business-custom-app-list">{draft.links.map((link, index) => link.link_type === 'custom' ? <article key={link.id || `custom-${index}`}><span className="business-social-icon"><SocialIcon type="custom" customIcon={link.icon} /></span><div className="business-custom-app-fields"><TextInput aria-label="Custom app name" value={link.label} onChange={(event) => updateLink(index, { label: event.target.value })} placeholder="App name" /><TextInput aria-label="Custom app icon URL" type="url" value={link.icon || ''} onChange={(event) => updateLink(index, { icon: event.target.value })} placeholder="Icon image URL" /><TextInput aria-label={`${link.label} URL`} type="url" value={link.value} onChange={(event) => updateLink(index, { value: event.target.value })} placeholder="https://..." /></div><button type="button" className="business-profile-remove" aria-label={`Remove ${link.label}`} title="Remove app" onClick={() => setDraft((current) => ({ ...current, links: current.links.filter((_, itemIndex) => itemIndex !== index) }))}><Trash2 size={14} /></button></article> : null)}</div> : null}
+            {customAppOpen ? <div className="business-add-link-panel"><div className="business-add-link-fields"><TextInput aria-label="Custom app name" value={customAppName} onChange={(event) => setCustomAppName(event.target.value)} placeholder="App name" /><TextInput aria-label="Custom app icon URL" type="url" value={customAppIcon} onChange={(event) => setCustomAppIcon(event.target.value)} placeholder="Icon image URL" /><TextInput aria-label="Custom app link URL" type="url" value={customAppUrl} onChange={(event) => setCustomAppUrl(event.target.value)} placeholder="https://..." /></div><button type="button" className="manage-button" disabled={!customAppName.trim() || !customAppUrl.trim()} onClick={addCustomApp}><Plus size={14} /> Add custom app</button></div> : <button type="button" className="manage-button" onClick={() => setCustomAppOpen(true)}><Plus size={14} /> Add your custom app</button>}
           </> : null}
           {tab === 'appearance' ? <>
             <header><h2>Appearance</h2><p>Choose accessible colours for the customer profile. Card design remains separate.</p></header>

@@ -3,8 +3,6 @@
 @media(max-width:1050px){.business-profile-layout{grid-template-columns:1fr}.business-profile-preview-panel{display:none}.business-profile-mobile-preview{display:inline-flex}.manage-app--hospitality .business-profile-savebar{left:0}.business-profile-toolbar{align-items:center}}
 @media(max-width:680px){.business-profile-form-card{padding:17px}.business-profile-toolbar nav{gap:17px}.business-profile-toolbar{align-items:flex-end}.business-hours-row{grid-template-columns:1fr 82px}.business-hours-row>div{grid-column:1/-1}.business-hours-row>div>span{display:grid;grid-template-columns:1fr auto 1fr auto}.business-hours-row input[type=time]{min-width:0;width:100%}.business-phone,.business-social-list article>div:first-child,.business-colours{grid-template-columns:1fr}.business-profile-savebar{padding:10px 14px}.business-profile-savebar>div span{max-width:190px}.business-profile-mobile-preview{font-size:0}.business-profile-mobile-preview svg{margin:0}}
 
-/* The editor is the source of truth; keep the duplicate live-preview card out
-   of the profile workspace while retaining the optional mobile preview modal. */
 .business-profile-layout { grid-template-columns: minmax(0, 1fr) !important; }
 .business-profile-layout > .business-profile-preview-panel { display: none !important; }
 .manage-app--hospitality .manage-header-actions .manage-button.is-primary,
@@ -14,8 +12,6 @@
 .manage-app--hospitality-theme-dark .manage-header-actions .manage-button.is-primary,
 .manage-app--hospitality-theme-dark .manage-button.is-primary { background: #1d4ed8; border-color: #1d4ed8; }
 
-/* Reusable social-link rows: one recognizable mark, one clear field, one
-   visibility control, and compact actions. */
 .business-google-link,
 .business-social-list article { display: grid; grid-template-columns: 38px minmax(0,1fr) auto auto; gap: 12px; align-items: center; padding: 14px 16px; border: 1px solid #dce4ef; border-radius: 10px; background: #fff; }
 .business-google-link { margin-bottom: 10px; }
@@ -63,4 +59,21 @@
   .business-add-link-panel { align-items: stretch; flex-direction: column; }
   .business-add-link-fields { grid-template-columns: 1fr; }
   .business-add-link-panel .manage-button { justify-content: center; }
+}
+
+.business-predefined-links,
+.business-custom-app-list { display: grid; gap: 10px; margin: 10px 0 16px; }
+.business-predefined-links article,
+.business-custom-app-list article { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 14px 16px; border: 1px solid #dce4ef; border-radius: 10px; background: #fff; }
+.business-predefined-links .business-social-fields { grid-template-columns: 150px minmax(0, 1fr); align-items: center; gap: 12px; }
+.business-custom-app-fields { display: grid; grid-template-columns: minmax(120px, .65fr) minmax(150px, 1fr) minmax(150px, 1fr); gap: 8px; min-width: 0; }
+.business-custom-app-list .business-profile-remove { margin: 0; }
+.manage-app--hospitality-theme-dark .business-predefined-links article,
+.manage-app--hospitality-theme-dark .business-custom-app-list article { border-color: rgba(148,163,184,.2); background: #1f2937; }
+.manage-app--hospitality-theme-dark .business-add-link-panel { border-color: rgba(148,163,184,.28); background: #182235; }
+@media (max-width: 760px) {
+  .business-predefined-links article,
+  .business-custom-app-list article { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 9px; padding: 12px; }
+  .business-predefined-links .business-social-fields { grid-template-columns: 1fr; gap: 6px; }
+  .business-custom-app-fields { grid-template-columns: 1fr; }
 }
