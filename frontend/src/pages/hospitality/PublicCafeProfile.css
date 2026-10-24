@@ -1020,6 +1020,21 @@
   .cafe-public .cafe-feedback-section .hospitality-feedback { padding-inline: 16px; }
 }
 
+/* Shared PNG brand artwork is the single visual source used by the profile
+   editor and the customer-facing overview. */
+.cafe-public .cafe-social-icon:has(.social-brand-image) {
+  overflow: hidden;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+.cafe-public .cafe-social-icon .social-brand-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 /* Café rewards: a compact entry point and a wallet-ready card foundation. */
 .cafe-public .cafe-loyalty {
   display: grid;

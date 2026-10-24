@@ -33,6 +33,11 @@
 .business-social-icon.is-whatsapp { background: #e6f8ed; color: #16a34a; }
 .business-social-icon.is-youtube { background: #fff0f0; color: #dc2626; }
 .business-social-icon.is-website { background: #eef3fb; color: #475569; }
+.business-social-icon:has(.social-brand-image) { background: transparent; }
+.business-social-icon .social-brand-image { display: block; width: 32px; height: 32px; object-fit: contain; }
+.business-social-icon.is-google .social-brand-image { width: 28px; height: 28px; }
+.business-profile-preview-links span { display: inline-flex; align-items: center; gap: 6px; }
+.business-profile-preview-links .social-brand-image { width: 16px; height: 16px; object-fit: contain; }
 .business-social-visible { display: inline-flex; align-items: center; gap: 6px; color: #475569; font-size: 12px; white-space: nowrap; }
 .business-social-visible input { width: 16px; height: 16px; accent-color: #2563eb; }
 .business-social-list article { margin: 0; }

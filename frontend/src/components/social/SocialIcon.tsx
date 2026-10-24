@@ -1,16 +1,21 @@
 import type { ComponentType, SVGProps } from 'react'
-import { FaFacebookF, FaGlobe, FaGoogle, FaInstagram, FaTiktok, FaWhatsapp, FaYoutube } from 'react-icons/fa6'
+import { FaWhatsapp } from 'react-icons/fa6'
 import ExternalLink from 'lucide-react/dist/esm/icons/external-link.js'
 import Mail from 'lucide-react/dist/esm/icons/mail.js'
+import { socialIconAssets } from './socialIconAssets'
 
-const icons: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
-  facebook: FaFacebookF,
-  google: FaGoogle,
-  instagram: FaInstagram,
-  tiktok: FaTiktok,
+const imageIcons: Record<string, string> = {
+  facebook: socialIconAssets.facebook,
+  google: socialIconAssets.googleReview,
+  'google-review': socialIconAssets.googleReview,
+  instagram: socialIconAssets.instagram,
+  tiktok: socialIconAssets.tiktok,
+  website: socialIconAssets.website,
+  youtube: socialIconAssets.youtube,
+}
+
+const fallbackIcons: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
   whatsapp: FaWhatsapp,
-  website: FaGlobe,
-  youtube: FaYoutube,
   email: Mail,
 }
 
@@ -24,7 +29,20 @@ export const socialLabels: Record<string, string> = {
   youtube: 'YouTube',
 }
 
-export function SocialIcon({ type, ...props }: { type: string } & SVGProps<SVGSVGElement>) {
-  const Icon = icons[type] || ExternalLink
-  return <Icon aria-hidden={props['aria-hidden'] ?? true} />
+type SocialIconProps = {
+  type: string
+  className?: string
+  'aria-hidden'?: boolean
+}
+
+export function SocialIcon({ type, className, 'aria-hidden': ariaHidden = true }: SocialIconProps) {
+  const normalizedType = type.toLowerCase()
+  const imageSource = imageIcons[normalizedType]
+
+  if (imageSource) {
+    return <img className={`social-brand-image${className ? ` ${className}` : ''}`} src={imageSource} width="20" height="20" alt="" aria-hidden={ariaHidden} draggable={false} />
+  }
+
+  const Icon = fallbackIcons[normalizedType] || ExternalLink
+  return <Icon className={className} aria-hidden={ariaHidden} />
 }
