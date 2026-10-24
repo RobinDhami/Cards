@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { CSSProperties, FormEvent } from 'react'
-import Eye from 'lucide-react/dist/esm/icons/eye.js'
+import type { FormEvent } from 'react'
 import Plus from 'lucide-react/dist/esm/icons/plus.js'
 import Save from 'lucide-react/dist/esm/icons/save.js'
 import Trash2 from 'lucide-react/dist/esm/icons/trash-2.js'
@@ -73,7 +72,6 @@ export function HospitalityBusinessProfile({
   const [scheduleTouched, setScheduleTouched] = useState(false)
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [message, setMessage] = useState('')
-  const [mobilePreview, setMobilePreview] = useState(false)
   const [customAppName, setCustomAppName] = useState('')
   const [customAppIcon, setCustomAppIcon] = useState('')
   const [customAppUrl, setCustomAppUrl] = useState('')
@@ -165,24 +163,7 @@ export function HospitalityBusinessProfile({
     }
   }
 
-  const preview = (
-    <div className="business-profile-preview" style={{ '--preview-primary': draft.venue.primaryColor, '--preview-accent': draft.venue.secondaryColor } as CSSProperties}>
-      <div className="business-profile-preview-cover" style={coverPreview ? { backgroundImage: `linear-gradient(0deg, ${draft.venue.primaryColor}cc, ${draft.venue.primaryColor}44), url(${coverPreview})` } : undefined}>
-        {logoPreview ? <img src={logoPreview} alt="Current business logo preview" /> : <span>{draft.organization.name.slice(0, 2).toUpperCase()}</span>}
-      </div>
-      <div className="business-profile-preview-body">
-        <small>Customer profile preview · unpublished changes</small>
-        <h2>{draft.organization.name || 'Business name'}</h2>
-        <p>{draft.organization.slogan || 'Add a short tagline for your customers.'}</p>
-        <div><button type="button">Home</button><button type="button">Menu</button></div>
-        <dl>
-          {draft.venue.address ? <><dt>Location</dt><dd>{draft.venue.address}</dd></> : null}
-          {fullPhone(phone.country, phone.number) ? <><dt>Phone</dt><dd>{fullPhone(phone.country, phone.number)}</dd></> : null}
-        </dl>
-        <div className="business-profile-preview-links">{draft.links.filter((link) => link.is_active !== false).map((link, index) => <span key={link.id || index}><SocialIcon type={link.link_type} customIcon={link.icon} />{link.label || link.link_type}</span>)}</div>
-      </div>
-    </div>
-  )
+
 
   return (
     <form className="business-profile-editor" onSubmit={save}>
@@ -191,7 +172,6 @@ export function HospitalityBusinessProfile({
         <nav aria-label="Business profile sections">
           {([['basic', 'Basic details'], ['contact', 'Contact & location'], ['links', 'Links'], ['appearance', 'Appearance']] as const).map(([key, label]) => <button type="button" className={tab === key ? 'is-active' : ''} aria-current={tab === key ? 'page' : undefined} onClick={() => setTab(key)} key={key}>{label}</button>)}
         </nav>
-        <button type="button" className="manage-button business-profile-icon-button business-profile-mobile-preview" onClick={() => setMobilePreview(true)} aria-label="Preview customer profile" title="Preview customer profile"><Eye size={15} /></button>
       </div>
       <div className="business-profile-layout">
         <section className="manage-card business-profile-form-card">
@@ -232,7 +212,6 @@ export function HospitalityBusinessProfile({
         </section>
       </div>
       <footer className={`business-profile-savebar is-${status}`}><div><strong>{status === 'saving' ? 'Saving changes…' : status === 'error' ? 'Could not save' : changed ? 'Unsaved changes' : status === 'saved' ? 'Saved' : 'Everything is up to date'}</strong>{message && !changed ? <span role={status === 'error' ? 'alert' : 'status'}>{message}</span> : changed ? <span>Select Save profile to publish these changes.</span> : null}</div><button type="submit" className="manage-button is-primary" disabled={!changed || status === 'saving'}><Save size={14} />{status === 'saving' ? 'Saving…' : 'Save profile'}</button></footer>
-      {mobilePreview ? <div className="business-profile-preview-modal" role="dialog" aria-modal="true" aria-label="Customer profile preview"><button type="button" aria-label="Close preview" onClick={() => setMobilePreview(false)}><X /></button>{preview}</div> : null}
     </form>
   )
 }
