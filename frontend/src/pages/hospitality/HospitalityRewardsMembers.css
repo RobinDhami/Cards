@@ -64,16 +64,3 @@
   .rewards-member__open b { font-size: 12px !important; }
   .rewards-member__actions a, .rewards-member__actions button { width: 25px; height: 25px; }
 }
-
-@media (max-width: 600px) {
-  .rewards-members__list { padding: 8px 14px; border-radius: 14px; }
-  .rewards-member { display: flex; gap: 8px; padding: 14px 0; align-items: center; }
-  .rewards-member__open { display: grid; grid-template-columns: minmax(0, 1fr) 82px; gap: 8px; padding: 0; align-items: center; }
-  .rewards-member__open > div:first-child { min-width: 0; }
-  .rewards-member__open > div:last-child { justify-items: end; }
-  .rewards-member__open small { max-width: 82px; line-height: 1.15; text-align: right; }
-  .rewards-member__open b { font-size: 13px; line-height: 1.2; }
-  .rewards-member .rewards-member__actions { width: auto; justify-content: flex-end; padding: 0; }
-  .rewards-member__actions a, .rewards-member__actions button { width: 32px; height: 32px; border-radius: 7px; }
-  .rewards-members__toolbar .rewards-members__scan { width: 62px !important; min-width: 62px !important; max-width: 62px; min-height: 62px; height: 62px; bottom: max(20px, env(safe-area-inset-bottom)); }
-}
