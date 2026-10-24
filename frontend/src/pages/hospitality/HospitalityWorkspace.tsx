@@ -27,8 +27,8 @@ import Trash2 from "lucide-react/dist/esm/icons/trash-2.js";
 import Utensils from "lucide-react/dist/esm/icons/utensils.js";
 import UserPlus from "lucide-react/dist/esm/icons/user-plus.js";
 import X from "lucide-react/dist/esm/icons/x.js";
-import { FaApple, FaFacebookF, FaGlobe, FaInstagram, FaTiktok, FaWhatsapp } from "react-icons/fa6";
-import { HiOutlineEnvelope } from "react-icons/hi2";
+import { FaApple } from "react-icons/fa6";
+import { SocialIcon } from "../../components/social/SocialIcon";
 import {
   Field,
   FileInput,
@@ -1770,13 +1770,7 @@ function openingScheduleRows(schedule: Venue["venue"]["openingSchedule"]) {
 }
 
 function CafeSocialIcon({ type }: { type: string }) {
-  if (type === "instagram") return <FaInstagram aria-hidden="true" />;
-  if (type === "facebook") return <FaFacebookF aria-hidden="true" />;
-  if (type === "tiktok") return <FaTiktok aria-hidden="true" />;
-  if (type === "whatsapp") return <FaWhatsapp aria-hidden="true" />;
-  if (type === "website") return <FaGlobe aria-hidden="true" />;
-  if (type === "email") return <HiOutlineEnvelope aria-hidden="true" />;
-  return <ExternalLink aria-hidden="true" />;
+  return <SocialIcon type={type} />;
 }
 
 function CafeLoyaltyPanel({ programName, stampGoal, onJoin }: { programName: string; stampGoal: number; onJoin: () => void }) {

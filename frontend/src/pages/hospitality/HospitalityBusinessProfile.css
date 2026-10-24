@@ -13,3 +13,43 @@
 .manage-app--hospitality .manage-button.is-primary:hover { background: #1e40af; border-color: #1e40af; }
 .manage-app--hospitality-theme-dark .manage-header-actions .manage-button.is-primary,
 .manage-app--hospitality-theme-dark .manage-button.is-primary { background: #1d4ed8; border-color: #1d4ed8; }
+
+/* Reusable social-link rows: one recognizable mark, one clear field, one
+   visibility control, and compact actions. */
+.business-google-link,
+.business-social-list article { display: grid; grid-template-columns: 38px minmax(0,1fr) auto auto; gap: 12px; align-items: center; padding: 14px 16px; border: 1px solid #dce4ef; border-radius: 10px; background: #fff; }
+.business-google-link { margin-bottom: 10px; }
+.business-google-link > div,
+.business-social-fields { display: grid; min-width: 0; gap: 6px; }
+.business-google-link strong,
+.business-social-fields strong { color: #10213e; font-size: 13px; }
+.business-google-link input,
+.business-social-fields input { min-width: 0; }
+.business-social-icon { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 9px; background: #eef3fb; color: #1d4ed8; font-size: 20px; }
+.business-social-icon.is-google { background: #f1f5f9; color: #4285f4; }
+.business-social-icon.is-instagram { background: #fff0f7; color: #d62976; }
+.business-social-icon.is-facebook { background: #e8f0ff; color: #1877f2; }
+.business-social-icon.is-tiktok { background: #e7e7e7; color: #111827; }
+.business-social-icon.is-whatsapp { background: #e6f8ed; color: #16a34a; }
+.business-social-icon.is-youtube { background: #fff0f0; color: #dc2626; }
+.business-social-icon.is-website { background: #eef3fb; color: #475569; }
+.business-social-visible { display: inline-flex; align-items: center; gap: 6px; color: #475569; font-size: 12px; white-space: nowrap; }
+.business-social-visible input { width: 16px; height: 16px; accent-color: #2563eb; }
+.business-social-list article { margin: 0; }
+.business-social-list article > .business-social-fields { grid-template-columns: 1fr; }
+.business-social-list article > .business-social-actions { margin: 0; }
+.manage-app--hospitality-theme-dark .business-google-link,
+.manage-app--hospitality-theme-dark .business-social-list article { border-color: rgba(148,163,184,.2); background: #1f2937; }
+.manage-app--hospitality-theme-dark .business-google-link strong,
+.manage-app--hospitality-theme-dark .business-social-fields strong { color: #f8fafc; }
+.manage-app--hospitality-theme-dark .business-social-visible { color: #cbd5e1; }
+@media (max-width: 760px) {
+  .business-google-link,
+  .business-social-list article { grid-template-columns: 34px minmax(0,1fr) auto; gap: 9px; padding: 12px; }
+  .business-google-link > div,
+  .business-social-fields { grid-column: 2/-1; }
+  .business-google-link > .business-social-icon,
+  .business-social-list article > .business-social-icon { grid-row: 1; }
+  .business-social-visible { grid-column: 2; grid-row: 3; }
+  .business-social-list article > .business-social-actions { grid-column: 3; grid-row: 3; }
+}
