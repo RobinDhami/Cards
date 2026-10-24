@@ -117,11 +117,11 @@ export function HospitalityBusinessProfile({
     try {
       const body = new FormData()
       const values = {
-        name: draft.organization.name, venue_type: draft.venue.type, description: draft.venue.description,
+        name: draft.organization.name, slogan: draft.organization.slogan || '', venue_type: draft.venue.type,
         address: draft.venue.address, map_url: draft.venue.mapUrl,
         phone: fullPhone(phone.country, phone.number), email: draft.venue.email, website: draft.venue.website,
         whatsapp: fullPhone(whatsapp.country, whatsapp.number), whatsapp_same_as_phone: draft.venue.whatsappSameAsPhone,
-        reservation_url: draft.venue.reservationUrl, google_review_url: draft.venue.googleReviewUrl,
+        google_review_url: draft.venue.googleReviewUrl,
         primary_color: draft.venue.primaryColor, secondary_color: draft.venue.secondaryColor,
         feedback_enabled: draft.feedbackEnabled,
         links: JSON.stringify(draft.links), remove_logo: removeLogo, remove_cover_image: removeCover,
@@ -148,7 +148,7 @@ export function HospitalityBusinessProfile({
       <div className="business-profile-preview-body">
         <small>Customer profile preview · unpublished changes</small>
         <h2>{draft.organization.name || 'Business name'}</h2>
-        <p>{draft.venue.description || 'Your business description will appear here.'}</p>
+        <p>{draft.organization.slogan || 'Add a short tagline for your customers.'}</p>
         <div><button type="button">Home</button><button type="button">Menu</button></div>
         <dl>
           {draft.venue.address ? <><dt>Location</dt><dd>{draft.venue.address}</dd></> : null}
@@ -176,7 +176,7 @@ export function HospitalityBusinessProfile({
               <Field label="Business name" wide><TextInput required value={draft.organization.name} onChange={(event) => updateOrganizationName(event.target.value)} /></Field>
               <Field label="Venue type"><SelectInput value={draft.venue.type} onChange={(event) => updateVenue('type', event.target.value)}><option value="hotel">Hotel</option><option value="cafe">Café</option><option value="restaurant">Restaurant</option><option value="bar">Bar</option><option value="other">Other</option></SelectInput></Field>
               <Field label="Customer feedback"><label className="business-inline-check"><input type="checkbox" checked={draft.feedbackEnabled} onChange={(event) => { setDraft((current) => ({ ...current, feedbackEnabled: event.target.checked })); setStatus('idle') }} /> Enable feedback form</label></Field>
-              <Field label="Description" wide hint={`${draft.venue.description.length}/1200 characters`}><TextArea maxLength={1200} value={draft.venue.description} onChange={(event) => updateVenue('description', event.target.value)} /></Field>
+              <Field label="Tagline" wide hint={`${(draft.organization.slogan || '').length}/255 characters`}><TextInput maxLength={255} value={draft.organization.slogan || ''} onChange={(event) => setDraft((current) => ({ ...current, organization: { ...current.organization, slogan: event.target.value } }))} placeholder="A short line customers will remember" /></Field>
               <Field label="Business logo"><ImageAdjustInput key={removeLogo ? 'logo-removed' : 'logo'} label="Choose and crop logo" mode="logo" currentUrl={removeLogo ? '' : initial.venue.logo} onChange={(file) => { setLogoFile(file); setRemoveLogo(false); setStatus('idle') }} />{logoPreview ? <button type="button" className="business-profile-remove" onClick={() => { setLogoFile(null); setRemoveLogo(true); setStatus('idle') }} aria-label="Remove business logo" title="Remove business logo"><Trash2 size={13} /></button> : null}</Field>
               <Field label="Cover image"><ImageAdjustInput key={removeCover ? 'cover-removed' : 'cover'} label="Choose and crop cover" mode="cover" currentUrl={removeCover ? '' : initial.venue.coverImage} onChange={(file) => { setCoverFile(file); setRemoveCover(false); setStatus('idle') }} />{coverPreview ? <button type="button" className="business-profile-remove" onClick={() => { setCoverFile(null); setRemoveCover(true); setStatus('idle') }} aria-label="Remove cover image" title="Remove cover image"><Trash2 size={13} /></button> : null}</Field>
             </div>
@@ -190,7 +190,6 @@ export function HospitalityBusinessProfile({
               <Field label="WhatsApp"><label className="business-inline-check"><input type="checkbox" checked={draft.venue.whatsappSameAsPhone} onChange={(event) => updateVenue('whatsappSameAsPhone', event.target.checked)} /> Same as phone</label>{!draft.venue.whatsappSameAsPhone ? <div className="business-phone"><SelectInput aria-label="WhatsApp country code" value={whatsapp.country} onChange={(event) => setWhatsapp({ ...whatsapp, country: event.target.value })}>{countries.map(([code, label]) => <option value={code} key={code}>{label}</option>)}</SelectInput><TextInput type="tel" value={whatsapp.number} onChange={(event) => setWhatsapp({ ...whatsapp, number: event.target.value })} /></div> : null}</Field>
               <Field label="Email"><TextInput type="email" value={draft.venue.email} onChange={(event) => updateVenue('email', event.target.value)} /></Field>
               <Field label="Website"><TextInput type="url" value={draft.venue.website} onChange={(event) => updateVenue('website', event.target.value)} /></Field>
-              <Field label="Reservation link"><TextInput type="url" value={draft.venue.reservationUrl} onChange={(event) => updateVenue('reservationUrl', event.target.value)} /></Field>
             </div>
             <div className="business-hours"><header><h3>Opening hours</h3><p>Mark closed days or add separate intervals, such as lunch and dinner.</p>{!Object.keys(draft.venue.openingSchedule || {}).length && draft.venue.openingHours ? <small>Your previous free-text hours are still public and will remain unchanged until you edit this schedule.</small> : null}</header>{days.map(([key, label]) => { const day = completeSchedule(draft.venue.openingSchedule)[key]; return <div className="business-hours-row" key={key}><strong>{label}</strong><label><input type="checkbox" checked={day.closed} onChange={(event) => updateDay(key, { closed: event.target.checked, intervals: event.target.checked ? [] : (day.intervals.length ? day.intervals : [{ start: '09:00', end: '17:00' }]) })} /> Closed</label><div>{!day.closed ? day.intervals.map((interval, index) => <span key={index}><input aria-label={`${label} opening time ${index + 1}`} type="time" value={interval.start} onChange={(event) => updateDay(key, { ...day, intervals: day.intervals.map((item, itemIndex) => itemIndex === index ? { ...item, start: event.target.value } : item) })} /><em>to</em><input aria-label={`${label} closing time ${index + 1}`} type="time" value={interval.end} onChange={(event) => updateDay(key, { ...day, intervals: day.intervals.map((item, itemIndex) => itemIndex === index ? { ...item, end: event.target.value } : item) })} /><button type="button" aria-label={`Remove ${label} interval ${index + 1}`} onClick={() => updateDay(key, { ...day, intervals: day.intervals.filter((_, itemIndex) => itemIndex !== index) })}><X size={14} /></button></span>) : null}{!day.closed && day.intervals.length < 4 ? <button type="button" className="business-add-interval" onClick={() => updateDay(key, { ...day, intervals: [...day.intervals, { start: '18:00', end: '22:00' }] })}><Plus size={13} /> Add interval</button> : null}</div></div> })}</div>
           </> : null}

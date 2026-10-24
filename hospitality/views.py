@@ -689,7 +689,7 @@ def venue_profile_manage_api(request, organization_id):
         try:
             with transaction.atomic():
                 organization = venue.organization
-                organization_fields = {'name': 'name', 'address': 'address', 'phone': 'phone', 'email': 'email', 'website': 'website', 'map_url': 'map_url'}
+                organization_fields = {'name': 'name', 'slogan': 'slogan', 'address': 'address', 'phone': 'phone', 'email': 'email', 'website': 'website', 'map_url': 'map_url'}
                 for api_key, model_key in organization_fields.items():
                     if api_key in data:
                         value = str(data.get(api_key) or '').strip()
