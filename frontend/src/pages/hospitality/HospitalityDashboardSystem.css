@@ -195,6 +195,11 @@
   .manage-app--hospitality .manage-header-actions .hospitality-notification-control { pointer-events:auto; }
 }
 
+/* Primary actions stay high-contrast in the light workspace as well. */
+.manage-app--hospitality-theme-light :is(.manage-button.is-primary, .manage-header-actions .manage-button.is-primary) {
+  color: #fff !important;
+}
+
 /* Keep catalog tables usable on narrow screens: the table scrolls, while the
    page and its controls stay within the viewport. */
 @media (max-width:640px) {
