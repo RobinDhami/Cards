@@ -193,6 +193,7 @@ def _loyalty_membership_payload(membership):
         'stampCount': membership.stamp_count,
         'stampGoal': membership.stamp_goal,
         'rewardsRedeemed': membership.rewards_redeemed,
+        'rewardBalance': str(membership.reward_balance),
         'isActive': membership.is_active,
     }
 
@@ -200,10 +201,15 @@ def _loyalty_membership_payload(membership):
 def _rewards_program_payload(program):
     return {
         'isActive': program.is_active,
+        'programType': program.program_type,
         'rewardRatePercent': str(program.reward_rate_percent),
         'minimumOrderAmount': str(program.minimum_order_amount),
         'maxRedemptionPercent': str(program.max_redemption_percent),
         'rewardLabel': program.reward_label,
+        'pointsPerCurrency': str(program.points_per_currency),
+        'pointsToReward': program.points_to_reward,
+        'stampGoal': program.stamp_goal,
+        'stampRewardLabel': program.stamp_reward_label,
         'expiryDays': program.expiry_days,
     }
 
@@ -283,6 +289,7 @@ def _payload(request, venue):
         } for item in category.items.filter(is_published=True).prefetch_related('price_variants')]
         if items:
             categories.append({'name': category.name, 'slug': category.slug, 'items': items})
+    program = VenueRewardsProgram.objects.filter(venue=venue).first()
     return {
         'organization': {'id': venue.organization_id, 'name': venue.organization.name, 'slogan': venue.organization.slogan or ''},
         'venue': {'publicIdentifier': venue.public_identifier, 'type': venue.venue_type, 'description': venue.description or venue.organization.description or '',
@@ -297,9 +304,12 @@ def _payload(request, venue):
         'rating': {'average': venue.feedback.aggregate(average=Avg('rating'))['average'] or 0, 'count': venue.feedback.count()},
         'categories': categories, 'feedbackEnabled': venue.feedback_enabled,
         'loyalty': {
-            'enabled': venue.venue_type in {'cafe', 'restaurant'},
-            'programName': f'{venue.organization.name} Rewards',
-            'stampGoal': 5,
+            'enabled': bool(program and program.is_active and venue.venue_type in {'cafe', 'restaurant'}),
+            'programName': program.reward_label if program and program.program_type != 'stamps' else (program.stamp_reward_label if program else f'{venue.organization.name} Rewards'),
+            'programType': program.program_type if program else 'rewards',
+            'stampGoal': program.stamp_goal if program else 5,
+            'pointsToReward': program.points_to_reward if program else 100,
+            'pointsPerCurrency': str(program.points_per_currency) if program else '1.00',
         },
     }
 
@@ -379,6 +389,9 @@ def venue_loyalty_join_api(request, public_identifier):
         is_active=True,
         venue_type__in=['cafe', 'restaurant'],
     )
+    program, _ = VenueRewardsProgram.objects.get_or_create(venue=venue)
+    if not program.is_active:
+        return JsonResponse({'error': 'This loyalty program is not active.'}, status=400)
     data = _body(request)
     if not isinstance(data, dict):
         return JsonResponse({'error': 'Invalid JSON.'}, status=400)
@@ -393,7 +406,7 @@ def venue_loyalty_join_api(request, public_identifier):
             membership, created = VenueLoyaltyMembership.objects.get_or_create(
                 venue=venue,
                 customer=customer,
-                defaults={'stamp_goal': 5},
+                defaults={'stamp_goal': program.stamp_goal},
             )
             if created:
                 _record_operational_activity(venue, 'loyalty_member_joined', f'New loyalty member joined: {phone_e164}', details={'membershipId': membership.public_identifier})
@@ -594,10 +607,15 @@ def venue_settings_api(request, organization_id):
             program, _ = VenueRewardsProgram.objects.get_or_create(venue=venue)
             try:
                 program.is_active = bool(data.get('isActive', program.is_active))
+                program.program_type = str(data.get('programType', program.program_type))
                 program.reward_rate_percent = Decimal(str(data.get('rewardRatePercent', program.reward_rate_percent)))
                 program.minimum_order_amount = Decimal(str(data.get('minimumOrderAmount', program.minimum_order_amount)))
                 program.max_redemption_percent = Decimal(str(data.get('maxRedemptionPercent', program.max_redemption_percent)))
                 program.reward_label = str(data.get('rewardLabel', program.reward_label)).strip() or 'Rewards balance'
+                program.points_per_currency = Decimal(str(data.get('pointsPerCurrency', program.points_per_currency)))
+                program.points_to_reward = int(data.get('pointsToReward', program.points_to_reward))
+                program.stamp_goal = int(data.get('stampGoal', program.stamp_goal))
+                program.stamp_reward_label = str(data.get('stampRewardLabel', program.stamp_reward_label)).strip() or 'Free reward'
                 expiry = data.get('expiryDays', program.expiry_days)
                 program.expiry_days = int(expiry) if expiry not in (None, '', 0, '0') else None
                 program.full_clean()
@@ -605,7 +623,7 @@ def venue_settings_api(request, organization_id):
             except (InvalidOperation, TypeError, ValueError, ValidationError) as error:
                 messages = getattr(error, 'messages', [str(error)])
                 return JsonResponse({'error': '; '.join(messages)}, status=400)
-            _record_operational_activity(venue, 'rewards_program_updated', 'Updated rewards program rules', request, {'active': program.is_active, 'rewardRatePercent': str(program.reward_rate_percent), 'expiryDays': program.expiry_days})
+            _record_operational_activity(venue, 'rewards_program_updated', 'Updated rewards program rules', request, {'active': program.is_active, 'programType': program.program_type, 'expiryDays': program.expiry_days})
             return JsonResponse({'ok': True, 'rewardsProgram': _rewards_program_payload(program)})
         if data.get('action') == 'notifications':
             preference, _ = OrganizationNotificationPreference.objects.get_or_create(organization=organization, user=request.user)

@@ -82,7 +82,7 @@ export type Venue = {
   links: Link[];
   rating: { average: number; count: number };
   feedbackEnabled: boolean;
-  loyalty?: { enabled: boolean; programName: string; stampGoal: number };
+  loyalty?: { enabled: boolean; programName: string; programType: 'rewards' | 'points' | 'stamps'; stampGoal: number; pointsToReward: number; pointsPerCurrency: string };
   sourceConflicts?: string[];
 };
 type Category = {
@@ -134,6 +134,7 @@ type LoyaltyMembership = {
   stampGoal: number;
   rewardsRedeemed: number;
   isActive: boolean;
+  rewardBalance?: string;
 };
 
 const newCafeFeedbackDraft = (source: string): CafeFeedbackDraft => ({
@@ -1773,12 +1774,12 @@ function CafeSocialIcon({ type, icon }: { type: string; icon?: string }) {
   return <SocialIcon type={type} customIcon={icon} />;
 }
 
-function CafeLoyaltyPanel({ programName, stampGoal, onJoin }: { programName: string; stampGoal: number; onJoin: () => void }) {
+function CafeLoyaltyPanel({ programName, programType, stampGoal, pointsToReward, pointsPerCurrency, onJoin }: { programName: string; programType: 'rewards' | 'points' | 'stamps'; stampGoal: number; pointsToReward: number; pointsPerCurrency: string; onJoin: () => void }) {
   return <section className="cafe-loyalty" aria-labelledby="cafe-loyalty-title">
     <span className="cafe-loyalty-mark" aria-hidden="true"><Gift size={20} /></span>
     <div>
       <strong id="cafe-loyalty-title">{programName}</strong>
-      <p>Collect {stampGoal} stamps. Your {stampGoal + 1}th coffee is on us.</p>
+      <p>{programType === 'stamps' ? `Collect ${stampGoal} stamps to earn ${programName}.` : programType === 'points' ? `Earn ${pointsPerCurrency} point${pointsPerCurrency === '1.00' ? '' : 's'} per rupee. ${pointsToReward} points earns ${programName}.` : `Earn rewards on every eligible visit.`}</p>
     </div>
     <button type="button" onClick={onJoin}>Join rewards</button>
   </section>;
@@ -1801,11 +1802,13 @@ const loyaltyPhoneCountries = [
 ] as const;
 
 function CafeLoyaltySheet({
-  cafeName, programName, stampGoal, phone, message, membership, joining, stage, onClose, onPhoneChange, onSubmit,
+  cafeName, programName, programType, stampGoal, pointsToReward, phone, message, membership, joining, stage, onClose, onPhoneChange, onSubmit,
 }: {
   cafeName: string;
   programName: string;
+  programType: 'rewards' | 'points' | 'stamps';
   stampGoal: number;
+  pointsToReward: number;
   phone: string;
   message: string;
   membership: LoyaltyMembership | null;
@@ -1815,7 +1818,7 @@ function CafeLoyaltySheet({
   onPhoneChange: (phone: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>, formattedPhone: string) => void;
 }) {
-  const activeMembership = membership ?? { memberId: '', stampCount: 0, stampGoal, rewardsRedeemed: 0, isActive: true };
+  const activeMembership = membership ?? { memberId: '', stampCount: 0, stampGoal, rewardsRedeemed: 0, rewardBalance: '0', isActive: true };
   const [countryId, setCountryId] = useState<(typeof loyaltyPhoneCountries)[number]["id"]>("NP");
   const country = loyaltyPhoneCountries.find((item) => item.id === countryId) ?? loyaltyPhoneCountries[0];
   const [qrImage, setQrImage] = useState("");
@@ -1840,7 +1843,7 @@ function CafeLoyaltySheet({
       {stage === "join" ? <form onSubmit={(event) => onSubmit(event, country.prefix ? `${country.prefix}${phone.replace(/\D/g, "")}` : phone)}>
         <span className="cafe-loyalty-sheet-icon" aria-hidden="true"><Coffee size={24} /></span>
         <h2 id="cafe-loyalty-sheet-title">Join {programName}</h2>
-        <p>Enter your phone number to collect stamps and keep one card with {cafeName}.</p>
+        <p>Enter your phone number to join and keep one loyalty card with {cafeName}.</p>
         <label>Mobile number
           <span className="cafe-loyalty-phone-field">
             <select className="cafe-loyalty-country" aria-label="Country code" value={countryId} onChange={(event) => setCountryId(event.target.value as typeof countryId)}>
@@ -1854,16 +1857,13 @@ function CafeLoyaltySheet({
         {message ? <p className="cafe-loyalty-message" role="status">{message}</p> : null}
       </form> : <div className="cafe-loyalty-card-state">
         <h2 id="cafe-loyalty-sheet-title">{programName}</h2>
-        <p>{activeMembership.stampCount} of {activeMembership.stampGoal} stamps</p>
-        <div className="cafe-loyalty-stamps" aria-label={`${activeMembership.stampCount} of ${activeMembership.stampGoal} stamps collected`}>
-          {Array.from({ length: activeMembership.stampGoal }, (_, index) => <span className={index < activeMembership.stampCount ? "is-filled" : ""} key={index}><Coffee size={18} /></span>)}
-        </div>
+        {programType === 'stamps' ? <><p>{activeMembership.stampCount} of {activeMembership.stampGoal} stamps</p><div className="cafe-loyalty-stamps" aria-label={`${activeMembership.stampCount} of ${activeMembership.stampGoal} stamps collected`}>{Array.from({ length: activeMembership.stampGoal }, (_, index) => <span className={index < activeMembership.stampCount ? "is-filled" : ""} key={index}><Coffee size={18} /></span>)}</div></> : <p>{programType === 'points' ? `${Number(activeMembership.rewardBalance || 0).toFixed(0)} of ${pointsToReward} points` : `Rs. ${Number(activeMembership.rewardBalance || 0).toFixed(2)} ${programName}`}</p>}
         <div className="cafe-loyalty-member-id"><small>Member ID</small><strong>{activeMembership.memberId}</strong></div>
-        <p className="cafe-loyalty-card-note">Show this card at {cafeName} when you collect a stamp.</p>
+        <p className="cafe-loyalty-card-note">Show this card at {cafeName} to collect {programType === 'stamps' ? 'a stamp' : programType === 'points' ? 'points' : 'rewards'}.</p>
         <div className="cafe-loyalty-wallet-row">
           <div className="cafe-loyalty-qr">{qrImage ? <img src={qrImage} alt={`Rewards QR code for ${activeMembership.memberId}`} /> : <span>Preparing QR…</span>}</div>
           <div className="cafe-loyalty-wallet-actions">
-            <p>Scan at {cafeName} to collect a stamp.</p>
+            <p>Scan at {cafeName} to collect {programType === 'stamps' ? 'a stamp' : programType === 'points' ? 'points' : 'rewards'}.</p>
             <button type="button" disabled title="Wallet pass setup is coming next"><FaApple aria-hidden="true" /> Add to Apple Wallet</button>
             <button type="button" disabled title="Wallet pass setup is coming next"><img src={socialIconAssets.googleReview} alt="" aria-hidden="true" /> Add to Google Wallet</button>
           </div>
@@ -2009,9 +2009,12 @@ export function PublicHospitalityProfile() {
   );
   const specialItems = availableMenuItems.filter((entry) => itemIsTodaySpecial(entry));
   const loyaltyProgram = venue.loyalty ?? {
-    enabled: venue.venue.type === "cafe" || venue.venue.type === "restaurant",
+    enabled: false,
     programName: `${venue.organization.name} Rewards`,
+    programType: 'rewards' as const,
     stampGoal: 5,
+    pointsToReward: 100,
+    pointsPerCurrency: '1.00',
   };
   const today = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'Asia/Kathmandu' }).format(new Date()).toLowerCase();
   const todaySchedule = venue.venue.openingSchedule?.[today];
@@ -2107,7 +2110,10 @@ export function PublicHospitalityProfile() {
           </section> : null}
           {loyaltyProgram.enabled ? <CafeLoyaltyPanel
             programName={loyaltyProgram.programName}
-            stampGoal={loyaltyProgram.stampGoal}
+            programType={loyaltyProgram.programType}
+        stampGoal={loyaltyProgram.stampGoal}
+        pointsToReward={loyaltyProgram.pointsToReward}
+        pointsPerCurrency={loyaltyProgram.pointsPerCurrency}
             onJoin={() => { setLoyaltyMessage(""); setLoyaltySheet("join"); }}
           /> : null}
           {(scheduleEntries.length || venue.venue.openingHours) ? (hasVariableHours ? <details className="hospitality-public-hours">
@@ -2226,7 +2232,9 @@ export function PublicHospitalityProfile() {
       {loyaltySheet !== "closed" ? <CafeLoyaltySheet
         cafeName={venue.organization.name}
         programName={loyaltyProgram.programName}
+        programType={loyaltyProgram.programType}
         stampGoal={loyaltyProgram.stampGoal}
+        pointsToReward={loyaltyProgram.pointsToReward}
         phone={loyaltyPhone}
         message={loyaltyMessage}
         membership={loyaltyMembership}

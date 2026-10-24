@@ -2,79 +2,25 @@ import { useEffect, useMemo, useState } from 'react'
 import Gift from 'lucide-react/dist/esm/icons/gift.js'
 import Save from 'lucide-react/dist/esm/icons/save.js'
 import ShieldCheck from 'lucide-react/dist/esm/icons/shield-check.js'
-import { Field, TextInput } from '../../components/manage/FormControls'
+import { Field, SelectInput, TextInput } from '../../components/manage/FormControls'
 import { apiFetch, displayError, jsonBody } from '../../lib/api'
 import './HospitalityRewardsProgram.css'
 
-type RewardsProgram = {
-  isActive: boolean
-  rewardRatePercent: string
-  minimumOrderAmount: string
-  maxRedemptionPercent: string
-  rewardLabel: string
-  expiryDays: number | null
-}
-
-const blankProgram: RewardsProgram = {
-  isActive: false,
-  rewardRatePercent: '5.00',
-  minimumOrderAmount: '0.00',
-  maxRedemptionPercent: '20.00',
-  rewardLabel: 'Rewards balance',
-  expiryDays: 180,
-}
+type ProgramType = 'rewards' | 'points' | 'stamps'
+type RewardsProgram = { isActive: boolean; programType: ProgramType; rewardRatePercent: string; minimumOrderAmount: string; maxRedemptionPercent: string; rewardLabel: string; pointsPerCurrency: string; pointsToReward: number; stampGoal: number; stampRewardLabel: string; expiryDays: number | null }
+const blankProgram: RewardsProgram = { isActive: false, programType: 'rewards', rewardRatePercent: '5.00', minimumOrderAmount: '0.00', maxRedemptionPercent: '20.00', rewardLabel: 'Rewards balance', pointsPerCurrency: '1.00', pointsToReward: 100, stampGoal: 5, stampRewardLabel: 'Free reward', expiryDays: 180 }
+const programCopy: Record<ProgramType, { title: string; hint: string }> = { rewards: { title: 'Spend rewards', hint: 'Customers earn a cash balance based on their bill.' }, points: { title: 'Points', hint: 'Customers collect points and exchange them for a reward.' }, stamps: { title: 'Stamps', hint: 'Customers collect one stamp per qualifying visit.' } }
 
 export function HospitalityRewardsProgram({ organizationId }: { organizationId: number }) {
-  const [saved, setSaved] = useState<RewardsProgram | null>(null)
-  const [draft, setDraft] = useState<RewardsProgram>(blankProgram)
-  const [status, setStatus] = useState<'loading' | 'saving' | 'saved' | 'error'>('loading')
-  const [message, setMessage] = useState('')
+  const [saved, setSaved] = useState<RewardsProgram | null>(null); const [draft, setDraft] = useState<RewardsProgram>(blankProgram)
+  const [status, setStatus] = useState<'loading' | 'saving' | 'saved' | 'error'>('loading'); const [message, setMessage] = useState('')
   const changed = useMemo(() => JSON.stringify(draft) !== JSON.stringify(saved), [draft, saved])
-
-  useEffect(() => {
-    let active = true
-    void apiFetch<{ rewardsProgram?: RewardsProgram }>(`/api/organizations/${organizationId}/venue/settings/`)
-      .then((payload) => {
-        if (!active) return
-        const program = payload.rewardsProgram || blankProgram
-        setSaved(program); setDraft(program); setStatus('saved')
-      })
-      .catch((reason) => { if (active) { setStatus('error'); setMessage(displayError(reason)) } })
-    return () => { active = false }
-  }, [organizationId])
-
-  async function save() {
-    if (!changed || status === 'saving') return
-    setStatus('saving'); setMessage('')
-    try {
-      const response = await apiFetch<{ rewardsProgram: RewardsProgram }>(`/api/organizations/${organizationId}/venue/settings/`, {
-        method: 'PATCH',
-        body: jsonBody({ action: 'rewards_program', ...draft, expiryDays: draft.expiryDays || null }),
-      })
-      setSaved(response.rewardsProgram); setDraft(response.rewardsProgram)
-      setStatus('saved'); setMessage('Rewards program saved.')
-    } catch (reason) {
-      setStatus('error'); setMessage(displayError(reason))
-    }
-  }
-
-  if (status === 'loading') return <div className="manage-state">Loading rewards program…</div>
-
+  useEffect(() => { let active = true; void apiFetch<{ rewardsProgram?: RewardsProgram }>(`/api/organizations/${organizationId}/venue/settings/`).then((payload) => { if (!active) return; const program = { ...blankProgram, ...(payload.rewardsProgram || {}) }; setSaved(program); setDraft(program); setStatus('saved') }).catch((reason) => { if (active) { setStatus('error'); setMessage(displayError(reason)) } }); return () => { active = false } }, [organizationId])
+  async function save() { if (!changed || status === 'saving') return; setStatus('saving'); setMessage(''); try { const response = await apiFetch<{ rewardsProgram: RewardsProgram }>(`/api/organizations/${organizationId}/venue/settings/`, { method: 'PATCH', body: jsonBody({ action: 'rewards_program', ...draft, expiryDays: draft.expiryDays || null }) }); const program = { ...blankProgram, ...response.rewardsProgram }; setSaved(program); setDraft(program); setStatus('saved'); setMessage('Loyalty program saved.') } catch (reason) { setStatus('error'); setMessage(displayError(reason)) } }
+  if (status === 'loading') return <div className="manage-state">Loading loyalty program…</div>
+  const copy = programCopy[draft.programType]
   return <section className="hospitality-rewards-program">
-    <div className="rewards-program-intro manage-card"><span><Gift size={22} /></span><div><h2>Spend-based rewards</h2></div></div>
-    <div className="rewards-program-layout">
-      <form className="rewards-program-form manage-card" onSubmit={(event) => { event.preventDefault(); void save() }}>
-        <header><div><h2>Program rules</h2></div><label className="rewards-program-toggle"><input type="checkbox" checked={draft.isActive} onChange={(event) => setDraft({ ...draft, isActive: event.target.checked })} /><span>{draft.isActive ? 'Active' : 'Paused'}</span></label></header>
-        <div className="form-grid">
-          <Field label="Customer-facing label" wide><TextInput maxLength={80} value={draft.rewardLabel} onChange={(event) => setDraft({ ...draft, rewardLabel: event.target.value })} placeholder="Rewards balance" /></Field>
-          <Field label="Reward rate (%)"><TextInput type="number" min="0.01" max="100" step="0.01" value={draft.rewardRatePercent} onChange={(event) => setDraft({ ...draft, rewardRatePercent: event.target.value })} /></Field>
-          <Field label="Minimum eligible bill (Rs.)"><TextInput type="number" min="0" step="0.01" value={draft.minimumOrderAmount} onChange={(event) => setDraft({ ...draft, minimumOrderAmount: event.target.value })} /></Field>
-          <Field label="Maximum redemption per bill (%)"><TextInput type="number" min="0" max="100" step="0.01" value={draft.maxRedemptionPercent} onChange={(event) => setDraft({ ...draft, maxRedemptionPercent: event.target.value })} /></Field>
-          <Field label="Rewards expiry (days)"><TextInput type="number" min="1" max="3650" value={draft.expiryDays ?? ''} onChange={(event) => setDraft({ ...draft, expiryDays: event.target.value ? Number(event.target.value) : null })} /></Field>
-        </div>
-        <footer><div>{message ? <span className={status === 'error' ? 'is-error' : ''} role={status === 'error' ? 'alert' : 'status'}>{message}</span> : null}</div><button className="manage-button is-primary" disabled={!changed || status === 'saving'}><Save size={14} />{status === 'saving' ? 'Saving…' : 'Save program'}</button></footer>
-      </form>
-      <aside className="rewards-program-preview manage-card"><span><ShieldCheck size={20} /></span><small>CUSTOMER EXAMPLE</small><h3>{draft.rewardLabel || 'Rewards balance'}</h3><strong>Rs. 60.00</strong><p>On a Rs. 1,200 eligible bill, the customer earns Rs. {((Number(draft.rewardRatePercent || 0) / 100) * 1200).toFixed(2)}.</p><dl><div><dt>Eligible from</dt><dd>Rs. {Number(draft.minimumOrderAmount || 0).toFixed(2)}</dd></div><div><dt>Can use per bill</dt><dd>Up to {draft.maxRedemptionPercent || '0'}%</dd></div></dl></aside>
-    </div>
+    <div className="rewards-program-intro manage-card"><span><Gift size={22} /></span><div><h2>Loyalty program</h2><p>Choose the system your customers use. Only the selected system appears on your public profile.</p></div></div>
+    <div className="rewards-program-layout"><form className="rewards-program-form manage-card" onSubmit={(event) => { event.preventDefault(); void save() }}><header><div><h2>{copy.title}</h2><p>{copy.hint}</p></div><label className="rewards-program-toggle"><input type="checkbox" checked={draft.isActive} onChange={(event) => setDraft({ ...draft, isActive: event.target.checked })} /><span>{draft.isActive ? 'Active' : 'Paused'}</span></label></header><div className="form-grid"><Field label="Loyalty system" wide><SelectInput value={draft.programType} onChange={(event) => setDraft({ ...draft, programType: event.target.value as ProgramType })}><option value="rewards">Spend rewards</option><option value="points">Points</option><option value="stamps">Stamps</option></SelectInput></Field>{draft.programType === 'rewards' ? <><Field label="Customer-facing label" wide><TextInput maxLength={80} value={draft.rewardLabel} onChange={(event) => setDraft({ ...draft, rewardLabel: event.target.value })} placeholder="Rewards balance" /></Field><Field label="Reward rate (%)"><TextInput type="number" min="0.01" max="100" step="0.01" value={draft.rewardRatePercent} onChange={(event) => setDraft({ ...draft, rewardRatePercent: event.target.value })} /></Field><Field label="Maximum redemption per bill (%)"><TextInput type="number" min="0" max="100" step="0.01" value={draft.maxRedemptionPercent} onChange={(event) => setDraft({ ...draft, maxRedemptionPercent: event.target.value })} /></Field></> : null}{draft.programType === 'points' ? <><Field label="Points per Rs. spent"><TextInput type="number" min="0.01" step="0.01" value={draft.pointsPerCurrency} onChange={(event) => setDraft({ ...draft, pointsPerCurrency: event.target.value })} /></Field><Field label="Points required for a reward"><TextInput type="number" min="1" step="1" value={draft.pointsToReward} onChange={(event) => setDraft({ ...draft, pointsToReward: Number(event.target.value) })} /></Field><Field label="Reward name" wide><TextInput maxLength={80} value={draft.rewardLabel} onChange={(event) => setDraft({ ...draft, rewardLabel: event.target.value })} placeholder="Free coffee" /></Field></> : null}{draft.programType === 'stamps' ? <><Field label="Stamps required"><TextInput type="number" min="1" max="50" step="1" value={draft.stampGoal} onChange={(event) => setDraft({ ...draft, stampGoal: Number(event.target.value) })} /></Field><Field label="Reward after stamps"><TextInput maxLength={80} value={draft.stampRewardLabel} onChange={(event) => setDraft({ ...draft, stampRewardLabel: event.target.value })} placeholder="Free coffee" /></Field></> : null}<Field label="Minimum eligible bill (Rs.)"><TextInput type="number" min="0" step="0.01" value={draft.minimumOrderAmount} onChange={(event) => setDraft({ ...draft, minimumOrderAmount: event.target.value })} /></Field>{draft.programType !== 'stamps' ? <Field label="Expiry (days)"><TextInput type="number" min="1" max="3650" value={draft.expiryDays ?? ''} onChange={(event) => setDraft({ ...draft, expiryDays: event.target.value ? Number(event.target.value) : null })} /></Field> : null}</div><footer><div>{message ? <span className={status === 'error' ? 'is-error' : ''} role={status === 'error' ? 'alert' : 'status'}>{message}</span> : null}</div><button className="manage-button is-primary" disabled={!changed || status === 'saving'}><Save size={14} />{status === 'saving' ? 'Saving…' : 'Save program'}</button></footer></form><aside className="rewards-program-preview manage-card"><span><ShieldCheck size={20} /></span><small>CUSTOMER EXAMPLE</small><h3>{draft.programType === 'stamps' ? draft.stampRewardLabel : draft.rewardLabel}</h3><strong>{draft.programType === 'stamps' ? `${draft.stampGoal} stamps` : draft.programType === 'points' ? `${draft.pointsToReward} points` : 'Rs. 60.00'}</strong><p>{draft.programType === 'stamps' ? `Collect ${draft.stampGoal} stamps to earn ${draft.stampRewardLabel || 'a reward'}.` : draft.programType === 'points' ? `Earn ${draft.pointsPerCurrency || '0'} points for every rupee spent.` : `On a Rs. 1,200 eligible bill, the customer earns Rs. ${((Number(draft.rewardRatePercent || 0) / 100) * 1200).toFixed(2)}.`}</p></aside></div>
   </section>
 }
