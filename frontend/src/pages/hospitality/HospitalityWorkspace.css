@@ -34,3 +34,20 @@
 .manage-app--hospitality .manage-brand-mark { border-radius: 50%; }
 .hospitality-public button.hospitality-menu-item{width:100%;align-items:flex-start;border:0;border-top:1px solid #e2e8f0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}.hospitality-public button.hospitality-menu-item:focus-visible{outline:2px solid #0b4bcb;outline-offset:3px;border-radius:6px}
 .hospitality-menu-detail{position:fixed;inset:0;z-index:30;display:grid;max-width:520px;height:max-content;max-height:calc(100vh - 48px);margin:auto;overflow:auto;border:1px solid #dbe5ee;border-radius:14px;background:#fff;padding:24px;box-shadow:0 24px 60px #10213a40}.hospitality-menu-detail>button{position:absolute;top:12px;right:12px;display:grid;width:32px;height:32px;place-items:center;border:0;border-radius:50%;background:#f1f5f9;color:#1e3a5f;cursor:pointer}.hospitality-menu-detail img{width:100%;max-height:230px;object-fit:cover;border-radius:10px}.hospitality-menu-detail h3{margin:16px 0 6px;color:#10213a}.hospitality-menu-detail p{margin:0;color:#596b82;line-height:1.55}.hospitality-menu-detail ul{margin:14px 0;padding-left:19px;color:#40536c}.hospitality-menu-detail strong{margin-top:12px;color:#145fe2;font-size:18px}
+
+.manage-app--hospitality > .manage-sidebar { width: 240px; }
+.manage-app--hospitality > .manage-main { margin-left: 240px; }
+.manage-app--hospitality .manage-brand { min-height: 72px; gap: 10px; padding: 14px 16px; }
+.manage-app--hospitality .manage-brand-mark { width: 38px; height: 38px; }
+.manage-app--hospitality .manage-brand strong { font-size: 14px; font-weight: 600; line-height: 1.2; }
+.manage-app--hospitality .manage-brand small { margin-top: 3px; font-size: 11px; line-height: 1.25; }
+.manage-app--hospitality .manage-nav { gap: 3px; padding: 16px 10px; }
+.manage-app--hospitality .manage-nav a { min-height: 40px; gap: 11px; padding: 9px 10px; font-size: 13px; font-weight: 500; line-height: 1.2; }
+.manage-app--hospitality .manage-nav a svg { width: 18px; height: 18px; flex: 0 0 18px; }
+.manage-app--hospitality .manage-account { grid-template-columns: 40px minmax(0, 1fr) 32px; gap: 10px; padding: 14px 16px; }
+.manage-app--hospitality .manage-avatar { width: 40px; height: 40px; font-size: 11px; }
+.manage-app--hospitality .manage-account strong { font-size: 12px; font-weight: 600; }
+.manage-app--hospitality .manage-account small { font-size: 11px; }
+.manage-app--hospitality .manage-account button { width: 32px; height: 32px; }
+@media (max-width: 1200px) { .manage-app--hospitality > .manage-sidebar { width: 224px; } .manage-app--hospitality > .manage-main { margin-left: 224px; } }
+@media (max-width: 960px) { .manage-app--hospitality > .manage-main { margin-left: 0; } .manage-app--hospitality .manage-brand { min-height: 64px; padding: 12px 14px; } .manage-app--hospitality .manage-nav { padding-block: 12px; } }
