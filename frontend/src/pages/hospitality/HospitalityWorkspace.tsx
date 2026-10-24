@@ -1851,7 +1851,7 @@ function CafeLoyaltySheet({
         <span className="cafe-loyalty-sheet-icon" aria-hidden="true"><Coffee size={24} /></span>
         <h2 id="cafe-loyalty-sheet-title">Join {programName}</h2>
         <p>Enter your name and phone number to join and keep one loyalty card with {cafeName}.</p>
-        <label>Full name<input autoFocus value={name} onChange={(event) => onNameChange(event.target.value)} autoComplete="name" placeholder="Your name" required /></label>
+        <label>Full name<input autoFocus value={name} onChange={(event) => onNameChange(event.target.value)} autoComplete="name" placeholder="Your name" /></label>
         <label>Mobile number
           <span className="cafe-loyalty-phone-field">
             <select className="cafe-loyalty-country" aria-label="Country code" value={countryId} onChange={(event) => setCountryId(event.target.value as typeof countryId)}>

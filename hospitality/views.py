@@ -401,7 +401,8 @@ def venue_loyalty_join_api(request, public_identifier):
     except ValidationError as error:
         return JsonResponse({'error': error.messages[0]}, status=400)
     full_name = str(data.get('name') or '').strip()[:120]
-    if not full_name:
+    existing_customer = LoyaltyCustomer.objects.filter(phone_e164=phone_e164).first()
+    if not existing_customer and not full_name:
         return JsonResponse({'error': 'Enter your name to join rewards.'}, status=400)
 
     try:
@@ -470,13 +471,38 @@ def venue_rewards_members_api(request, organization_id):
     return JsonResponse({'program': _rewards_program_payload(program), 'members': members})
 
 
-@require_http_methods(['GET'])
+@require_http_methods(['GET', 'PATCH', 'DELETE'])
 def venue_rewards_member_detail_api(request, organization_id, member_identifier):
     venue = _venue_for(request, organization_id, 'staff')
     if not venue:
         return JsonResponse({'error': 'Not authorized.'}, status=403)
-    program, _ = VenueRewardsProgram.objects.get_or_create(venue=venue)
     membership = get_object_or_404(VenueLoyaltyMembership.objects.select_related('customer'), venue=venue, public_identifier=member_identifier)
+    if request.method == 'DELETE':
+        phone = membership.customer.phone_e164
+        membership.delete()
+        _record_operational_activity(venue, 'loyalty_member_removed', f'Loyalty member removed: {phone}', request)
+        return JsonResponse({'ok': True})
+    if request.method == 'PATCH':
+        data = _body(request)
+        if not isinstance(data, dict):
+            return JsonResponse({'error': 'Invalid member details.'}, status=400)
+        full_name = str(data.get('name') or '').strip()[:120]
+        if not full_name:
+            return JsonResponse({'error': 'Enter the member name.'}, status=400)
+        try:
+            phone_e164 = _normalize_loyalty_phone(data.get('phone'))
+        except ValidationError as error:
+            return JsonResponse({'error': error.messages[0]}, status=400)
+        if LoyaltyCustomer.objects.filter(phone_e164=phone_e164).exclude(pk=membership.customer_id).exists():
+            return JsonResponse({'error': 'Another loyalty customer already uses this phone number.'}, status=409)
+        customer = membership.customer
+        customer.full_name = full_name
+        customer.phone_e164 = phone_e164
+        customer.save(update_fields=['full_name', 'phone_e164', 'updated_at'])
+        _record_operational_activity(venue, 'loyalty_member_updated', f'Loyalty member updated: {phone_e164}', request)
+        program, _ = VenueRewardsProgram.objects.get_or_create(venue=venue)
+        return JsonResponse({'ok': True, 'member': _membership_payload(membership, program)})
+    program, _ = VenueRewardsProgram.objects.get_or_create(venue=venue)
     with transaction.atomic():
         _expire_rewards_if_needed(membership, program)
     membership.refresh_from_db()

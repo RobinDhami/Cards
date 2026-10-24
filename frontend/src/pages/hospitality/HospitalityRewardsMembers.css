@@ -18,6 +18,12 @@
 .rewards-members__toolbar select { min-width: 164px; border: 1px solid #d9dee7; border-radius: 9px; background: #fff; padding: 0 32px 0 11px; color: #344054; font: inherit; }
 .rewards-whatsapp { display: inline-flex; width: fit-content; margin-top: 12px; align-items: center; gap: 7px; border-radius: 7px; background: #168a55; padding: 9px 11px; color: #fff; font-size: 12px; font-weight: 750; text-decoration: none; }
 .rewards-whatsapp:hover { background: #107345; }
+.rewards-member { display: flex; align-items: center; gap: 10px; }
+.rewards-member__open { display:flex; width:100%; flex:1; justify-content:space-between; align-items:center; gap:15px; border:0; background:transparent; padding:15px 0; color:inherit; text-align:left; cursor:pointer; }
+.rewards-member__open > div { display:grid; gap:3px; }
+.rewards-member__open strong { color:#182b4d; }.rewards-member__open span,.rewards-member__open small { color:#667085; font-size:12px; }.rewards-member__open b { color:#0d775a; font-size:15px; text-align:right; }
+.rewards-member .rewards-member__actions { display:flex; flex:0 0 auto; gap:5px; }.rewards-member__actions a,.rewards-member__actions button { display:grid; width:31px; height:31px; place-items:center; border:1px solid #d9e2ed; border-radius:7px; background:#fff; color:#38516f; cursor:pointer; }.rewards-member__actions a:hover,.rewards-member__actions button:hover { border-color:#99b5d9; background:#eef5ff; color:#145fe2; }.rewards-member__actions a { color:#168a55; }.rewards-member__actions .is-danger { color:#c33144; }.rewards-member__actions .is-danger:hover { border-color:#f2b6bd; background:#fff1f2; color:#b4232d; }
+.rewards-member-edit { display:grid; gap:13px; max-width:420px; }.rewards-member-edit h2,.rewards-member-edit p { margin:0; }.rewards-member-edit p { color:#667085; font-size:13px; }.rewards-member-edit label { display:grid; gap:6px; color:#344054; font-size:12px; font-weight:700; }.rewards-member-edit input { min-height:40px; border:1px solid #d9dee7; border-radius:7px; padding:0 10px; font:inherit; }.rewards-member-edit footer { display:flex; justify-content:flex-end; gap:8px; margin-top:4px; }
 .rewards-members__toolbar label { position: relative; }
 .rewards-members__toolbar label > svg { flex: 0 0 auto; }
 .rewards-members__toolbar input { padding-right: 42px; }
@@ -31,6 +37,7 @@
   .rewards-members__toolbar input { min-height: 46px; font-size: 14px; }
   .rewards-members__search { right: 8px; width: 34px; height: 34px; }
   .rewards-members__toolbar .rewards-members__scan { position: fixed; z-index: 25; right: auto; bottom: max(18px, env(safe-area-inset-bottom)); left: 50%; display: grid; width: 64px; min-height: 64px; height: 64px; transform: translateX(-50%); border-radius: 50%; padding: 0; box-shadow: 0 10px 28px rgba(15,23,42,.32); }
+  .rewards-member { align-items:flex-start; }.rewards-member__open { min-width:0; }.rewards-member__open > div:first-child { min-width:0; }.rewards-member__open span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }.rewards-member__actions { padding-top:14px; }
   .rewards-members__scan svg { width: 27px; height: 27px; }
   .rewards-members__scan span { position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%); color: #334155; font-size: 10px; font-weight: 700; white-space: nowrap; }
 }
