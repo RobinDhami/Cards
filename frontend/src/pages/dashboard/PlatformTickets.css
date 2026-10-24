@@ -42,4 +42,31 @@
 .platform-ticket-modal input, .platform-ticket-modal select, .platform-ticket-modal textarea { width: 100%; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; padding: 8px; color: #0f172a; font: 14px system-ui, sans-serif; }
 .platform-ticket-modal textarea { min-height: 96px; resize: vertical; }
 .platform-ticket-modal footer { justify-content: flex-end; margin-top: 16px; }
+.manage-app--hospitality-theme-dark .platform-tickets-page { color:#e2e8f0; }
+.manage-app--hospitality-theme-dark .platform-ticket-toolbar,
+.manage-app--hospitality-theme-dark .organization-ticket-row > span,
+.manage-app--hospitality-theme-dark .organization-ticket-row time,
+.manage-app--hospitality-theme-dark .organization-ticket-row small { color:#94a3b8; }
+.manage-app--hospitality-theme-dark .platform-ticket-list { border-color:rgba(148,163,184,.2); background:#1f2937; }
+.manage-app--hospitality-theme-dark .organization-ticket-head { border-color:rgba(148,163,184,.2); background:#172235; color:#cbd5e1; }
+.manage-app--hospitality-theme-dark .organization-ticket-row { border-color:rgba(148,163,184,.15); }
+.manage-app--hospitality-theme-dark .organization-ticket-row strong { color:#f8fafc; }
+.manage-app--hospitality-theme-dark .platform-ticket-modal-backdrop { background:rgba(2,6,23,.72); }
+.manage-app--hospitality-theme-dark .platform-ticket-modal { border-color:rgba(148,163,184,.28); background:#1f2937; box-shadow:0 18px 42px rgba(0,0,0,.42); }
+.manage-app--hospitality-theme-dark .platform-ticket-modal h2 { color:#f8fafc; }
+.manage-app--hospitality-theme-dark .platform-ticket-modal p { color:#94a3b8; }
+.manage-app--hospitality-theme-dark .platform-ticket-modal label { color:#e2e8f0; }
+.manage-app--hospitality-theme-dark .platform-ticket-modal input,
+.manage-app--hospitality-theme-dark .platform-ticket-modal select,
+.manage-app--hospitality-theme-dark .platform-ticket-modal textarea { border-color:rgba(148,163,184,.28); background:#111827; color:#f8fafc; }
+.manage-app--hospitality-theme-dark .platform-ticket-modal header button,
+.manage-app--hospitality-theme-dark .platform-ticket-modal footer button:not(.is-primary) { border-color:rgba(148,163,184,.3); background:#273449; color:#e2e8f0; }
+.manage-app--hospitality-theme-dark .platform-ticket-modal header button:hover,
+.manage-app--hospitality-theme-dark .platform-ticket-modal footer button:not(.is-primary):hover { background:#334155; color:#fff; }
+.manage-app--hospitality-theme-light .platform-ticket-list { border-color:rgba(0,0,0,.08); background:#fff; }
+.manage-app--hospitality-theme-light .organization-ticket-head { border-color:#e2e8f0; background:#f8fafc; color:#64748b; }
+.manage-app--hospitality-theme-light .platform-ticket-modal { border-color:#dbe3ee; background:#fff; }
+.manage-app--hospitality-theme-light .platform-ticket-modal input,
+.manage-app--hospitality-theme-light .platform-ticket-modal select,
+.manage-app--hospitality-theme-light .platform-ticket-modal textarea { border-color:#cbd5e1; background:#fff; color:#0f172a; }
 @media (max-width: 760px) { .platform-ticket-head,.organization-ticket-head { display:none; } .platform-ticket-row,.organization-ticket-row { grid-template-columns:1fr 1fr; gap:10px; padding:12px; } .platform-ticket-row > div,.organization-ticket-row > div { grid-column:1 / -1; } .platform-ticket-row time,.organization-ticket-row time { text-align:right; } }
