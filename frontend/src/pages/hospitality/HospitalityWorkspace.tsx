@@ -29,6 +29,7 @@ import UserPlus from "lucide-react/dist/esm/icons/user-plus.js";
 import X from "lucide-react/dist/esm/icons/x.js";
 import { FaApple } from "react-icons/fa6";
 import { SocialIcon } from "../../components/social/SocialIcon";
+import { socialIconAssets } from "../../components/social/socialIconAssets";
 import {
   Field,
   FileInput,
@@ -51,7 +52,6 @@ import { HospitalityAnalytics } from "./HospitalityAnalytics";
 import { HospitalityRewardsProgram } from "./HospitalityRewardsProgram";
 import { HospitalityRewardsMembers } from "./HospitalityRewardsMembers";
 import { HospitalityActivityNotifications } from "./HospitalityActivityNotifications";
-import googleGLogo from "./google-g.svg";
 import "./HospitalityWorkspace.css";
 import "./HospitalityDashboardSystem.css";
 import "./PublicCafeProfile.css";
@@ -1865,7 +1865,7 @@ function CafeLoyaltySheet({
           <div className="cafe-loyalty-wallet-actions">
             <p>Scan at {cafeName} to collect a stamp.</p>
             <button type="button" disabled title="Wallet pass setup is coming next"><FaApple aria-hidden="true" /> Add to Apple Wallet</button>
-            <button type="button" disabled title="Wallet pass setup is coming next"><img src={googleGLogo} alt="" aria-hidden="true" /> Add to Google Wallet</button>
+            <button type="button" disabled title="Wallet pass setup is coming next"><img src={socialIconAssets.googleReview} alt="" aria-hidden="true" /> Add to Google Wallet</button>
           </div>
         </div>
         <small className="cafe-loyalty-wallet-note">Wallet passes will be available after the Apple and Google pass setup is complete.</small>
@@ -2158,7 +2158,7 @@ export function PublicHospitalityProfile() {
             {venue.venue.address ? <iframe title={`Map for ${venue.organization.name}`} src={`https://maps.google.com/maps?q=${encodeURIComponent(`${venue.organization.name}, ${venue.venue.address}`)}&output=embed`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <div><MapPin size={28} />{venue.organization.name}</div>}
           </article> : null}
           {venue.venue.googleReviewUrl ? <article className="cafe-google-reviews">
-            <div className="cafe-google-review-copy"><img src={googleGLogo} alt="" /><span><strong>Review us on Google</strong><small>Share your public review</small></span></div>
+            <div className="cafe-google-review-copy"><img src={socialIconAssets.googleReview} alt="" /><span><strong>Review us on Google</strong><small>Share your public review</small></span></div>
             <a className="cafe-google-review-link" href={venue.venue.googleReviewUrl} onClick={() => track("google_review_click", "google_review")} target="_blank" rel="noreferrer">Write a review</a>
           </article> : null}
         </section>
