@@ -51,3 +51,4 @@
 .manage-app--hospitality .manage-account button { width: 32px; height: 32px; }
 @media (max-width: 1200px) { .manage-app--hospitality > .manage-sidebar { width: 224px; } .manage-app--hospitality > .manage-main { margin-left: 224px; } }
 @media (max-width: 960px) { .manage-app--hospitality > .manage-main { margin-left: 0; } .manage-app--hospitality .manage-brand { min-height: 64px; padding: 12px 14px; } .manage-app--hospitality .manage-nav { padding-block: 12px; } }
+@media (max-width: 960px) { .manage-app--hospitality .manage-mobile-drawer.is-open { background: #0f172a; } .manage-app--hospitality .manage-mobile-drawer.is-open > .manage-sidebar { width: 100%; border-right: 0; } }
