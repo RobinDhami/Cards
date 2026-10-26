@@ -2448,6 +2448,8 @@ def _ensure_hospitality_profile(school):
         organization=school,
         defaults={'venue_type': 'restaurant'},
     )
+    from vcards.organization_access import ensure_organization_modules
+    ensure_organization_modules(school)
     return venue
 
 

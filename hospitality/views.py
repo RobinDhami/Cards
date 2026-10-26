@@ -27,8 +27,12 @@ from .models import (
     VenueStaffProfile, VenueTouchpoint,
 )
 from django.contrib.auth import get_user_model
-from vcards.models import CardBatchCard, College, OrganizationNotificationPreference, OrganizationTeamMember
-from vcards.organization_access import ROLE_CAPABILITIES, accessible_organizations, can_access_organization, ensure_organization_owner, organization_role
+from vcards.models import CardBatchCard, College, OrganizationModuleAccess, OrganizationNotificationPreference, OrganizationServicePlan, OrganizationTeamMember
+from vcards.organization_access import (
+    MODULE_CAPABILITIES, ROLE_CAPABILITIES, accessible_organizations, can_access_organization,
+    effective_capabilities, enabled_organization_modules, ensure_organization_modules,
+    ensure_organization_owner, organization_role,
+)
 
 
 def _body(request):
@@ -282,8 +286,9 @@ def _record_event(request, venue, event_type, target='', dedupe_seconds=3):
 
 
 def _payload(request, venue):
+    enabled_modules = enabled_organization_modules(venue.organization)
     categories = []
-    for category in venue.menu_categories.filter(is_active=True):
+    for category in (venue.menu_categories.filter(is_active=True) if 'menu' in enabled_modules else []):
         items = [{
             'id': str(item.public_identifier), 'name': item.name,
             'description': item.description, 'image': _file_url(request, item.image),
@@ -308,9 +313,9 @@ def _payload(request, venue):
                   'openingSchedule': venue.opening_schedule, 'whatsappSameAsPhone': venue.whatsapp_same_as_phone},
         'links': list(venue.links.filter(is_active=True).order_by('display_order', 'id').values('id', 'link_type', 'label', 'value', 'icon', 'display_order', 'is_active')),
         'rating': {'average': venue.feedback.aggregate(average=Avg('rating'))['average'] or 0, 'count': venue.feedback.count()},
-        'categories': categories, 'feedbackEnabled': venue.feedback_enabled,
+        'categories': categories, 'feedbackEnabled': bool(venue.feedback_enabled and 'feedback' in enabled_modules),
         'loyalty': {
-            'enabled': bool(program and program.is_active and venue.venue_type in {'cafe', 'restaurant'}),
+            'enabled': bool('loyalty' in enabled_modules and program and program.is_active and venue.venue_type in {'cafe', 'restaurant'}),
             'programName': program.reward_label if program and program.program_type != 'stamps' else (program.stamp_reward_label if program else f'{venue.organization.name} Rewards'),
             'programType': program.program_type if program else 'rewards',
             'stampGoal': program.stamp_goal if program else 5,
@@ -349,6 +354,8 @@ def venue_track_api(request, public_identifier):
 @require_http_methods(['POST'])
 def venue_feedback_api(request, public_identifier):
     venue = get_object_or_404(VenueProfile, public_identifier=public_identifier, is_active=True, feedback_enabled=True)
+    if 'feedback' not in enabled_organization_modules(venue.organization):
+        return JsonResponse({'error': 'Feedback is not available for this business.'}, status=404)
     data = _body(request)
     if not isinstance(data, dict):
         return JsonResponse({'error': 'Invalid JSON.'}, status=400)
@@ -396,7 +403,7 @@ def venue_loyalty_join_api(request, public_identifier):
         venue_type__in=['cafe', 'restaurant'],
     )
     program, _ = VenueRewardsProgram.objects.get_or_create(venue=venue)
-    if not program.is_active:
+    if 'loyalty' not in enabled_organization_modules(venue.organization) or not program.is_active:
         return JsonResponse({'error': 'This loyalty program is not active.'}, status=400)
     data = _body(request)
     if not isinstance(data, dict):
@@ -454,7 +461,7 @@ def _reward_decimal(data, key, label):
 
 @require_http_methods(['GET'])
 def venue_rewards_members_api(request, organization_id):
-    venue = _venue_for(request, organization_id, 'staff')
+    venue = _venue_for(request, organization_id, 'loyalty')
     if not venue:
         return JsonResponse({'error': 'Not authorized.'}, status=403)
     program, _ = VenueRewardsProgram.objects.get_or_create(venue=venue)
@@ -478,7 +485,7 @@ def venue_rewards_members_api(request, organization_id):
 
 @require_http_methods(['GET', 'PATCH', 'DELETE'])
 def venue_rewards_member_detail_api(request, organization_id, member_identifier):
-    venue = _venue_for(request, organization_id, 'staff')
+    venue = _venue_for(request, organization_id, 'loyalty')
     if not venue:
         return JsonResponse({'error': 'Not authorized.'}, status=403)
     membership = get_object_or_404(VenueLoyaltyMembership.objects.select_related('customer'), venue=venue, public_identifier=member_identifier)
@@ -521,7 +528,7 @@ def venue_rewards_member_detail_api(request, organization_id, member_identifier)
 
 @require_http_methods(['POST'])
 def venue_rewards_transaction_api(request, organization_id):
-    venue = _venue_for(request, organization_id, 'staff')
+    venue = _venue_for(request, organization_id, 'loyalty')
     if not venue:
         return JsonResponse({'error': 'Not authorized.'}, status=403)
     data = _body(request)
@@ -634,13 +641,50 @@ def _team_payload(member):
     }
 
 
+def _service_plan_payload(organization, include_internal=False):
+    ensure_organization_modules(organization)
+    plan, _ = OrganizationServicePlan.objects.get_or_create(organization=organization)
+    modules = {row.module_key: row for row in organization.module_access.all()}
+    payload = {
+        'name': plan.name,
+        'startsOn': plan.starts_on.isoformat() if plan.starts_on else '',
+        'endsOn': plan.ends_on.isoformat() if plan.ends_on else '',
+        'technicalOwner': {
+            'id': plan.technical_owner_id,
+            'name': plan.technical_owner.get_full_name().strip() or plan.technical_owner.username,
+            'email': plan.technical_owner.email,
+        } if plan.technical_owner_id else None,
+        'modules': [{
+            'key': key,
+            'label': label,
+            'enabled': bool(modules.get(key) and modules[key].is_enabled and (not modules[key].ends_at or modules[key].ends_at >= timezone.now())),
+            'available': key != 'ordering',
+        } for key, label in OrganizationModuleAccess.MODULE_CHOICES],
+    }
+    if include_internal:
+        payload['internalNotes'] = plan.internal_notes
+    return payload
+
+
+def _support_staff_payload():
+    User = get_user_model()
+    return [{
+        'id': item.id,
+        'name': item.get_full_name().strip() or item.username,
+        'email': item.email,
+    } for item in User.objects.filter(
+        Q(user_permissions__codename='access_platform_organizations') | Q(groups__permissions__codename='access_platform_organizations'),
+        is_active=True,
+    ).exclude(is_superuser=True).distinct().order_by('first_name', 'last_name', 'username')]
+
+
 def _hospitality_shell(request, organization, role):
     organizations = accessible_organizations(request.user).filter(organization_type='hospitality').order_by('name')
     venue, _ = VenueProfile.objects.get_or_create(organization=organization)
     return {
         'isSuperAdmin': request.user.is_superuser,
         'role': role,
-        'capabilities': sorted({'overview', 'profile', 'menu', 'feedback', 'staff', 'analytics', 'settings', 'team'} & ({'overview', 'profile', 'menu', 'feedback', 'staff', 'analytics', 'settings', 'team'} if request.user.is_superuser else ROLE_CAPABILITIES.get(role, set()))),
+        'capabilities': sorted(effective_capabilities(request.user, organization)),
         'currentSchool': {'id': organization.pk, 'name': organization.name, 'logo': _file_url(request, organization.logo), 'organizationType': organization.organization_type, 'themePrimary': organization.theme_primary, 'publicIdentifier': venue.public_identifier},
         'schools': [{'id': item.pk, 'name': item.name} for item in organizations],
         'user': {'displayName': request.user.get_full_name().strip() or request.user.username},
@@ -665,6 +709,9 @@ def venue_settings_api(request, organization_id):
             },
             'organizationCode': organization.organization_code or '',
         }}
+        response['subscription'] = _service_plan_payload(organization, include_internal=request.user.is_superuser)
+        if request.user.is_superuser:
+            response['supportStaff'] = _support_staff_payload()
         if role == 'owner' or request.user.is_superuser:
             venue, _ = VenueProfile.objects.get_or_create(organization=organization)
             program, _ = VenueRewardsProgram.objects.get_or_create(venue=venue)
@@ -673,7 +720,51 @@ def venue_settings_api(request, organization_id):
         return JsonResponse(response)
     if request.method == 'PATCH':
         data = _body(request) or {}
+        if data.get('action') == 'subscription':
+            if not request.user.is_superuser:
+                return JsonResponse({'error': 'Only Super Admins can change a service plan.'}, status=403)
+            module_keys = data.get('modules')
+            if not isinstance(module_keys, list):
+                return JsonResponse({'error': 'Choose the modules included in this plan.'}, status=400)
+            valid_keys = set(MODULE_CAPABILITIES)
+            requested_keys = {str(key) for key in module_keys}
+            if not requested_keys.issubset(valid_keys):
+                return JsonResponse({'error': 'The plan contains an unknown module.'}, status=400)
+            # A hospitality workspace always needs its landing screen and public profile editor.
+            requested_keys.update({'overview', 'profile'})
+            support_id = data.get('technicalOwnerId') or None
+            support_user = None
+            if support_id:
+                try:
+                    support_user = get_user_model().objects.get(pk=int(support_id), is_active=True)
+                except (TypeError, ValueError, get_user_model().DoesNotExist):
+                    return JsonResponse({'error': 'Choose an active technical support person.'}, status=400)
+            try:
+                starts_on = date.fromisoformat(str(data.get('startsOn') or '')) if data.get('startsOn') else None
+                ends_on = date.fromisoformat(str(data.get('endsOn') or '')) if data.get('endsOn') else None
+            except ValueError:
+                return JsonResponse({'error': 'Use valid service-plan dates.'}, status=400)
+            if starts_on and ends_on and ends_on < starts_on:
+                return JsonResponse({'error': 'The plan end date must be after its start date.'}, status=400)
+            plan, _ = OrganizationServicePlan.objects.get_or_create(organization=organization)
+            plan.name = str(data.get('name') or '').strip()[:120]
+            plan.internal_notes = str(data.get('internalNotes') or '').strip()
+            plan.starts_on, plan.ends_on = starts_on, ends_on
+            plan.technical_owner, plan.updated_by = support_user, request.user
+            plan.save()
+            ensure_organization_modules(organization)
+            now = timezone.now()
+            for access in organization.module_access.all():
+                enabled = access.module_key in requested_keys
+                access.is_enabled = enabled
+                access.enabled_at = now if enabled and not access.enabled_at else (None if not enabled else access.enabled_at)
+                access.ends_at = None
+                access.configured_by = request.user
+                access.save(update_fields=['is_enabled', 'enabled_at', 'ends_at', 'configured_by', 'updated_at'])
+            return JsonResponse({'ok': True, 'subscription': _service_plan_payload(organization, include_internal=True)})
         if data.get('action') == 'rewards_program':
+            if not can_access_organization(request.user, organization, 'loyalty'):
+                return JsonResponse({'error': 'Loyalty is not included in this organization’s plan.'}, status=403)
             if role != 'owner' and not request.user.is_superuser:
                 return JsonResponse({'error': 'Only owners can update the rewards program.'}, status=403)
             venue, _ = VenueProfile.objects.get_or_create(organization=organization)

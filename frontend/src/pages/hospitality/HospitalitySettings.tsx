@@ -24,10 +24,15 @@ import "./HospitalityDashboardSystem.css";
 
 type Role = "owner" | "manager" | "menu_editor";
 type TeamMember = { id: number; name: string; email: string; role: Role; status: "active" | "invited"; isCurrentUser: boolean };
+type ServiceModule = { key: string; label: string; enabled: boolean; available: boolean };
+type ServicePlan = { name: string; startsOn: string; endsOn: string; internalNotes?: string; technicalOwner: { id: number; name: string; email: string } | null; modules: ServiceModule[] };
+type SupportStaff = { id: number; name: string; email: string };
 type SettingsPayload = {
   shell: { isSuperAdmin: boolean; role: Role; capabilities: string[]; currentSchool: { id: number; name: string; logo: string | null; organizationType: string; publicIdentifier: string }; schools: Array<{ id: number; name: string }>; user: { displayName: string } };
   settings: { notifications: { newFeedbackEmail: boolean; lowRatingFeedbackEmail: boolean; weeklySummaryEmail: boolean }; organizationCode: string };
   team?: TeamMember[];
+  subscription: ServicePlan;
+  supportStaff?: SupportStaff[];
 };
 
 const tabs = ["General", "Staff & Access", "Notifications", "Integrations", "Subscription", "Advanced"] as const;
@@ -52,6 +57,7 @@ export function HospitalitySettingsPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<Role>("manager");
   const [organizationCode, setOrganizationCode] = useState("");
+  const [subscription, setSubscription] = useState<ServicePlan | null>(null);
   const [darkTheme, setDarkTheme] = useState(() => window.localStorage.getItem("tap2connect:hospitality-theme") !== "light");
   const toggleTheme = () => setDarkTheme((current) => {
     const next = !current;
@@ -64,6 +70,7 @@ export function HospitalitySettingsPage() {
       const response = await apiFetch<SettingsPayload>(`/api/organizations/${id}/venue/settings/`);
       setPayload(response);
       setOrganizationCode(response.settings.organizationCode);
+      setSubscription(response.subscription);
     } catch (reason) { setError(displayError(reason)); }
   }, [id]);
   useEffect(() => { void load(); }, [load]);
@@ -86,6 +93,20 @@ export function HospitalitySettingsPage() {
     event.preventDefault();
     await request({ action: "invite", email: inviteEmail, role: inviteRole }, "POST");
     setInviteEmail("");
+  }
+
+  async function saveSubscription(event: FormEvent) {
+    event.preventDefault();
+    if (!subscription) return;
+    await request({
+      action: "subscription",
+      name: subscription.name,
+      startsOn: subscription.startsOn,
+      endsOn: subscription.endsOn,
+      internalNotes: subscription.internalNotes || "",
+      technicalOwnerId: subscription.technicalOwner?.id || null,
+      modules: subscription.modules.filter((module) => module.enabled).map((module) => module.key),
+    });
   }
 
   if (!payload) return <div className="manage-state">{error || "Loading settings…"}</div>;
@@ -138,7 +159,14 @@ export function HospitalitySettingsPage() {
       ].map(([key, label]) => <label key={key}><span><Mail size={18} /><strong>{label}</strong></span><input type="checkbox" checked={settings.notifications[key as keyof typeof settings.notifications]} onChange={(event) => void request({ action: "notifications", [key]: event.target.checked })} disabled={saving} /></label>)}</div></section> : null}
 
       {tab === "Integrations" ? <section className="manage-card hospitality-settings-card"><h2>Integrations</h2><div className="hospitality-unavailable"><strong>Google Business Profile</strong></div></section> : null}
-      {tab === "Subscription" ? <section className="manage-card hospitality-settings-card"><h2>Subscription</h2><div className="hospitality-unavailable"><strong>Subscription management is unavailable</strong></div></section> : null}
+      {tab === "Subscription" && subscription ? <section className="manage-card hospitality-settings-card hospitality-plan-card"><div className="hospitality-section-title"><div><h2>{shell.isSuperAdmin ? "Service plan & modules" : "Your service plan"}</h2><p>{shell.isSuperAdmin ? "Control the modules included in this organization’s deal and assign its technical owner." : "These modules are included in your agreement. Contact your technical owner to request a change."}</p></div></div>
+        {shell.isSuperAdmin ? <form className="hospitality-plan-form" onSubmit={saveSubscription}>
+          <div className="hospitality-plan-fields"><label>Plan name<input value={subscription.name} onChange={(event) => setSubscription({ ...subscription, name: event.target.value })} placeholder="e.g. Loyalty package" /></label><label>Starts on<input type="date" value={subscription.startsOn} onChange={(event) => setSubscription({ ...subscription, startsOn: event.target.value })} /></label><label>Ends on<input type="date" value={subscription.endsOn} onChange={(event) => setSubscription({ ...subscription, endsOn: event.target.value })} /></label><label>Technical owner<select value={subscription.technicalOwner?.id || ""} onChange={(event) => { const person = (payload.supportStaff || []).find((item) => item.id === Number(event.target.value)) || null; setSubscription({ ...subscription, technicalOwner: person }); }}><option value="">Not assigned</option>{(payload.supportStaff || []).map((person) => <option key={person.id} value={person.id}>{person.name}{person.email ? ` · ${person.email}` : ""}</option>)}</select></label></div>
+          <label className="hospitality-plan-notes">Internal deal notes<textarea value={subscription.internalNotes || ""} onChange={(event) => setSubscription({ ...subscription, internalNotes: event.target.value })} placeholder="Internal only: scope, support terms, renewal notes…" /></label>
+          <div className="hospitality-module-grid">{subscription.modules.map((module) => <label key={module.key} className={module.enabled ? "is-enabled" : ""}><input type="checkbox" checked={module.enabled} disabled={module.key === "overview" || module.key === "profile"} onChange={(event) => setSubscription({ ...subscription, modules: subscription.modules.map((item) => item.key === module.key ? { ...item, enabled: event.target.checked } : item) })} /><span><strong>{module.label}</strong>{module.key === "ordering" ? <small>Ordering workspace will appear here when it is released.</small> : null}</span></label>)}</div>
+          <button className="manage-button is-primary" disabled={saving}><Check size={15} />{saving ? "Saving…" : "Save service plan"}</button>
+        </form> : <><div className="hospitality-plan-summary"><div><small>Plan</small><strong>{subscription.name || "Custom plan"}</strong></div><div><small>Technical owner</small><strong>{subscription.technicalOwner?.name || "Contact Tap2Connect support"}</strong>{subscription.technicalOwner?.email ? <span>{subscription.technicalOwner.email}</span> : null}</div><div><small>Included modules</small><p>{subscription.modules.filter((module) => module.enabled).map((module) => module.label).join(" · ") || "Core workspace"}</p></div></div><a className="manage-button" href={`/dashboard/organizations/${school.id}/support/`}>Request a module</a></>}
+      </section> : null}
       {tab === "Advanced" && owner ? <section className="manage-card hospitality-settings-card"><div className="hospitality-settings-heading"><KeyRound size={20} /><div><h2>Advanced</h2></div></div><form className="hospitality-advanced-form" onSubmit={(event) => { event.preventDefault(); void request({ action: "organization_code", organizationCode }); }}><label>Organization code<input value={organizationCode} onChange={(event) => setOrganizationCode(event.target.value.toUpperCase())} maxLength={12} /></label><button className="manage-button is-primary" disabled={saving}>{saving ? <LoaderCircle size={15} className="is-spinning" /> : <Check size={15} />}Save internal settings</button></form></section> : null}
     </div>
   </ManageShell>;

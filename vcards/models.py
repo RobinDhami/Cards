@@ -210,6 +210,50 @@ class College(models.Model):
         return self.name
 
 
+class OrganizationServicePlan(models.Model):
+    """Commercial agreement and technical owner for an organization."""
+    organization = models.OneToOneField(College, on_delete=models.CASCADE, related_name='service_plan')
+    name = models.CharField(max_length=120, blank=True, default='')
+    internal_notes = models.TextField(blank=True, default='')
+    starts_on = models.DateField(blank=True, null=True)
+    ends_on = models.DateField(blank=True, null=True)
+    technical_owner = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True, related_name='supported_organizations')
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True, related_name='configured_service_plans')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.organization.name} service plan'
+
+
+class OrganizationModuleAccess(models.Model):
+    MODULE_CHOICES = [
+        ('overview', 'Overview'),
+        ('profile', 'Profile'),
+        ('menu', 'Menu'),
+        ('feedback', 'Feedback'),
+        ('staff_cards', 'Staff & Cards'),
+        ('loyalty', 'Loyalty'),
+        ('analytics', 'Analytics'),
+        ('ordering', 'Ordering'),
+    ]
+    organization = models.ForeignKey(College, on_delete=models.CASCADE, related_name='module_access')
+    module_key = models.CharField(max_length=32, choices=MODULE_CHOICES)
+    is_enabled = models.BooleanField(default=False)
+    enabled_at = models.DateTimeField(blank=True, null=True)
+    ends_at = models.DateTimeField(blank=True, null=True)
+    configured_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True, related_name='configured_organization_modules')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['organization', 'module_key'], name='organization_module_access_unique')]
+        ordering = ['module_key']
+
+    def __str__(self):
+        return f'{self.organization.name} · {self.module_key}'
+
+
 class OrganizationTeamMember(models.Model):
     ROLE_CHOICES = [
         ('owner', 'Owner'),

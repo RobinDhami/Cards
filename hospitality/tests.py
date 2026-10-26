@@ -8,7 +8,7 @@ from django.test import Client, TestCase
 from django.utils import timezone
 from datetime import timedelta
 
-from vcards.models import CardBatch, CardBatchCard, College, OrganizationTeamMember
+from vcards.models import CardBatch, CardBatchCard, College, OrganizationModuleAccess, OrganizationServicePlan, OrganizationTeamMember
 from .models import LoyaltyCustomer, VenueAnalyticsEvent, VenueCardAssignment, VenueFeedback, VenueLink, VenueLoyaltyMembership, VenueMenuCategory, VenueMenuItem, VenueMenuItemVariant, VenueProfile, VenueRewardsProgram, VenueStaffProfile, VenueTouchpoint
 
 
@@ -57,6 +57,32 @@ class HospitalityWorkspaceTests(TestCase):
         self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/feedback/').status_code, 200)
         self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/analytics/').status_code, 200)
         self.assertEqual(self.client.post(f'/api/organizations/{self.org.pk}/venue/settings/', data='{"action":"invite","email":"new@example.com","role":"manager"}', content_type='application/json').status_code, 403)
+
+    def test_super_admin_plan_controls_loyalty_visibility_and_api_access(self):
+        super_admin = get_user_model().objects.create_superuser(username='platform-admin', password='pass')
+        self.client.force_login(super_admin)
+        response = self.client.patch(
+            f'/api/organizations/{self.org.pk}/venue/settings/',
+            data=json.dumps({'action': 'subscription', 'name': 'Menu package', 'modules': ['overview', 'profile', 'menu', 'feedback']}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertFalse(response.json()['subscription']['modules'][5]['enabled'])
+        self.assertFalse(OrganizationModuleAccess.objects.get(organization=self.org, module_key='loyalty').is_enabled)
+
+        self.client.force_login(self.user)
+        self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/rewards/members/').status_code, 403)
+        self.assertFalse(self.client.get(f'/api/venue/{self.venue.public_identifier}/').json()['loyalty']['enabled'])
+
+    def test_assigned_technical_owner_can_access_only_their_organization(self):
+        support = get_user_model().objects.create_user(username='support-agent', password='pass')
+        OrganizationServicePlan.objects.create(organization=self.org, technical_owner=support)
+        other = College.objects.create(name='Unassigned Cafe', organization_code='UNASSIGNED', organization_type='hospitality')
+        VenueProfile.objects.create(organization=other)
+
+        self.client.force_login(support)
+        self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/menu/items/').status_code, 200)
+        self.assertEqual(self.client.get(f'/api/organizations/{other.pk}/venue/menu/items/').status_code, 403)
 
     def test_settings_prevents_removing_the_last_owner(self):
         self.client.force_login(self.user)

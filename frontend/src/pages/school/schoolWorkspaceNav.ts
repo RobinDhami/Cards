@@ -43,7 +43,7 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
       ]
       const capabilityFor: Record<string, string> = {
         Overview: 'overview', Profile: 'profile', Menu: 'menu', Feedback: 'feedback',
-        'Staff & Cards': 'staff', Rewards: 'settings', Members: 'staff', Analytics: 'analytics', Settings: 'settings',
+        'Staff & Cards': 'staff', Rewards: 'loyalty', Members: 'loyalty', Analytics: 'analytics', Settings: 'settings',
       }
       return capabilities ? items.filter((item) => capabilities.includes(capabilityFor[item.label])) : items
     }

@@ -1184,10 +1184,11 @@ function HospitalityAdminPanel() {
   useEffect(() => {
     if (!shell) return;
     const capabilityFor: Record<HospitalityAdminSection, string> = {
-      overview: "overview", profile: "profile", menu: "menu", feedback: "feedback", staff: "staff", loyalty: "settings", members: "staff", analytics: "analytics",
+      overview: "overview", profile: "profile", menu: "menu", feedback: "feedback", staff: "staff", loyalty: "loyalty", members: "loyalty", analytics: "analytics",
     };
     if (!shell.capabilities.includes(capabilityFor[activeTab])) {
-      window.location.replace(`/dashboard/organizations/${id}/hospitality/?tab=menu`);
+      const firstAvailable = ["overview", "profile", "menu"].find((item) => shell.capabilities.includes(item)) || "overview";
+      window.location.replace(`/dashboard/organizations/${id}/hospitality/?tab=${firstAvailable}`);
     }
   }, [activeTab, id, shell]);
 
