@@ -226,6 +226,8 @@ def _record_operational_activity(venue, event_type, summary, request=None, detai
 
 
 def _expire_rewards_if_needed(membership, program):
+    if program.program_type == 'stamps':
+        return False
     if not program.expiry_days or not membership.reward_balance or not membership.last_activity_at:
         return False
     if membership.last_activity_at > timezone.now() - timedelta(days=program.expiry_days):
@@ -251,6 +253,9 @@ def _membership_payload(membership, program):
         'name': membership.customer.full_name,
         'phone': membership.customer.phone_e164,
         'rewardBalance': str(membership.reward_balance),
+        'stampCount': membership.stamp_count,
+        'stampGoal': membership.stamp_goal or program.stamp_goal,
+        'rewardsRedeemed': membership.rewards_redeemed,
         'lifetimeEarned': str(membership.lifetime_rewards_earned),
         'lifetimeRedeemed': str(membership.lifetime_rewards_redeemed),
         'lastActivityAt': membership.last_activity_at.isoformat() if membership.last_activity_at else None,
@@ -530,7 +535,7 @@ def venue_rewards_transaction_api(request, organization_id):
         return JsonResponse({'error': 'The rewards program is paused.'}, status=400)
     try:
         bill_amount = _reward_decimal(data, 'billAmount', 'bill amount')
-        requested_amount = _reward_decimal(data, 'rewardAmount', 'reward amount') if action == 'redeem' else None
+        requested_amount = _reward_decimal(data, 'rewardAmount', 'reward amount') if action == 'redeem' and program.program_type == 'rewards' else None
     except ValidationError as error:
         return JsonResponse({'error': error.messages[0]}, status=400)
     membership_id = str(data.get('memberId') or '').replace('T2C-LOYALTY:', '').strip()
@@ -544,11 +549,40 @@ def venue_rewards_transaction_api(request, organization_id):
                 return JsonResponse({'error': 'This receipt has already been used for this rewards action.'}, status=409)
             if action == 'earn':
                 if bill_amount < program.minimum_order_amount:
-                    return JsonResponse({'error': f'Bills must be at least Rs. {program.minimum_order_amount} to earn rewards.'}, status=400)
-                amount = (bill_amount * program.reward_rate_percent / Decimal('100')).quantize(Decimal('0.01'))
-                membership.reward_balance += amount
-                membership.lifetime_rewards_earned += amount
-                summary = f'Added Rs. {amount} rewards for {membership.customer.phone_e164}'
+                    return JsonResponse({'error': f'Bills must be at least Rs. {program.minimum_order_amount} to collect loyalty credit.'}, status=400)
+                if program.program_type == 'stamps':
+                    membership.stamp_count += 1
+                    amount = Decimal('1.00')
+                    balance_after = Decimal(membership.stamp_count)
+                    summary = f'Added 1 stamp for {membership.customer.phone_e164}'
+                else:
+                    rate = program.points_per_currency if program.program_type == 'points' else program.reward_rate_percent / Decimal('100')
+                    amount = (bill_amount * rate).quantize(Decimal('0.01'))
+                    membership.reward_balance += amount
+                    membership.lifetime_rewards_earned += amount
+                    balance_after = membership.reward_balance
+                    unit = 'points' if program.program_type == 'points' else 'rewards'
+                    summary = f'Added {amount} {unit} for {membership.customer.phone_e164}'
+            elif program.program_type == 'stamps':
+                if membership.stamp_count < membership.stamp_goal:
+                    remaining = membership.stamp_goal - membership.stamp_count
+                    return JsonResponse({'error': f'This member needs {remaining} more stamp{"s" if remaining != 1 else ""} before claiming {program.stamp_reward_label}.'}, status=400)
+                membership.stamp_count -= membership.stamp_goal
+                membership.rewards_redeemed += 1
+                amount = -Decimal(membership.stamp_goal)
+                balance_after = Decimal(membership.stamp_count)
+                summary = f'Redeemed {program.stamp_reward_label} for {membership.customer.phone_e164}'
+            elif program.program_type == 'points':
+                required = Decimal(program.points_to_reward)
+                if membership.reward_balance < required:
+                    remaining = required - membership.reward_balance
+                    return JsonResponse({'error': f'This member needs {remaining.normalize()} more points before claiming {program.reward_label}.'}, status=400)
+                membership.reward_balance -= required
+                membership.lifetime_rewards_redeemed += required
+                membership.rewards_redeemed += 1
+                amount = -required
+                balance_after = membership.reward_balance
+                summary = f'Redeemed {program.reward_label} for {membership.customer.phone_e164}'
             else:
                 max_for_bill = (bill_amount * program.max_redemption_percent / Decimal('100')).quantize(Decimal('0.01'))
                 if not requested_amount or requested_amount <= 0:
@@ -560,10 +594,11 @@ def venue_rewards_transaction_api(request, organization_id):
                 amount = -requested_amount
                 membership.reward_balance += amount
                 membership.lifetime_rewards_redeemed += requested_amount
+                balance_after = membership.reward_balance
                 summary = f'Redeemed Rs. {requested_amount} rewards for {membership.customer.phone_e164}'
             membership.last_activity_at = timezone.now()
-            membership.save(update_fields=['reward_balance', 'lifetime_rewards_earned', 'lifetime_rewards_redeemed', 'last_activity_at', 'updated_at'])
-            row = VenueRewardsTransaction.objects.create(venue=venue, membership=membership, transaction_type=action, reward_amount=amount, balance_after=membership.reward_balance, order_amount=bill_amount, receipt_reference=receipt_reference, created_by=request.user)
+            membership.save(update_fields=['stamp_count', 'reward_balance', 'lifetime_rewards_earned', 'lifetime_rewards_redeemed', 'rewards_redeemed', 'last_activity_at', 'updated_at'])
+            row = VenueRewardsTransaction.objects.create(venue=venue, membership=membership, transaction_type=action, reward_amount=amount, balance_after=balance_after, order_amount=bill_amount, receipt_reference=receipt_reference, created_by=request.user)
             _record_operational_activity(venue, f'rewards_{action}', summary, request, {'membershipId': membership.public_identifier, 'billAmount': str(bill_amount), 'rewardAmount': str(abs(amount)), 'receiptReference': receipt_reference})
     except VenueLoyaltyMembership.DoesNotExist:
         return JsonResponse({'error': 'Member not found for this business.'}, status=404)

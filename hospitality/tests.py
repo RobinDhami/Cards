@@ -202,6 +202,41 @@ class HospitalityWorkspaceTests(TestCase):
         self.assertEqual(second.json()['membership']['memberId'], first.json()['membership']['memberId'])
         self.assertEqual(VenueLoyaltyMembership.objects.count(), 1)
 
+    def test_staff_can_collect_and_redeem_stamps(self):
+        customer = LoyaltyCustomer.objects.create(full_name='Robin Dhami', phone_e164='+9779812345678')
+        membership = VenueLoyaltyMembership.objects.create(venue=self.venue, customer=customer, stamp_goal=3)
+        program = VenueRewardsProgram.objects.create(venue=self.venue, is_active=True, program_type='stamps', stamp_goal=3, stamp_reward_label='Free coffee')
+        self.client.force_login(self.user)
+        endpoint = f'/api/organizations/{self.org.pk}/venue/rewards/transactions/'
+
+        for _ in range(3):
+            response = self.client.post(endpoint, {'action': 'earn', 'memberId': membership.public_identifier, 'billAmount': '0'}, content_type='application/json')
+            self.assertEqual(response.status_code, 200, response.content)
+        membership.refresh_from_db()
+        self.assertEqual(membership.stamp_count, 3)
+
+        response = self.client.post(endpoint, {'action': 'redeem', 'memberId': membership.public_identifier, 'billAmount': '0'}, content_type='application/json')
+        self.assertEqual(response.status_code, 200, response.content)
+        membership.refresh_from_db()
+        self.assertEqual(membership.stamp_count, 0)
+        self.assertEqual(membership.rewards_redeemed, 1)
+        self.assertEqual(program.stamp_reward_label, 'Free coffee')
+
+    def test_staff_can_collect_and_redeem_points(self):
+        customer = LoyaltyCustomer.objects.create(full_name='Robin Dhami', phone_e164='+9779812345678')
+        membership = VenueLoyaltyMembership.objects.create(venue=self.venue, customer=customer)
+        VenueRewardsProgram.objects.create(venue=self.venue, is_active=True, program_type='points', points_per_currency='2', points_to_reward=10, reward_label='Free coffee')
+        self.client.force_login(self.user)
+        endpoint = f'/api/organizations/{self.org.pk}/venue/rewards/transactions/'
+        earned = self.client.post(endpoint, {'action': 'earn', 'memberId': membership.public_identifier, 'billAmount': '5'}, content_type='application/json')
+        self.assertEqual(earned.status_code, 200, earned.content)
+        self.assertEqual(earned.json()['member']['rewardBalance'], '10.00')
+        redeemed = self.client.post(endpoint, {'action': 'redeem', 'memberId': membership.public_identifier, 'billAmount': '0'}, content_type='application/json')
+        self.assertEqual(redeemed.status_code, 200, redeemed.content)
+        membership.refresh_from_db()
+        self.assertEqual(str(membership.reward_balance), '0.00')
+        self.assertEqual(membership.rewards_redeemed, 1)
+
     def test_a_loyalty_customer_can_have_one_card_per_cafe(self):
         self.venue.venue_type = 'cafe'
         self.venue.save(update_fields=['venue_type'])
