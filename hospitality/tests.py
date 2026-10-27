@@ -84,6 +84,19 @@ class HospitalityWorkspaceTests(TestCase):
         self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/menu/items/').status_code, 200)
         self.assertEqual(self.client.get(f'/api/organizations/{other.pk}/venue/menu/items/').status_code, 403)
 
+    def test_super_admin_selects_hospitality_modules_when_creating_an_organization(self):
+        super_admin = get_user_model().objects.create_superuser(username='create-admin', password='pass')
+        self.client.force_login(super_admin)
+        response = self.client.post('/api/dashboard/schools/', data=json.dumps({
+            'name': 'Menu Only Cafe', 'organizationCode': 'MENUONLY', 'organizationType': 'hospitality',
+            'adminUsername': 'menu-only-owner', 'adminPassword': 'OwnerPass123!',
+            'modules': ['overview', 'profile', 'menu'],
+        }), content_type='application/json')
+        self.assertEqual(response.status_code, 201, response.content)
+        created = College.objects.get(name='Menu Only Cafe')
+        enabled = set(OrganizationModuleAccess.objects.filter(organization=created, is_enabled=True).values_list('module_key', flat=True))
+        self.assertEqual(enabled, {'overview', 'profile', 'menu'})
+
     def test_settings_prevents_removing_the_last_owner(self):
         self.client.force_login(self.user)
         settings = self.client.get(f'/api/organizations/{self.org.pk}/venue/settings/').json()

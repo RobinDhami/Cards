@@ -45,14 +45,14 @@ from professional_cards.views import (
 from vcards.models import (
     CardBatch, CardBatchCard, ClubMemberProfile, ClubMemberSocialLink,
     ClubProfileSettings, ClubSocialLink, ClubEvent, College, ProfileActivity, Skill,
-    StudentCard, StudentProfile, PlatformSupportTicket,
+    StudentCard, StudentProfile, PlatformSupportTicket, OrganizationServicePlan,
 )
 from vcards.club_serializers import (
     ClubMemberProfileSerializer, ClubMemberSocialLinkSerializer,
     ClubProfileSettingsSerializer, ClubSocialLinkSerializer,
 )
 from vcards.organization_modules import IMPORT_COLUMN_LABELS, identifier_label, normalize_import_column, organization_module
-from vcards.organization_access import ROLE_CAPABILITIES, accessible_organizations, organization_role
+from vcards.organization_access import MODULE_KEYS, ROLE_CAPABILITIES, accessible_organizations, ensure_organization_modules, organization_role
 from vcards.usernames import create_organization_member, validate_member_username
 from vcards.platform_access import (
     PLATFORM_MODULES,
@@ -2364,6 +2364,7 @@ def dashboard_schools_api(request):
             'shell': _dashboard_shell(request, 'schools'),
             'schools': [_school_payload(school, with_stats=True) for school in schools],
             'organizationTypeCounts': organization_type_counts,
+            'supportStaff': _organization_support_staff_payload(),
         })
 
     payload = _json_body(request)
@@ -2381,6 +2382,16 @@ def dashboard_schools_api(request):
                 return _json_error('Organization code is required.')
             school.save()
             _ensure_hospitality_profile(school)
+            _apply_hospitality_modules(school, source.get('modules') if isinstance(source, dict) else None, request.user)
+            support_id = source.get('technicalOwnerId') if isinstance(source, dict) else None
+            if support_id not in (None, ''):
+                support_user = _organization_support_staff_queryset().filter(pk=support_id).first()
+                if not support_user:
+                    raise ValidationError('Choose an active platform support person.')
+                OrganizationServicePlan.objects.update_or_create(
+                    organization=school,
+                    defaults={'technical_owner': support_user, 'updated_by': request.user},
+                )
             _sync_school_admin_user(school, username, password)
             school.save()
     except (ValidationError, IntegrityError) as exc:
@@ -2451,6 +2462,40 @@ def _ensure_hospitality_profile(school):
     from vcards.organization_access import ensure_organization_modules
     ensure_organization_modules(school)
     return venue
+
+
+def _organization_support_staff_queryset():
+    return User.objects.filter(
+        Q(user_permissions__codename='access_platform_organizations') | Q(groups__permissions__codename='access_platform_organizations'),
+        is_active=True,
+    ).exclude(is_superuser=True).distinct().order_by('first_name', 'last_name', 'username')
+
+
+def _organization_support_staff_payload():
+    return [{
+        'id': user.id,
+        'name': user.get_full_name().strip() or user.username,
+        'email': user.email,
+    } for user in _organization_support_staff_queryset()]
+
+
+def _apply_hospitality_modules(school, selected_modules, actor):
+    if school.organization_type != 'hospitality' or selected_modules is None:
+        return
+    if not isinstance(selected_modules, list):
+        raise ValidationError({'modules': 'Choose the hospitality modules for this organization.'})
+    requested = {str(key) for key in selected_modules}
+    if not requested.issubset(set(MODULE_KEYS)):
+        raise ValidationError({'modules': 'One or more selected hospitality modules are invalid.'})
+    requested.update({'overview', 'profile'})
+    ensure_organization_modules(school)
+    now = timezone.now()
+    for access in school.module_access.all():
+        access.is_enabled = access.module_key in requested
+        access.enabled_at = now if access.is_enabled else None
+        access.ends_at = None
+        access.configured_by = actor
+        access.save(update_fields=['is_enabled', 'enabled_at', 'ends_at', 'configured_by', 'updated_at'])
 
 
 @require_http_methods(['GET', 'POST', 'DELETE'])

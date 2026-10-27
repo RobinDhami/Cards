@@ -184,6 +184,23 @@ function LoadingSchool() {
   return <div className="manage-state">Loading school workspace…</div>
 }
 
+const hospitalityModuleChoices: Array<{ key: string; label: string; locked: boolean; hint?: string }> = [
+  { key: 'overview', label: 'Overview', locked: true },
+  { key: 'profile', label: 'Profile', locked: true },
+  { key: 'menu', label: 'Menu', locked: false },
+  { key: 'feedback', label: 'Feedback', locked: false },
+  { key: 'staff_cards', label: 'Staff & Cards', locked: false },
+  { key: 'loyalty', label: 'Loyalty', locked: false },
+  { key: 'analytics', label: 'Analytics', locked: false },
+  { key: 'ordering', label: 'Ordering', locked: false, hint: 'Available when the ordering workspace is released.' },
+]
+
+const newOrganizationDraft = () => ({
+  name: '', organizationCode: '', organizationType: 'other', address: '', website: '', mapUrl: '', phone: '', email: '', adminUsername: '', adminPassword: '',
+  technicalOwnerId: '',
+  modules: ['overview', 'profile', 'menu', 'feedback'],
+})
+
 function SchoolMetric({
   label,
   value,
@@ -205,29 +222,20 @@ export function SchoolsPage() {
   const [shell, setShell] = useState<DashboardShellData | null>(null)
   const [schools, setSchools] = useState<SchoolSummary[]>([])
   const [organizationTypeCounts, setOrganizationTypeCounts] = useState<Record<string, number>>({})
+  const [supportStaff, setSupportStaff] = useState<Array<{ id: number; name: string; email: string }>>([])
   const [typeFilter, setTypeFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [error, setError] = useState('')
   const [createOpen, setCreateOpen] = useState(false)
   const [creating, setCreating] = useState(false)
-  const [newSchool, setNewSchool] = useState({
-    name: '',
-    organizationCode: '',
-    organizationType: 'other',
-    address: '',
-    website: '',
-    mapUrl: '',
-    phone: '',
-    email: '',
-    adminUsername: '',
-    adminPassword: '',
-  })
+  const [newSchool, setNewSchool] = useState(newOrganizationDraft)
 
-  const load = () => apiFetch<{ shell: DashboardShellData; schools: SchoolSummary[]; organizationTypeCounts: Record<string, number> }>('/api/dashboard/schools/')
+  const load = () => apiFetch<{ shell: DashboardShellData; schools: SchoolSummary[]; organizationTypeCounts: Record<string, number>; supportStaff: Array<{ id: number; name: string; email: string }> }>('/api/dashboard/schools/')
     .then((payload) => {
       setShell(payload.shell)
       setSchools(payload.schools)
       setOrganizationTypeCounts(payload.organizationTypeCounts)
+      setSupportStaff(payload.supportStaff)
     })
     .catch((reason) => setError(displayError(reason)))
 
@@ -246,7 +254,7 @@ export function SchoolsPage() {
         body: jsonBody(newSchool),
       })
       setCreateOpen(false)
-      setNewSchool({ name: '', organizationCode: '', organizationType: 'other', address: '', website: '', mapUrl: '', phone: '', email: '', adminUsername: '', adminPassword: '' })
+      setNewSchool(newOrganizationDraft())
       await load()
     } catch (reason) {
       setError(displayError(reason))
@@ -303,6 +311,7 @@ export function SchoolsPage() {
             <Field label="Admin username"><TextInput value={newSchool.adminUsername} onChange={(event) => setNewSchool((current) => ({ ...current, adminUsername: event.target.value }))} required /></Field>
             <Field label="Admin password"><TextInput type="password" value={newSchool.adminPassword} onChange={(event) => setNewSchool((current) => ({ ...current, adminPassword: event.target.value }))} required /></Field>
           </div>
+          {newSchool.organizationType === 'hospitality' ? <section className="school-module-picker" aria-labelledby="hospitality-modules-title"><div><h3 id="hospitality-modules-title">Hospitality modules</h3><p>Choose what this café purchased. Overview and Profile are always included.</p></div><div className="school-module-options">{hospitalityModuleChoices.map((module) => <label key={module.key} className={newSchool.modules.includes(module.key) ? 'is-selected' : ''}><input type="checkbox" checked={newSchool.modules.includes(module.key)} disabled={module.locked} onChange={(event) => setNewSchool((current) => ({ ...current, modules: event.target.checked ? [...current.modules, module.key] : current.modules.filter((key) => key !== module.key) }))} /><span><strong>{module.label}</strong>{module.hint ? <small>{module.hint}</small> : null}</span></label>)}</div><Field label="Technical owner" hint="Optional platform person responsible for this café."><SelectInput value={newSchool.technicalOwnerId} onChange={(event) => setNewSchool((current) => ({ ...current, technicalOwnerId: event.target.value }))}><option value="">Not assigned</option>{supportStaff.map((person) => <option key={person.id} value={person.id}>{person.name}{person.email ? ` · ${person.email}` : ''}</option>)}</SelectInput></Field></section> : null}
           <div><button className="manage-button" type="button" onClick={() => setCreateOpen(false)}>Cancel</button><button className="manage-button is-primary" type="submit" disabled={creating}>{creating ? 'Creating…' : 'Create organization'}</button></div>
         </form>
       ) : null}
