@@ -20,4 +20,5 @@ pnpm --dir "$APP_DIR/frontend" exec tsc -b
 
 pnpm --dir "$APP_DIR/frontend" exec vite build --base=/static/react/ --outDir=../theme/static/react
 
+python "$APP_DIR/manage.py" migrate --noinput
 python "$APP_DIR/manage.py" collectstatic --no-input
