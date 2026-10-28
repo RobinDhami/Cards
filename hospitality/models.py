@@ -109,12 +109,22 @@ class VenueRewardsTransaction(models.Model):
     balance_after = models.DecimalField(max_digits=12, decimal_places=2)
     order_amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
     receipt_reference = models.CharField(max_length=120, blank=True)
+    # A browser-generated key makes retries safe when a phone briefly loses its
+    # connection after the server has already recorded the transaction.
+    idempotency_key = models.CharField(max_length=64, blank=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, related_name='venue_rewards_transactions')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-created_at']
         indexes = [models.Index(fields=['venue', 'created_at'], name='hospitality_venue_r_b1ca9f_idx'), models.Index(fields=['membership', 'created_at'], name='hospitality_venue_l_b3fe5a_idx')]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['venue', 'idempotency_key'],
+                condition=~models.Q(idempotency_key=''),
+                name='venue_rewards_idempotency_unique',
+            ),
+        ]
 
 
 class VenueOperationalActivity(models.Model):

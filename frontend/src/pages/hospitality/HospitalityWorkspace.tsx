@@ -40,7 +40,7 @@ import {
 } from "../../components/manage/FormControls";
 import { ManageShell } from "../../components/manage/ManageShell";
 import { DashboardHeaderTools } from "../../components/manage/DashboardHeaderTools";
-import { apiFetch, displayError, jsonBody, queryString } from "../../lib/api";
+import { apiFetch, apiHref, displayError, jsonBody, queryString } from "../../lib/api";
 import { currentOrganizationId, organizationWorkspaceHref, vanityDashboardMatch } from "../../lib/organizationRoute";
 import { schoolWorkspaceNav } from "../school/schoolWorkspaceNav";
 import { HospitalityOverview } from "./HospitalityOverview";
@@ -1779,14 +1779,14 @@ function CafeSocialIcon({ type, icon }: { type: string; icon?: string }) {
   return <SocialIcon type={type} customIcon={icon} />;
 }
 
-function CafeLoyaltyPanel({ programName, programType, stampGoal, pointsToReward, pointsPerCurrency, onJoin }: { programName: string; programType: 'rewards' | 'points' | 'stamps'; stampGoal: number; pointsToReward: number; pointsPerCurrency: string; onJoin: () => void }) {
+function CafeLoyaltyPanel({ programName, programType, stampGoal, pointsToReward, pointsPerCurrency, hasCard, onJoin }: { programName: string; programType: 'rewards' | 'points' | 'stamps'; stampGoal: number; pointsToReward: number; pointsPerCurrency: string; hasCard: boolean; onJoin: () => void }) {
   return <section className="cafe-loyalty" aria-labelledby="cafe-loyalty-title">
     <span className="cafe-loyalty-mark" aria-hidden="true"><Gift size={20} /></span>
     <div>
       <strong id="cafe-loyalty-title">{programName}</strong>
       <p>{programType === 'stamps' ? `Collect ${stampGoal} stamps to earn ${programName}.` : programType === 'points' ? `Earn ${pointsPerCurrency} point${pointsPerCurrency === '1.00' ? '' : 's'} per rupee. ${pointsToReward} points earns ${programName}.` : `Earn rewards on every eligible visit.`}</p>
     </div>
-    <button type="button" onClick={onJoin}>Join rewards</button>
+    <button type="button" onClick={onJoin}>{hasCard ? 'View loyalty card' : 'Join rewards'}</button>
   </section>;
 }
 
@@ -1960,6 +1960,25 @@ export function PublicHospitalityProfile() {
       .then(setVenue)
       .catch(() => setLoadError(true));
   }, [dashboardPreview, entryChannel, identifier, touchpointSource]);
+  useEffect(() => {
+    if (!venue?.loyalty?.enabled) return;
+    const storageKey = `tap2connect:loyalty:${identifier}`;
+    const savedMemberId = window.localStorage.getItem(storageKey);
+    if (!savedMemberId) return;
+    let cancelled = false;
+    void fetch(apiHref(`/api/venue/${identifier}/loyalty/card/${encodeURIComponent(savedMemberId)}/`), {
+      credentials: "include",
+      headers: { Accept: "application/json" },
+    }).then(async (response) => {
+      if (!response.ok) {
+        if (response.status === 404) window.localStorage.removeItem(storageKey);
+        return;
+      }
+      const payload = await response.json() as { membership: LoyaltyMembership };
+      if (!cancelled) setLoyaltyMembership(payload.membership);
+    }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [identifier, setLoyaltyMembership, venue?.loyalty?.enabled]);
   if (!venue)
     return (
       <main className="hospitality-public-state">{loadError ? "This café profile could not be loaded. Please refresh to try again." : "Loading café profile…"}</main>
@@ -1996,6 +2015,7 @@ export function PublicHospitalityProfile() {
         body: jsonBody({ name: loyaltyName, phone: formattedPhone, source: touchpointSource, entry: entryChannel }),
       });
       setLoyaltyMembership(response.membership);
+      window.localStorage.setItem(`tap2connect:loyalty:${identifier}`, response.membership.memberId);
       setLoyaltyMessage(response.created ? "Your rewards card is ready." : "Welcome back — your rewards card is ready.");
       setLoyaltySheet("card");
     } catch (reason) {
@@ -2124,7 +2144,8 @@ export function PublicHospitalityProfile() {
         stampGoal={loyaltyProgram.stampGoal}
         pointsToReward={loyaltyProgram.pointsToReward}
         pointsPerCurrency={loyaltyProgram.pointsPerCurrency}
-            onJoin={() => { setLoyaltyMessage(""); setLoyaltySheet("join"); }}
+            hasCard={Boolean(loyaltyMembership)}
+            onJoin={() => { setLoyaltyMessage(""); setLoyaltySheet(loyaltyMembership ? "card" : "join"); }}
           /> : null}
           {(scheduleEntries.length || venue.venue.openingHours) ? (hasVariableHours ? <details className="hospitality-public-hours">
             <summary><span aria-hidden="true" className={`cafe-hours-status ${hoursStatusClass}`} /><span className="cafe-hours-copy"><small>Today</small><strong>{isClosedToday ? "Closed" : todaySchedule ? "Open" : todayLabel}</strong>{!isClosedToday ? <span>{todayHours}</span> : null}</span><span className="cafe-hours-action">View weekly hours <ChevronRight size={18} /></span></summary>

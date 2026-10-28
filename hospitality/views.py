@@ -428,8 +428,21 @@ def venue_loyalty_join_api(request, public_identifier):
                 customer=customer,
                 defaults={'stamp_goal': program.stamp_goal},
             )
+            reopened = False
+            update_fields = []
+            if membership.stamp_goal != program.stamp_goal:
+                membership.stamp_goal = program.stamp_goal
+                update_fields.append('stamp_goal')
+            if not membership.is_active:
+                membership.is_active = True
+                reopened = True
+                update_fields.append('is_active')
+            if update_fields:
+                membership.save(update_fields=[*update_fields, 'updated_at'])
             if created:
                 _record_operational_activity(venue, 'loyalty_member_joined', f'New loyalty member joined: {phone_e164}', details={'membershipId': membership.public_identifier})
+            elif reopened:
+                _record_operational_activity(venue, 'loyalty_member_reactivated', f'Loyalty member rejoined: {phone_e164}', details={'membershipId': membership.public_identifier})
     except IntegrityError:
         # A concurrent join for the same number can win the unique constraint.
         customer = LoyaltyCustomer.objects.filter(phone_e164=phone_e164).first()
@@ -449,6 +462,33 @@ def venue_loyalty_join_api(request, public_identifier):
     return JsonResponse({'ok': True, 'created': created, 'membership': _loyalty_membership_payload(membership)}, status=201 if created else 200)
 
 
+@require_http_methods(['GET'])
+def venue_loyalty_card_api(request, public_identifier, member_identifier):
+    """Restore a customer's card using the unguessable identifier stored on their device."""
+    venue = get_object_or_404(
+        VenueProfile,
+        public_identifier=public_identifier,
+        is_active=True,
+        venue_type__in=['cafe', 'restaurant'],
+    )
+    program = get_object_or_404(VenueRewardsProgram, venue=venue, is_active=True)
+    if 'loyalty' not in enabled_organization_modules(venue.organization):
+        return JsonResponse({'error': 'This loyalty program is not available.'}, status=404)
+    membership = get_object_or_404(
+        VenueLoyaltyMembership.objects.select_related('customer'),
+        venue=venue,
+        public_identifier=member_identifier,
+        is_active=True,
+    )
+    with transaction.atomic():
+        _expire_rewards_if_needed(membership, program)
+    membership.refresh_from_db()
+    return JsonResponse({
+        'membership': _loyalty_membership_payload(membership),
+        'program': _rewards_program_payload(program),
+    })
+
+
 def _reward_decimal(data, key, label):
     try:
         value = Decimal(str(data.get(key, '')).strip())
@@ -465,7 +505,7 @@ def venue_rewards_members_api(request, organization_id):
     if not venue:
         return JsonResponse({'error': 'Not authorized.'}, status=403)
     program, _ = VenueRewardsProgram.objects.get_or_create(venue=venue)
-    rows = venue.loyalty_memberships.select_related('customer').order_by('-last_activity_at', '-created_at')
+    rows = venue.loyalty_memberships.filter(is_active=True).select_related('customer').order_by('-last_activity_at', '-created_at')
     query = str(request.GET.get('q') or '').strip()
     if query:
         rows = rows.filter(Q(customer__phone_e164__icontains=query) | Q(customer__full_name__icontains=query) | Q(public_identifier__icontains=query.replace('T2C-LOYALTY:', '')))
@@ -491,8 +531,9 @@ def venue_rewards_member_detail_api(request, organization_id, member_identifier)
     membership = get_object_or_404(VenueLoyaltyMembership.objects.select_related('customer'), venue=venue, public_identifier=member_identifier)
     if request.method == 'DELETE':
         phone = membership.customer.phone_e164
-        membership.delete()
-        _record_operational_activity(venue, 'loyalty_member_removed', f'Loyalty member removed: {phone}', request)
+        membership.is_active = False
+        membership.save(update_fields=['is_active', 'updated_at'])
+        _record_operational_activity(venue, 'loyalty_member_archived', f'Loyalty member archived: {phone}', request, {'membershipId': membership.public_identifier})
         return JsonResponse({'ok': True})
     if request.method == 'PATCH':
         data = _body(request)
@@ -547,17 +588,29 @@ def venue_rewards_transaction_api(request, organization_id):
         return JsonResponse({'error': error.messages[0]}, status=400)
     membership_id = str(data.get('memberId') or '').replace('T2C-LOYALTY:', '').strip()
     receipt_reference = str(data.get('receiptReference') or '').strip()[:120]
+    idempotency_key = re.sub(r'[^a-zA-Z0-9_-]', '', str(data.get('idempotencyKey') or ''))[:64]
     try:
         with transaction.atomic():
             membership = VenueLoyaltyMembership.objects.select_for_update().select_related('customer').get(venue=venue, public_identifier=membership_id, is_active=True)
             _expire_rewards_if_needed(membership, program)
             membership.refresh_from_db()
+            if idempotency_key:
+                previous = VenueRewardsTransaction.objects.filter(venue=venue, idempotency_key=idempotency_key).first()
+                if previous:
+                    return JsonResponse({
+                        'ok': True,
+                        'duplicate': True,
+                        'member': _membership_payload(membership, program),
+                        'transaction': {'id': previous.pk, 'amount': str(previous.reward_amount), 'balanceAfter': str(previous.balance_after)},
+                    })
             if receipt_reference and VenueRewardsTransaction.objects.filter(venue=venue, receipt_reference=receipt_reference, transaction_type=action).exists():
                 return JsonResponse({'error': 'This receipt has already been used for this rewards action.'}, status=409)
             if action == 'earn':
                 if bill_amount < program.minimum_order_amount:
                     return JsonResponse({'error': f'Bills must be at least Rs. {program.minimum_order_amount} to collect loyalty credit.'}, status=400)
                 if program.program_type == 'stamps':
+                    if membership.stamp_goal != program.stamp_goal:
+                        membership.stamp_goal = program.stamp_goal
                     membership.stamp_count += 1
                     amount = Decimal('1.00')
                     balance_after = Decimal(membership.stamp_count)
@@ -571,12 +624,14 @@ def venue_rewards_transaction_api(request, organization_id):
                     unit = 'points' if program.program_type == 'points' else 'rewards'
                     summary = f'Added {amount} {unit} for {membership.customer.phone_e164}'
             elif program.program_type == 'stamps':
-                if membership.stamp_count < membership.stamp_goal:
-                    remaining = membership.stamp_goal - membership.stamp_count
+                if membership.stamp_goal != program.stamp_goal:
+                    membership.stamp_goal = program.stamp_goal
+                if membership.stamp_count < program.stamp_goal:
+                    remaining = program.stamp_goal - membership.stamp_count
                     return JsonResponse({'error': f'This member needs {remaining} more stamp{"s" if remaining != 1 else ""} before claiming {program.stamp_reward_label}.'}, status=400)
-                membership.stamp_count -= membership.stamp_goal
+                membership.stamp_count -= program.stamp_goal
                 membership.rewards_redeemed += 1
-                amount = -Decimal(membership.stamp_goal)
+                amount = -Decimal(program.stamp_goal)
                 balance_after = Decimal(membership.stamp_count)
                 summary = f'Redeemed {program.stamp_reward_label} for {membership.customer.phone_e164}'
             elif program.program_type == 'points':
@@ -604,8 +659,8 @@ def venue_rewards_transaction_api(request, organization_id):
                 balance_after = membership.reward_balance
                 summary = f'Redeemed Rs. {requested_amount} rewards for {membership.customer.phone_e164}'
             membership.last_activity_at = timezone.now()
-            membership.save(update_fields=['stamp_count', 'reward_balance', 'lifetime_rewards_earned', 'lifetime_rewards_redeemed', 'rewards_redeemed', 'last_activity_at', 'updated_at'])
-            row = VenueRewardsTransaction.objects.create(venue=venue, membership=membership, transaction_type=action, reward_amount=amount, balance_after=balance_after, order_amount=bill_amount, receipt_reference=receipt_reference, created_by=request.user)
+            membership.save(update_fields=['stamp_count', 'stamp_goal', 'reward_balance', 'lifetime_rewards_earned', 'lifetime_rewards_redeemed', 'rewards_redeemed', 'last_activity_at', 'updated_at'])
+            row = VenueRewardsTransaction.objects.create(venue=venue, membership=membership, transaction_type=action, reward_amount=amount, balance_after=balance_after, order_amount=bill_amount, receipt_reference=receipt_reference, idempotency_key=idempotency_key, created_by=request.user)
             _record_operational_activity(venue, f'rewards_{action}', summary, request, {'membershipId': membership.public_identifier, 'billAmount': str(bill_amount), 'rewardAmount': str(abs(amount)), 'receiptReference': receipt_reference})
     except VenueLoyaltyMembership.DoesNotExist:
         return JsonResponse({'error': 'Member not found for this business.'}, status=404)
@@ -774,6 +829,7 @@ def venue_settings_api(request, organization_id):
                 return JsonResponse({'error': 'Only owners can update the rewards program.'}, status=403)
             venue, _ = VenueProfile.objects.get_or_create(organization=organization)
             program, _ = VenueRewardsProgram.objects.get_or_create(venue=venue)
+            previous_type = program.program_type
             try:
                 program.is_active = bool(data.get('isActive', program.is_active))
                 program.program_type = str(data.get('programType', program.program_type))
@@ -788,11 +844,38 @@ def venue_settings_api(request, organization_id):
                 expiry = data.get('expiryDays', program.expiry_days)
                 program.expiry_days = int(expiry) if expiry not in (None, '', 0, '0') else None
                 program.full_clean()
-                program.save()
             except (InvalidOperation, TypeError, ValueError, ValidationError) as error:
                 messages = getattr(error, 'messages', [str(error)])
                 return JsonResponse({'error': '; '.join(messages)}, status=400)
-            _record_operational_activity(venue, 'rewards_program_updated', 'Updated rewards program rules', request, {'active': program.is_active, 'programType': program.program_type, 'expiryDays': program.expiry_days})
+            outstanding = venue.loyalty_memberships.filter(Q(reward_balance__gt=0) | Q(stamp_count__gt=0))
+            affected_members = outstanding.count()
+            if previous_type != program.program_type and affected_members and not bool(data.get('resetExistingBalances')):
+                return JsonResponse({
+                    'error': 'Members still have loyalty balances. Confirm that you want to reset them before changing the loyalty system.',
+                    'code': 'loyalty_balance_reset_required',
+                    'affectedMembers': affected_members,
+                }, status=409)
+            with transaction.atomic():
+                if previous_type != program.program_type:
+                    for membership in outstanding.select_for_update():
+                        old_balance = Decimal(membership.stamp_count) if previous_type == 'stamps' else membership.reward_balance
+                        membership.stamp_count = 0
+                        membership.reward_balance = Decimal('0.00')
+                        membership.save(update_fields=['stamp_count', 'reward_balance', 'updated_at'])
+                        VenueRewardsTransaction.objects.create(
+                            venue=venue, membership=membership,
+                            transaction_type=VenueRewardsTransaction.EXPIRE,
+                            reward_amount=-old_balance, balance_after=Decimal('0.00'),
+                            created_by=request.user,
+                        )
+                    _record_operational_activity(
+                        venue, 'rewards_program_reset',
+                        f'Reset {affected_members} member balances while changing loyalty system', request,
+                        {'from': previous_type, 'to': program.program_type},
+                    )
+                program.save()
+                venue.loyalty_memberships.exclude(stamp_goal=program.stamp_goal).update(stamp_goal=program.stamp_goal)
+            _record_operational_activity(venue, 'rewards_program_updated', 'Updated loyalty program rules', request, {'active': program.is_active, 'programType': program.program_type, 'expiryDays': program.expiry_days})
             return JsonResponse({'ok': True, 'rewardsProgram': _rewards_program_payload(program)})
         if data.get('action') == 'notifications':
             preference, _ = OrganizationNotificationPreference.objects.get_or_create(organization=organization, user=request.user)

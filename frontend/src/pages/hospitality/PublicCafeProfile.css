@@ -1137,7 +1137,7 @@
 .cafe-public .cafe-loyalty-sheet form > small { color: var(--cafe-muted); text-align: center; font-size: 11px; line-height: 1.4; }
 .cafe-public .cafe-loyalty-message { color: var(--cafe-brand) !important; text-align: center; font-size: 12px !important; font-weight: 700; }
 .cafe-public .cafe-loyalty-card-state > p { font-size: 15px; font-weight: 700; }
-.cafe-public .cafe-loyalty-stamps { display: flex; gap: 8px; padding: 3px 0 5px; }
+.cafe-public .cafe-loyalty-stamps { display: flex; flex-wrap: wrap; gap: 8px; padding: 3px 0 5px; }
 .cafe-public .cafe-loyalty-stamps span {
   display: grid;
   width: 42px;

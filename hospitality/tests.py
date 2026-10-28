@@ -9,7 +9,7 @@ from django.utils import timezone
 from datetime import timedelta
 
 from vcards.models import CardBatch, CardBatchCard, College, OrganizationModuleAccess, OrganizationServicePlan, OrganizationTeamMember
-from .models import LoyaltyCustomer, VenueAnalyticsEvent, VenueCardAssignment, VenueFeedback, VenueLink, VenueLoyaltyMembership, VenueMenuCategory, VenueMenuItem, VenueMenuItemVariant, VenueProfile, VenueRewardsProgram, VenueStaffProfile, VenueTouchpoint
+from .models import LoyaltyCustomer, VenueAnalyticsEvent, VenueCardAssignment, VenueFeedback, VenueLink, VenueLoyaltyMembership, VenueMenuCategory, VenueMenuItem, VenueMenuItemVariant, VenueProfile, VenueRewardsProgram, VenueRewardsTransaction, VenueStaffProfile, VenueTouchpoint
 
 
 class HospitalityWorkspaceTests(TestCase):
@@ -229,8 +229,9 @@ class HospitalityWorkspaceTests(TestCase):
     def test_loyalty_join_normalizes_a_nepali_number_and_reopens_the_same_card(self):
         self.venue.venue_type = 'restaurant'
         self.venue.save(update_fields=['venue_type'])
+        VenueRewardsProgram.objects.create(venue=self.venue, is_active=True)
         endpoint = f'/api/venue/{self.venue.public_identifier}/loyalty/join/'
-        first = self.client.post(endpoint, {'phone': '9812345678'}, content_type='application/json')
+        first = self.client.post(endpoint, {'name': 'Robin Dhami', 'phone': '9812345678'}, content_type='application/json')
         self.assertEqual(first.status_code, 201, first.content)
         self.assertTrue(first.json()['created'])
         self.assertEqual(first.json()['membership']['stampGoal'], 5)
@@ -277,6 +278,85 @@ class HospitalityWorkspaceTests(TestCase):
         self.assertEqual(str(membership.reward_balance), '0.00')
         self.assertEqual(membership.rewards_redeemed, 1)
 
+    def test_transaction_retry_is_idempotent(self):
+        customer = LoyaltyCustomer.objects.create(full_name='Robin Dhami', phone_e164='+9779812345678')
+        membership = VenueLoyaltyMembership.objects.create(venue=self.venue, customer=customer)
+        VenueRewardsProgram.objects.create(venue=self.venue, is_active=True, program_type='points', points_per_currency='2')
+        self.client.force_login(self.user)
+        endpoint = f'/api/organizations/{self.org.pk}/venue/rewards/transactions/'
+        payload = {'action': 'earn', 'memberId': membership.public_identifier, 'billAmount': '100', 'idempotencyKey': 'phone-request-1'}
+
+        first = self.client.post(endpoint, payload, content_type='application/json')
+        second = self.client.post(endpoint, payload, content_type='application/json')
+
+        self.assertEqual(first.status_code, 200, first.content)
+        self.assertEqual(second.status_code, 200, second.content)
+        self.assertTrue(second.json()['duplicate'])
+        membership.refresh_from_db()
+        self.assertEqual(str(membership.reward_balance), '200.00')
+        self.assertEqual(VenueRewardsTransaction.objects.filter(membership=membership).count(), 1)
+
+    def test_archived_member_is_hidden_and_rejoining_restores_the_same_card(self):
+        self.venue.venue_type = 'cafe'
+        self.venue.save(update_fields=['venue_type'])
+        VenueRewardsProgram.objects.create(venue=self.venue, is_active=True, program_type='stamps', stamp_goal=6)
+        customer = LoyaltyCustomer.objects.create(full_name='Robin Dhami', phone_e164='+9779812345678')
+        membership = VenueLoyaltyMembership.objects.create(venue=self.venue, customer=customer, stamp_count=2, stamp_goal=5)
+        self.client.force_login(self.user)
+
+        archived = self.client.delete(f'/api/organizations/{self.org.pk}/venue/rewards/members/{membership.public_identifier}/')
+        self.assertEqual(archived.status_code, 200, archived.content)
+        self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/rewards/members/').json()['members'], [])
+
+        self.client.logout()
+        restored = self.client.post(
+            f'/api/venue/{self.venue.public_identifier}/loyalty/join/',
+            {'name': 'Robin Dhami', 'phone': '+9779812345678'},
+            content_type='application/json',
+        )
+        self.assertEqual(restored.status_code, 200, restored.content)
+        membership.refresh_from_db()
+        self.assertTrue(membership.is_active)
+        self.assertEqual(membership.stamp_count, 2)
+        self.assertEqual(membership.stamp_goal, 6)
+        self.assertEqual(restored.json()['membership']['memberId'], membership.public_identifier)
+
+    def test_customer_can_restore_saved_loyalty_card(self):
+        self.venue.venue_type = 'cafe'
+        self.venue.save(update_fields=['venue_type'])
+        VenueRewardsProgram.objects.create(venue=self.venue, is_active=True, program_type='points', points_to_reward=100)
+        customer = LoyaltyCustomer.objects.create(full_name='Robin Dhami', phone_e164='+9779812345678')
+        membership = VenueLoyaltyMembership.objects.create(venue=self.venue, customer=customer, reward_balance='45')
+
+        response = self.client.get(f'/api/venue/{self.venue.public_identifier}/loyalty/card/{membership.public_identifier}/')
+
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json()['membership']['rewardBalance'], '45.00')
+        self.assertEqual(response.json()['program']['programType'], 'points')
+
+    def test_changing_loyalty_system_requires_confirmed_balance_reset(self):
+        program = VenueRewardsProgram.objects.create(venue=self.venue, is_active=True, program_type='points')
+        customer = LoyaltyCustomer.objects.create(full_name='Robin Dhami', phone_e164='+9779812345678')
+        membership = VenueLoyaltyMembership.objects.create(venue=self.venue, customer=customer, reward_balance='45')
+        self.client.force_login(self.user)
+        endpoint = f'/api/organizations/{self.org.pk}/venue/settings/'
+        payload = {'action': 'rewards_program', 'programType': 'stamps', 'stampGoal': 8, 'stampRewardLabel': 'Free coffee'}
+
+        blocked = self.client.patch(endpoint, data=json.dumps(payload), content_type='application/json')
+        self.assertEqual(blocked.status_code, 409, blocked.content)
+        program.refresh_from_db()
+        self.assertEqual(program.program_type, 'points')
+
+        payload['resetExistingBalances'] = True
+        changed = self.client.patch(endpoint, data=json.dumps(payload), content_type='application/json')
+        self.assertEqual(changed.status_code, 200, changed.content)
+        membership.refresh_from_db()
+        program.refresh_from_db()
+        self.assertEqual(program.program_type, 'stamps')
+        self.assertEqual(membership.stamp_goal, 8)
+        self.assertEqual(str(membership.reward_balance), '0.00')
+        self.assertEqual(membership.rewards_transactions.get().transaction_type, 'expire')
+
     def test_a_loyalty_customer_can_have_one_card_per_cafe(self):
         self.venue.venue_type = 'cafe'
         self.venue.save(update_fields=['venue_type'])
@@ -284,7 +364,9 @@ class HospitalityWorkspaceTests(TestCase):
             organization=College.objects.create(name='Second Cafe', organization_code='SECOND', organization_type='hospitality'),
             venue_type='cafe',
         )
-        self.client.post(f'/api/venue/{self.venue.public_identifier}/loyalty/join/', {'phone': '9812345678'}, content_type='application/json')
+        VenueRewardsProgram.objects.create(venue=self.venue, is_active=True)
+        VenueRewardsProgram.objects.create(venue=other, is_active=True)
+        self.client.post(f'/api/venue/{self.venue.public_identifier}/loyalty/join/', {'name': 'Robin Dhami', 'phone': '9812345678'}, content_type='application/json')
         response = self.client.post(f'/api/venue/{other.public_identifier}/loyalty/join/', {'phone': '9812345678'}, content_type='application/json')
         self.assertEqual(response.status_code, 201, response.content)
         self.assertEqual(LoyaltyCustomer.objects.count(), 1)
@@ -293,9 +375,10 @@ class HospitalityWorkspaceTests(TestCase):
     def test_loyalty_join_accepts_an_international_e164_number(self):
         self.venue.venue_type = 'restaurant'
         self.venue.save(update_fields=['venue_type'])
+        VenueRewardsProgram.objects.create(venue=self.venue, is_active=True)
         response = self.client.post(
             f'/api/venue/{self.venue.public_identifier}/loyalty/join/',
-            {'phone': '+44 7700 900123'},
+            {'name': 'Robin Dhami', 'phone': '+44 7700 900123'},
             content_type='application/json',
         )
         self.assertEqual(response.status_code, 201, response.content)
