@@ -74,14 +74,14 @@ class HospitalityWorkspaceTests(TestCase):
         self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/rewards/members/').status_code, 403)
         self.assertFalse(self.client.get(f'/api/venue/{self.venue.public_identifier}/').json()['loyalty']['enabled'])
 
-    def test_assigned_technical_owner_can_access_only_their_organization(self):
+    def test_assigned_technical_owner_cannot_access_the_organization_workspace(self):
         support = get_user_model().objects.create_user(username='support-agent', password='pass')
         OrganizationServicePlan.objects.create(organization=self.org, technical_owner=support)
         other = College.objects.create(name='Unassigned Cafe', organization_code='UNASSIGNED', organization_type='hospitality')
         VenueProfile.objects.create(organization=other)
 
         self.client.force_login(support)
-        self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/menu/items/').status_code, 200)
+        self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/menu/items/').status_code, 403)
         self.assertEqual(self.client.get(f'/api/organizations/{other.pk}/venue/menu/items/').status_code, 403)
 
     def test_super_admin_selects_hospitality_modules_when_creating_an_organization(self):

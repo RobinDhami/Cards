@@ -2,16 +2,13 @@ from django.db.models import Q
 
 from django.utils import timezone
 
-from .models import College, OrganizationModuleAccess, OrganizationServicePlan, OrganizationTeamMember
+from .models import College, OrganizationModuleAccess, OrganizationTeamMember
 
 
 ROLE_CAPABILITIES = {
     'owner': {'overview', 'profile', 'menu', 'feedback', 'staff', 'loyalty', 'analytics', 'settings', 'team'},
     'manager': {'overview', 'profile', 'menu', 'feedback', 'staff', 'loyalty', 'analytics'},
     'menu_editor': {'menu'},
-    # Assigned platform support can configure the modules included in an
-    # organization’s deal, but cannot manage its owner/team membership.
-    'support': {'overview', 'profile', 'menu', 'feedback', 'staff', 'loyalty', 'analytics', 'settings'},
 }
 
 MODULE_CAPABILITIES = {
@@ -90,8 +87,7 @@ def organization_role(user, organization):
     ).first()
     if member:
         return member.role
-    plan = OrganizationServicePlan.objects.filter(organization=organization, technical_owner=user).first()
-    return 'support' if plan else ''
+    return ''
 
 
 def can_access_organization(user, organization, capability):
@@ -102,5 +98,5 @@ def accessible_organizations(user):
     if user.is_superuser:
         return College.objects.all()
     return College.objects.filter(
-        Q(admin_user=user) | Q(team_members__user=user, team_members__status='active') | Q(service_plan__technical_owner=user),
+        Q(admin_user=user) | Q(team_members__user=user, team_members__status='active'),
     ).distinct()
