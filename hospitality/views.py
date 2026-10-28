@@ -747,9 +747,14 @@ def venue_settings_api(request, organization_id):
             if starts_on and ends_on and ends_on < starts_on:
                 return JsonResponse({'error': 'The plan end date must be after its start date.'}, status=400)
             plan, _ = OrganizationServicePlan.objects.get_or_create(organization=organization)
-            plan.name = str(data.get('name') or '').strip()[:120]
-            plan.internal_notes = str(data.get('internalNotes') or '').strip()
-            plan.starts_on, plan.ends_on = starts_on, ends_on
+            if 'name' in data:
+                plan.name = str(data.get('name') or '').strip()[:120]
+            if 'internalNotes' in data:
+                plan.internal_notes = str(data.get('internalNotes') or '').strip()
+            if 'startsOn' in data:
+                plan.starts_on = starts_on
+            if 'endsOn' in data:
+                plan.ends_on = ends_on
             plan.technical_owner, plan.updated_by = support_user, request.user
             plan.save()
             ensure_organization_modules(organization)

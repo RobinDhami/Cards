@@ -35,10 +35,11 @@
 .school-module-picker h3 { margin: 0; font-size: 12px; }
 .school-module-picker > div:first-child p { margin: 3px 0 10px; color: #64748b; font-size: 10px; }
 .school-module-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-.school-module-picker label { display: flex; min-height: 50px; align-items: flex-start; gap: 7px; border: 1px solid var(--manage-border); border-radius: 8px; padding: 9px; cursor: pointer; }
-.school-module-picker label.is-selected { border-color: var(--manage-accent); background: color-mix(in srgb, var(--manage-accent) 8%, transparent); }
-.school-module-picker input { margin-top: 2px; accent-color: var(--manage-accent); }
-.school-module-picker strong,.school-module-picker small { display: block; }.school-module-picker strong { font-size: 10px; }.school-module-picker small { margin-top: 3px; color: #64748b; font-size: 8px; line-height: 1.35; }
+.school-module-options label { display: flex; min-height: 50px; align-items: flex-start; gap: 7px; border: 1px solid var(--manage-border); border-radius: 8px; padding: 9px; cursor: pointer; }
+.school-module-options label.is-selected { border-color: var(--manage-accent); background: color-mix(in srgb, var(--manage-accent) 8%, transparent); }
+.school-module-options input { margin-top: 2px; accent-color: var(--manage-accent); }
+.school-module-options strong,.school-module-options small { display: block; }.school-module-options strong { font-size: 10px; }.school-module-options small { margin-top: 3px; color: #64748b; font-size: 8px; line-height: 1.35; }
+.school-technical-owner { max-width: 420px; margin-top: 14px; }
 @media (max-width: 720px) { .school-module-options { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 .school-organization-filters {

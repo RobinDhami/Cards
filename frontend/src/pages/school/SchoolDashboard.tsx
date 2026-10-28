@@ -81,6 +81,12 @@ type DashboardShellData = {
   user: { username: string; displayName: string }
 }
 
+type HospitalityConfiguration = {
+  shell: { isSuperAdmin: boolean; currentSchool: { organizationType: string } }
+  subscription?: { modules: Array<{ key: string; enabled: boolean }>; technicalOwner: { id: number } | null }
+  supportStaff?: Array<{ id: number; name: string; email: string }>
+}
+
 type Member = {
   id: number
   name: string
@@ -652,6 +658,10 @@ export function SchoolReportsPage() {
 export function SchoolSettingsPage() {
   const schoolId = selectedSchoolId()
   const [isHospitality, setIsHospitality] = useState<boolean | null>(null)
+  const [isPlatformAdmin, setIsPlatformAdmin] = useState<boolean | null>(null)
+  const [hospitalityModules, setHospitalityModules] = useState<string[]>([])
+  const [technicalOwnerId, setTechnicalOwnerId] = useState('')
+  const [supportStaff, setSupportStaff] = useState<Array<{ id: number; name: string; email: string }>>([])
   const [shell, setShell] = useState<DashboardShellData | null>(null)
   const [school, setSchool] = useState<SchoolSummary | null>(null)
   const [values, setValues] = useState<Record<string, string>>({})
@@ -663,13 +673,22 @@ export function SchoolSettingsPage() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    apiFetch<{ shell: { currentSchool: { organizationType: string } } }>(`/api/organizations/${schoolId}/venue/settings/`)
-      .then((payload) => setIsHospitality(payload.shell.currentSchool.organizationType === 'hospitality'))
-      .catch(() => setIsHospitality(false))
+    apiFetch<HospitalityConfiguration>(`/api/organizations/${schoolId}/venue/settings/`)
+      .then((payload) => {
+        const hospitality = payload.shell.currentSchool.organizationType === 'hospitality'
+        setIsHospitality(hospitality)
+        setIsPlatformAdmin(payload.shell.isSuperAdmin)
+        if (hospitality && payload.shell.isSuperAdmin) {
+          setHospitalityModules((payload.subscription?.modules || []).filter((module) => module.enabled).map((module) => module.key))
+          setTechnicalOwnerId(String(payload.subscription?.technicalOwner?.id || ''))
+          setSupportStaff(payload.supportStaff || [])
+        }
+      })
+      .catch(() => { setIsHospitality(false); setIsPlatformAdmin(false) })
   }, [schoolId])
 
   useEffect(() => {
-    if (isHospitality !== false) return
+    if (isHospitality === null || isPlatformAdmin === null || (isHospitality && !isPlatformAdmin)) return
     apiFetch<{ shell: DashboardShellData; school: SchoolSummary }>(`/api/dashboard/settings/${queryString({ school: schoolId })}`)
       .then((payload) => {
         setShell(payload.shell)
@@ -704,9 +723,9 @@ export function SchoolSettingsPage() {
         })
       })
       .catch((reason) => setError(displayError(reason)))
-  }, [schoolId, isHospitality])
+  }, [schoolId, isHospitality, isPlatformAdmin])
 
-  if (isHospitality) return <HospitalitySettingsPage />
+  if (isHospitality && !isPlatformAdmin) return <HospitalitySettingsPage />
 
   async function save(event: FormEvent) {
     event.preventDefault()
@@ -742,12 +761,17 @@ export function SchoolSettingsPage() {
       ;['organizationCode', 'organizationType', 'adminUsername', 'adminPassword'].forEach((key) => body.append(key, values[key] ?? ''))
       try {
         await apiFetch(`/api/dashboard/settings/${queryString({ school: school.id })}`, { method: 'POST', body })
+        const subscription = await apiFetch<{ subscription: { modules: Array<{ key: string; enabled: boolean }>; technicalOwner: { id: number } | null } }>(`/api/organizations/${school.id}/venue/settings/`, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: jsonBody({ action: 'subscription', modules: hospitalityModules, technicalOwnerId: technicalOwnerId || null }),
+        })
+        setHospitalityModules(subscription.subscription.modules.filter((module) => module.enabled).map((module) => module.key))
+        setTechnicalOwnerId(String(subscription.subscription.technicalOwner?.id || ''))
         setValues((current) => ({ ...current, adminPassword: '' }))
-        setSuccess('Settings saved.')
+        setSuccess('Organization configuration saved.')
       } catch (reason) { setError(displayError(reason)) } finally { setSaving(false) }
     }
     return (
-      <SchoolShell shell={shell} title="Settings" subtitle={`Account and workspace settings for ${school.name}`}>
+      <SchoolShell shell={shell} title="Edit organization" subtitle={`Platform configuration for ${school.name}`}>
         <div className="manage-alert is-success school-message">
           <strong>Public business information has one home.</strong>
           <span>Name, contact details, location, images, links, hours, and colours are now managed in Business Profile.</span>
@@ -768,7 +792,8 @@ export function SchoolSettingsPage() {
               <Field label="New password" hint="Leave blank to keep the current password."><TextInput type="password" value={values.adminPassword ?? ''} onChange={(event) => update('adminPassword', event.target.value)} /></Field>
             </div>
           </FormSection>
-          <div className="form-actions"><button className="manage-button is-primary" type="submit" disabled={saving}><Save size={14} />{saving ? 'Saving…' : 'Save settings'}</button></div>
+          {shell.isSuperAdmin ? <FormSection title="Hospitality modules" description="Choose the modules included in this café’s package. Overview and Profile are always included."><div className="school-module-options">{hospitalityModuleChoices.map((module) => <label key={module.key} className={hospitalityModules.includes(module.key) ? 'is-selected' : ''}><input type="checkbox" checked={hospitalityModules.includes(module.key)} disabled={module.locked} onChange={(event) => setHospitalityModules((current) => event.target.checked ? [...current, module.key] : current.filter((key) => key !== module.key))} /><span><strong>{module.label}</strong>{module.hint ? <small>{module.hint}</small> : null}</span></label>)}</div><div className="school-technical-owner"><Field label="Technical owner" hint="Optional platform person responsible for support."><SelectInput value={technicalOwnerId} onChange={(event) => setTechnicalOwnerId(event.target.value)}><option value="">Not assigned</option>{supportStaff.map((person) => <option key={person.id} value={person.id}>{person.name}{person.email ? ` · ${person.email}` : ''}</option>)}</SelectInput></Field></div></FormSection> : null}
+          <div className="form-actions"><button className="manage-button is-primary" type="submit" disabled={saving}><Save size={14} />{saving ? 'Saving…' : 'Save organization configuration'}</button></div>
         </form>
       </SchoolShell>
     )
