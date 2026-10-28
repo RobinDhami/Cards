@@ -32,7 +32,10 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='college',
             name='workspace_slug',
-            field=models.SlugField(blank=True, max_length=80, null=True),
+            # Use a plain field for the backfill stage. PostgreSQL otherwise
+            # queues the SlugField pattern index here and again when the field
+            # becomes unique below.
+            field=models.CharField(blank=True, max_length=80, null=True),
         ),
         migrations.RunPython(populate_workspace_slugs, migrations.RunPython.noop),
         migrations.AlterField(
