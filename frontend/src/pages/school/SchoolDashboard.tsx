@@ -28,6 +28,7 @@ import {
 } from '../../components/manage/FormControls'
 import { ManageShell } from '../../components/manage/ManageShell'
 import { DashboardHeaderTools } from '../../components/manage/DashboardHeaderTools'
+import { platformNavigation } from '../../components/manage/platformNavigation'
 import { apiFetch, backendHref, displayError, jsonBody, queryString } from '../../lib/api'
 import { schoolWorkspaceNav, withSchool } from './schoolWorkspaceNav'
 import { dashboardMetrics, moduleConfig } from './organizationModuleConfig'
@@ -79,6 +80,7 @@ type DashboardShellData = {
   currentSchool: SchoolSummary | null
   schools: Array<{ id: number; name: string }>
   user: { username: string; displayName: string }
+  platformAccess: { isSuperAdmin: boolean; allowedModules: string[] }
 }
 
 type HospitalityConfiguration = {
@@ -141,6 +143,16 @@ function organizationWorkspaceHref(schoolId: number) {
   return `/dashboard/organizations/${schoolId}/${moduleName ? `${moduleName}/` : ''}`
 }
 
+function organizationHomeHref(school: Pick<SchoolSummary, 'id' | 'organizationType'>) {
+  if (school.organizationType === 'hospitality') {
+    return `/dashboard/organizations/${school.id}/hospitality/?tab=overview`
+  }
+  if (school.organizationType === 'club') {
+    return `/dashboard/organizations/${school.id}/club/`
+  }
+  return `/dashboard/organizations/${school.id}/`
+}
+
 function SchoolShell({
   shell,
   title,
@@ -155,7 +167,9 @@ function SchoolShell({
   children: ReactNode
 }) {
   const school = shell.currentSchool
-  const navigation = schoolWorkspaceNav(school?.id, shell.isSuperAdmin, school?.organizationType)
+  const navigation = school
+    ? schoolWorkspaceNav(school.id, shell.isSuperAdmin, school.organizationType)
+    : platformNavigation(shell.platformAccess.allowedModules)
   return (
     <ManageShell
       brand={school?.name || 'Tap2Connect'}
@@ -165,7 +179,7 @@ function SchoolShell({
       title={title}
       subtitle={subtitle}
       userName={shell.user.displayName}
-      userRole={shell.isSuperAdmin ? 'Platform administrator' : 'Organization administrator'}
+      userRole={shell.isSuperAdmin ? 'Platform administrator' : school ? 'Organization administrator' : 'Platform staff'}
       accent={school?.themePrimary || '#0b4bcb'}
       schoolOptions={shell.isSuperAdmin && school ? shell.schools : undefined}
       selectedSchool={school?.id ?? null}
@@ -293,7 +307,7 @@ export function SchoolsPage() {
       shell={shell}
       title="Organizations"
       subtitle={`${filteredSchools.length} of ${schools.length} organizations on the platform`}
-      actions={<button className="manage-button is-primary" type="button" onClick={() => setCreateOpen((current) => !current)}><Plus size={14} />Add organization</button>}
+      actions={shell.isSuperAdmin ? <button className="manage-button is-primary" type="button" onClick={() => setCreateOpen((current) => !current)}><Plus size={14} />Add organization</button> : undefined}
     >
       {error ? <div className="manage-alert school-message">{error}</div> : null}
       <section className="school-organization-filters manage-card" aria-label="Organization filters">
@@ -328,7 +342,7 @@ export function SchoolsPage() {
             <header>
               <span>{school.logo ? <img src={school.logo} alt="" /> : <Building2 size={21} />}</span>
               <div><h2>{school.name}</h2><p>{school.address || 'Address not added'} · <strong>{school.organizationType === 'generic' ? 'Generic / Unclassified' : school.organizationType[0].toUpperCase() + school.organizationType.slice(1)}</strong>{school.organizationCode ? ` · ${school.organizationCode}` : ''}</p></div>
-              <button type="button" onClick={() => deleteSchool(school)} title="Delete organization" aria-label="Delete organization"><Trash2 size={14} /></button>
+              {shell.isSuperAdmin ? <button type="button" onClick={() => deleteSchool(school)} title="Delete organization" aria-label="Delete organization"><Trash2 size={14} /></button> : null}
             </header>
             <div className="school-summary-stats">
               <span><strong>{school.stats?.members ?? 0}</strong>Members</span>
@@ -337,8 +351,8 @@ export function SchoolsPage() {
             </div>
             <footer>
               <span>{school.adminUsername ? `Admin: ${school.adminUsername}` : 'No admin assigned'}</span>
-              <a className="manage-button" href={`/dashboard/organizations/${school.id}/`}>Open workspace</a>
-              <a className="manage-button" href={`/dashboard/organizations/${school.id}/settings/`}><Settings size={13} />Edit organization</a>
+              {shell.isSuperAdmin ? <a className="manage-button" href={organizationHomeHref(school)}>Open workspace</a> : null}
+              {shell.isSuperAdmin ? <a className="manage-button" href={`/dashboard/organizations/${school.id}/settings/`}><Settings size={13} />Edit organization</a> : null}
             </footer>
           </article>
         ))}
@@ -358,6 +372,10 @@ export function OrganizationWorkspaceOverview() {
       .then((payload) => {
         if (payload.shell.currentSchool?.organizationType === 'hospitality') {
           window.location.replace(`/dashboard/organizations/${schoolId}/hospitality/?tab=overview`)
+          return
+        }
+        if (payload.shell.currentSchool?.organizationType === 'club') {
+          window.location.replace(`/dashboard/organizations/${schoolId}/club/`)
           return
         }
         setShell(payload.shell)
@@ -385,7 +403,7 @@ export function OrganizationWorkspaceOverview() {
           <h2>{organization?.name}</h2>
           <p>{organization?.address || 'No address has been added.'}</p>
         </div>
-        {shell.isSuperAdmin ? <a className="manage-button" href="/dashboard/schools/">Back to Organizations</a> : null}
+        {shell.isSuperAdmin ? <a className="manage-button" href="/dashboard/organizations/">Back to Organizations</a> : null}
       </section>
 
       <section className="school-report-metrics">
@@ -1081,7 +1099,7 @@ export function SchoolDashboardRouter() {
   if (/^\/dashboard\/organizations\/\d+\/exports\/?$/.test(path)) return <PrintControlsPage mode="qr" />
   if (/^\/dashboard\/organizations\/\d+\/reports\/?$/.test(path)) return <SchoolReportsPage />
   if (/^\/dashboard\/organizations\/\d+\/settings\/?$/.test(path)) return <SchoolSettingsPage />
-  if (path.includes('/schools')) return <SchoolsPage />
+  if (/^\/dashboard\/organizations\/?$/.test(path)) return <SchoolsPage />
   if (path.includes('/teachers')) return <MembersPage memberType="teacher" />
   if (path.includes('/students')) return <MembersPage memberType="student" />
   if (path.includes('/student/') && path.includes('/credentials')) return <StudentCredentialsPage />

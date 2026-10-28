@@ -144,6 +144,38 @@ class WorkspaceLoginTests(TestCase):
             reverse('dashboard_organization_workspace', args=[organization.id]),
         )
 
+    def test_organization_login_destination_is_the_canonical_scoped_url(self):
+        admin_user = self._user('hospitality.admin')
+        organization = College.objects.create(
+            name='Canonical Cafe',
+            organization_type='hospitality',
+            admin_user=admin_user,
+        )
+
+        response = self._login(admin_user.username)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json()['redirectPath'],
+            f'/dashboard/organizations/{organization.id}/hospitality/?tab=overview',
+        )
+
+    def test_club_login_opens_the_club_workspace_directly(self):
+        admin_user = self._user('club.admin')
+        organization = College.objects.create(
+            name='Canonical Club',
+            organization_type='club',
+            admin_user=admin_user,
+        )
+
+        response = self._login(admin_user.username)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json()['redirectPath'],
+            reverse('dashboard_club_workspace', args=[organization.id]),
+        )
+
     def test_organization_admin_cannot_access_another_organization(self):
         admin_user = self._user('scoped.admin')
         assigned = College.objects.create(name='Scoped Organization', admin_user=admin_user)
@@ -562,6 +594,7 @@ class PlatformStaffAccessTests(TestCase):
         self.client.force_login(self.template_user)
         denied_paths = [
             '/dashboard/',
+            '/dashboard/organizations/',
             '/dashboard/schools/',
             '/dashboard/students/',
             '/dashboard/professional-cards/',
@@ -609,8 +642,47 @@ class PlatformStaffAccessTests(TestCase):
         response = self._platform_login(multi_module_user)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['redirectPath'], '/dashboard/schools/')
+        self.assertEqual(response.json()['redirectPath'], '/dashboard/organizations/')
         self.assertEqual(response.json()['platformAccess']['allowedModules'], ['organizations', 'templates'])
+
+    def test_organizations_module_opens_directory_but_not_customer_workspace(self):
+        organizations_permission = Permission.objects.get(
+            content_type__app_label='vcards',
+            codename='access_platform_organizations',
+        )
+        support_user = User.objects.create_user(
+            username='organization.directory.staff',
+            password=self.password,
+        )
+        support_user.user_permissions.add(organizations_permission)
+        organization = College.objects.create(name='Private Customer Workspace')
+        self.client.force_login(support_user)
+
+        directory = self.client.get(reverse('dashboard_schools'))
+        directory_api = self.client.get(reverse('react_dashboard_schools_api'))
+        workspace = self.client.get(
+            reverse('dashboard_organization_workspace', args=[organization.id]),
+        )
+        create = self.client.post(
+            reverse('react_dashboard_schools_api'),
+            data=json.dumps({
+                'name': 'Unauthorized Organization',
+                'organizationCode': 'UNAUTH',
+                'adminUsername': 'unauthorized.admin',
+                'adminPassword': self.password,
+            }),
+            content_type='application/json',
+        )
+
+        self.assertEqual(directory.status_code, 200)
+        self.assertEqual(directory_api.status_code, 200)
+        self.assertEqual(
+            directory_api.json()['shell']['platformAccess']['allowedModules'],
+            ['organizations'],
+        )
+        self.assertEqual(workspace.status_code, 403)
+        self.assertEqual(create.status_code, 403)
+        self.assertFalse(College.objects.filter(name='Unauthorized Organization').exists())
 
     def test_activity_and_reports_apis_follow_module_permissions(self):
         activity_user = User.objects.create_user(
@@ -943,6 +1015,33 @@ class SchoolDashboardScopeTests(TestCase):
         response = self.client.get(reverse('react_dashboard_schools_api'))
 
         self.assertEqual(response.status_code, 403)
+
+    def test_organization_directory_uses_canonical_url_and_redirects_legacy_url(self):
+        self.client.force_login(self.super_admin)
+
+        canonical = self.client.get(reverse('dashboard_schools'))
+        legacy = self.client.get('/dashboard/schools/?type=hospitality')
+
+        self.assertEqual(reverse('dashboard_schools'), '/dashboard/organizations/')
+        self.assertEqual(canonical.status_code, 200)
+        self.assertRedirects(
+            legacy,
+            '/dashboard/organizations/?type=hospitality',
+            fetch_redirect_response=False,
+        )
+
+    def test_organization_admin_can_open_only_their_scoped_workspace_page(self):
+        self.client.force_login(self.school_admin_a)
+
+        assigned = self.client.get(
+            reverse('dashboard_organization_workspace', args=[self.school_a.id]),
+        )
+        other = self.client.get(
+            reverse('dashboard_organization_workspace', args=[self.school_b.id]),
+        )
+
+        self.assertEqual(assigned.status_code, 200)
+        self.assertEqual(other.status_code, 403)
 
     def test_reports_are_scoped_to_the_assigned_school(self):
         self.client.force_login(self.school_admin_a)

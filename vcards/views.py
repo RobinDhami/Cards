@@ -296,7 +296,9 @@ def _workspace_contexts(user):
             continue
         destination = reverse('dashboard_organization_workspace', args=[organization.id])
         if organization.organization_type == 'hospitality':
-            destination = f'/dashboard/organizations/{organization.id}/hospitality/?tab=overview'
+            destination = f"{reverse('dashboard_hospitality_workspace', args=[organization.id])}?tab=overview"
+        elif organization.organization_type == 'club':
+            destination = reverse('dashboard_club_workspace', args=[organization.id])
         contexts.append({
             'key': f'organization:{organization.id}',
             'role': role,

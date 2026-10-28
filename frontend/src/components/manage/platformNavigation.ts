@@ -13,7 +13,7 @@ export type PlatformModule = 'overview' | 'organizations' | 'members' | 'profess
 
 const platformItems: Array<Omit<ShellNavItem, 'active'> & { module: PlatformModule }> = [
   { module: 'overview', label: 'Overview', href: '/dashboard/', icon: LayoutDashboard },
-  { module: 'organizations', label: 'Organizations', href: '/dashboard/schools/', icon: Building2 },
+  { module: 'organizations', label: 'Organizations', href: '/dashboard/organizations/', icon: Building2 },
   { module: 'professionals', label: 'Profiles', href: '/dashboard/professional-cards/', icon: UserRound },
   { module: 'templates', label: 'Templates', href: '/dashboard/templates/', icon: LayoutTemplate },
   { module: 'card_operations', label: 'Card Operations', href: '/dashboard/card-operations/', icon: Boxes },

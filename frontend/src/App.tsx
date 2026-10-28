@@ -46,7 +46,7 @@ function routeMatches(path: string, patterns: RegExp[]) {
 }
 
 const schoolDashboardRoutes = [
-  /^\/dashboard\/schools\/?$/,
+  /^\/dashboard\/organizations\/?$/,
   /^\/dashboard\/organizations\/\d+\/?$/,
   /^\/dashboard\/organizations\/\d+\/(?:members|bulk-upload|print|exports|reports|settings)\/?$/,
   /^\/dashboard\/organizations\/\d+\/members\/\d+\/credentials\/?$/,
@@ -76,6 +76,11 @@ const oldProjectRoutesNeedingMigration = [
 
 function AppRoutes() {
   const path = window.location.pathname
+
+  if (path === '/dashboard/schools/' || path === '/dashboard/schools') {
+    window.location.replace(`/dashboard/organizations/${window.location.search}`)
+    return <BrandLoader label="Opening organizations…" />
+  }
 
   if (path === '/' || path === '') {
     return <HomePage />

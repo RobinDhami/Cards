@@ -8,7 +8,7 @@ from vcards.views import dashboard_qr_export, dashboard_qr_export_download
 from vcard_backend import react_api
 from hospitality import views as hospitality_views
 from vcard_backend.health import health_check
-from vcard_backend.react_views import react_app
+from vcard_backend.react_views import legacy_organizations_redirect, react_app
 
 urlpatterns = [
     path('health/', health_check, name='health_check'),
@@ -25,7 +25,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('dashboard/', react_app, name='admin_dashboard'),
     path('dashboard/templates/', react_app, name='dashboard_template_studio'),
-    path('dashboard/schools/', react_app, name='dashboard_schools'),
+    path('dashboard/schools/', legacy_organizations_redirect, name='dashboard_schools_legacy'),
+    path('dashboard/organizations/', react_app, name='dashboard_schools'),
     path('dashboard/organizations/<int:organization_id>/', react_app, name='dashboard_organization_workspace'),
     path('dashboard/organizations/<int:organization_id>/members/', react_app, name='dashboard_organization_members'),
     path('dashboard/organizations/<int:organization_id>/members/<int:student_id>/credentials/', react_app, name='dashboard_organization_member_credentials'),

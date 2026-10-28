@@ -2344,16 +2344,15 @@ def _dashboard_shell(request, active, school=None):
             'username': request.user.username,
             'displayName': request.user.get_full_name().strip() or request.user.username,
         },
+        'platformAccess': platform_access_payload(request.user),
     }
 
 
 @require_http_methods(['GET', 'POST'])
 def dashboard_schools_api(request):
-    permission_error = _require_login(request)
+    permission_error = _require_platform_module(request, 'organizations')
     if permission_error:
         return permission_error
-    if not _is_super_admin(request.user):
-        return _json_error('Only platform administrators can manage organizations.', status=403)
     if request.method == 'GET':
         schools = College.objects.select_related('admin_user').order_by('name')
         organization_type_counts = {'all': schools.count(), 'generic': 0, 'education': 0, 'club': 0, 'business': 0, 'hospitality': 0, 'other': 0}
@@ -2366,6 +2365,9 @@ def dashboard_schools_api(request):
             'organizationTypeCounts': organization_type_counts,
             'supportStaff': _organization_support_staff_payload(),
         })
+
+    if not _is_super_admin(request.user):
+        return _json_error('Only Super Admins can create organizations.', status=403)
 
     payload = _json_body(request)
     source = payload.get('fields', payload) if isinstance(payload, dict) else payload
