@@ -89,6 +89,7 @@ class HospitalityWorkspaceTests(TestCase):
         self.client.force_login(super_admin)
         response = self.client.post('/api/dashboard/schools/', data=json.dumps({
             'name': 'Menu Only Cafe', 'organizationCode': 'MENUONLY', 'organizationType': 'hospitality',
+            'workspaceSlug': 'menu-only-cafe',
             'adminUsername': 'menu-only-owner', 'adminPassword': 'OwnerPass123!',
             'modules': ['overview', 'profile', 'menu'],
         }), content_type='application/json')

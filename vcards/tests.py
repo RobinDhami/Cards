@@ -141,7 +141,47 @@ class WorkspaceLoginTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response.json()['redirectPath'],
-            reverse('dashboard_organization_workspace', args=[organization.id]),
+            reverse('organization_vanity_dashboard', args=[organization.workspace_slug]),
+        )
+
+    def test_vanity_workspace_is_private_and_injects_the_resolved_organization(self):
+        owner = self._user('vanity.owner')
+        outsider = self._user('vanity.outsider')
+        organization = College.objects.create(
+            name='Vanity Organization',
+            workspace_slug='vanity-organization',
+            admin_user=owner,
+        )
+        url = reverse('organization_vanity_dashboard', args=[organization.workspace_slug])
+
+        self.client.force_login(owner)
+        allowed = self.client.get(url)
+        self.client.force_login(outsider)
+        denied = self.client.get(url)
+
+        self.assertEqual(allowed.status_code, 200)
+        self.assertContains(allowed, 'window.__TAP2CONNECT_ORGANIZATION__=')
+        self.assertContains(allowed, '"slug": "vanity-organization"')
+        self.assertEqual(denied.status_code, 403)
+
+    def test_numeric_owner_url_redirects_to_the_vanity_workspace(self):
+        owner = self._user('legacy.numeric.owner')
+        organization = College.objects.create(
+            name='Legacy Numeric Cafe',
+            organization_type='hospitality',
+            admin_user=owner,
+        )
+        self.client.force_login(owner)
+
+        response = self.client.get(
+            reverse('dashboard_hospitality_workspace', args=[organization.id]),
+            {'tab': 'menu'},
+        )
+
+        self.assertRedirects(
+            response,
+            f'/{organization.workspace_slug}/dashboard/menu/',
+            fetch_redirect_response=False,
         )
 
     def test_organization_login_destination_is_the_canonical_scoped_url(self):
@@ -157,7 +197,7 @@ class WorkspaceLoginTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response.json()['redirectPath'],
-            f'/dashboard/organizations/{organization.id}/hospitality/?tab=overview',
+            reverse('organization_vanity_dashboard', args=[organization.workspace_slug]),
         )
 
     def test_club_login_opens_the_club_workspace_directly(self):
@@ -173,7 +213,7 @@ class WorkspaceLoginTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response.json()['redirectPath'],
-            reverse('dashboard_club_workspace', args=[organization.id]),
+            reverse('organization_vanity_dashboard', args=[organization.workspace_slug]),
         )
 
     def test_organization_admin_cannot_access_another_organization(self):
@@ -288,7 +328,7 @@ class WorkspaceLoginTests(TestCase):
             content_type='application/json',
         )
         self.assertEqual(select.status_code, 200)
-        self.assertEqual(select.json()['redirectPath'], reverse('dashboard_organization_workspace', args=[second.id]))
+        self.assertEqual(select.json()['redirectPath'], reverse('organization_vanity_dashboard', args=[second.workspace_slug]))
         self.assertEqual(self.client.get(reverse('react_session_api')).json()['redirectPath'], select.json()['redirectPath'])
 
     def test_org_admin_and_personal_profile_show_workspace_choices(self):
@@ -684,6 +724,20 @@ class PlatformStaffAccessTests(TestCase):
         self.assertEqual(create.status_code, 403)
         self.assertFalse(College.objects.filter(name='Unauthorized Organization').exists())
 
+    def test_workspace_slug_availability_rejects_taken_and_reserved_addresses(self):
+        super_admin = User.objects.create_superuser('slug.admin', password=self.password)
+        College.objects.create(name='Existing Slug', workspace_slug='existing-slug')
+        self.client.force_login(super_admin)
+
+        available = self.client.get(reverse('organization_slug_availability_api'), {'slug': 'New Cafe'})
+        taken = self.client.get(reverse('organization_slug_availability_api'), {'slug': 'EXISTING-SLUG'})
+        reserved = self.client.get(reverse('organization_slug_availability_api'), {'slug': 'api'})
+
+        self.assertTrue(available.json()['available'])
+        self.assertEqual(available.json()['slug'], 'new-cafe')
+        self.assertFalse(taken.json()['available'])
+        self.assertFalse(reserved.json()['available'])
+
     def test_activity_and_reports_apis_follow_module_permissions(self):
         activity_user = User.objects.create_user(
             username='activity.staff',
@@ -1006,7 +1060,7 @@ class SchoolDashboardScopeTests(TestCase):
         self.assertEqual(response.status_code, 403)
         self.assertEqual(
             response.json()['redirectTo'],
-            reverse('dashboard_organization_workspace', args=[self.school_a.id]),
+            reverse('organization_vanity_dashboard', args=[self.school_a.workspace_slug]),
         )
 
     def test_school_admin_cannot_open_platform_school_directory(self):
@@ -1040,7 +1094,11 @@ class SchoolDashboardScopeTests(TestCase):
             reverse('dashboard_organization_workspace', args=[self.school_b.id]),
         )
 
-        self.assertEqual(assigned.status_code, 200)
+        self.assertRedirects(
+            assigned,
+            reverse('organization_vanity_dashboard', args=[self.school_a.workspace_slug]),
+            fetch_redirect_response=False,
+        )
         self.assertEqual(other.status_code, 403)
 
     def test_reports_are_scoped_to_the_assigned_school(self):
@@ -1234,7 +1292,7 @@ class SuperAdminOverviewV1Tests(TestCase):
         self.assertEqual(response.status_code, 403)
         self.assertEqual(
             response.json()['redirectTo'],
-            reverse('dashboard_organization_workspace', args=[school.id]),
+            reverse('organization_vanity_dashboard', args=[school.workspace_slug]),
         )
 
     def test_kpis_use_approved_platform_semantics(self):
@@ -1689,7 +1747,7 @@ class OrganizationModuleTests(TestCase):
             reverse('react_dashboard_schools_api'),
             data=json.dumps({
                 'name': 'Vedanga International School', 'organizationType': 'education',
-                'organizationCode': 'v i-s!', 'adminUsername': 'vedanga.admin', 'adminPassword': 'AdminPass123!',
+                'organizationCode': 'v i-s!', 'workspaceSlug': 'vedanga-international-school', 'adminUsername': 'vedanga.admin', 'adminPassword': 'AdminPass123!',
             }),
             content_type='application/json',
         )

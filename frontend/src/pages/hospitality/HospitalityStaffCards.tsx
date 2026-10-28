@@ -17,6 +17,7 @@ import UserRound from 'lucide-react/dist/esm/icons/user-round.js'
 import X from 'lucide-react/dist/esm/icons/x.js'
 import { Field, SelectInput, TextArea, TextInput } from '../../components/manage/FormControls'
 import { apiFetch, displayError, jsonBody } from '../../lib/api'
+import { organizationWorkspaceHref } from '../../lib/organizationRoute'
 import './HospitalityStaffCards.css'
 
 type StaffLink = { id?: number; link_type: string; label: string; value: string; display_order?: number; is_active?: boolean }
@@ -41,7 +42,7 @@ function StaffPreview({ staff, organizationName, organizationId, logo }: { staff
         <div className="hospitality-staff-contact-preview">{staff.links.filter((link) => link.is_active !== false).map((link) => <span key={`${link.link_type}-${link.value}`}><LinkIcon size={13} />{link.label}</span>)}</div>
       </div>
     </div>
-    <p className="hospitality-access-note"><Settings size={16} /> Dashboard access is managed in <a href={`/dashboard/organizations/${organizationId}/settings/`}>Settings → Staff & Access</a>.</p>
+    <p className="hospitality-access-note"><Settings size={16} /> Dashboard access is managed in <a href={organizationWorkspaceHref(organizationId, 'settings')}>Settings → Staff & Access</a>.</p>
   </aside>
 }
 

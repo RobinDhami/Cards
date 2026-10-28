@@ -41,6 +41,7 @@ import {
 import { ManageShell } from "../../components/manage/ManageShell";
 import { DashboardHeaderTools } from "../../components/manage/DashboardHeaderTools";
 import { apiFetch, displayError, jsonBody, queryString } from "../../lib/api";
+import { currentOrganizationId, organizationWorkspaceHref, vanityDashboardMatch } from "../../lib/organizationRoute";
 import { schoolWorkspaceNav } from "../school/schoolWorkspaceNav";
 import { HospitalityOverview } from "./HospitalityOverview";
 import type { HospitalityOverviewData } from "./HospitalityOverview";
@@ -260,13 +261,11 @@ type HospitalityShell = {
 type HospitalityAdminSection = "overview" | "profile" | "menu" | "feedback" | "staff" | "loyalty" | "members" | "analytics";
 
 function organizationId() {
-  return Number(
-    window.location.pathname.match(/organizations\/(\d+)/)?.[1] || 0,
-  );
+  return currentOrganizationId();
 }
 
 function hospitalityAdminSection(): HospitalityAdminSection {
-  const section = new URLSearchParams(window.location.search).get("tab");
+  const section = vanityDashboardMatch()?.[2] || new URLSearchParams(window.location.search).get("tab");
   return section === "profile" || section === "menu" || section === "feedback" || section === "staff" || section === "loyalty" || section === "members" || section === "analytics"
     ? section
     : "overview";
@@ -322,7 +321,7 @@ function VenueShell({
       selectedSchool={school?.id ?? null}
       workspaceSelectorLabel="Organization workspace"
       onSchoolChange={(schoolId) => {
-        window.location.href = `/dashboard/organizations/${schoolId}/hospitality/?tab=overview`;
+        window.location.href = organizationWorkspaceHref(schoolId);
       }}
       actions={
         <>
@@ -1188,7 +1187,7 @@ function HospitalityAdminPanel() {
     };
     if (!shell.capabilities.includes(capabilityFor[activeTab])) {
       const firstAvailable = ["overview", "profile", "menu"].find((item) => shell.capabilities.includes(item)) || "overview";
-      window.location.replace(`/dashboard/organizations/${id}/hospitality/?tab=${firstAvailable}`);
+      window.location.replace(organizationWorkspaceHref(id, firstAvailable));
     }
   }, [activeTab, id, shell]);
 
@@ -1466,7 +1465,7 @@ function HospitalityAdminPanel() {
                     <div><dt>Address</dt><dd>{organizationContact.address || "Not added"}</dd></div>
                     <div><dt>Directions</dt><dd>{organizationContact.mapUrl ? <a href={organizationContact.mapUrl} target="_blank" rel="noreferrer">Open map <ExternalLink size={12} /></a> : "Add a map link in Settings"}</dd></div>
                   </dl>
-                  <a href={`/dashboard/organizations/${id}/settings/`}>Edit shared details in Settings</a>
+                  <a href={organizationWorkspaceHref(id, "settings")}>Edit shared details in Settings</a>
                 </div>
                 <label className="hospitality-check-row">
                   <input

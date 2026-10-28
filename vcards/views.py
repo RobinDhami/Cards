@@ -294,11 +294,7 @@ def _workspace_contexts(user):
         role = organization_role(user, organization)
         if not role:
             continue
-        destination = reverse('dashboard_organization_workspace', args=[organization.id])
-        if organization.organization_type == 'hospitality':
-            destination = f"{reverse('dashboard_hospitality_workspace', args=[organization.id])}?tab=overview"
-        elif organization.organization_type == 'club':
-            destination = reverse('dashboard_club_workspace', args=[organization.id])
+        destination = reverse('organization_vanity_dashboard', args=[organization.workspace_slug])
         contexts.append({
             'key': f'organization:{organization.id}',
             'role': role,

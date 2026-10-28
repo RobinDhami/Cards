@@ -3,6 +3,7 @@ import Headphones from 'lucide-react/dist/esm/icons/headphones.js'
 import Plus from 'lucide-react/dist/esm/icons/plus.js'
 import Ticket from 'lucide-react/dist/esm/icons/ticket.js'
 import type { ShellNavItem } from './ManageShell'
+import { organizationWorkspaceHref } from '../../lib/organizationRoute'
 import './DashboardHeaderTools.css'
 
 export function DashboardHeaderTools({
@@ -17,7 +18,7 @@ export function DashboardHeaderTools({
   canRaiseSupport?: boolean
 }) {
   const [supportOpen, setSupportOpen] = useState(false)
-  const supportHref = organizationId ? `/dashboard/organizations/${organizationId}/support/` : ''
+  const supportHref = organizationId ? organizationWorkspaceHref(organizationId, 'support') : ''
 
   return (
     <div className="dashboard-header-tools">

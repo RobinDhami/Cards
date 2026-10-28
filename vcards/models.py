@@ -9,6 +9,9 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.text import slugify
+
+from .organization_slugs import RESERVED_ORGANIZATION_SLUGS
 
 
 class PlatformAccess(User):
@@ -143,7 +146,10 @@ class Skill(models.Model):
 # College
 class College(models.Model):
     class Meta:
-        constraints = [models.UniqueConstraint(Lower('organization_code'), name='college_code_ci_unique')]
+        constraints = [
+            models.UniqueConstraint(Lower('organization_code'), name='college_code_ci_unique'),
+            models.UniqueConstraint(Lower('workspace_slug'), name='college_workspace_slug_ci_unique'),
+        ]
 
     ORGANIZATION_TYPE_CHOICES = [
         ('education', 'Education'),
@@ -157,6 +163,7 @@ class College(models.Model):
     # Blank preserves the legacy generic workspace behaviour for existing records.
     organization_type = models.CharField(max_length=20, choices=ORGANIZATION_TYPE_CHOICES, blank=True, default='')
     organization_code = models.CharField(max_length=12, unique=True, blank=True, null=True, default=None)
+    workspace_slug = models.SlugField(max_length=80, unique=True)
     member_username_sequence = models.PositiveBigIntegerField(default=0, editable=False)
     admin_user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='managed_schools', blank=True, null=True)
     slogan = models.CharField(max_length=255, blank=True, null=True)
@@ -195,6 +202,14 @@ class College(models.Model):
 
     def save(self, *args, **kwargs):
         self.organization_code = re.sub(r'[^A-Z0-9]', '', self.organization_code.upper()) or None if self.organization_code else None
+        if not self.workspace_slug:
+            base = slugify(self.name)[:70] or 'organization'
+            candidate = base
+            suffix = 2
+            while candidate in RESERVED_ORGANIZATION_SLUGS or College.objects.exclude(pk=self.pk).filter(workspace_slug__iexact=candidate).exists():
+                candidate = f'{base[:70 - len(str(suffix))]}-{suffix}'
+                suffix += 1
+            self.workspace_slug = candidate
         # The allocator owns this field. A stale settings form must never
         # overwrite the database's high-water mark with its earlier value.
         if self.pk:

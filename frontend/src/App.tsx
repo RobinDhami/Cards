@@ -30,6 +30,7 @@ const ClubProfileDesignPage = lazy(() => import('./pages/school/ClubWorkspace').
 const ClubInformationPage = lazy(() => import('./pages/school/ClubWorkspace').then((module) => ({ default: module.ClubInformationPage })))
 const ClubMemberProfilePage = lazy(() => import('./pages/school/ClubWorkspace').then((module) => ({ default: module.ClubMemberProfilePage })))
 const HospitalityWorkspace = lazy(() => import('./pages/hospitality/HospitalityWorkspace').then((module) => ({ default: module.HospitalityWorkspace })))
+const HospitalitySettingsPage = lazy(() => import('./pages/hospitality/HospitalitySettings').then((module) => ({ default: module.HospitalitySettingsPage })))
 const PublicHospitalityProfile = lazy(() => import('./pages/hospitality/HospitalityWorkspace').then((module) => ({ default: module.PublicHospitalityProfile })))
 const PublicHospitalityStaffProfile = lazy(() => import('./pages/hospitality/HospitalityStaffCards').then((module) => ({ default: module.PublicHospitalityStaffProfile })))
 const PublicVenueCard = lazy(() => import('./pages/hospitality/HospitalityStaffCards').then((module) => ({ default: module.PublicVenueCard })))
@@ -76,10 +77,28 @@ const oldProjectRoutesNeedingMigration = [
 
 function AppRoutes() {
   const path = window.location.pathname
+  const vanityMatch = path.match(/^\/([a-z0-9-]+)\/dashboard(?:\/(.*?))?\/?$/i)
 
   if (path === '/dashboard/schools/' || path === '/dashboard/schools') {
     window.location.replace(`/dashboard/organizations/${window.location.search}`)
     return <BrandLoader label="Opening organizations…" />
+  }
+
+  if (vanityMatch) {
+    const organization = window.__TAP2CONNECT_ORGANIZATION__
+    const vanityParts = (vanityMatch[2] || '').split('/').filter(Boolean)
+    const section = vanityParts[0] || 'overview'
+    if (organization?.type === 'hospitality') {
+      if (section === 'support') return <OrganizationSupportTickets />
+      return section === 'settings' ? <HospitalitySettingsPage /> : <HospitalityWorkspace />
+    }
+    if (organization?.type === 'club') {
+      if (section === 'members') return vanityParts[1] ? <ClubMemberProfilePage /> : <ClubMembersPage />
+      if (section === 'profile-design') return <ClubProfileDesignPage />
+      if (section === 'club-information' || section === 'settings') return <ClubInformationPage />
+      return <ClubOverviewPage />
+    }
+    return <SchoolDashboardRouter />
   }
 
   if (path === '/' || path === '') {

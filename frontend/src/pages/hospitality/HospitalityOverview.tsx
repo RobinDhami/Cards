@@ -14,6 +14,7 @@ import QrCode from 'lucide-react/dist/esm/icons/qr-code.js'
 import Store from 'lucide-react/dist/esm/icons/store.js'
 import Utensils from 'lucide-react/dist/esm/icons/utensils.js'
 import X from 'lucide-react/dist/esm/icons/x.js'
+import { organizationWorkspaceHref } from '../../lib/organizationRoute'
 import './HospitalityOverview.css'
 
 type Feedback = { id: number; rating: number; comment: string; status: string; created_at: string }
@@ -175,10 +176,10 @@ export function HospitalityOverview({ organizationId, publicIdentifier, organiza
   const readyForCustomers = Boolean(data?.readiness.profileReady && data.readiness.menuItemCount > 0 && data.readiness.feedbackEnabled && qrDownloaded)
   const incompleteSteps = checklist.filter((step) => !step.complete)
   const stepActions: Record<string, { label: string; href?: string; onClick?: () => void }> = {
-    profile: { label: 'Complete profile', href: `/dashboard/organizations/${organizationId}/hospitality/?tab=profile` },
-    menu: { label: 'Add menu item', href: `/dashboard/organizations/${organizationId}/hospitality/?tab=menu&action=add-item` },
+    profile: { label: 'Complete profile', href: organizationWorkspaceHref(organizationId, 'profile') },
+    menu: { label: 'Add menu item', href: organizationWorkspaceHref(organizationId, 'menu', 'action=add-item') },
     qr: { label: 'Download QR', onClick: () => setShareOpen(true) },
-    feedback: { label: 'Enable feedback', href: `/dashboard/organizations/${organizationId}/hospitality/?tab=profile` },
+    feedback: { label: 'Enable feedback', href: organizationWorkspaceHref(organizationId, 'profile') },
   }
 
   return (
@@ -198,7 +199,7 @@ export function HospitalityOverview({ organizationId, publicIdentifier, organiza
           <div><h2>{readyForCustomers ? `${organizationName} is ready` : `Set up ${organizationName}`}</h2></div>
           <div className="hospitality-readiness-progress"><span>Pilot setup <strong>{doneCount} of {checklist.length} complete</strong></span><i><b style={{ width: `${progress}%` }} /></i></div>
           <div className="hospitality-readiness-actions">
-            {!readyForCustomers && !data.readiness.profileReady ? <a className="manage-button" href={`/dashboard/organizations/${organizationId}/hospitality/?tab=profile`}><Check size={15} />Complete profile</a> : null}
+            {!readyForCustomers && !data.readiness.profileReady ? <a className="manage-button" href={organizationWorkspaceHref(organizationId, 'profile')}><Check size={15} />Complete profile</a> : null}
             <button type="button" className="manage-button is-primary" onClick={() => setShareOpen(true)}><QrCode size={15} />Share QR code</button>
           </div>
         </section>
@@ -216,7 +217,7 @@ export function HospitalityOverview({ organizationId, publicIdentifier, organiza
         <div className="hospitality-overview-grid">
           <VisitorsChart values={data.dailyVisits} />
           <section className="hospitality-overview-panel hospitality-recent-feedback">
-            <header><div><h2>Recent feedback</h2></div><a href={`/dashboard/organizations/${organizationId}/hospitality/?tab=feedback`}>View all</a></header>
+            <header><div><h2>Recent feedback</h2></div><a href={organizationWorkspaceHref(organizationId, 'feedback')}>View all</a></header>
             {data.recentFeedback.length ? <div className="hospitality-feedback-list">{data.recentFeedback.map((entry) => <article key={entry.id}>
               <div className="hospitality-feedback-rating" aria-label={`${entry.rating} out of 5 stars`}>{'★'.repeat(entry.rating)}<span>{'★'.repeat(5 - entry.rating)}</span></div>
               <div className="hospitality-feedback-copy"><strong>Anonymous customer <time dateTime={entry.created_at}>{relativeDate(entry.created_at)}</time></strong><p>{entry.comment || 'Rating only; no comment provided.'}</p></div>
@@ -226,9 +227,9 @@ export function HospitalityOverview({ organizationId, publicIdentifier, organiza
           <section className="hospitality-overview-panel hospitality-quick-panel">
             <header><div><h2>Quick actions</h2></div></header>
             <div className="hospitality-quick-list">
-              <QuickAction href={`/dashboard/organizations/${organizationId}/hospitality/?tab=menu&action=add-item`} icon={Plus} title="Add menu item" />
-              <QuickAction href={`/dashboard/organizations/${organizationId}/hospitality/?tab=profile`} icon={Store} title="Edit profile" />
-              <QuickAction href={`/dashboard/organizations/${organizationId}/hospitality/?tab=staff`} icon={QrCode} title="QR & NFC touchpoints" />
+              <QuickAction href={organizationWorkspaceHref(organizationId, 'menu', 'action=add-item')} icon={Plus} title="Add menu item" />
+              <QuickAction href={organizationWorkspaceHref(organizationId, 'profile')} icon={Store} title="Edit profile" />
+              <QuickAction href={organizationWorkspaceHref(organizationId, 'staff')} icon={QrCode} title="QR & NFC touchpoints" />
               <QuickAction icon={QrCode} title="Share or download QR" onClick={() => setShareOpen(true)} />
             </div>
           </section>

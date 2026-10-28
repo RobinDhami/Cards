@@ -30,6 +30,7 @@ import { ManageShell } from '../../components/manage/ManageShell'
 import { DashboardHeaderTools } from '../../components/manage/DashboardHeaderTools'
 import { platformNavigation } from '../../components/manage/platformNavigation'
 import { apiFetch, backendHref, displayError, jsonBody, queryString } from '../../lib/api'
+import { currentOrganizationId } from '../../lib/organizationRoute'
 import { schoolWorkspaceNav, withSchool } from './schoolWorkspaceNav'
 import { dashboardMetrics, moduleConfig } from './organizationModuleConfig'
 import { HospitalitySettingsPage } from '../hospitality/HospitalitySettings'
@@ -40,6 +41,7 @@ type Choice = { value: string; label: string }
 type SchoolSummary = {
   id: number
   name: string
+  workspaceSlug: string
   organizationCode: string
   organizationType: string
   module: { key: string; memberTypes: Choice[]; bulkColumns: string[] }
@@ -132,7 +134,7 @@ type ReportPayload = {
 function selectedSchoolId() {
   const organizationMatch = window.location.pathname.match(/^\/dashboard\/organizations\/(\d+)/)
   if (organizationMatch) return Number(organizationMatch[1])
-  return Number(new URLSearchParams(window.location.search).get('school') ?? 0)
+  return currentOrganizationId() || Number(new URLSearchParams(window.location.search).get('school') ?? 0)
 }
 
 function organizationWorkspaceHref(schoolId: number) {
@@ -216,7 +218,7 @@ const hospitalityModuleChoices: Array<{ key: string; label: string; locked: bool
 ]
 
 const newOrganizationDraft = () => ({
-  name: '', organizationCode: '', organizationType: 'other', address: '', website: '', mapUrl: '', phone: '', email: '', adminUsername: '', adminPassword: '',
+  name: '', workspaceSlug: '', organizationCode: '', organizationType: 'other', address: '', website: '', mapUrl: '', phone: '', email: '', adminUsername: '', adminPassword: '',
   technicalOwnerId: '',
   modules: ['overview', 'profile', 'menu', 'feedback'],
 })
@@ -248,6 +250,7 @@ export function SchoolsPage() {
   const [error, setError] = useState('')
   const [createOpen, setCreateOpen] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [slugMessage, setSlugMessage] = useState('')
   const [newSchool, setNewSchool] = useState(newOrganizationDraft)
 
   const load = () => apiFetch<{ shell: DashboardShellData; schools: SchoolSummary[]; organizationTypeCounts: Record<string, number>; supportStaff: Array<{ id: number; name: string; email: string }> }>('/api/dashboard/schools/')
@@ -280,6 +283,17 @@ export function SchoolsPage() {
       setError(displayError(reason))
     } finally {
       setCreating(false)
+    }
+  }
+
+  async function checkWorkspaceSlug() {
+    if (!newSchool.workspaceSlug) return
+    try {
+      const result = await apiFetch<{ available: boolean; message: string; slug: string }>(`/api/dashboard/organization-slug-availability/${queryString({ slug: newSchool.workspaceSlug })}`)
+      setNewSchool((current) => ({ ...current, workspaceSlug: result.slug }))
+      setSlugMessage(result.message)
+    } catch (reason) {
+      setSlugMessage(displayError(reason))
     }
   }
 
@@ -320,7 +334,8 @@ export function SchoolsPage() {
         <form className="school-create-panel manage-card" onSubmit={createSchool}>
           <div><h2>Create organization workspace</h2><p>Set the organization and its first administrator account.</p></div>
           <div className="form-grid is-three">
-            <Field label="Organization name"><TextInput value={newSchool.name} onChange={(event) => setNewSchool((current) => ({ ...current, name: event.target.value }))} required /></Field>
+            <Field label="Organization name"><TextInput value={newSchool.name} onChange={(event) => setNewSchool((current) => ({ ...current, name: event.target.value, workspaceSlug: event.target.value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') }))} required /></Field>
+            <Field label="Workspace slug" hint={slugMessage || `Private dashboard: /${newSchool.workspaceSlug || 'your-slug'}/dashboard/`}><TextInput value={newSchool.workspaceSlug} onChange={(event) => { setSlugMessage(''); setNewSchool((current) => ({ ...current, workspaceSlug: event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })) }} onBlur={checkWorkspaceSlug} minLength={3} maxLength={80} required /></Field>
             <Field label="Organization code" hint="Unique uppercase code, e.g. VIS"><TextInput value={newSchool.organizationCode} onChange={(event) => setNewSchool((current) => ({ ...current, organizationCode: event.target.value.toUpperCase() }))} maxLength={12} required /></Field>
             <Field label="Organization type"><SelectInput value={newSchool.organizationType} onChange={(event) => setNewSchool((current) => ({ ...current, organizationType: event.target.value }))}><option value="education">Education</option><option value="club">Club</option><option value="business">Business</option><option value="hospitality">Hospitality</option><option value="other">Other</option></SelectInput></Field>
             <Field label="Address"><TextInput value={newSchool.address} onChange={(event) => setNewSchool((current) => ({ ...current, address: event.target.value }))} /></Field>
@@ -713,6 +728,7 @@ export function SchoolSettingsPage() {
         setSchool(payload.school)
         setValues({
           name: payload.school.name,
+          workspaceSlug: payload.school.workspaceSlug,
           organizationCode: payload.school.organizationCode,
           organizationType: payload.school.organizationType === 'generic' ? 'other' : payload.school.organizationType,
           slogan: payload.school.slogan,
@@ -776,7 +792,7 @@ export function SchoolSettingsPage() {
       event.preventDefault()
       setSaving(true); setError(''); setSuccess('')
       const body = new FormData()
-      ;['organizationCode', 'organizationType', 'adminUsername', 'adminPassword'].forEach((key) => body.append(key, values[key] ?? ''))
+      ;['workspaceSlug', 'organizationCode', 'organizationType', 'adminUsername', 'adminPassword'].forEach((key) => body.append(key, values[key] ?? ''))
       try {
         await apiFetch(`/api/dashboard/settings/${queryString({ school: school.id })}`, { method: 'POST', body })
         const subscription = await apiFetch<{ subscription: { modules: Array<{ key: string; enabled: boolean }>; technicalOwner: { id: number } | null } }>(`/api/organizations/${school.id}/venue/settings/`, {
@@ -800,6 +816,7 @@ export function SchoolSettingsPage() {
           {success ? <div className="manage-alert is-success school-message">{success}</div> : null}
           <FormSection title="Workspace">
             <div className="form-grid">
+              <Field label="Workspace slug" hint={`Private dashboard: /${values.workspaceSlug || school.workspaceSlug}/dashboard/`}><TextInput value={values.workspaceSlug ?? ''} onChange={(event) => update('workspaceSlug', event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} minLength={3} maxLength={80} required /></Field>
               <Field label="Organization code" hint="Used for organization administration and member identifiers."><TextInput value={values.organizationCode ?? ''} onChange={(event) => update('organizationCode', event.target.value.toUpperCase())} maxLength={12} /></Field>
               {shell.isSuperAdmin ? <Field label="Organization type"><SelectInput value={values.organizationType ?? 'hospitality'} onChange={(event) => update('organizationType', event.target.value)}><option value="hospitality">Hospitality</option><option value="business">Business</option><option value="other">Other</option></SelectInput></Field> : null}
             </div>
@@ -824,6 +841,7 @@ export function SchoolSettingsPage() {
         <FormSection title="Organization identity">
           <div className="form-grid">
             <Field label="Organization name"><TextInput value={values.name ?? ''} onChange={(event) => update('name', event.target.value)} required /></Field>
+            {shell.isSuperAdmin ? <Field label="Workspace slug" hint={`Private dashboard: /${values.workspaceSlug || school.workspaceSlug}/dashboard/`}><TextInput value={values.workspaceSlug ?? ''} onChange={(event) => update('workspaceSlug', event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} minLength={3} maxLength={80} required /></Field> : null}
             <Field label="Organization code" hint="Unique uppercase code; changing it does not rewrite member usernames."><TextInput value={values.organizationCode ?? ''} onChange={(event) => update('organizationCode', event.target.value.toUpperCase())} maxLength={12} /></Field>
             <Field label="Organization type"><SelectInput value={values.organizationType ?? 'other'} onChange={(event) => update('organizationType', event.target.value)}><option value="education">Education</option><option value="club">Club</option><option value="business">Business</option><option value="hospitality">Hospitality</option><option value="other">Other</option></SelectInput></Field>
             <Field label="Slogan"><TextInput value={values.slogan ?? ''} onChange={(event) => update('slogan', event.target.value)} /></Field>
@@ -1091,6 +1109,16 @@ export function PrintControlsPage({ mode }: { mode: 'print' | 'qr' }) {
 
 export function SchoolDashboardRouter() {
   const path = window.location.pathname
+  const vanitySection = path.match(/^\/[a-z0-9-]+\/dashboard(?:\/([^/]+))?\/?$/i)?.[1]
+  if (window.__TAP2CONNECT_ORGANIZATION__) {
+    if (!vanitySection || vanitySection === 'overview') return <OrganizationWorkspaceOverview />
+    if (vanitySection === 'members') return <MembersPage memberType="all" />
+    if (vanitySection === 'bulk-upload') return <BulkUploadPage />
+    if (vanitySection === 'print') return <PrintControlsPage mode="print" />
+    if (vanitySection === 'exports') return <PrintControlsPage mode="qr" />
+    if (vanitySection === 'reports') return <SchoolReportsPage />
+    if (vanitySection === 'settings') return <SchoolSettingsPage />
+  }
   if (/^\/dashboard\/organizations\/\d+\/?$/.test(path)) return <OrganizationWorkspaceOverview />
   if (/^\/dashboard\/organizations\/\d+\/members\/?$/.test(path)) return <MembersPage memberType="all" />
   if (/^\/dashboard\/organizations\/\d+\/members\/\d+\/credentials\/?$/.test(path)) return <StudentCredentialsPage />

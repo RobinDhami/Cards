@@ -9,6 +9,7 @@ import X from 'lucide-react/dist/esm/icons/x.js'
 import { DashboardHeaderTools } from '../../components/manage/DashboardHeaderTools'
 import { ManageShell } from '../../components/manage/ManageShell'
 import { apiFetch, displayError, jsonBody } from '../../lib/api'
+import { currentOrganizationId, organizationWorkspaceHref } from '../../lib/organizationRoute'
 import { schoolWorkspaceNav } from '../school/schoolWorkspaceNav'
 import { HospitalityActivityNotifications } from '../hospitality/HospitalityActivityNotifications'
 import '../hospitality/HospitalityWorkspace.css'
@@ -27,7 +28,7 @@ const emptyForm = { subject: '', message: '', category: 'technical', priority: '
 const statusLabel = { open: 'Open', in_progress: 'In progress', resolved: 'Resolved' }
 
 function organizationId() {
-  return Number(window.location.pathname.match(/organizations\/(\d+)/)?.[1] || 0)
+  return currentOrganizationId()
 }
 
 export function OrganizationSupportTickets() {
@@ -52,7 +53,7 @@ export function OrganizationSupportTickets() {
       setData((current) => current ? { ...current, tickets: [response.ticket, ...current.tickets] } : current)
       setForm(emptyForm)
       setShowForm(false)
-      window.history.replaceState({}, '', `/dashboard/organizations/${id}/support/`)
+      window.history.replaceState({}, '', organizationWorkspaceHref(id, 'support'))
     } catch (reason) { setError(displayError(reason)) }
     finally { setSaving(false) }
   }

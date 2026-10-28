@@ -52,6 +52,7 @@ from vcards.club_serializers import (
     ClubProfileSettingsSerializer, ClubSocialLinkSerializer,
 )
 from vcards.organization_modules import IMPORT_COLUMN_LABELS, identifier_label, normalize_import_column, organization_module
+from vcards.organization_slugs import normalize_organization_slug, validate_organization_slug
 from vcards.organization_access import MODULE_KEYS, ROLE_CAPABILITIES, accessible_organizations, ensure_organization_modules, organization_role
 from vcards.usernames import create_organization_member, validate_member_username
 from vcards.platform_access import (
@@ -2276,6 +2277,7 @@ def _school_payload(school, with_stats=False):
     payload = {
         'id': school.id,
         'name': school.name,
+        'workspaceSlug': school.workspace_slug,
         'organizationCode': school.organization_code or '',
         'organizationType': school.organization_type or 'generic',
         'module': {
@@ -2372,13 +2374,19 @@ def dashboard_schools_api(request):
     payload = _json_body(request)
     source = payload.get('fields', payload) if isinstance(payload, dict) else payload
     name = str(source.get('name') or '').strip()
+    workspace_slug, slug_error = validate_organization_slug(
+        source.get('workspaceSlug') or source.get('workspace_slug'),
+        queryset=College.objects.all(),
+    )
     username = str(source.get('adminUsername') or source.get('admin_username') or '').strip()
     password = str(source.get('adminPassword') or source.get('admin_password') or '').strip()
-    if not name or not username or not password:
-        return _json_error('Organization name, admin username, and password are required.')
+    if not name or not username or not password or not workspace_slug:
+        return _json_error('Organization name, workspace slug, admin username, and password are required.')
+    if slug_error:
+        return _json_error(slug_error, errors={'workspaceSlug': [slug_error]})
     try:
         with transaction.atomic():
-            school = College(name=name)
+            school = College(name=name, workspace_slug=workspace_slug)
             _apply_school_fields(request, school, source)
             if not school.organization_code:
                 return _json_error('Organization code is required.')
@@ -2441,6 +2449,15 @@ def _apply_school_fields(request, school, source, public_profile_fields_allowed=
     for key, field in mapping.items():
         if key in source:
             setattr(school, field, source.get(key) or '')
+    if request.user.is_superuser and ('workspaceSlug' in source or 'workspace_slug' in source):
+        workspace_slug, slug_error = validate_organization_slug(
+            source.get('workspaceSlug', source.get('workspace_slug')),
+            queryset=College.objects.all(),
+            exclude_pk=school.pk,
+        )
+        if slug_error:
+            raise ValidationError({'workspaceSlug': slug_error})
+        school.workspace_slug = workspace_slug
     if public_profile_fields_allowed and request.FILES.get('logo'):
         school.logo = request.FILES['logo']
     if public_profile_fields_allowed and request.FILES.get('cover_photo'):
@@ -2451,6 +2468,24 @@ def _apply_school_fields(request, school, source, public_profile_fields_allowed=
         chartered_on = source.get('charteredOn', source.get('chartered_on'))
         school.chartered_on = parse_date(str(chartered_on)) if chartered_on else None
     school.full_clean(exclude=['admin_user'])
+
+
+@require_http_methods(['GET'])
+def organization_slug_availability_api(request):
+    permission_error = _require_platform_module(request, 'organizations')
+    if permission_error:
+        return permission_error
+    slug, error = validate_organization_slug(
+        request.GET.get('slug'),
+        queryset=College.objects.all(),
+        exclude_pk=_int(request.GET.get('exclude')),
+    )
+    return JsonResponse({
+        'ok': True,
+        'slug': slug,
+        'available': not error,
+        'message': error or 'This organization address is available.',
+    })
 
 
 def _ensure_hospitality_profile(school):

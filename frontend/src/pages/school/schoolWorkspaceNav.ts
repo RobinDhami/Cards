@@ -16,6 +16,7 @@ import Gift from 'lucide-react/dist/esm/icons/gift.js'
 import { queryString } from '../../lib/api'
 import { platformNavigation } from '../../components/manage/platformNavigation'
 import { workspaceMemberNavigation } from './organizationModuleConfig'
+import { organizationRouteContext, organizationWorkspaceHref } from '../../lib/organizationRoute'
 
 export function withSchool(path: string, schoolId?: number | null) {
   return `${path}${schoolId ? queryString({ school: schoolId }) : ''}`
@@ -24,22 +25,23 @@ export function withSchool(path: string, schoolId?: number | null) {
 export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = false, organizationType = '', capabilities?: string[]) {
   const path = window.location.pathname
   const search = window.location.search
+  const vanity = organizationRouteContext()
 
-  if (schoolId && path.startsWith('/dashboard/organizations/')) {
+  if (schoolId && (path.startsWith('/dashboard/organizations/') || vanity?.id === schoolId)) {
     const workspaceRoot = `/dashboard/organizations/${schoolId}`
     if (organizationType === 'hospitality') {
       const hospitalityRoot = `${workspaceRoot}/hospitality`
-      const section = new URLSearchParams(search).get('tab') || 'overview'
+      const section = path.match(/^\/[a-z0-9-]+\/dashboard(?:\/([^/]+))?\/?$/i)?.[1] || new URLSearchParams(search).get('tab') || 'overview'
       const items = [
-        { label: 'Overview', href: `${hospitalityRoot}/?tab=overview`, icon: LayoutDashboard, active: path.startsWith(hospitalityRoot) && section === 'overview' },
-        { label: 'Profile', href: `${hospitalityRoot}/?tab=profile`, icon: Store, active: path.startsWith(hospitalityRoot) && section === 'profile' },
-        { label: 'Menu', href: `${hospitalityRoot}/?tab=menu`, icon: Utensils, active: path.startsWith(hospitalityRoot) && section === 'menu' },
-        { label: 'Feedback', href: `${hospitalityRoot}/?tab=feedback`, icon: MessageSquare, active: path.startsWith(hospitalityRoot) && section === 'feedback' },
-        { label: 'Staff & Cards', href: `${hospitalityRoot}/?tab=staff`, icon: Users, active: path.startsWith(hospitalityRoot) && section === 'staff' },
-        { label: 'Rewards', href: `${hospitalityRoot}/?tab=loyalty`, icon: Gift, active: path.startsWith(hospitalityRoot) && section === 'loyalty' },
-        { label: 'Members', href: `${hospitalityRoot}/?tab=members`, icon: Users, active: path.startsWith(hospitalityRoot) && section === 'members' },
-        { label: 'Analytics', href: `${hospitalityRoot}/?tab=analytics`, icon: BarChart3, active: path.startsWith(hospitalityRoot) && section === 'analytics' },
-        { label: 'Settings', href: `${workspaceRoot}/settings/`, icon: Settings, active: path.includes('/settings') },
+        { label: 'Overview', href: vanity ? organizationWorkspaceHref(schoolId) : `${hospitalityRoot}/?tab=overview`, icon: LayoutDashboard, active: section === 'overview' },
+        { label: 'Profile', href: vanity ? organizationWorkspaceHref(schoolId, 'profile') : `${hospitalityRoot}/?tab=profile`, icon: Store, active: section === 'profile' },
+        { label: 'Menu', href: vanity ? organizationWorkspaceHref(schoolId, 'menu') : `${hospitalityRoot}/?tab=menu`, icon: Utensils, active: section === 'menu' },
+        { label: 'Feedback', href: vanity ? organizationWorkspaceHref(schoolId, 'feedback') : `${hospitalityRoot}/?tab=feedback`, icon: MessageSquare, active: section === 'feedback' },
+        { label: 'Staff & Cards', href: vanity ? organizationWorkspaceHref(schoolId, 'staff') : `${hospitalityRoot}/?tab=staff`, icon: Users, active: section === 'staff' },
+        { label: 'Rewards', href: vanity ? organizationWorkspaceHref(schoolId, 'loyalty') : `${hospitalityRoot}/?tab=loyalty`, icon: Gift, active: section === 'loyalty' },
+        { label: 'Members', href: vanity ? organizationWorkspaceHref(schoolId, 'members') : `${hospitalityRoot}/?tab=members`, icon: Users, active: section === 'members' },
+        { label: 'Analytics', href: vanity ? organizationWorkspaceHref(schoolId, 'analytics') : `${hospitalityRoot}/?tab=analytics`, icon: BarChart3, active: section === 'analytics' },
+        { label: 'Settings', href: vanity ? organizationWorkspaceHref(schoolId, 'settings') : `${workspaceRoot}/settings/`, icon: Settings, active: section === 'settings' || path.includes('/settings') },
       ]
       const capabilityFor: Record<string, string> = {
         Overview: 'overview', Profile: 'profile', Menu: 'menu', Feedback: 'feedback',
@@ -50,25 +52,25 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
     if (organizationType === 'club') {
       const clubRoot = `${workspaceRoot}/club`
       return [
-        { label: 'Overview', href: `${clubRoot}/`, icon: LayoutDashboard, active: path === clubRoot || path === `${clubRoot}/` },
-        { label: 'Members', href: `${clubRoot}/members/`, icon: Users, active: path.includes('/club/members/') },
-        { label: 'Profile Design', href: `${clubRoot}/profile-design/`, icon: Palette, active: path.includes('/club/profile-design/') },
-        { label: 'Club Information', href: `${clubRoot}/club-information/`, icon: Info, active: path.includes('/club/club-information/') },
-        { label: 'Analytics', href: `${workspaceRoot}/reports/`, icon: BarChart3, active: path.includes('/reports') },
-        { label: 'Settings', href: `${clubRoot}/settings/`, icon: Settings, active: path.includes('/club/settings/') },
+        { label: 'Overview', href: vanity ? organizationWorkspaceHref(schoolId) : `${clubRoot}/`, icon: LayoutDashboard, active: !path.match(/dashboard\/.+/) || path === clubRoot || path === `${clubRoot}/` },
+        { label: 'Members', href: vanity ? organizationWorkspaceHref(schoolId, 'members') : `${clubRoot}/members/`, icon: Users, active: path.includes('/members/') },
+        { label: 'Profile Design', href: vanity ? organizationWorkspaceHref(schoolId, 'profile-design') : `${clubRoot}/profile-design/`, icon: Palette, active: path.includes('/profile-design/') },
+        { label: 'Club Information', href: vanity ? organizationWorkspaceHref(schoolId, 'club-information') : `${clubRoot}/club-information/`, icon: Info, active: path.includes('/club-information/') },
+        { label: 'Analytics', href: vanity ? organizationWorkspaceHref(schoolId, 'reports') : `${workspaceRoot}/reports/`, icon: BarChart3, active: path.includes('/reports') },
+        { label: 'Settings', href: vanity ? organizationWorkspaceHref(schoolId, 'settings') : `${clubRoot}/settings/`, icon: Settings, active: path.includes('/settings/') },
       ]
     }
     return [
-      { label: 'Overview', href: `${workspaceRoot}/`, icon: LayoutDashboard, active: path === workspaceRoot || path === `${workspaceRoot}/` },
+      { label: 'Overview', href: vanity ? organizationWorkspaceHref(schoolId) : `${workspaceRoot}/`, icon: LayoutDashboard, active: path === workspaceRoot || path === `${workspaceRoot}/` || Boolean(vanity && !path.match(/dashboard\/.+/)) },
       ...workspaceMemberNavigation(organizationType).map((item) => ({
-        label: item.label, href: `${workspaceRoot}/members/${item.query}`, icon: LayoutList,
+        label: item.label, href: vanity ? organizationWorkspaceHref(schoolId, 'members', item.query) : `${workspaceRoot}/members/${item.query}`, icon: LayoutList,
         active: path.includes('/members') && (item.query ? search === item.query : !search),
       })),
-      { label: 'Bulk Upload', href: `${workspaceRoot}/bulk-upload/`, icon: Upload, active: path.includes('/bulk-upload') },
-      { label: 'Print Studio', href: `${workspaceRoot}/print/`, icon: Printer, active: path.includes('/print') },
-      { label: 'QR & Export', href: `${workspaceRoot}/exports/`, icon: QrCode, active: path.includes('/exports') },
-      { label: 'Analytics', href: `${workspaceRoot}/reports/`, icon: BarChart3, active: path.includes('/reports') },
-      { label: 'Settings', href: `${workspaceRoot}/settings/`, icon: Settings, active: path.includes('/settings') },
+      { label: 'Bulk Upload', href: vanity ? organizationWorkspaceHref(schoolId, 'bulk-upload') : `${workspaceRoot}/bulk-upload/`, icon: Upload, active: path.includes('/bulk-upload') },
+      { label: 'Print Studio', href: vanity ? organizationWorkspaceHref(schoolId, 'print') : `${workspaceRoot}/print/`, icon: Printer, active: path.includes('/print') },
+      { label: 'QR & Export', href: vanity ? organizationWorkspaceHref(schoolId, 'exports') : `${workspaceRoot}/exports/`, icon: QrCode, active: path.includes('/exports') },
+      { label: 'Analytics', href: vanity ? organizationWorkspaceHref(schoolId, 'reports') : `${workspaceRoot}/reports/`, icon: BarChart3, active: path.includes('/reports') },
+      { label: 'Settings', href: vanity ? organizationWorkspaceHref(schoolId, 'settings') : `${workspaceRoot}/settings/`, icon: Settings, active: path.includes('/settings') },
     ]
   }
 

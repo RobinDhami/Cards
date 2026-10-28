@@ -119,6 +119,7 @@ urlpatterns = [
     path('api/manage/students/<int:student_id>/', react_api.student_manage_api, name='react_student_manage_api'),
     path('api/manage/students/<int:student_id>/dashboard/', react_api.student_owner_dashboard_api, name='react_student_dashboard_api'),
     path('api/dashboard/schools/', react_api.dashboard_schools_api, name='react_dashboard_schools_api'),
+    path('api/dashboard/organization-slug-availability/', react_api.organization_slug_availability_api, name='organization_slug_availability_api'),
     path('api/dashboard/schools/<int:school_id>/', react_api.dashboard_school_api, name='react_dashboard_school_api'),
     path('api/dashboard/members/', react_api.dashboard_members_api, name='react_dashboard_members_api'),
     path('api/dashboard/reports/', react_api.dashboard_reports_api, name='react_dashboard_reports_api'),
@@ -156,6 +157,10 @@ urlpatterns = [
     path('api/organizations/<int:organization_id>/venue/analytics/', hospitality_views.venue_analytics_api, name='venue_analytics_api'),
     path('api/organizations/<int:organization_id>/venue/overview/', hospitality_views.venue_overview_api, name='venue_overview_api'),
     path('api/organizations/<int:organization_id>/venue/staff-cards/', hospitality_views.venue_staff_cards_manage_api, name='venue_staff_cards_manage_api'),
+    # Tenant vanity routes must remain last so "api/dashboard/..." and other
+    # first-party paths cannot be mistaken for an organization slug.
+    path('<slug:organization_slug>/dashboard/', react_app, name='organization_vanity_dashboard'),
+    path('<slug:organization_slug>/dashboard/<path:workspace_path>', react_app, name='organization_vanity_workspace'),
 ]
 
 if settings.DEBUG:

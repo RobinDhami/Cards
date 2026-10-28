@@ -17,6 +17,7 @@ import { ManageShell } from "../../components/manage/ManageShell";
 import { DashboardHeaderTools } from "../../components/manage/DashboardHeaderTools";
 import { HospitalityActivityNotifications } from "./HospitalityActivityNotifications";
 import { apiFetch, displayError, jsonBody } from "../../lib/api";
+import { currentOrganizationId, organizationWorkspaceHref } from "../../lib/organizationRoute";
 import { schoolWorkspaceNav } from "../school/schoolWorkspaceNav";
 import "./HospitalityWorkspace.css";
 import "./HospitalitySettings.css";
@@ -39,7 +40,7 @@ const roles: Array<{ value: Role; label: string; detail: string }> = [
 ];
 
 function organizationId() {
-  return Number(window.location.pathname.match(/organizations\/(\d+)/)?.[1] || 0);
+  return currentOrganizationId();
 }
 
 export function HospitalitySettingsPage() {
@@ -107,7 +108,7 @@ export function HospitalitySettingsPage() {
     accent="#145fe2" showNotifications={false}
     schoolOptions={shell.schools.length > 1 ? shell.schools : undefined} selectedSchool={school.id}
     workspaceSelectorLabel="Organization workspace"
-    onSchoolChange={(schoolId) => { window.location.href = `/dashboard/organizations/${schoolId}/settings/`; }}
+    onSchoolChange={(schoolId) => { window.location.href = organizationWorkspaceHref(schoolId, "settings"); }}
     actions={<><HospitalityActivityNotifications organizationId={school.id} /><DashboardHeaderTools nav={navigation} organizationId={school.id} enableSupport canRaiseSupport={!shell.isSuperAdmin} /><button type="button" className="manage-icon-button hospitality-theme-toggle" onClick={toggleTheme} aria-label={darkTheme ? "Use light theme" : "Use dark theme"} title={darkTheme ? "Use light theme" : "Use dark theme"}>{darkTheme ? <Sun size={16} /> : <Moon size={16} />}</button><a className="manage-button is-primary" href={`/venue/${school.publicIdentifier}/?preview=dashboard`} target="_blank" rel="noreferrer"><Eye size={14} />Preview profile</a></>}
   >
     <div className="hospitality-settings">
@@ -119,7 +120,7 @@ export function HospitalitySettingsPage() {
 
       {tab === "General" ? <section className="manage-card hospitality-settings-card">
         <div className="hospitality-settings-heading"><Settings size={20} /><div><h2>Workspace settings</h2></div></div>
-        <div className="hospitality-settings-callout"><strong>Profile</strong><a className="manage-button is-primary" href={`/dashboard/organizations/${school.id}/hospitality/?tab=profile`}>Open Profile <ExternalLink size={14} /></a></div>
+        <div className="hospitality-settings-callout"><strong>Profile</strong><a className="manage-button is-primary" href={organizationWorkspaceHref(school.id, "profile")}>Open Profile <ExternalLink size={14} /></a></div>
         <div className="hospitality-role-grid">{roles.map((role) => <article key={role.value} className={shell.role === role.value ? "is-current" : ""}><strong>{role.label}</strong><p>{role.detail}</p>{shell.role === role.value ? <small>Current role</small> : null}</article>)}</div>
       </section> : null}
 

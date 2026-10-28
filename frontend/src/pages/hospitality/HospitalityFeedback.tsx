@@ -8,6 +8,7 @@ import Phone from 'lucide-react/dist/esm/icons/phone.js'
 import Star from 'lucide-react/dist/esm/icons/star.js'
 import UserRound from 'lucide-react/dist/esm/icons/user-round.js'
 import { apiFetch, displayError, jsonBody, queryString } from '../../lib/api'
+import { organizationWorkspaceHref } from '../../lib/organizationRoute'
 import './HospitalityFeedback.css'
 
 type FeedbackStatus = 'new' | 'in_progress' | 'resolved'
@@ -170,7 +171,7 @@ export function HospitalityFeedback({ organizationId, googleReviewUrl }: { organ
           <div><strong>Google reviews</strong></div>
           {googleReviewUrl
             ? <a className="manage-button" href={googleReviewUrl} target="_blank" rel="noreferrer">Open Google review page</a>
-            : <a className="manage-button" href={`/dashboard/organizations/${organizationId}/hospitality/?tab=profile`}>Add Google review link</a>}
+            : <a className="manage-button" href={organizationWorkspaceHref(organizationId, 'profile')}>Add Google review link</a>}
         </aside>
       </div>
     </div>
