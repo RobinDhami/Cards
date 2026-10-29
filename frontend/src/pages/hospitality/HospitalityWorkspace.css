@@ -93,7 +93,9 @@
 }
 
 @media (max-width:960px){
-  .manage-app--hospitality .manage-header-actions :is(.dashboard-header-tools,.hospitality-theme-toggle){display:none!important}
+  .manage-app--hospitality .manage-header-actions .hospitality-theme-toggle{display:none!important}
+  .manage-app--hospitality .manage-header-actions .dashboard-header-tools{display:block!important;order:3}
+  .manage-app--hospitality .manage-header-actions .dashboard-header-tools .manage-icon-button{display:grid!important}
   .manage-app--hospitality-theme-light .hospitality-notification-control .manage-icon-button{border-color:#cbd5e1!important;background:#fff!important;color:#0f172a!important}
   .manage-app--hospitality-theme-dark .hospitality-notification-control .manage-icon-button{border-color:#475569!important;background:#273449!important;color:#e2e8f0!important}
 }
