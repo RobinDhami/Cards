@@ -27,6 +27,9 @@ import Trash2 from "lucide-react/dist/esm/icons/trash-2.js";
 import Utensils from "lucide-react/dist/esm/icons/utensils.js";
 import UserPlus from "lucide-react/dist/esm/icons/user-plus.js";
 import X from "lucide-react/dist/esm/icons/x.js";
+import House from "lucide-react/dist/esm/icons/house.js";
+import QrCode from "lucide-react/dist/esm/icons/qr-code.js";
+import Users from "lucide-react/dist/esm/icons/users.js";
 import { FaApple } from "react-icons/fa6";
 import { SocialIcon } from "../../components/social/SocialIcon";
 import { socialIconAssets } from "../../components/social/socialIconAssets";
@@ -299,6 +302,7 @@ function VenueShell({
   const school = shell.currentSchool;
   const details = hospitalitySectionDetails[section];
   const navigation = schoolWorkspaceNav(school?.id, shell.isSuperAdmin, "hospitality", shell.capabilities);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [darkTheme, setDarkTheme] = useState(() => window.localStorage.getItem("tap2connect:hospitality-theme") !== "light");
   const toggleTheme = () => setDarkTheme((current) => {
     const next = !current;
@@ -331,7 +335,7 @@ function VenueShell({
             {darkTheme ? <Sun size={16} /> : <Moon size={16} />}
           </button>
           <a
-            className="manage-button is-primary"
+            className="manage-button is-primary hospitality-preview-action"
             href={`/venue/${publicIdentifier}/?preview=dashboard`}
             target="_blank"
             rel="noreferrer"
@@ -343,8 +347,42 @@ function VenueShell({
       }
     >
       {children}
+      {school?.id ? <HospitalityMobileNav organizationId={school.id} section={section} navigation={navigation} moreOpen={moreOpen} onMoreOpenChange={setMoreOpen} /> : null}
     </ManageShell>
   );
+}
+
+function HospitalityMobileNav({ organizationId, section, navigation, moreOpen, onMoreOpenChange }: {
+  organizationId: number;
+  section: HospitalityAdminSection;
+  navigation: ReturnType<typeof schoolWorkspaceNav>;
+  moreOpen: boolean;
+  onMoreOpenChange: (open: boolean) => void;
+}) {
+  const primary = [
+    { label: 'Overview', section: 'overview' as const, icon: House, href: organizationWorkspaceHref(organizationId) },
+    { label: 'Menu', section: 'menu' as const, icon: Utensils, href: organizationWorkspaceHref(organizationId, 'menu') },
+    { label: 'Rewards', section: 'loyalty' as const, icon: Gift, href: organizationWorkspaceHref(organizationId, 'loyalty') },
+    { label: 'Members', section: 'members' as const, icon: Users, href: organizationWorkspaceHref(organizationId, 'members') },
+  ];
+  const moreItems = navigation.filter((item) => !['Overview', 'Menu', 'Rewards', 'Members'].includes(item.label));
+  const moreIsActive = moreItems.some((item) => item.active);
+  return <>
+    {moreOpen ? <button className="hospitality-mobile-more-backdrop" type="button" aria-label="Close more navigation" onClick={() => onMoreOpenChange(false)} /> : null}
+    <nav className="hospitality-mobile-nav" aria-label="Mobile workspace navigation">
+      {primary.slice(0, 2).map((item) => {
+        const Icon = item.icon;
+        return <a key={item.section} className={section === item.section ? 'is-active' : ''} href={item.href}><Icon size={20} /><span>{item.label}</span></a>;
+      })}
+      <a className="hospitality-mobile-scan" href={organizationWorkspaceHref(organizationId, 'members', 'scan=1')} aria-label="Scan member QR"><span><QrCode size={23} /></span><small>Scan</small></a>
+      {primary.slice(2).map((item) => {
+        const Icon = item.icon;
+        return <a key={item.section} className={section === item.section ? 'is-active' : ''} href={item.href}><Icon size={20} /><span>{item.label}</span></a>;
+      })}
+      <button className={moreIsActive ? 'is-active' : ''} type="button" aria-label="More navigation options" aria-expanded={moreOpen} onClick={() => onMoreOpenChange(!moreOpen)}><MoreHorizontal size={21} /><span>More</span></button>
+    </nav>
+    {moreOpen ? <section className="hospitality-mobile-more-sheet" role="dialog" aria-modal="true" aria-label="More workspace sections"><header><strong>More</strong><button type="button" onClick={() => onMoreOpenChange(false)} aria-label="Close more navigation"><X size={18} /></button></header><div>{moreItems.map((item) => { const Icon = item.icon; return <a key={item.href} className={item.active ? 'is-active' : ''} href={item.href} onClick={() => onMoreOpenChange(false)}><Icon size={19} /><span>{item.label}</span><ChevronRight size={17} /></a> })}</div></section> : null}
+  </>;
 }
 
 const emptyItem: DraftItem = {

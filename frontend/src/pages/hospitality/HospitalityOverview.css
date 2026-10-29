@@ -12,3 +12,35 @@
 @media(max-width:760px){.hospitality-readiness{grid-template-columns:1fr}.hospitality-readiness>.manage-button{justify-self:start}.hospitality-attention-list{grid-template-columns:1fr}.hospitality-attention-list article,.hospitality-attention-list article:nth-child(odd),.hospitality-attention-list article:nth-last-child(-n+2){border-right:0;border-bottom:1px solid #edf1f6}.hospitality-attention-list article:last-child{border-bottom:0}}
 @media(max-width:760px){.hospitality-readiness-actions{width:100%}.hospitality-readiness-actions .manage-button{flex:1}}
 @media(max-width:620px){.hospitality-overview{gap:12px}.hospitality-overview-heading{align-items:flex-start;flex-direction:column}.hospitality-overview-heading h2{font-size:21px}.hospitality-date-filter{width:100%}.hospitality-readiness{gap:14px;padding:16px}.hospitality-readiness h2{font-size:16px}.hospitality-attention-list article{grid-template-columns:19px minmax(0,1fr)}.hospitality-attention-list a,.hospitality-attention-list button{grid-column:2;justify-self:start;padding-left:0}.hospitality-activity-summary article{padding:13px 11px}.hospitality-activity-summary small{font-size:8px}.hospitality-activity-summary strong{font-size:19px}.hospitality-overview-panel{padding:13px}.hospitality-chart-wrap{height:180px}.hospitality-feedback-list article{grid-template-columns:1fr auto;gap:6px}.hospitality-feedback-rating{grid-column:1}.hospitality-feedback-copy{grid-column:1/-1;grid-row:2}.hospitality-feedback-status{grid-column:2;grid-row:1}.hospitality-qr-backdrop{align-items:end;padding:10px}.hospitality-qr-dialog{padding:20px}.hospitality-qr-image{width:190px;height:190px}}
+
+/* The phone and tablet overview keeps the desktop data model, but changes its
+   reading order and density for a one-handed workspace. */
+@media(max-width:960px){
+  .hospitality-overview{gap:14px}
+  .hospitality-overview-heading>div{display:none}
+  .hospitality-overview-heading{display:block}
+  .hospitality-date-filter{width:100%;min-height:46px;border-radius:10px;padding-inline:14px}
+  .hospitality-date-filter select{font-size:14px;font-weight:600}
+  .hospitality-activity-summary>header{display:none}
+  .hospitality-activity-summary>div{grid-template-columns:repeat(2,minmax(0,1fr));border:0;gap:10px}
+  .hospitality-activity-summary article,.hospitality-activity-summary article:nth-child(n){min-height:96px;border:1px solid #dfe6ef;border-radius:10px;padding:13px;gap:10px;background:#fff}
+  .hospitality-activity-summary article>svg{width:22px;height:22px}
+  .hospitality-activity-summary small{font-size:11px;white-space:normal}
+  .hospitality-activity-summary strong{font-size:24px}
+  .hospitality-activity-summary em{font-size:10px}
+  .hospitality-readiness{grid-template-columns:1fr;padding:16px}
+  .hospitality-readiness-progress{grid-row:1}
+  .hospitality-readiness>div:first-child{order:2}.hospitality-readiness-actions{order:3}
+  .hospitality-attention-list{grid-template-columns:1fr}
+  .hospitality-attention-list article,.hospitality-attention-list article:nth-child(odd),.hospitality-attention-list article:nth-last-child(-n+2){border-right:0;border-bottom:1px solid #edf1f6}
+  .hospitality-attention-list article:last-child{border-bottom:0}
+  .hospitality-overview-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  .hospitality-visitors-panel,.hospitality-recent-feedback{grid-column:1/-1}.hospitality-quick-panel{grid-column:auto}
+}
+@media(max-width:620px){
+  .hospitality-overview{gap:12px}
+  .hospitality-activity-summary>div{gap:9px}.hospitality-activity-summary article,.hospitality-activity-summary article:nth-child(n){min-height:88px;padding:12px}
+  .hospitality-activity-summary strong{font-size:21px}.hospitality-activity-summary small{font-size:10px}
+  .hospitality-readiness{gap:12px}.hospitality-readiness-actions .manage-button{min-height:42px}
+  .hospitality-overview-grid{grid-template-columns:1fr}.hospitality-quick-panel{grid-column:auto}
+}

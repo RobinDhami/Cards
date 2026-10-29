@@ -288,3 +288,15 @@
   .category-management-row > .category-visibility { grid-column: 2; grid-row: 1; }
   .category-management-row > .category-row-actions { grid-column: 2; grid-row: 2; }
 }
+
+/* The phone shell uses a compact action row after the legacy mobile rules. */
+@media (max-width:640px) {
+  .manage-app--hospitality .manage-header { position:sticky; min-height:64px; flex-wrap:nowrap!important; padding:10px 12px; }
+  .manage-app--hospitality .manage-title { padding-right:0; }
+  .manage-app--hospitality .manage-header-actions { position:static!important; display:flex!important; width:auto!important; flex:none!important; grid-template-columns:none!important; gap:5px; pointer-events:auto; }
+  .manage-app--hospitality .manage-header-actions .hospitality-notification-control,
+  .manage-app--hospitality .manage-header-actions .dashboard-header-tools,
+  .manage-app--hospitality .manage-header-actions .hospitality-theme-toggle,
+  .manage-app--hospitality .manage-header-actions > .manage-button { grid-column:auto; width:auto; }
+  .manage-app--hospitality .manage-header-actions > .manage-button.hospitality-preview-action { display:grid!important; width:35px!important; min-width:35px!important; height:35px!important; min-height:35px!important; grid-column:auto!important; justify-self:auto!important; padding:0!important; font-size:0!important; }
+}

@@ -52,3 +52,43 @@
 @media (max-width: 1200px) { .manage-app--hospitality > .manage-sidebar { width: 224px; } .manage-app--hospitality > .manage-main { margin-left: 224px; } }
 @media (max-width: 960px) { .manage-app--hospitality > .manage-main { margin-left: 0; } .manage-app--hospitality .manage-brand { min-height: 64px; padding: 12px 14px; } .manage-app--hospitality .manage-nav { padding-block: 12px; } }
 @media (max-width: 960px) { .manage-app--hospitality .manage-mobile-drawer.is-open { width: min(240px, 82vw); background: #0f172a; } .manage-app--hospitality .manage-mobile-drawer.is-open > .manage-sidebar { width: 100%; border-right: 0; } }
+
+/* The hospitality workspace becomes a thumb-first app shell on phones and tablets.
+   Desktop and laptop navigation deliberately remain untouched above this breakpoint. */
+.hospitality-mobile-nav,.hospitality-mobile-more-sheet,.hospitality-mobile-more-backdrop{display:none}
+@media (max-width:960px){
+  .manage-app--hospitality .manage-menu,.manage-app--hospitality .manage-mobile-drawer,.manage-app--hospitality .manage-overlay{display:none!important}
+  .manage-app--hospitality .manage-header{position:sticky;top:0;z-index:35;min-height:64px;flex-wrap:nowrap;gap:10px;padding:10px 14px;background:var(--manage-page)}
+  .manage-app--hospitality .manage-title{flex:1;min-width:0;padding:0}
+  .manage-app--hospitality .manage-title h1{overflow:hidden;font-size:20px;line-height:1.2;text-overflow:ellipsis;white-space:nowrap}
+  .manage-app--hospitality .manage-header-actions{display:flex;flex:none;width:auto;gap:7px}
+  .manage-app--hospitality .manage-school-select{display:none!important}
+  .manage-app--hospitality .manage-header-actions :is(.hospitality-notification-control,.dashboard-header-tools,.hospitality-theme-toggle,.hospitality-preview-action){display:block!important}
+  .manage-app--hospitality .hospitality-preview-action{order:1}
+  .manage-app--hospitality .hospitality-notification-control{order:2}
+  .manage-app--hospitality .dashboard-header-tools{order:3}
+  .manage-app--hospitality .hospitality-theme-toggle{order:4}
+  .manage-app--hospitality .manage-header-actions .manage-icon-button,.manage-app--hospitality .hospitality-preview-action{display:grid!important;width:38px;min-width:38px;height:38px;min-height:38px;place-items:center;border:1px solid #d9e2ed!important;border-radius:9px!important;background:#fff!important;padding:0!important;color:#0f172a!important;box-shadow:none!important}
+  .manage-app--hospitality .hospitality-preview-action svg{width:19px;height:19px}
+  .manage-app--hospitality .hospitality-preview-action{font-size:0!important}
+  .manage-app--hospitality .hospitality-preview-action svg{margin:0}
+  .manage-app--hospitality .manage-content{padding:14px 14px calc(94px + env(safe-area-inset-bottom));}
+  .hospitality-mobile-nav{position:fixed;z-index:45;right:0;bottom:0;left:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr)) 66px repeat(3,minmax(0,1fr));min-height:68px;align-items:end;border-top:1px solid #e2e8f0;background:rgba(255,255,255,.97);padding:7px max(8px,env(safe-area-inset-right)) calc(7px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));box-shadow:0 -8px 24px rgba(15,23,42,.08);backdrop-filter:blur(12px)}
+  .hospitality-mobile-nav>a:not(.hospitality-mobile-scan),.hospitality-mobile-nav>button{display:grid;min-height:50px;place-items:center;align-content:center;gap:3px;border:0;background:transparent;color:#64748b;font:600 10px/1.1 inherit;text-decoration:none}
+  .hospitality-mobile-nav>a.is-active,.hospitality-mobile-nav>button.is-active{color:#2563eb}
+  .hospitality-mobile-nav>a svg,.hospitality-mobile-nav>button svg{stroke-width:2}
+  .hospitality-mobile-scan{display:grid;align-self:start;justify-items:center;gap:3px;margin-top:-30px;color:#2563eb;text-decoration:none;font:700 10px/1.1 inherit}
+  .hospitality-mobile-scan>span{display:grid;width:58px;height:58px;place-items:center;border:4px solid #f8fafc;border-radius:50%;background:#2563eb;color:#fff;box-shadow:0 7px 18px rgba(37,99,235,.3)}
+  .hospitality-mobile-scan small{font:700 10px/1.1 inherit}
+  .hospitality-mobile-more-backdrop{position:fixed;z-index:46;inset:0;display:block;border:0;background:rgba(15,23,42,.35)}
+  .hospitality-mobile-more-sheet{position:fixed;z-index:47;right:0;bottom:calc(68px + env(safe-area-inset-bottom));left:0;display:block;overflow:hidden;border-radius:18px 18px 0 0;background:#fff;box-shadow:0 -18px 48px rgba(15,23,42,.2)}
+  .hospitality-mobile-more-sheet header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e6edf5;padding:15px 18px}
+  .hospitality-mobile-more-sheet header strong{font-size:15px;color:#0f172a}.hospitality-mobile-more-sheet header button{display:grid;width:30px;height:30px;place-items:center;border:1px solid #dbe4ee;border-radius:8px;background:#fff;color:#334155}
+  .hospitality-mobile-more-sheet>div{display:grid;grid-template-columns:1fr 1fr;padding:8px}.hospitality-mobile-more-sheet a{display:flex;align-items:center;gap:9px;border-radius:9px;padding:12px;color:#334155;font-size:12px;font-weight:600;text-decoration:none}.hospitality-mobile-more-sheet a.is-active{background:#eff6ff;color:#2563eb}.hospitality-mobile-more-sheet a svg:last-child{margin-left:auto;color:#94a3b8}
+  .manage-app--hospitality-theme-dark .hospitality-mobile-nav,.manage-app--hospitality-theme-dark .hospitality-mobile-more-sheet{border-color:rgba(148,163,184,.2);background:rgba(17,24,39,.97)}
+  .manage-app--hospitality-theme-dark .hospitality-mobile-nav>a:not(.hospitality-mobile-scan),.manage-app--hospitality-theme-dark .hospitality-mobile-nav>button{color:#aebcd0}.manage-app--hospitality-theme-dark .hospitality-mobile-nav>a.is-active,.manage-app--hospitality-theme-dark .hospitality-mobile-nav>button.is-active{color:#60a5fa}.manage-app--hospitality-theme-dark .hospitality-mobile-scan>span{border-color:#111827;background:#2563eb}.manage-app--hospitality-theme-dark .hospitality-mobile-more-sheet header{border-color:rgba(148,163,184,.2)}.manage-app--hospitality-theme-dark .hospitality-mobile-more-sheet header strong,.manage-app--hospitality-theme-dark .hospitality-mobile-more-sheet a{color:#e5edf7}.manage-app--hospitality-theme-dark .hospitality-mobile-more-sheet header button{border-color:#3b4658;background:#1f2937;color:#dce5f1}.manage-app--hospitality-theme-dark .hospitality-mobile-more-sheet a.is-active{background:#1e3a5f;color:#93c5fd}
+}
+@media (max-width:520px){
+  .manage-app--hospitality .manage-header{padding-inline:12px}.manage-app--hospitality .manage-header-actions{gap:5px}.manage-app--hospitality .manage-header-actions .manage-icon-button,.manage-app--hospitality .hospitality-preview-action{width:35px;min-width:35px;height:35px;min-height:35px;border-radius:8px!important}.manage-app--hospitality .manage-header-actions .manage-icon-button svg,.manage-app--hospitality .hospitality-preview-action svg{width:18px;height:18px}
+  .hospitality-mobile-nav{grid-template-columns:repeat(2,minmax(0,1fr)) 58px repeat(3,minmax(0,1fr));min-height:66px}.hospitality-mobile-scan>span{width:54px;height:54px}
+}

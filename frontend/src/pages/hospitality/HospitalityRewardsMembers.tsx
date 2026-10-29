@@ -43,6 +43,16 @@ export function HospitalityRewardsMembers({ organizationId }: { organizationId: 
   const transactionPendingRef = useRef(false); const transactionKeyRef = useRef(crypto.randomUUID())
   const load = useCallback(async (search = '', selectedSegment = segment) => { setLoading(true); try { const params = new URLSearchParams(); if (search) params.set('q', search); if (selectedSegment !== 'all') params.set('segment', selectedSegment); const suffix = params.toString() ? `?${params}` : ''; const data = await apiFetch<{ members: Member[]; program: Program }>(`/api/organizations/${organizationId}/venue/rewards/members/${suffix}`); setMembers(data.members); setProgram(data.program); setMessage('') } catch (reason) { setMessage(displayError(reason)) } finally { setLoading(false) } }, [organizationId, segment])
   useEffect(() => { void load() }, [load])
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('scan') !== '1') return
+    params.delete('scan')
+    const query = params.toString()
+    window.history.replaceState({}, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`)
+    setScannerMessage('')
+    setManualCode('')
+    setScannerOpen(true)
+  }, [])
   const openMember = useCallback(async (value: string) => { const identifier = memberCode(value); if (!identifier) return; try { const data = await apiFetch<{ member: Member; transactions: Ledger[] }>(`/api/organizations/${organizationId}/venue/rewards/members/${encodeURIComponent(identifier)}/`); setBillAmount(''); setRewardAmount(''); setReceiptReference(''); transactionKeyRef.current = crypto.randomUUID(); setSelected(data.member); setLedger(data.transactions); setScannerOpen(false); setScannerMessage('') } catch (reason) { setScannerMessage(displayError(reason)) } }, [organizationId])
   const open = async (member: Member) => { await openMember(member.memberId) }
   const stopScanner = useCallback(() => { if (scanFrameRef.current) cancelAnimationFrame(scanFrameRef.current); scanFrameRef.current = null; streamRef.current?.getTracks().forEach((track) => track.stop()); streamRef.current = null; scanningRef.current = false }, [])
