@@ -29,7 +29,6 @@ import UserPlus from "lucide-react/dist/esm/icons/user-plus.js";
 import X from "lucide-react/dist/esm/icons/x.js";
 import House from "lucide-react/dist/esm/icons/house.js";
 import QrCode from "lucide-react/dist/esm/icons/qr-code.js";
-import Users from "lucide-react/dist/esm/icons/users.js";
 import { FaApple } from "react-icons/fa6";
 import { SocialIcon } from "../../components/social/SocialIcon";
 import { socialIconAssets } from "../../components/social/socialIconAssets";
@@ -363,9 +362,8 @@ function HospitalityMobileNav({ organizationId, section, navigation, moreOpen, o
     { label: 'Overview', section: 'overview' as const, icon: House, href: organizationWorkspaceHref(organizationId) },
     { label: 'Menu', section: 'menu' as const, icon: Utensils, href: organizationWorkspaceHref(organizationId, 'menu') },
     { label: 'Rewards', section: 'loyalty' as const, icon: Gift, href: organizationWorkspaceHref(organizationId, 'loyalty') },
-    { label: 'Members', section: 'members' as const, icon: Users, href: organizationWorkspaceHref(organizationId, 'members') },
   ];
-  const moreItems = navigation.filter((item) => !['Overview', 'Menu', 'Rewards', 'Members'].includes(item.label));
+  const moreItems = navigation.filter((item) => !['Overview', 'Menu', 'Rewards'].includes(item.label));
   const moreIsActive = moreItems.some((item) => item.active);
   return <>
     {moreOpen ? <button className="hospitality-mobile-more-backdrop" type="button" aria-label="Close more navigation" onClick={() => onMoreOpenChange(false)} /> : null}

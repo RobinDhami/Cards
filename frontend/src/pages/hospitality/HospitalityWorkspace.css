@@ -73,7 +73,7 @@
   .manage-app--hospitality .hospitality-preview-action{font-size:0!important}
   .manage-app--hospitality .hospitality-preview-action svg{margin:0}
   .manage-app--hospitality .manage-content{padding:14px 14px calc(94px + env(safe-area-inset-bottom));}
-  .hospitality-mobile-nav{position:fixed;z-index:45;right:0;bottom:0;left:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr)) 66px repeat(3,minmax(0,1fr));min-height:68px;align-items:end;border-top:1px solid #e2e8f0;background:rgba(255,255,255,.97);padding:7px max(8px,env(safe-area-inset-right)) calc(7px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));box-shadow:0 -8px 24px rgba(15,23,42,.08);backdrop-filter:blur(12px)}
+  .hospitality-mobile-nav{position:fixed;z-index:45;right:0;bottom:0;left:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr)) 66px repeat(2,minmax(0,1fr));min-height:68px;align-items:end;border-top:1px solid #e2e8f0;background:rgba(255,255,255,.97);padding:7px max(8px,env(safe-area-inset-right)) calc(7px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));box-shadow:0 -8px 24px rgba(15,23,42,.08);backdrop-filter:blur(12px)}
   .hospitality-mobile-nav>a:not(.hospitality-mobile-scan),.hospitality-mobile-nav>button{display:grid;min-height:50px;place-items:center;align-content:center;gap:3px;border:0;background:transparent;color:#64748b;font:600 10px/1.1 inherit;text-decoration:none}
   .hospitality-mobile-nav>a.is-active,.hospitality-mobile-nav>button.is-active{color:#2563eb}
   .hospitality-mobile-nav>a svg,.hospitality-mobile-nav>button svg{stroke-width:2}
@@ -90,5 +90,5 @@
 }
 @media (max-width:520px){
   .manage-app--hospitality .manage-header{padding-inline:12px}.manage-app--hospitality .manage-header-actions{gap:5px}.manage-app--hospitality .manage-header-actions .manage-icon-button,.manage-app--hospitality .hospitality-preview-action{width:35px;min-width:35px;height:35px;min-height:35px;border-radius:8px!important}.manage-app--hospitality .manage-header-actions .manage-icon-button svg,.manage-app--hospitality .hospitality-preview-action svg{width:18px;height:18px}
-  .hospitality-mobile-nav{grid-template-columns:repeat(2,minmax(0,1fr)) 58px repeat(3,minmax(0,1fr));min-height:66px}.hospitality-mobile-scan>span{width:54px;height:54px}
+  .hospitality-mobile-nav{grid-template-columns:repeat(2,minmax(0,1fr)) 58px repeat(2,minmax(0,1fr));min-height:66px}.hospitality-mobile-scan>span{width:54px;height:54px}
 }

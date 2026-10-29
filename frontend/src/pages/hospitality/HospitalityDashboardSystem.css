@@ -299,4 +299,7 @@
   .manage-app--hospitality .manage-header-actions .hospitality-theme-toggle,
   .manage-app--hospitality .manage-header-actions > .manage-button { grid-column:auto; width:auto; }
   .manage-app--hospitality .manage-header-actions > .manage-button.hospitality-preview-action { display:grid!important; width:35px!important; min-width:35px!important; height:35px!important; min-height:35px!important; grid-column:auto!important; justify-self:auto!important; padding:0!important; font-size:0!important; }
+  .manage-app--hospitality-theme-light .manage-header-actions > .manage-button.hospitality-preview-action { border-color:#cbd5e1!important; background:#fff!important; color:#0f172a!important; }
+  .manage-app--hospitality-theme-dark .manage-header-actions > .manage-button.hospitality-preview-action { border-color:#475569!important; background:#273449!important; color:#e2e8f0!important; }
+  .manage-app--hospitality .manage-header-actions > .manage-button.hospitality-preview-action svg { display:block!important; stroke:currentColor!important; }
 }
