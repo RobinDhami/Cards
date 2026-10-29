@@ -695,6 +695,13 @@ class HospitalityWorkspaceTests(TestCase):
             'menuItemCount': 1,
             'feedbackEnabled': True,
         })
+        self.assertIn('loyalty', payload['enabledModules'])
+        self.assertEqual(payload['loyaltyMetrics'], {
+            'activeMembers': 0,
+            'activityCount': 0,
+            'earnedCount': 0,
+            'redeemedCount': 0,
+        })
         self.assertEqual(payload['organizations'], [
             {'id': self.org.pk, 'name': self.org.name},
             {'id': managed_branch.pk, 'name': managed_branch.name},

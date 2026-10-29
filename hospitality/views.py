@@ -1598,6 +1598,16 @@ def venue_overview_api(request, organization_id):
         row['created_at'] = row['created_at'].isoformat()
 
     item_count = venue.menu_items.filter(is_published=True).count()
+    enabled_modules = enabled_organization_modules(venue.organization)
+    loyalty_metrics = None
+    if 'loyalty' in enabled_modules:
+        loyalty_activity = venue.rewards_transactions.filter(created_at__gte=start, created_at__lt=end)
+        loyalty_metrics = {
+            'activeMembers': venue.loyalty_memberships.filter(is_active=True).count(),
+            'activityCount': loyalty_activity.count(),
+            'earnedCount': loyalty_activity.filter(transaction_type='earn').count(),
+            'redeemedCount': loyalty_activity.filter(transaction_type='redeem').count(),
+        }
     organizations = College.objects.filter(organization_type='hospitality').order_by('name')
     if not request.user.is_superuser:
         organizations = organizations.filter(admin_user=request.user)
@@ -1624,4 +1634,6 @@ def venue_overview_api(request, organization_id):
             'profileViews': analytics['definitions']['profileViews'],
             'googleReviewClicks': analytics['definitions']['googleReviewClicks'],
         },
+        'enabledModules': sorted(enabled_modules),
+        'loyaltyMetrics': loyalty_metrics,
     })

@@ -13,6 +13,7 @@ import Plus from 'lucide-react/dist/esm/icons/plus.js'
 import QrCode from 'lucide-react/dist/esm/icons/qr-code.js'
 import Store from 'lucide-react/dist/esm/icons/store.js'
 import Utensils from 'lucide-react/dist/esm/icons/utensils.js'
+import Users from 'lucide-react/dist/esm/icons/users.js'
 import X from 'lucide-react/dist/esm/icons/x.js'
 import { organizationWorkspaceHref } from '../../lib/organizationRoute'
 import './HospitalityOverview.css'
@@ -28,6 +29,8 @@ export type HospitalityOverviewData = {
   readiness: { profileReady: boolean; menuItemCount: number; feedbackEnabled: boolean }
   organizations: Array<{ id: number; name: string }>
   trackingNotes: { profileViews: string; googleReviewClicks: string }
+  enabledModules?: string[]
+  loyaltyMetrics?: { activeMembers: number; activityCount: number; earnedCount: number; redeemedCount: number } | null
 }
 
 const metricDetails = [
@@ -148,9 +151,10 @@ function ShareQrDialog({ url, name, onClose, onDownloaded }: { url: string; name
   )
 }
 
-function QuickAction({ href, icon: Icon, title, onClick }: { href?: string; icon: typeof Plus; title: string; onClick?: () => void }) {
+function QuickAction({ href, icon: Icon, title, onClick, className = '' }: { href?: string; icon: typeof Plus; title: string; onClick?: () => void; className?: string }) {
   const content = <><span className="hospitality-quick-icon"><Icon size={19} aria-hidden="true" /></span><strong>{title}</strong><ChevronRight className="hospitality-quick-arrow" size={17} aria-hidden="true" /></>
-  return href ? <a className="hospitality-quick-action" href={href}>{content}</a> : <button className="hospitality-quick-action" type="button" onClick={onClick}>{content}</button>
+  const classes = `hospitality-quick-action ${className}`.trim()
+  return href ? <a className={classes} href={href}>{content}</a> : <button className={classes} type="button" onClick={onClick}>{content}</button>
 }
 
 export function HospitalityOverview({ organizationId, publicIdentifier, organizationName, days, onDaysChange, data, loading, error, onRetry }: {
@@ -175,6 +179,7 @@ export function HospitalityOverview({ organizationId, publicIdentifier, organiza
   const progress = checklist.length ? Math.round((doneCount / checklist.length) * 100) : 0
   const readyForCustomers = Boolean(data?.readiness.profileReady && data.readiness.menuItemCount > 0 && data.readiness.feedbackEnabled && qrDownloaded)
   const incompleteSteps = checklist.filter((step) => !step.complete)
+  const hasLoyalty = Boolean(data?.enabledModules?.includes('loyalty') && data.loyaltyMetrics)
   const stepActions: Record<string, { label: string; href?: string; onClick?: () => void }> = {
     profile: { label: 'Complete profile', href: organizationWorkspaceHref(organizationId, 'profile') },
     menu: { label: 'Add menu item', href: organizationWorkspaceHref(organizationId, 'menu', 'action=add-item') },
@@ -202,6 +207,10 @@ export function HospitalityOverview({ organizationId, publicIdentifier, organiza
             {!readyForCustomers && !data.readiness.profileReady ? <a className="manage-button" href={organizationWorkspaceHref(organizationId, 'profile')}><Check size={15} />Complete profile</a> : null}
             <button type="button" className="manage-button is-primary" onClick={() => setShareOpen(true)}><QrCode size={15} />Share QR code</button>
           </div>
+          {incompleteSteps.length ? <details className="hospitality-mobile-setup-tasks"><summary>View {incompleteSteps.length} setup {incompleteSteps.length === 1 ? 'task' : 'tasks'}<ChevronRight size={16} /></summary><div>{incompleteSteps.map((step) => {
+            const action = stepActions[step.key]
+            return <article key={step.key}><span className="hospitality-setup-check" /><strong>{step.label}</strong>{action.href ? <a href={action.href}>{action.label}<ChevronRight size={15} /></a> : <button type="button" onClick={action.onClick}>{action.label}<ChevronRight size={15} /></button>}</article>
+          })}</div></details> : null}
         </section>
         <section className="hospitality-attention-panel">
           <header><div><h2>{incompleteSteps.length ? 'Needs attention' : 'Setup complete'}</h2></div></header>
@@ -212,7 +221,13 @@ export function HospitalityOverview({ organizationId, publicIdentifier, organiza
         </section>
         <section className={`hospitality-activity-summary${loading ? ' is-refreshing' : ''}`} aria-busy={loading}>
           <header><div><h2>Customer activity</h2></div></header>
-          <div>{metricDetails.map(({ key, icon: Icon }) => <article key={key}><Icon size={19} /><span><small>{metricDetails.find((item) => item.key === key)?.label}</small><strong>{data.metrics[key].toLocaleString()}</strong><em>Last {days} days</em></span></article>)}</div>
+          <div className="hospitality-activity-metrics hospitality-activity-metrics--desktop">{metricDetails.map(({ key, label, icon: Icon }) => <article key={key}><Icon size={19} /><span><small>{label}</small><strong>{data.metrics[key].toLocaleString()}</strong><em>Last {days} days</em></span></article>)}</div>
+          <div className="hospitality-activity-metrics hospitality-activity-metrics--mobile">{(hasLoyalty ? [
+            { key: 'profileViews', label: 'Profile views', icon: Eye, value: data.metrics.profileViews },
+            { key: 'menuOpens', label: 'Menu opens', icon: Utensils, value: data.metrics.menuOpens },
+            { key: 'activeMembers', label: 'Active members', icon: Users, value: data.loyaltyMetrics!.activeMembers },
+            { key: 'loyaltyActivity', label: 'Loyalty activity', icon: QrCode, value: data.loyaltyMetrics!.activityCount },
+          ] : metricDetails.map(({ key, label, icon }) => ({ key, label, icon, value: data.metrics[key] }))).map(({ key, label, icon: Icon, value }) => <article key={key}><Icon size={19} /><span><small>{label}</small><strong>{value.toLocaleString()}</strong><em>{key === 'activeMembers' ? 'Current total' : `Last ${days} days`}</em></span></article>)}</div>
         </section>
         <div className="hospitality-overview-grid">
           <VisitorsChart values={data.dailyVisits} />
@@ -227,9 +242,10 @@ export function HospitalityOverview({ organizationId, publicIdentifier, organiza
           <section className="hospitality-overview-panel hospitality-quick-panel">
             <header><div><h2>Quick actions</h2></div></header>
             <div className="hospitality-quick-list">
+              {hasLoyalty ? <QuickAction className="hospitality-quick-action--mobile" href={organizationWorkspaceHref(organizationId, 'members', 'scan=1')} icon={QrCode} title="Scan member" /> : null}
               <QuickAction href={organizationWorkspaceHref(organizationId, 'menu', 'action=add-item')} icon={Plus} title="Add menu item" />
               <QuickAction href={organizationWorkspaceHref(organizationId, 'profile')} icon={Store} title="Edit profile" />
-              <QuickAction href={organizationWorkspaceHref(organizationId, 'staff')} icon={QrCode} title="QR & NFC touchpoints" />
+              <QuickAction className="hospitality-quick-action--desktop" href={organizationWorkspaceHref(organizationId, 'staff')} icon={QrCode} title="QR & NFC touchpoints" />
               <QuickAction icon={QrCode} title="Share or download QR" onClick={() => setShareOpen(true)} />
             </div>
           </section>
