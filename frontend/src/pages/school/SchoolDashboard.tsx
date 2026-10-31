@@ -140,14 +140,6 @@ function selectedSchoolId() {
   return currentOrganizationId() || Number(new URLSearchParams(window.location.search).get('school') ?? 0)
 }
 
-function organizationWorkspaceHref(schoolId: number) {
-  const moduleMatch = window.location.pathname.match(
-    /^\/dashboard\/organizations\/\d+\/(members|bulk-upload|print|exports|reports|settings)(?:\/|$)/,
-  )
-  const moduleName = moduleMatch?.[1]
-  return `/dashboard/organizations/${schoolId}/${moduleName ? `${moduleName}/` : ''}`
-}
-
 function organizationHomeHref(school: Pick<SchoolSummary, 'id' | 'organizationType'>) {
   if (school.organizationType === 'hospitality') {
     return `/dashboard/organizations/${school.id}/hospitality/?tab=overview`
@@ -193,14 +185,8 @@ function SchoolShell({
       userName={shell.user.displayName}
       userRole={shell.isSuperAdmin ? 'Platform administrator' : school ? 'Organization administrator' : 'Platform staff'}
       accent={school?.themePrimary || '#0b4bcb'}
-      schoolOptions={shell.isSuperAdmin && school ? shell.schools : undefined}
-      selectedSchool={school?.id ?? null}
-      onSchoolChange={(schoolId) => {
-        window.location.href = organizationWorkspaceHref(schoolId)
-      }}
       actions={(
         <>
-          {shell.isSuperAdmin && school ? <span className="school-super-admin-context">Viewing as Super Admin</span> : null}
           {!shell.isSuperAdmin && school ? <span className="school-workspace-label">{school.name}</span> : null}
           {school ? <DashboardHeaderTools nav={navigation} organizationId={school.id} enableSupport canRaiseSupport={!shell.isSuperAdmin} /> : null}
           <button type="button" className="manage-icon-button hospitality-theme-toggle" onClick={toggleTheme} aria-label={darkTheme ? 'Use light theme' : 'Use dark theme'} title={darkTheme ? 'Use light theme' : 'Use dark theme'}>{darkTheme ? <Sun size={16} /> : <Moon size={16} />}</button>
