@@ -18,3 +18,5 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             /home/tap2connectnepal.com/deploy.sh
+            cd /home/tap2connectnepal.com/public_html
+            ./venv/bin/python manage.py shell -c "from django.contrib.auth import get_user_model; from vcards.models import College, OrganizationTeamMember; from vcards.views import _resolve_user_workspace; from vcards.platform_access import get_allowed_platform_modules; o=College.objects.select_related('admin_user').filter(workspace_slug__iexact='jyapu-cafe').first(); u=o.admin_user if o else None; print('JYAPU_ACCESS_DIAGNOSTIC', {'organization_found': bool(o), 'organization_id': o.pk if o else None, 'admin_assigned': bool(u), 'admin_username': u.username if u else None, 'admin_active': u.is_active if u else None, 'admin_superuser': u.is_superuser if u else None, 'admin_staff': u.is_staff if u else None, 'platform_modules': get_allowed_platform_modules(u) if u else [], 'team_rows': list(OrganizationTeamMember.objects.filter(organization=o).values('user_id','role','status')) if o else [], 'normal_workspace': _resolve_user_workspace(u, surface='normal') if u else None})"
