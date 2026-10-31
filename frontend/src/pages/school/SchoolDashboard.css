@@ -42,6 +42,19 @@
 .school-technical-owner { max-width: 420px; margin-top: 14px; }
 @media (max-width: 720px) { .school-module-options { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
+/* Platform organization settings shares the hospitality theme preference. */
+.manage-app--hospitality-theme-dark .form-label { color:#e2e8f0; }
+.manage-app--hospitality-theme-dark .form-toggle-row { border-color:rgba(148,163,184,.22); color:#e2e8f0; }
+.manage-app--hospitality-theme-dark .form-file { border-color:#475569; color:#93c5fd; }
+.manage-app--hospitality-theme-dark .form-file strong { color:#f8fafc; }
+.manage-app--hospitality-theme-dark .school-module-picker { border-color:rgba(148,163,184,.2); }
+.manage-app--hospitality-theme-dark .school-module-picker>div:first-child p,.manage-app--hospitality-theme-dark .school-module-options small { color:#94a3b8; }
+.manage-app--hospitality-theme-dark .school-module-options label { border-color:rgba(148,163,184,.24); background:#1f2937; }
+.manage-app--hospitality-theme-dark .school-module-options label.is-selected { border-color:#3b82f6; background:#172a43; }
+.manage-app--hospitality-theme-dark .school-module-options strong { color:#f8fafc; }
+.manage-app--hospitality-theme-dark .form-actions { border-color:rgba(148,163,184,.22); background:rgba(15,23,42,.97); box-shadow:0 -8px 24px rgba(0,0,0,.25); }
+.manage-app--hospitality-theme-dark .school-message.is-success { border-color:#176b4d; background:#123a31; color:#bbf7d0; }
+
 .school-organization-filters {
   display: flex;
   align-items: center;

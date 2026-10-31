@@ -10,6 +10,7 @@ import Eye from 'lucide-react/dist/esm/icons/eye.js'
 import FileSpreadsheet from 'lucide-react/dist/esm/icons/file-spreadsheet.js'
 import IdCard from 'lucide-react/dist/esm/icons/id-card.js'
 import KeyRound from 'lucide-react/dist/esm/icons/key-round.js'
+import Moon from 'lucide-react/dist/esm/icons/moon.js'
 import Plus from 'lucide-react/dist/esm/icons/plus.js'
 import Printer from 'lucide-react/dist/esm/icons/printer.js'
 import Save from 'lucide-react/dist/esm/icons/save.js'
@@ -18,6 +19,7 @@ import Settings from 'lucide-react/dist/esm/icons/settings.js'
 import Trash2 from 'lucide-react/dist/esm/icons/trash-2.js'
 import Upload from 'lucide-react/dist/esm/icons/upload.js'
 import UserRound from 'lucide-react/dist/esm/icons/user-round.js'
+import Sun from 'lucide-react/dist/esm/icons/sun.js'
 import {
   Field,
   FileInput,
@@ -35,6 +37,7 @@ import { schoolWorkspaceNav, withSchool } from './schoolWorkspaceNav'
 import { dashboardMetrics, moduleConfig } from './organizationModuleConfig'
 import { HospitalitySettingsPage } from '../hospitality/HospitalitySettings'
 import './SchoolDashboard.css'
+import '../hospitality/HospitalityDashboardSystem.css'
 
 type Choice = { value: string; label: string }
 
@@ -169,6 +172,12 @@ function SchoolShell({
   children: ReactNode
 }) {
   const school = shell.currentSchool
+  const [darkTheme, setDarkTheme] = useState(() => window.localStorage.getItem('tap2connect:hospitality-theme') !== 'light')
+  const toggleTheme = () => setDarkTheme((current) => {
+    const next = !current
+    window.localStorage.setItem('tap2connect:hospitality-theme', next ? 'dark' : 'light')
+    return next
+  })
   const navigation = school
     ? schoolWorkspaceNav(school.id, shell.isSuperAdmin, school.organizationType)
     : platformNavigation(shell.platformAccess.allowedModules)
@@ -177,6 +186,7 @@ function SchoolShell({
       brand={school?.name || 'Tap2Connect'}
       brandDetail={school ? (shell.isSuperAdmin ? 'Super Admin · Organization workspace' : 'Organization administration') : 'Platform administration'}
       logo={school?.logo || brandLogo}
+      className={`manage-app--hospitality ${darkTheme ? 'manage-app--hospitality-theme-dark' : 'manage-app--hospitality-theme-light'}`}
       nav={navigation}
       title={title}
       subtitle={subtitle}
@@ -193,6 +203,7 @@ function SchoolShell({
           {shell.isSuperAdmin && school ? <span className="school-super-admin-context">Viewing as Super Admin</span> : null}
           {!shell.isSuperAdmin && school ? <span className="school-workspace-label">{school.name}</span> : null}
           {school ? <DashboardHeaderTools nav={navigation} organizationId={school.id} enableSupport canRaiseSupport={!shell.isSuperAdmin} /> : null}
+          <button type="button" className="manage-icon-button hospitality-theme-toggle" onClick={toggleTheme} aria-label={darkTheme ? 'Use light theme' : 'Use dark theme'} title={darkTheme ? 'Use light theme' : 'Use dark theme'}>{darkTheme ? <Sun size={16} /> : <Moon size={16} />}</button>
           {actions}
         </>
       )}
