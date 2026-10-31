@@ -1174,15 +1174,16 @@ function HospitalityAdminPanel() {
       const settingsPayload = await apiFetch<{ shell: HospitalityShell }>(
         `/api/organizations/${id}/venue/settings/`,
       );
+      const canReadMenu = settingsPayload.shell.capabilities.includes("menu");
       const canReadFeedback = settingsPayload.shell.capabilities.includes("feedback");
       const [payload, categories, items, feedbackPayload] = await Promise.all([
         apiFetch<Venue>(`/api/organizations/${id}/venue/`),
-        apiFetch<{ categories: Category[] }>(
-          `/api/organizations/${id}/venue/menu/categories/`,
-        ),
-        apiFetch<{ items: Item[] }>(
-          `/api/organizations/${id}/venue/menu/items/`,
-        ),
+        canReadMenu
+          ? apiFetch<{ categories: Category[] }>(`/api/organizations/${id}/venue/menu/categories/`)
+          : Promise.resolve({ categories: [] }),
+        canReadMenu
+          ? apiFetch<{ items: Item[] }>(`/api/organizations/${id}/venue/menu/items/`)
+          : Promise.resolve({ items: [] }),
         canReadFeedback
           ? apiFetch<{ feedback: Feedback[] }>(`/api/organizations/${id}/venue/feedback/`)
           : Promise.resolve({ feedback: [] }),
