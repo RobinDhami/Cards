@@ -351,6 +351,25 @@ def _resolve_user_workspace(user, surface='session', preferred_context_key=None)
             }
         return {'role': 'super_admin', 'destination': reverse('admin_dashboard'), 'message': ''}
 
+    contexts = _workspace_contexts(user)
+    # A user may still carry an old platform permission after being assigned
+    # as an organization administrator.  On the normal login surface, the
+    # explicit organization assignment must win; /platform/login/ continues
+    # to resolve the same account against its platform permissions.
+    if surface == 'normal' and contexts:
+        if len(contexts) == 1:
+            context = contexts[0]
+            return {**context, 'contexts': contexts, 'message': ''}
+        selected = next((context for context in contexts if context['key'] == preferred_context_key), None)
+        if selected:
+            return {**selected, 'contexts': contexts, 'message': ''}
+        return {
+            'role': 'workspace_choice',
+            'destination': '/workspaces/',
+            'contexts': contexts,
+            'message': '',
+        }
+
     platform_modules = get_allowed_platform_modules(user)
     if platform_modules:
         if surface == 'normal':
@@ -365,7 +384,6 @@ def _resolve_user_workspace(user, surface='session', preferred_context_key=None)
             'message': '',
         }
 
-    contexts = _workspace_contexts(user)
     if not contexts:
         return {
             'role': 'public',

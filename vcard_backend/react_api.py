@@ -53,7 +53,7 @@ from vcards.club_serializers import (
 )
 from vcards.organization_modules import IMPORT_COLUMN_LABELS, identifier_label, normalize_import_column, organization_module
 from vcards.organization_slugs import normalize_organization_slug, validate_organization_slug
-from vcards.organization_access import MODULE_KEYS, ROLE_CAPABILITIES, accessible_organizations, ensure_organization_modules, organization_role, repair_organization_access
+from vcards.organization_access import MODULE_KEYS, ROLE_CAPABILITIES, accessible_organizations, ensure_organization_modules, organization_role
 from vcards.usernames import create_organization_member, validate_member_username
 from vcards.platform_access import (
     PLATFORM_MODULES,
@@ -845,7 +845,6 @@ def session_login_api(request):
     user = authenticate(request, username=username, password=password)
     if user is None:
         return _json_error('Invalid username or password.', status=400)
-    repair_organization_access(user)
     preferred_context_key = None
     if request.session.get('tap2connect_workspace_user_id') == user.id:
         preferred_context_key = request.session.get('tap2connect_workspace_context')
