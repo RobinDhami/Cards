@@ -191,11 +191,14 @@ export function HospitalityOverview({ organizationId, publicIdentifier, organiza
     <div className="hospitality-overview">
       <div className="hospitality-overview-heading">
         <div><h2>{organizationName}</h2></div>
-        <label className="hospitality-date-filter"><CalendarDays size={16} aria-hidden="true" /><span className="sr-only">Overview date range</span>
-          <select value={days} onChange={(event) => onDaysChange(Number(event.target.value))}>
-            <option value={7}>Last 7 days</option><option value={30}>Last 30 days</option><option value={90}>Last 90 days</option>
-          </select>
-        </label>
+        <div className="hospitality-date-filter"><CalendarDays size={16} aria-hidden="true" />
+          <details className="hospitality-date-menu">
+            <summary aria-label="Overview date range">Last {days} days</summary>
+            <div role="menu">
+              {[7, 30, 90].map((option) => <button key={option} type="button" role="menuitem" className={days === option ? 'is-active' : ''} onClick={(event) => { onDaysChange(option); event.currentTarget.closest('details')?.removeAttribute('open') }}>Last {option} days</button>)}
+            </div>
+          </details>
+        </div>
       </div>
       {error ? <div className="manage-alert" role="alert">{error} <button type="button" onClick={onRetry}>Retry</button></div> : null}
       {loading && !data ? <div className="hospitality-overview-loading" role="status">Loading your overview…</div> : null}
