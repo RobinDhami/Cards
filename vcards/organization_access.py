@@ -76,6 +76,29 @@ def ensure_organization_owner(organization):
             member.save(update_fields=['role', 'status', 'updated_at'])
 
 
+def repair_organization_access(user):
+    """Activate access records that are already tied to a successful sign-in."""
+    if not user or not user.is_authenticated:
+        return
+    for organization in College.objects.filter(admin_user=user):
+        ensure_organization_owner(organization)
+    email = (user.email or '').strip()
+    if not email:
+        return
+    pending = OrganizationTeamMember.objects.filter(
+        user__isnull=True,
+        status='invited',
+        invite_email__iexact=email,
+    ).select_related('organization')
+    for invitation in pending:
+        if OrganizationTeamMember.objects.filter(organization=invitation.organization, user=user).exists():
+            invitation.delete()
+            continue
+        invitation.user = user
+        invitation.status = 'active'
+        invitation.save(update_fields=['user', 'status', 'updated_at'])
+
+
 def organization_role(user, organization):
     if not user or not user.is_authenticated:
         return ''

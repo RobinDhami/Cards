@@ -13,7 +13,7 @@ from openpyxl import load_workbook
 
 from card_designer.models import CardTemplate, CardTemplateVersion
 from professional_cards.models import ProfessionalProfile
-from vcards.models import CardBatch, CardBatchCard, College, PlatformSupportTicket, ProfileActivity, Skill, StudentCard, StudentProfile
+from vcards.models import CardBatch, CardBatchCard, College, OrganizationTeamMember, PlatformSupportTicket, ProfileActivity, Skill, StudentCard, StudentProfile
 
 
 class StudentDigitalCardTestMixin:
@@ -143,6 +143,24 @@ class WorkspaceLoginTests(TestCase):
             response.json()['redirectPath'],
             reverse('organization_vanity_dashboard', args=[organization.workspace_slug]),
         )
+
+    def test_login_activates_a_matching_organization_invitation(self):
+        user = self._user('invited.cafe.user', email='team@cafe.test')
+        organization = College.objects.create(name='Invited Cafe')
+        invitation = OrganizationTeamMember.objects.create(
+            organization=organization,
+            invite_email=user.email,
+            role='manager',
+            status='invited',
+        )
+
+        response = self._login(user.username)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['redirectPath'], reverse('organization_vanity_dashboard', args=[organization.workspace_slug]))
+        invitation.refresh_from_db()
+        self.assertEqual(invitation.user, user)
+        self.assertEqual(invitation.status, 'active')
 
     def test_vanity_workspace_is_private_and_injects_the_resolved_organization(self):
         owner = self._user('vanity.owner')
