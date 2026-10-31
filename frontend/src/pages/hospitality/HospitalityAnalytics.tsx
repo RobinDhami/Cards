@@ -87,8 +87,13 @@ export function HospitalityAnalytics({ organizationId }: { organizationId: numbe
     { label: 'Google review clicks', value: data.metrics.googleReviewClicks, previous: data.previousMetrics.googleReviewClicks, tint: 'amber', note: 'Clicks only · not posted reviews' },
     { label: 'Feedback submitted', value: data.metrics.feedbackSubmissions, previous: data.previousMetrics.feedbackSubmissions, tint: 'red' },
   ] : []
+  const selectedPreset = presets.find(([value]) => value === preset)?.[1] ?? 'Last 7 days'
+  const selectPreset = (nextPreset: string, target: HTMLButtonElement) => {
+    setPreset(nextPreset)
+    target.closest('details')?.removeAttribute('open')
+  }
   return <div className="hospitality-analytics-page">
-    <header className="hospitality-analytics-heading"><div className="hospitality-analytics-range"><CalendarDays size={17} /><label><span className="sr-only">Analytics date range</span><select value={preset} onChange={(event) => setPreset(event.target.value)}>{presets.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label>{preset === 'custom' ? <><label><span className="sr-only">Start date</span><input type="date" value={start} onChange={(event) => setStart(event.target.value)} /></label><label><span className="sr-only">End date</span><input type="date" value={end} onChange={(event) => setEnd(event.target.value)} /></label></> : null}</div></header>
+    <header className="hospitality-analytics-heading"><div className="hospitality-analytics-range"><CalendarDays size={17} /><details className="hospitality-analytics-range-menu"><summary aria-label="Analytics date range">{selectedPreset}</summary><div role="menu">{presets.map(([value, label]) => <button key={value} type="button" role="menuitem" className={preset === value ? 'is-active' : ''} onClick={(event) => selectPreset(value, event.currentTarget)}>{label}</button>)}</div></details>{preset === 'custom' ? <><label><span className="sr-only">Start date</span><input type="date" value={start} onChange={(event) => setStart(event.target.value)} /></label><label><span className="sr-only">End date</span><input type="date" value={end} onChange={(event) => setEnd(event.target.value)} /></label></> : null}</div></header>
     {error ? <div className="manage-alert" role="alert">{error}</div> : null}
     {loading && !data ? <div className="hospitality-analytics-empty" role="status">Loading analytics…</div> : null}
     {data ? <><div className={`hospitality-analytics-stat-grid${loading ? ' is-refreshing' : ''}`} aria-busy={loading}>{metricRows.map((metric) => <AnalyticsStatCard key={metric.label} {...metric} />)}</div>
