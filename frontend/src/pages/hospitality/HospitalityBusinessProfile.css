@@ -71,6 +71,29 @@
 .manage-app--hospitality-theme-dark .business-predefined-links article,
 .manage-app--hospitality-theme-dark .business-custom-app-list article { border-color: rgba(148,163,184,.2); background: #1f2937; }
 .manage-app--hospitality-theme-dark .business-add-link-panel { border-color: rgba(148,163,184,.28); background: #182235; }
+
+/* Profile editor: dark surfaces keep their own text, file controls and save bar readable. */
+.manage-app--hospitality-theme-dark .business-profile-toolbar{border-color:rgba(148,163,184,.28)}
+.manage-app--hospitality-theme-dark .business-profile-toolbar nav button{color:#aebcd0}
+.manage-app--hospitality-theme-dark .business-profile-toolbar nav button.is-active{color:#60a5fa;border-color:#3b82f6}
+.manage-app--hospitality-theme-dark .business-profile-form-card>header :is(h2,h3),.manage-app--hospitality-theme-dark .business-profile-form-card .form-label,.manage-app--hospitality-theme-dark .business-inline-check,.manage-app--hospitality-theme-dark .business-hours-row{color:#f1f5f9}
+.manage-app--hospitality-theme-dark .business-profile-form-card>header p,.manage-app--hospitality-theme-dark .business-profile-form-card :is(.form-field small,.business-hours header p,.business-hours-row em){color:#aebcd0}
+.manage-app--hospitality-theme-dark .business-hours{border-color:rgba(148,163,184,.22)}
+.manage-app--hospitality-theme-dark .business-hours-row{border-color:rgba(148,163,184,.16)}
+.manage-app--hospitality-theme-dark .business-hours-row input[type=time]{border-color:#3a465b;background:#101827;color:#f8fafc;color-scheme:dark}
+.manage-app--hospitality-theme-dark .business-hours-row button,.manage-app--hospitality-theme-dark .business-social-actions button{background:#243047;color:#dbe7f5}
+.manage-app--hospitality-theme-dark .business-profile-savebar{border-color:rgba(148,163,184,.22);background:rgba(15,23,42,.97);box-shadow:0 -8px 24px rgba(0,0,0,.25)}
+.manage-app--hospitality-theme-dark .business-profile-savebar strong{color:#f8fafc}
+.manage-app--hospitality-theme-dark .business-profile-savebar span{color:#aebcd0}
+.manage-app--hospitality-theme-dark .business-profile-remove{background:#3c1f2a;color:#ff8792}
+.manage-app--hospitality-theme-dark .business-profile-conflict{border-color:#6c3f4d;background:#2c1d25;color:#fecdd3}
+.manage-app--hospitality-theme-dark .business-profile-conflict strong{color:#fecdd3}
+.manage-app--hospitality-theme-dark .business-profile-conflict span{color:#fda4af}
+.manage-app--hospitality-theme-dark .image-adjust-trigger{border-color:#3b4a61;background:#172235}
+.manage-app--hospitality-theme-dark .image-adjust-thumb{border-color:#3b4a61;background:#101827;color:#5eead4}
+.manage-app--hospitality-theme-dark .image-adjust-trigger strong{color:#f1f5f9}
+.manage-app--hospitality-theme-dark .image-adjust-trigger small{color:#aebcd0}
+.manage-app--hospitality-theme-dark .image-adjust-choose{border-color:#168a77;background:#123a38;color:#5eead4}
 @media (max-width: 760px) {
   .business-predefined-links article,
   .business-custom-app-list article { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 9px; padding: 12px; }
