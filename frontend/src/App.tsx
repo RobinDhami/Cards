@@ -11,7 +11,6 @@ const OrganizationSupportTickets = lazy(() => import('./pages/dashboard/Organiza
 const CardOperations = lazy(() => import('./pages/dashboard/CardOperations').then((module) => ({ default: module.CardOperations })))
 const PublicProfessionalProfile = lazy(() => import('./pages/profiles/PublicProfessionalProfile').then((module) => ({ default: module.PublicProfessionalProfile })))
 const LoginPage = lazy(() => import('./pages/auth/LoginPage').then((module) => ({ default: module.LoginPage })))
-const PlatformLoginPage = lazy(() => import('./pages/auth/LoginPage').then((module) => ({ default: module.PlatformLoginPage })))
 const WorkspaceChooser = lazy(() => import('./pages/auth/LoginPage').then((module) => ({ default: module.WorkspaceChooser })))
 const ProfessionalEditLogin = lazy(() => import('./pages/professional/ProfessionalWorkspace').then((module) => ({ default: module.ProfessionalEditLogin })))
 const ProfessionalProfileDelete = lazy(() => import('./pages/professional/ProfessionalWorkspace').then((module) => ({ default: module.ProfessionalProfileDelete })))
@@ -110,7 +109,7 @@ function AppRoutes() {
   }
 
   if (path === '/platform/login/' || path === '/platform/login') {
-    return <PlatformLoginPage />
+    return <LoginPage />
   }
 
   if (path === '/workspaces/' || path === '/workspaces') {

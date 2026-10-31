@@ -130,11 +130,10 @@ function LoginForm({ surface }: { surface: LoginSurface }) {
 }
 
 export function LoginPage() {
-  return <LoginForm surface="normal" />
-}
-
-export function PlatformLoginPage() {
-  return <LoginForm surface="platform" />
+  const surface: LoginSurface = /^\/platform\/login\/?$/.test(window.location.pathname)
+    ? 'platform'
+    : 'normal'
+  return <LoginForm surface={surface} />
 }
 
 export function WorkspaceChooser() {
