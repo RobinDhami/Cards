@@ -853,7 +853,10 @@ def session_login_api(request):
         logout(request)
         return _json_error(workspace['message'], status=403)
     login(request, user)
-    return JsonResponse(_session_payload(request))
+    # Keep the redirect resolved on the normal-login surface.  This prevents a
+    # café or organization administrator from ever being sent to /dashboard/,
+    # which belongs only to the platform administration surface.
+    return JsonResponse(_session_payload(request, surface='normal'))
 
 
 @require_http_methods(['POST'])
