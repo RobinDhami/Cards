@@ -26,7 +26,7 @@ from .models import (
     VenueRewardsTransaction, VenueStaffLink,
     VenueStaffProfile, VenueTouchpoint,
 )
-from django.contrib.auth import get_user_model
+from django.contrib.auth import authenticate, get_user_model, login
 from vcards.models import CardBatchCard, College, OrganizationModuleAccess, OrganizationNotificationPreference, OrganizationServicePlan, OrganizationTeamMember
 from vcards.organization_access import (
     MODULE_CAPABILITIES, ROLE_CAPABILITIES, accessible_organizations, can_access_organization,
@@ -1306,7 +1306,59 @@ def _staff_payload(request, staff, include_private=False):
         }
     if include_private:
         payload['links'] = list(staff.links.values('id', 'link_type', 'label', 'value', 'display_order', 'is_active'))
+        payload['hasEditorAccess'] = bool(staff.editor_user_id)
+        payload['editorUsername'] = staff.editor_user.username if staff.editor_user_id else ''
+        payload['editLoginUrl'] = request.build_absolute_uri(f'/venue/{staff.venue.public_identifier}/staff/{staff.public_identifier}/edit-login/')
     return payload
+
+
+def _staff_editor(request, public_identifier, staff_identifier):
+    staff = get_object_or_404(
+        VenueStaffProfile.objects.select_related('venue__organization', 'editor_user').prefetch_related('links'),
+        venue__public_identifier=public_identifier, public_identifier=staff_identifier,
+    )
+    return staff if request.user.is_authenticated and staff.editor_user_id == request.user.id else None
+
+
+@require_http_methods(['GET', 'POST'])
+def venue_staff_edit_login_api(request, public_identifier, staff_identifier):
+    staff = get_object_or_404(VenueStaffProfile.objects.select_related('venue__organization', 'editor_user'), venue__public_identifier=public_identifier, public_identifier=staff_identifier)
+    redirect_path = f'/venue/{public_identifier}/staff/{staff_identifier}/edit/'
+    if request.method == 'GET':
+        return JsonResponse({'staffName': staff.name, 'organizationName': staff.venue.organization.name, 'hasEditorAccess': bool(staff.editor_user_id), 'authenticated': bool(request.user.is_authenticated and staff.editor_user_id == request.user.id), 'redirectPath': redirect_path})
+    data = _body(request) or {}
+    user = authenticate(request, username=str(data.get('username') or '').strip(), password=str(data.get('password') or ''))
+    if not user or user.pk != staff.editor_user_id:
+        return JsonResponse({'error': 'The username or password is not valid for this staff profile.'}, status=403)
+    login(request, user)
+    return JsonResponse({'redirectPath': redirect_path})
+
+
+@require_http_methods(['GET', 'POST'])
+def venue_staff_editor_api(request, public_identifier, staff_identifier):
+    staff = _staff_editor(request, public_identifier, staff_identifier)
+    if not staff:
+        return JsonResponse({'error': 'Sign in to edit this staff profile.'}, status=403)
+    if request.method == 'POST':
+        data = ((_body(request) if request.content_type.startswith('application/json') else request.POST) or {})
+        try:
+            for key in {'name', 'bio'}:
+                if key in data:
+                    setattr(staff, key, str(data.get(key) or '').strip())
+            if request.FILES.get('photo'):
+                staff.photo = request.FILES['photo']
+            if str(data.get('remove_photo') or '').lower() in {'1', 'true', 'yes', 'on'}:
+                staff.photo = None
+            staff.full_clean(); staff.save()
+            if 'links' in data:
+                _replace_staff_links(staff, data.get('links'))
+        except ValidationError as exc:
+            return JsonResponse({'error': '; '.join(exc.messages)}, status=400)
+    return JsonResponse({
+        'organization': {'name': staff.venue.organization.name, 'logo': _file_url(request, staff.venue.logo or staff.venue.organization.logo), 'coverImage': _file_url(request, staff.venue.cover_image or staff.venue.organization.cover_photo)},
+        'staff': _staff_payload(request, staff, include_private=True),
+        'locked': {'position': staff.position, 'message': 'Your role is managed by the café.'},
+    })
 
 
 def _touchpoint_destination(request, touchpoint, entry='qr'):
@@ -1370,6 +1422,23 @@ def venue_staff_cards_manage_api(request, organization_id):
                     value = data.get('is_active'); staff.is_active = str(value).lower() in {'1', 'true', 'yes', 'on'} if isinstance(value, str) else bool(value)
                 if request.FILES.get('photo'): staff.photo = request.FILES['photo']
                 if str(data.get('remove_photo') or '').lower() in {'1', 'true', 'yes', 'on'}: staff.photo = None
+                editor_username = str(data.get('editor_username') or '').strip()
+                editor_password = str(data.get('editor_password') or '')
+                if editor_username:
+                    User = get_user_model()
+                    if staff.editor_user_id:
+                        if User.objects.filter(username__iexact=editor_username).exclude(pk=staff.editor_user_id).exists():
+                            raise ValidationError('That staff profile username is already in use.')
+                        staff.editor_user.username = editor_username
+                        if editor_password:
+                            staff.editor_user.set_password(editor_password)
+                        staff.editor_user.save()
+                    else:
+                        if not editor_password:
+                            raise ValidationError('Set a password to enable staff profile editing.')
+                        if User.objects.filter(username__iexact=editor_username).exists():
+                            raise ValidationError('That staff profile username is already in use.')
+                        staff.editor_user = User.objects.create_user(username=editor_username, password=editor_password)
                 staff.full_clean(); staff.save()
                 _replace_staff_links(staff, data.get('links'))
                 if hasattr(staff, 'card_assignment'):
@@ -1410,7 +1479,7 @@ def venue_staff_cards_manage_api(request, organization_id):
         }
         _record_operational_activity(venue, f'staff_{action or "updated"}', activity_labels.get(action, 'Updated staff or card settings'), request)
 
-    staff = venue.staff_profiles.prefetch_related('links').select_related('card_assignment__physical_card')
+    staff = venue.staff_profiles.prefetch_related('links').select_related('card_assignment__physical_card', 'editor_user')
     touchpoints = venue.touchpoints.select_related('card_assignment__physical_card')
     eligible_cards = CardBatchCard.objects.filter(
         Q(organization=venue.organization) | (Q(organization__isnull=True) if request.user.is_superuser else Q(pk__in=[])),

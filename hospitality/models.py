@@ -228,6 +228,8 @@ class VenueLink(models.Model):
 
 class VenueStaffProfile(models.Model):
     venue = models.ForeignKey(VenueProfile, on_delete=models.CASCADE, related_name='staff_profiles')
+    # Profile-editor access is never a workspace membership or dashboard access.
+    editor_user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, related_name='venue_staff_editor_profile', blank=True, null=True)
     public_identifier = models.CharField(max_length=64, unique=True, default=public_identifier, editable=False)
     name = models.CharField(max_length=160)
     position = models.CharField(max_length=120, blank=True)
