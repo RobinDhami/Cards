@@ -1,54 +1,113 @@
 .manage-app--hospitality { overflow-x: hidden; }
-.hospitality-settings { display: grid; min-width: 0; gap: 1.25rem; }
-.hospitality-settings-tabs { display:flex; gap:.35rem; overflow-x:auto; border-bottom:1px solid #dbe4f0; }
-.hospitality-settings-tabs button { appearance:none; border:0; background:transparent; color:#52647e; font:inherit; font-weight:700; padding:.8rem 1rem; border-bottom:3px solid transparent; white-space:nowrap; cursor:pointer; }
-.hospitality-settings-tabs button.is-active { color:#145fe2; border-color:#145fe2; }
-.hospitality-settings-card { padding:1.4rem; }
-.hospitality-settings-heading,.hospitality-section-title { display:flex; gap:.75rem; align-items:flex-start; margin-bottom:1.2rem; }
-.hospitality-settings-heading h2,.hospitality-section-title h2,.hospitality-settings-card h2 { margin:0; color:#10244b; font-size:1.12rem; }
-.hospitality-settings-heading p,.hospitality-section-title p,.hospitality-muted,.hospitality-role-grid p,.hospitality-role-permissions p,.hospitality-unavailable p,.hospitality-advanced-form p { color:#62738f; margin:.25rem 0 0; line-height:1.45; }
-.hospitality-settings-callout { display:grid; gap:.6rem; padding:1rem; border:1px solid #bfdbfe; background:#eff6ff; border-radius:.8rem; color:#31537c; }
-.hospitality-settings-callout .manage-button { justify-self:start; }
-.hospitality-role-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.75rem; margin-top:1rem; }
-.hospitality-role-grid article { border:1px solid #dbe4f0; border-radius:.7rem; padding:.85rem; }
-.hospitality-role-grid article.is-current { border-color:#7db0ff; background:#eff6ff; }
-.hospitality-role-grid small,.hospitality-team-table small { color:#145fe2; display:block; margin-top:.35rem; }
-.hospitality-settings-layout { display:grid; grid-template-columns:minmax(0,1fr) 18rem; gap:1rem; }
-.hospitality-invite { display:grid; grid-template-columns:minmax(12rem,1fr) 10rem auto; align-items:end; gap:.7rem; }
-.hospitality-invite label,.hospitality-advanced-form label { display:grid; gap:.35rem; color:#1c3158; font-weight:700; font-size:.88rem; }
-.hospitality-invite input,.hospitality-invite select,.hospitality-advanced-form input,.hospitality-team-table select { border:1px solid #cbd8ea; min-height:2.6rem; border-radius:.5rem; background:#fff; color:#12264d; padding:.45rem .65rem; font:inherit; }
-.hospitality-muted { font-size:.82rem; }
-.hospitality-team-table { margin-top:1rem; border:1px solid #dbe4f0; border-radius:.7rem; overflow:auto; }
-.hospitality-team-table > div { min-width:700px; display:grid; grid-template-columns:1.1fr 1.25fr .8fr .6fr .7fr; align-items:center; gap:.6rem; padding:.72rem .85rem; border-bottom:1px solid #edf1f7; }
-.hospitality-team-table > div:last-child { border-bottom:0; }
-.hospitality-team-head { color:#59708f; font-size:.78rem; font-weight:800; text-transform:uppercase; letter-spacing:.03em; background:#f8fafc; }
-.hospitality-team-table em { color:#a56509; background:#fff4d8; padding:.24rem .45rem; border-radius:999px; font-style:normal; font-weight:700; width:max-content; font-size:.78rem; }
-.hospitality-team-table em.is-active { color:#087443; background:#ddf8ea; }
-.hospitality-role-permissions { display:grid; align-content:start; gap:.6rem; }
-.hospitality-role-permissions > div { border-top:1px solid #e4eaf3; padding-top:.7rem; }
-.hospitality-preference-list { display:grid; }
-.hospitality-preference-list label { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:1rem 0; border-top:1px solid #e4eaf3; cursor:pointer; }
-.hospitality-preference-list span { display:flex; align-items:flex-start; gap:.7rem; color:#145fe2; }
-.hospitality-preference-list strong { color:#12264d; }.hospitality-preference-list small { display:block; font-weight:400; color:#62738f; margin-top:.2rem; }
-.hospitality-preference-list input { width:1.15rem; height:1.15rem; accent-color:#145fe2; }
-.hospitality-unavailable { padding:1rem; border-radius:.7rem; border:1px solid #e2e8f0; background:#f8fafc; }.hospitality-unavailable strong { color:#172c54; }
-.hospitality-plan-card { display:grid; gap:1rem; }.hospitality-plan-form { display:grid; gap:1rem; }.hospitality-plan-fields { display:grid; grid-template-columns:1.4fr repeat(3,minmax(9rem,1fr)); gap:.75rem; }.hospitality-plan-fields label,.hospitality-plan-notes { display:grid; gap:.35rem; color:#1c3158; font-size:.84rem; font-weight:700; }.hospitality-plan-fields input,.hospitality-plan-fields select,.hospitality-plan-notes textarea { min-height:2.55rem; border:1px solid #cbd8ea; border-radius:.5rem; background:#fff; color:#12264d; padding:.45rem .65rem; font:inherit; }.hospitality-plan-notes textarea { min-height:5rem; resize:vertical; }.hospitality-module-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.65rem; }.hospitality-module-grid label { display:flex; min-height:4.3rem; gap:.65rem; align-items:flex-start; border:1px solid #dbe4f0; border-radius:.7rem; padding:.8rem; cursor:pointer; }.hospitality-module-grid label.is-enabled { border-color:#77a9ff; background:#eff6ff; }.hospitality-module-grid input { width:1rem; height:1rem; margin:.12rem 0 0; accent-color:#145fe2; }.hospitality-module-grid strong,.hospitality-module-grid small { display:block; }.hospitality-module-grid strong { color:#17305b; font-size:.88rem; }.hospitality-module-grid small { margin-top:.2rem; color:#677a95; font-size:.72rem; line-height:1.35; }.hospitality-plan-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1rem; }.hospitality-plan-summary > div { display:grid; gap:.25rem; border:1px solid #e1e8f2; border-radius:.7rem; padding:.85rem; }.hospitality-plan-summary small { color:#657893; font-weight:700; }.hospitality-plan-summary strong { color:#12264d; }.hospitality-plan-summary span,.hospitality-plan-summary p { margin:0; color:#62738f; font-size:.82rem; line-height:1.45; }
-.manage-app--hospitality-theme-dark .hospitality-plan-fields label,.manage-app--hospitality-theme-dark .hospitality-plan-notes { color:#aebcd2; }.manage-app--hospitality-theme-dark .hospitality-plan-fields input,.manage-app--hospitality-theme-dark .hospitality-plan-fields select,.manage-app--hospitality-theme-dark .hospitality-plan-notes textarea { border-color:#31415c; background:#111b2d; color:#edf3ff; }.manage-app--hospitality-theme-dark .hospitality-module-grid label { border-color:#34425b; background:#1c283b; }.manage-app--hospitality-theme-dark .hospitality-module-grid label.is-enabled { border-color:#3c7ded; background:#17345e; }.manage-app--hospitality-theme-dark .hospitality-module-grid strong,.manage-app--hospitality-theme-dark .hospitality-plan-summary strong { color:#f4f7ff; }.manage-app--hospitality-theme-dark .hospitality-module-grid small,.manage-app--hospitality-theme-dark .hospitality-plan-summary small,.manage-app--hospitality-theme-dark .hospitality-plan-summary span,.manage-app--hospitality-theme-dark .hospitality-plan-summary p { color:#a9b9d2; }.manage-app--hospitality-theme-dark .hospitality-plan-summary > div { border-color:#34425b; background:#172237; }
-
-/* Settings uses nested controls, status chips and tables that need their own dark values. */
-.manage-app--hospitality-theme-dark .hospitality-settings { color:#e2e8f0; }
-.manage-app--hospitality-theme-dark .hospitality-settings :is(.hospitality-settings-heading svg,.hospitality-section-title svg,.hospitality-role-permissions>svg) { color:#93c5fd; }
-.manage-app--hospitality-theme-dark .hospitality-settings-callout strong { color:#dbeafe; }
-.manage-app--hospitality-theme-dark .hospitality-role-grid article { background:#1f2937; }
-.manage-app--hospitality-theme-dark .hospitality-role-grid small,.manage-app--hospitality-theme-dark .hospitality-team-table small { color:#93c5fd; }
-.manage-app--hospitality-theme-dark .hospitality-team-table { background:#1f2937; }
-.manage-app--hospitality-theme-dark .hospitality-team-table>div { color:#dbe7f5; }
-.manage-app--hospitality-theme-dark .hospitality-team-table em { border:1px solid #714c17; background:#35280f; color:#fcd68a; }
-.manage-app--hospitality-theme-dark .hospitality-team-table em.is-active { border-color:#176b4d; background:#123a31; color:#86efc4; }
-.manage-app--hospitality-theme-dark .hospitality-role-permissions>div { color:#dbe7f5; }
-.manage-app--hospitality-theme-dark .hospitality-preference-list span { color:#93c5fd; }
-.manage-app--hospitality-theme-dark .hospitality-preference-list input { accent-color:#3b82f6; }
-.manage-app--hospitality-theme-dark .hospitality-advanced-form input::placeholder,.manage-app--hospitality-theme-dark .hospitality-invite input::placeholder { color:#94a3b8; }
-.hospitality-advanced-form { display:grid; max-width:32rem; gap:.7rem; }.hospitality-advanced-form .manage-button { justify-self:start; }.is-spinning { animation:hospitality-spin .75s linear infinite; }@keyframes hospitality-spin { to { transform:rotate(360deg); } }
-@media (max-width: 900px) { .hospitality-settings-layout { grid-template-columns:1fr; }.hospitality-role-grid { grid-template-columns:1fr; }.hospitality-invite { grid-template-columns:1fr; }.hospitality-invite .manage-button { justify-content:center; }.hospitality-plan-fields,.hospitality-module-grid,.hospitality-plan-summary { grid-template-columns:1fr; } }
-@media (max-width: 620px) { .hospitality-settings-card { padding:1rem; }.hospitality-settings-tabs { margin:0 -1rem; padding:0 1rem; }.hospitality-settings-tabs button { padding:.75rem .7rem; }.hospitality-settings-callout .manage-button { width:100%; justify-content:center; } }
+.hospitality-settings { display: grid; min-width: 0; gap: 1.4rem; }
+.hospitality-settings-tabs { display: flex; gap: 1.4rem; overflow-x: auto; border-bottom: 1px solid #dbe4f0; scrollbar-width: none; }
+.hospitality-settings-tabs::-webkit-scrollbar { display: none; }
+.hospitality-settings-tabs button { appearance: none; min-height: 48px; border: 0; border-bottom: 3px solid transparent; background: transparent; padding: .75rem .4rem; color: #52647e; cursor: pointer; font: inherit; font-size: 13px; font-weight: 650; white-space: nowrap; }
+.hospitality-settings-tabs button.is-active { border-color: #3b82f6; color: #2563eb; }
+.hospitality-settings-card { padding: 1.8rem; }
+.hospitality-settings-heading, .hospitality-section-title { display: flex; align-items: flex-start; gap: .75rem; margin-bottom: 1.6rem; }
+.hospitality-settings-heading h2, .hospitality-section-title h2, .hospitality-settings-card h2 { margin: 0; color: #10244b; font-size: 18px; font-weight: 650; }
+.hospitality-settings-heading p, .hospitality-section-title p, .hospitality-muted, .hospitality-role-grid p, .hospitality-role-permissions p, .hospitality-unavailable p, .hospitality-advanced-form p { margin: .35rem 0 0; color: #62738f; line-height: 1.45; }
+.hospitality-settings-callout { display: grid; gap: .6rem; border: 1px solid #bfdbfe; border-radius: .7rem; background: #eff6ff; padding: 1rem; color: #31537c; }
+.hospitality-settings-callout .manage-button { justify-self: start; }
+.hospitality-role-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin-top: 1rem; }
+.hospitality-role-grid article { border: 1px solid #dbe4f0; border-radius: .7rem; padding: .9rem; }
+.hospitality-role-grid article.is-current { border-color: #7db0ff; background: #eff6ff; }
+.hospitality-role-grid small { display: block; margin-top: .35rem; color: #145fe2; }
+.hospitality-team-access { width: 100%; max-width: none; }
+.hospitality-invite { display: grid; grid-template-columns: minmax(15rem, 1.8fr) minmax(10rem, .9fr) auto auto; align-items: end; gap: 1rem; }
+.hospitality-invite label, .hospitality-advanced-form label { display: grid; gap: .45rem; color: #1c3158; font-size: 12px; font-weight: 650; }
+.hospitality-invite input, .hospitality-invite select, .hospitality-advanced-form input, .hospitality-team-table select { min-height: 44px; border: 1px solid #cbd8ea; border-radius: 7px; background: #fff; padding: .55rem .8rem; color: #12264d; font: inherit; font-size: 13px; }
+.hospitality-invite input::placeholder { color: #8291aa; }
+.hospitality-role-link { display: inline-flex; min-height: 44px; align-items: center; align-self: end; gap: .45rem; border: 0; background: transparent; padding: 0; color: #3b82f6; cursor: pointer; font: inherit; font-size: 12px; text-decoration: underline; white-space: nowrap; }
+.hospitality-invite-button { min-width: 118px; min-height: 44px; border-radius: 7px; }
+.hospitality-role-permissions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .65rem; margin-top: 1rem; }
+.hospitality-role-permissions > div { border: 1px solid #dbe4f0; border-radius: 7px; padding: .75rem; }
+.hospitality-role-permissions p { font-size: 11px; }
+.hospitality-team-table { margin-top: 1.5rem; overflow: visible; border: 1px solid #dbe4f0; border-radius: 9px; }
+.hospitality-team-table > div { display: grid; grid-template-columns: minmax(16rem, 1.8fr) minmax(8rem, .75fr) minmax(7rem, .65fr) 74px; align-items: center; gap: 1rem; min-height: 68px; border-bottom: 1px solid #e7edf5; padding: .75rem 1.4rem; }
+.hospitality-team-table > div:last-child { border-bottom: 0; }
+.hospitality-team-head { min-height: 52px !important; border-radius: 9px 9px 0 0; background: transparent !important; color: #59708f; font-size: 11px; font-weight: 650; letter-spacing: 0 !important; text-transform: none !important; }
+.hospitality-team-head span:last-child { text-align: center; }
+.hospitality-team-member { display: flex; min-width: 0; align-items: center; gap: 2.2rem; }
+.hospitality-team-member > span:first-child { min-width: 8.5rem; }
+.hospitality-team-member strong, .hospitality-team-member small { display: block; }
+.hospitality-team-member small { margin-top: .25rem; color: #8ea0bb; }
+.hospitality-team-email { overflow: hidden; color: #9badc7; text-overflow: ellipsis; white-space: nowrap; }
+.hospitality-role-badge { width: max-content; border: 1px solid #40506a; border-radius: 7px; padding: .55rem .85rem; color: inherit; font-weight: 600; }
+.hospitality-team-table em { display: inline-flex; width: max-content; align-items: center; gap: .45rem; border: 1px solid #a56509; border-radius: 999px; background: #fff4d8; padding: .42rem .75rem; color: #a56509; font-size: 11px; font-style: normal; font-weight: 650; }
+.hospitality-team-table em i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; }
+.hospitality-team-table em.is-active { border-color: #0b7d56; background: #e8fff5; color: #0b8f63; }
+.hospitality-member-actions { position: relative; display: grid; justify-items: center; }
+.hospitality-member-menu-button { display: inline-grid; width: 48px; height: 38px; place-items: center; border: 1px solid #cbd8ea; border-radius: 7px; background: transparent; color: #64748b; cursor: pointer; }
+.hospitality-member-menu { position: absolute; top: calc(100% + 6px); right: 0; z-index: 5; min-width: 145px; overflow: hidden; border: 1px solid #dbe4f0; border-radius: 7px; background: #fff; box-shadow: 0 12px 28px rgba(15, 23, 42, .16); }
+.hospitality-member-menu button, .hospitality-member-menu span { display: block; width: 100%; border: 0; background: transparent; padding: .7rem .8rem; color: #334155; font: inherit; font-size: 12px; text-align: left; }
+.hospitality-member-menu button { color: #dc2626; cursor: pointer; }
+.hospitality-member-menu button:hover { background: #fff1f2; }
+.hospitality-preference-list { display: grid; }
+.hospitality-preference-list label { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-top: 1px solid #e4eaf3; padding: 1rem 0; cursor: pointer; }
+.hospitality-preference-list span { display: flex; align-items: flex-start; gap: .7rem; color: #145fe2; }
+.hospitality-preference-list strong { color: #12264d; }
+.hospitality-preference-list input { width: 1.15rem; height: 1.15rem; accent-color: #145fe2; }
+.hospitality-unavailable { border: 1px solid #e2e8f0; border-radius: .7rem; background: #f8fafc; padding: 1rem; }
+.hospitality-unavailable strong { color: #172c54; }
+.hospitality-advanced-form { display: grid; max-width: 32rem; gap: .8rem; }
+.hospitality-advanced-form .manage-button { justify-self: start; }
+.is-spinning { animation: hospitality-spin .75s linear infinite; }
+@keyframes hospitality-spin { to { transform: rotate(360deg); } }
+.manage-app--hospitality-theme-dark .hospitality-settings { color: #e2e8f0; }
+.manage-app--hospitality-theme-dark .hospitality-settings-tabs { border-color: rgba(148, 163, 184, .24); }
+.manage-app--hospitality-theme-dark .hospitality-settings-tabs button { color: #a7b5cb; }
+.manage-app--hospitality-theme-dark .hospitality-settings-tabs button.is-active { border-color: #60a5fa; color: #74adff; }
+.manage-app--hospitality-theme-dark .hospitality-settings-card { border-color: #354760 !important; background: #19263a !important; }
+.manage-app--hospitality-theme-dark .hospitality-settings :is(.hospitality-settings-heading svg, .hospitality-section-title svg) { color: #93c5fd; }
+.manage-app--hospitality-theme-dark .hospitality-section-title p, .manage-app--hospitality-theme-dark .hospitality-role-permissions p { color: #9aabc4; }
+.manage-app--hospitality-theme-dark .hospitality-invite label { color: #eef4ff; }
+.manage-app--hospitality-theme-dark .hospitality-invite :is(input, select), .manage-app--hospitality-theme-dark .hospitality-team-table select, .manage-app--hospitality-theme-dark .hospitality-advanced-form input { border-color: #475a76 !important; background: #101b2d !important; color: #f6f8fc !important; }
+.manage-app--hospitality-theme-dark .hospitality-role-permissions > div, .manage-app--hospitality-theme-dark .hospitality-team-table { border-color: #3a4b65; }
+.manage-app--hospitality-theme-dark .hospitality-team-table > div { border-color: #32435c; }
+.manage-app--hospitality-theme-dark .hospitality-team-head { color: #b9c6d9; }
+.manage-app--hospitality-theme-dark .hospitality-team-member small, .manage-app--hospitality-theme-dark .hospitality-team-email { color: #9aacc5; }
+.manage-app--hospitality-theme-dark .hospitality-role-badge { border-color: #475a76; color: #f8fafc; }
+.manage-app--hospitality-theme-dark .hospitality-team-table em { border-color: #85601d; background: #362d17; color: #f6c85f; }
+.manage-app--hospitality-theme-dark .hospitality-team-table em.is-active { border-color: #087d59; background: #0b4036; color: #54e5ad; }
+.manage-app--hospitality-theme-dark .hospitality-member-menu-button { border-color: #475a76; background: #1d2c42; color: #d5deec; }
+.manage-app--hospitality-theme-dark .hospitality-member-menu { border-color: #475a76; background: #142135; box-shadow: 0 14px 30px rgba(0, 0, 0, .32); }
+.manage-app--hospitality-theme-dark .hospitality-member-menu span { color: #a9b8ce; }
+.manage-app--hospitality-theme-dark .hospitality-member-menu button { color: #fda4af; }
+.manage-app--hospitality-theme-dark .hospitality-member-menu button:hover { background: #3a1e2a; }
+.manage-app--hospitality-theme-dark .dashboard-header-tools .manage-icon-button { border-color: rgba(148, 163, 184, .28) !important; background: #273449 !important; color: #e2e8f0 !important; }
+.manage-app--hospitality-theme-dark .hospitality-settings-callout { border-color: #35547a; background: #172a43; color: #bfdbfe; }
+.manage-app--hospitality-theme-dark .hospitality-role-grid article { border-color: #34425b; background: #1c283b; }
+.manage-app--hospitality-theme-dark .hospitality-role-grid article.is-current { border-color: #3c7ded; background: #17345e; }
+.manage-app--hospitality-theme-dark .hospitality-preference-list label { border-color: rgba(148, 163, 184, .18); }
+.manage-app--hospitality-theme-dark .hospitality-preference-list span { color: #93c5fd; }
+.manage-app--hospitality-theme-dark .hospitality-preference-list input { accent-color: #3b82f6; }
+.manage-app--hospitality-theme-dark .hospitality-unavailable { border-color: rgba(148, 163, 184, .18); background: #172235; color: #cbd5e1; }
+.manage-app--hospitality-theme-light .hospitality-settings .manage-button.is-primary { border-color: #2563eb !important; background: #2563eb !important; color: #fff !important; }
+@media (max-width: 1000px) {
+  .hospitality-invite { grid-template-columns: minmax(14rem, 1fr) minmax(10rem, .65fr) auto; }
+  .hospitality-invite-button { grid-column: 3; }
+  .hospitality-role-link { grid-column: 1 / 3; grid-row: 2; min-height: 34px; }
+  .hospitality-team-table { overflow-x: auto; }
+  .hospitality-team-table > div { min-width: 760px; }
+}
+@media (max-width: 700px) {
+  .hospitality-settings-card { padding: 1rem; }
+  .hospitality-settings-tabs { margin: 0 -.25rem; gap: .65rem; }
+  .hospitality-settings-tabs button { min-height: 43px; padding: .65rem .55rem; }
+  .hospitality-role-grid, .hospitality-role-permissions { grid-template-columns: 1fr; }
+  .hospitality-invite { grid-template-columns: 1fr; gap: .8rem; }
+  .hospitality-role-link, .hospitality-invite-button { grid-column: 1; grid-row: auto; }
+  .hospitality-invite-button { width: 100%; }
+  .hospitality-team-table { border: 0; border-radius: 0; overflow: visible; }
+  .hospitality-team-head { display: none !important; }
+  .hospitality-team-table > div.hospitality-team-row { min-width: 0; grid-template-columns: 1fr auto; gap: .85rem; border: 1px solid #dbe4f0; border-radius: 8px; padding: 1rem; }
+  .hospitality-team-member { grid-column: 1 / -1; justify-content: space-between; gap: 1rem; }
+  .hospitality-team-member > span:first-child { min-width: 0; }
+  .hospitality-team-email { max-width: 52%; }
+  .hospitality-role-badge, .hospitality-team-table select { grid-column: 1; }
+  .hospitality-team-table em { grid-column: 1; }
+  .hospitality-member-actions { grid-column: 2; grid-row: 2 / span 2; align-self: center; }
+  .manage-app--hospitality-theme-dark .hospitality-team-table > div.hospitality-team-row { border-color: #3a4b65; }
+}

@@ -7,12 +7,12 @@ import ExternalLink from "lucide-react/dist/esm/icons/external-link.js";
 import KeyRound from "lucide-react/dist/esm/icons/key-round.js";
 import LoaderCircle from "lucide-react/dist/esm/icons/loader-circle.js";
 import Mail from "lucide-react/dist/esm/icons/mail.js";
+import CircleHelp from "lucide-react/dist/esm/icons/circle-help.js";
+import Ellipsis from "lucide-react/dist/esm/icons/ellipsis.js";
 import Moon from "lucide-react/dist/esm/icons/moon.js";
 import Plus from "lucide-react/dist/esm/icons/plus.js";
 import Settings from "lucide-react/dist/esm/icons/settings.js";
 import Sun from "lucide-react/dist/esm/icons/sun.js";
-import Trash2 from "lucide-react/dist/esm/icons/trash-2.js";
-import Users from "lucide-react/dist/esm/icons/users.js";
 import { ManageShell } from "../../components/manage/ManageShell";
 import { DashboardHeaderTools } from "../../components/manage/DashboardHeaderTools";
 import { HospitalityActivityNotifications } from "./HospitalityActivityNotifications";
@@ -52,6 +52,8 @@ export function HospitalitySettingsPage() {
   const [saving, setSaving] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<Role>("manager");
+  const [permissionsOpen, setPermissionsOpen] = useState(false);
+  const [memberMenuId, setMemberMenuId] = useState<number | null>(null);
   const [organizationCode, setOrganizationCode] = useState("");
   const [darkTheme, setDarkTheme] = useState(() => window.localStorage.getItem("tap2connect:hospitality-theme") !== "light");
   const toggleTheme = () => setDarkTheme((current) => {
@@ -109,7 +111,7 @@ export function HospitalitySettingsPage() {
     schoolOptions={shell.schools.length > 1 ? shell.schools : undefined} selectedSchool={school.id}
     workspaceSelectorLabel="Organization workspace"
     onSchoolChange={(schoolId) => { window.location.href = organizationWorkspaceHref(schoolId, "settings"); }}
-    actions={<><HospitalityActivityNotifications organizationId={school.id} /><DashboardHeaderTools nav={navigation} organizationId={school.id} enableSupport canRaiseSupport={!shell.isSuperAdmin} /><button type="button" className="manage-icon-button hospitality-theme-toggle" onClick={toggleTheme} aria-label={darkTheme ? "Use light theme" : "Use dark theme"} title={darkTheme ? "Use light theme" : "Use dark theme"}>{darkTheme ? <Sun size={16} /> : <Moon size={16} />}</button><a className="manage-button is-primary" href={`/venue/${school.publicIdentifier}/?preview=dashboard`} target="_blank" rel="noreferrer"><Eye size={14} />Preview profile</a></>}
+    actions={<><HospitalityActivityNotifications organizationId={school.id} /><DashboardHeaderTools nav={navigation} organizationId={school.id} enableSupport canRaiseSupport={!shell.isSuperAdmin} /><button type="button" className="manage-icon-button hospitality-theme-toggle" onClick={toggleTheme} aria-label={darkTheme ? "Use light theme" : "Use dark theme"} title={darkTheme ? "Use light theme" : "Use dark theme"}>{darkTheme ? <Sun size={16} /> : <Moon size={16} />}</button><a className="manage-button is-primary hospitality-preview-action" href={`/venue/${school.publicIdentifier}/?preview=dashboard`} target="_blank" rel="noreferrer"><Eye size={14} />Preview profile</a></>}
   >
     <div className="hospitality-settings">
       {error ? <div className="manage-alert school-message" role="alert">{error}</div> : null}
@@ -124,12 +126,24 @@ export function HospitalitySettingsPage() {
         <div className="hospitality-role-grid">{roles.map((role) => <article key={role.value} className={shell.role === role.value ? "is-current" : ""}><strong>{role.label}</strong><p>{role.detail}</p>{shell.role === role.value ? <small>Current role</small> : null}</article>)}</div>
       </section> : null}
 
-      {tab === "Staff & Access" && owner ? <section className="hospitality-settings-layout">
-        <article className="manage-card hospitality-settings-card"><div className="hospitality-section-title"><div><h2>Dashboard team</h2></div></div>
-          <form className="hospitality-invite" onSubmit={invite}><label>Email address<input type="email" value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} required placeholder="person@example.com" /></label><label>Role<select value={inviteRole} onChange={(event) => setInviteRole(event.target.value as Role)}>{roles.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}</select></label><button className="manage-button is-primary" disabled={saving}><Plus size={15} />Invite</button></form>
-          <div className="hospitality-team-table" role="table"><div role="row" className="hospitality-team-head"><span>Name</span><span>Email</span><span>Role</span><span>Status</span><span>Actions</span></div>{(payload.team || []).map((member) => <div role="row" key={member.id}><strong>{member.name}{member.isCurrentUser ? <small> You</small> : null}</strong><span>{member.email}</span><select aria-label={`${member.name} role`} value={member.role} onChange={(event) => changeRole(member, event.target.value as Role)} disabled={saving}><option value="owner">Owner</option><option value="manager">Manager</option><option value="menu_editor">Menu editor</option></select><em className={member.status === "active" ? "is-active" : ""}>{member.status === "active" ? "Active" : "Invited"}</em><button type="button" className="manage-button is-danger" onClick={() => removeMember(member)} disabled={saving}><Trash2 size={14} />Remove</button></div>)}</div>
-        </article>
-        <aside className="manage-card hospitality-settings-card hospitality-role-permissions"><Users size={20} /><h2>Role permissions</h2>{roles.map((role) => <div key={role.value}><strong>{role.label}</strong><p>{role.detail}</p></div>)}</aside>
+      {tab === "Staff & Access" && owner ? <section className="manage-card hospitality-settings-card hospitality-team-access">
+        <div className="hospitality-section-title"><div><h2>Team access</h2><p>Invite people and manage access to your workspace.</p></div></div>
+        <form className="hospitality-invite" onSubmit={invite}>
+          <label>Email address<input type="email" value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} required placeholder="person@example.com" /></label>
+          <label>Role<select value={inviteRole} onChange={(event) => setInviteRole(event.target.value as Role)}>{roles.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}</select></label>
+          <button type="button" className="hospitality-role-link" aria-expanded={permissionsOpen} onClick={() => setPermissionsOpen((current) => !current)}><CircleHelp size={16} />View role permissions</button>
+          <button className="manage-button is-primary hospitality-invite-button" disabled={saving}>{saving ? <LoaderCircle size={16} className="is-spinning" /> : <Plus size={17} />}Invite</button>
+        </form>
+        {permissionsOpen ? <div className="hospitality-role-permissions" role="region" aria-label="Role permissions">{roles.map((role) => <div key={role.value}><strong>{role.label}</strong><p>{role.detail}</p></div>)}</div> : null}
+        <div className="hospitality-team-table" role="table" aria-label="Workspace team">
+          <div role="row" className="hospitality-team-head"><span>Member</span><span>Role</span><span>Status</span><span>Action</span></div>
+          {(payload.team || []).map((member) => <div role="row" className="hospitality-team-row" key={member.id}>
+            <div className="hospitality-team-member"><span><strong>{member.name}</strong>{member.isCurrentUser ? <small>You</small> : null}</span><span className="hospitality-team-email">{member.email}</span></div>
+            {member.isCurrentUser ? <span className="hospitality-role-badge">{roles.find((role) => role.value === member.role)?.label}</span> : <select aria-label={`${member.name} role`} value={member.role} onChange={(event) => changeRole(member, event.target.value as Role)} disabled={saving}><option value="owner">Owner</option><option value="manager">Manager</option><option value="menu_editor">Menu editor</option></select>}
+            <em className={member.status === "active" ? "is-active" : ""}><i aria-hidden="true" />{member.status === "active" ? "Active" : "Invited"}</em>
+            <div className="hospitality-member-actions"><button type="button" className="hospitality-member-menu-button" aria-label={`Actions for ${member.name}`} aria-expanded={memberMenuId === member.id} onClick={() => setMemberMenuId((current) => current === member.id ? null : member.id)}><Ellipsis size={19} /></button>{memberMenuId === member.id ? <div className="hospitality-member-menu">{member.isCurrentUser ? <span>Current account</span> : <button type="button" onClick={() => { setMemberMenuId(null); removeMember(member); }} disabled={saving}>Remove access</button>}</div> : null}</div>
+          </div>)}
+        </div>
       </section> : null}
 
       {tab === "Notifications" ? <section className="manage-card hospitality-settings-card"><div className="hospitality-settings-heading"><Bell size={20} /><div><h2>Email notifications</h2></div></div><div className="hospitality-preference-list">{[
