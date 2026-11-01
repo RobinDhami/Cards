@@ -4,7 +4,6 @@ import LayoutList from 'lucide-react/dist/esm/icons/layout-list.js'
 import LayoutDashboard from 'lucide-react/dist/esm/icons/layout-dashboard.js'
 import MessageSquare from 'lucide-react/dist/esm/icons/message-square.js'
 import Printer from 'lucide-react/dist/esm/icons/printer.js'
-import QrCode from 'lucide-react/dist/esm/icons/qr-code.js'
 import Settings from 'lucide-react/dist/esm/icons/settings.js'
 import Upload from 'lucide-react/dist/esm/icons/upload.js'
 import Utensils from 'lucide-react/dist/esm/icons/utensils.js'
@@ -13,6 +12,7 @@ import Palette from 'lucide-react/dist/esm/icons/palette.js'
 import Info from 'lucide-react/dist/esm/icons/info.js'
 import Store from 'lucide-react/dist/esm/icons/store.js'
 import Gift from 'lucide-react/dist/esm/icons/gift.js'
+import QrCode from 'lucide-react/dist/esm/icons/qr-code.js'
 import { queryString } from '../../lib/api'
 import { platformNavigation } from '../../components/manage/platformNavigation'
 import { workspaceMemberNavigation } from './organizationModuleConfig'
@@ -40,12 +40,13 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
         { label: 'Staff & Cards', href: vanity ? organizationWorkspaceHref(schoolId, 'staff') : `${hospitalityRoot}/?tab=staff`, icon: Users, active: section === 'staff' },
         { label: 'Rewards', href: vanity ? organizationWorkspaceHref(schoolId, 'loyalty') : `${hospitalityRoot}/?tab=loyalty`, icon: Gift, active: section === 'loyalty' },
         { label: 'Members', href: vanity ? organizationWorkspaceHref(schoolId, 'members') : `${hospitalityRoot}/?tab=members`, icon: Users, active: section === 'members' },
+        { label: 'Ordering', href: vanity ? organizationWorkspaceHref(schoolId, 'orders') : `${hospitalityRoot}/?tab=orders`, icon: QrCode, active: section === 'orders' },
         { label: 'Analytics', href: vanity ? organizationWorkspaceHref(schoolId, 'analytics') : `${hospitalityRoot}/?tab=analytics`, icon: BarChart3, active: section === 'analytics' },
         { label: 'Settings', href: vanity ? organizationWorkspaceHref(schoolId, 'settings') : `${workspaceRoot}/settings/`, icon: Settings, active: section === 'settings' || path.includes('/settings') },
       ]
       const capabilityFor: Record<string, string> = {
         Overview: 'overview', Profile: 'profile', Menu: 'menu', Feedback: 'feedback',
-        'Staff & Cards': 'staff', Rewards: 'loyalty', Members: 'loyalty', Analytics: 'analytics', Settings: 'settings',
+        'Staff & Cards': 'staff', Rewards: 'loyalty', Members: 'loyalty', Ordering: 'ordering', Analytics: 'analytics', Settings: 'settings',
       }
       return capabilities ? items.filter((item) => capabilities.includes(capabilityFor[item.label])) : items
     }

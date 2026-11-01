@@ -6,8 +6,8 @@ from .models import College, OrganizationModuleAccess, OrganizationTeamMember
 
 
 ROLE_CAPABILITIES = {
-    'owner': {'overview', 'profile', 'menu', 'feedback', 'staff', 'loyalty', 'analytics', 'settings', 'team'},
-    'manager': {'overview', 'profile', 'menu', 'feedback', 'staff', 'loyalty', 'analytics'},
+    'owner': {'overview', 'profile', 'menu', 'feedback', 'staff', 'loyalty', 'ordering', 'analytics', 'settings', 'team'},
+    'manager': {'overview', 'profile', 'menu', 'feedback', 'staff', 'loyalty', 'ordering', 'analytics'},
     'menu_editor': {'menu'},
 }
 
@@ -19,7 +19,7 @@ MODULE_CAPABILITIES = {
     'staff_cards': {'staff'},
     'loyalty': {'loyalty'},
     'analytics': {'analytics'},
-    'ordering': set(),  # Reserved until the ordering workspace is released.
+    'ordering': {'ordering'},
 }
 MODULE_KEYS = tuple(MODULE_CAPABILITIES)
 DEFAULT_HOSPITALITY_MODULES = {'overview', 'profile', 'menu', 'feedback', 'staff_cards', 'loyalty', 'analytics'}

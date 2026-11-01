@@ -262,7 +262,7 @@ class VenueStaffLink(models.Model):
 
 
 class VenueTouchpoint(models.Model):
-    DESTINATIONS = [('profile', 'Business profile'), ('menu', 'Menu'), ('feedback', 'Feedback')]
+    DESTINATIONS = [('profile', 'Business profile'), ('menu', 'Menu'), ('feedback', 'Feedback'), ('ordering', 'Table ordering')]
     venue = models.ForeignKey(VenueProfile, on_delete=models.CASCADE, related_name='touchpoints')
     public_identifier = models.CharField(max_length=64, unique=True, default=public_identifier, editable=False)
     name = models.CharField(max_length=120)
@@ -274,6 +274,34 @@ class VenueTouchpoint(models.Model):
     class Meta:
         ordering = ['name', 'id']
         constraints = [models.UniqueConstraint(fields=['venue', 'name'], name='venue_touchpoint_name_unique')]
+
+
+class VenueOrder(models.Model):
+    STATUS_CHOICES = [('new', 'New'), ('accepted', 'Accepted'), ('preparing', 'Preparing'), ('ready', 'Ready'), ('completed', 'Completed'), ('cancelled', 'Cancelled')]
+    venue = models.ForeignKey(VenueProfile, on_delete=models.CASCADE, related_name='orders')
+    table = models.ForeignKey(VenueTouchpoint, on_delete=models.SET_NULL, blank=True, null=True, related_name='orders')
+    public_identifier = models.CharField(max_length=64, unique=True, default=public_identifier, editable=False)
+    order_number = models.PositiveIntegerField()
+    customer_name = models.CharField(max_length=120, blank=True)
+    customer_phone = models.CharField(max_length=40, blank=True)
+    note = models.TextField(blank=True, max_length=1000)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new')
+    total = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at', '-id']
+        constraints = [models.UniqueConstraint(fields=['venue', 'order_number'], name='venue_order_number_unique')]
+
+
+class VenueOrderItem(models.Model):
+    order = models.ForeignKey(VenueOrder, on_delete=models.CASCADE, related_name='items')
+    menu_item = models.ForeignKey(VenueMenuItem, on_delete=models.SET_NULL, blank=True, null=True, related_name='order_items')
+    name = models.CharField(max_length=160)
+    unit_price = models.DecimalField(max_digits=12, decimal_places=2)
+    quantity = models.PositiveSmallIntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(50)])
+    note = models.CharField(max_length=300, blank=True)
 
 
 class VenueCardAssignment(models.Model):

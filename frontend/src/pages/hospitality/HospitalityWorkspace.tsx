@@ -29,6 +29,7 @@ import UserPlus from "lucide-react/dist/esm/icons/user-plus.js";
 import X from "lucide-react/dist/esm/icons/x.js";
 import House from "lucide-react/dist/esm/icons/house.js";
 import QrCode from "lucide-react/dist/esm/icons/qr-code.js";
+import ShoppingCart from "lucide-react/dist/esm/icons/shopping-cart.js";
 import Headphones from "lucide-react/dist/esm/icons/headphones.js";
 import { FaApple } from "react-icons/fa6";
 import { SocialIcon } from "../../components/social/SocialIcon";
@@ -56,6 +57,7 @@ import { HospitalityAnalytics } from "./HospitalityAnalytics";
 import { HospitalityRewardsProgram } from "./HospitalityRewardsProgram";
 import { HospitalityRewardsMembers } from "./HospitalityRewardsMembers";
 import { HospitalityActivityNotifications } from "./HospitalityActivityNotifications";
+import { HospitalityOrders } from "./HospitalityOrders";
 import "./HospitalityWorkspace.css";
 import "./HospitalityDashboardSystem.css";
 import "./PublicCafeProfile.css";
@@ -87,6 +89,7 @@ export type Venue = {
   rating: { average: number; count: number };
   feedbackEnabled: boolean;
   loyalty?: { enabled: boolean; programName: string; programType: 'rewards' | 'points' | 'stamps'; stampGoal: number; pointsToReward: number; pointsPerCurrency: string };
+  ordering?: { enabled: boolean };
   sourceConflicts?: string[];
 };
 type Category = {
@@ -261,7 +264,7 @@ type HospitalityShell = {
   schools: Array<{ id: number; name: string }>;
   user: { displayName: string };
 };
-type HospitalityAdminSection = "overview" | "profile" | "menu" | "feedback" | "staff" | "loyalty" | "members" | "analytics";
+type HospitalityAdminSection = "overview" | "profile" | "menu" | "feedback" | "staff" | "loyalty" | "members" | "orders" | "analytics";
 
 function organizationId() {
   return currentOrganizationId();
@@ -269,7 +272,7 @@ function organizationId() {
 
 function hospitalityAdminSection(): HospitalityAdminSection {
   const section = vanityDashboardMatch()?.[2] || new URLSearchParams(window.location.search).get("tab");
-  return section === "profile" || section === "menu" || section === "feedback" || section === "staff" || section === "loyalty" || section === "members" || section === "analytics"
+  return section === "profile" || section === "menu" || section === "feedback" || section === "staff" || section === "loyalty" || section === "members" || section === "orders" || section === "analytics"
     ? section
     : "overview";
 }
@@ -285,6 +288,7 @@ const hospitalitySectionDetails: Record<
   staff: { title: "Staff & Cards" },
   loyalty: { title: "Rewards program" },
   members: { title: "Loyalty members" },
+  orders: { title: "Ordering" },
   analytics: { title: "Analytics" },
 };
 
@@ -1223,7 +1227,7 @@ function HospitalityAdminPanel() {
   useEffect(() => {
     if (!shell) return;
     const capabilityFor: Record<HospitalityAdminSection, string> = {
-      overview: "overview", profile: "profile", menu: "menu", feedback: "feedback", staff: "staff", loyalty: "loyalty", members: "loyalty", analytics: "analytics",
+      overview: "overview", profile: "profile", menu: "menu", feedback: "feedback", staff: "staff", loyalty: "loyalty", members: "loyalty", orders: "ordering", analytics: "analytics",
     };
     if (!shell.capabilities.includes(capabilityFor[activeTab])) {
       const firstAvailable = ["overview", "profile", "menu"].find((item) => shell.capabilities.includes(item)) || "overview";
@@ -1443,6 +1447,7 @@ function HospitalityAdminPanel() {
       {activeTab === "staff" ? <HospitalityStaffCards organizationId={id} organizationName={venue.organization.name} logo={venue.venue.logo} /> : null}
       {activeTab === "loyalty" ? <HospitalityRewardsProgram organizationId={id} /> : null}
       {activeTab === "members" ? <HospitalityRewardsMembers organizationId={id} /> : null}
+      {activeTab === "orders" ? <HospitalityOrders organizationId={id} /> : null}
       <div hidden>
         {venue && legacyProfileEnabled ? (
           <div className="hospitality-profile-grid">
@@ -1930,7 +1935,12 @@ export function PublicHospitalityProfile() {
   const entryChannel = publicParams.get("entry") || "";
   const dashboardPreview = publicParams.get("preview") === "dashboard" ? "dashboard" : "";
   const feedbackSource = entryChannel ? `${touchpointSource}:${entryChannel}` : touchpointSource;
+  const tableIdentifier = publicParams.get("order") === "1" ? touchpointSource : "";
   const [venue, setVenue] = useState<Venue | null>(null);
+  const [orderItems, setOrderItems] = useState<Array<{ id: string; name: string; price: string; quantity: number }>>([]);
+  const [orderName, setOrderName] = useState("");
+  const [orderMessage, setOrderMessage] = useState("");
+  const [placingOrder, setPlacingOrder] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const activeTab = usePublicCafeUIStore((state) => state.activeTab);
   const feedback = usePublicCafeUIStore((state) => state.feedback);
@@ -1962,6 +1972,9 @@ export function PublicHospitalityProfile() {
   const setLoyaltyMessage = usePublicCafeUIStore((state) => state.setLoyaltyMessage);
   const setLoyaltyMembership = usePublicCafeUIStore((state) => state.setLoyaltyMembership);
   const detailRef = useRef<HTMLElement>(null);
+  const orderingAvailable = Boolean(venue?.ordering?.enabled && tableIdentifier);
+  function addOrderItem(item: Item) { const id = String(item.id || ''); if (!id) return; setOrderItems((rows) => { const current = rows.find((row) => row.id === id); return current ? rows.map((row) => row.id === id ? { ...row, quantity: row.quantity + 1 } : row) : [...rows, { id, name: item.name, price: item.price, quantity: 1 }] }); setSelectedMenuItem(null); }
+  async function placeOrder() { if (!orderItems.length) return; setPlacingOrder(true); setOrderMessage(''); try { const result = await apiFetch<{ order: { number: number } }>(`/api/venue/${identifier}/orders/`, { method: 'POST', body: jsonBody({ table: tableIdentifier, customerName: orderName, items: orderItems.map(({ id, quantity }) => ({ id, quantity })) }) }); setOrderItems([]); setOrderMessage(`Order #${result.order.number} sent to the café. Please pay at the counter.`); } catch (reason) { setOrderMessage(displayError(reason)) } finally { setPlacingOrder(false) } }
   useEffect(() => {
     resetPublicCafeUI(feedbackSource, new URLSearchParams(window.location.search).get("tab") === "menu" ? "menu" : "home");
   }, [feedbackSource, resetPublicCafeUI]);
@@ -2298,7 +2311,10 @@ export function PublicHospitalityProfile() {
           {itemHasReducedPrice(selectedMenuItem) ? <span>Was <del>Rs. {itemOriginalPrice(selectedMenuItem)}</del></span> : null}
           <strong>{itemHasReducedPrice(selectedMenuItem) ? 'Now ' : ''}Rs. {selectedMenuItem.price}</strong>
         </div>
+        {orderingAvailable && selectedMenuItem.isAvailable !== false ? <button type="button" className="cafe-primary" onClick={() => addOrderItem(selectedMenuItem)}>Add to table order</button> : null}
       </section> : null}
+      {orderingAvailable && (orderItems.length || orderMessage) ? <aside className="cafe-order-cart" aria-live="polite"><header><span><ShoppingCart size={18} /> Table order</span><small>{orderItems.reduce((total, item) => total + item.quantity, 0)} items</small></header>{orderItems.map((item) => <div key={item.id}><span>{item.quantity}× {item.name}</span><button type="button" aria-label={`Remove ${item.name}`} onClick={() => setOrderItems((rows) => rows.filter((row) => row.id !== item.id))}><X size={15} /></button></div>)}{orderItems.length ? <><label>Your name <input value={orderName} onChange={(event) => setOrderName(event.target.value)} placeholder="Optional" /></label><button className="cafe-primary" type="button" disabled={placingOrder} onClick={() => void placeOrder()}>{placingOrder ? 'Sending…' : 'Place order'}</button></> : null}{orderMessage ? <p>{orderMessage}</p> : null}</aside> : null}
+      {orderingAvailable && !orderItems.length && !orderMessage ? <button className="cafe-order-fab" type="button" onClick={() => setActiveTab('menu')}><ShoppingCart size={18} /> Order from this table</button> : null}
       <footer className="cafe-footer">Powered by <a href="/">Tap2Connect</a></footer>
       {loyaltySheet !== "closed" ? <CafeLoyaltySheet
         cafeName={venue.organization.name}

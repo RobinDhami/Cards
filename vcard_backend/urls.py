@@ -145,6 +145,7 @@ urlpatterns = [
     path('api/venue/<str:public_identifier>/loyalty/join/', hospitality_views.venue_loyalty_join_api, name='venue_loyalty_join_api'),
     path('api/venue/<str:public_identifier>/loyalty/card/<str:member_identifier>/', hospitality_views.venue_loyalty_card_api, name='venue_loyalty_card_api'),
     path('api/venue/<str:public_identifier>/track/', hospitality_views.venue_track_api, name='venue_track_api'),
+    path('api/venue/<str:public_identifier>/orders/', hospitality_views.venue_public_order_api, name='venue_public_order_api'),
     path('api/venue/<str:public_identifier>/staff/<str:staff_identifier>/', hospitality_views.venue_staff_public_api, name='venue_staff_public_api'),
     path('api/venue/<str:public_identifier>/staff/<str:staff_identifier>/edit-login/', hospitality_views.venue_staff_edit_login_api, name='venue_staff_edit_login_api'),
     path('api/venue/<str:public_identifier>/staff/<str:staff_identifier>/edit/', hospitality_views.venue_staff_editor_api, name='venue_staff_editor_api'),
@@ -162,6 +163,7 @@ urlpatterns = [
     path('api/organizations/<int:organization_id>/venue/analytics/', hospitality_views.venue_analytics_api, name='venue_analytics_api'),
     path('api/organizations/<int:organization_id>/venue/overview/', hospitality_views.venue_overview_api, name='venue_overview_api'),
     path('api/organizations/<int:organization_id>/venue/staff-cards/', hospitality_views.venue_staff_cards_manage_api, name='venue_staff_cards_manage_api'),
+    path('api/organizations/<int:organization_id>/venue/orders/', hospitality_views.venue_orders_manage_api, name='venue_orders_manage_api'),
     # Tenant vanity routes must remain last so "api/dashboard/..." and other
     # first-party paths cannot be mistaken for an organization slug.
     path('<slug:organization_slug>/dashboard/', react_app, name='organization_vanity_dashboard'),

@@ -24,7 +24,7 @@ from .models import (
     VenueLink, VenueLoyaltyMembership, VenueMenuCategory, VenueMenuItem,
     VenueMenuItemVariant, VenueOperationalActivity, VenueProfile, VenueRewardsProgram,
     VenueRewardsTransaction, VenueStaffLink,
-    VenueStaffProfile, VenueTouchpoint,
+    VenueStaffProfile, VenueTouchpoint, VenueOrder, VenueOrderItem,
 )
 from django.contrib.auth import authenticate, get_user_model, login
 from vcards.models import CardBatchCard, College, OrganizationModuleAccess, OrganizationNotificationPreference, OrganizationServicePlan, OrganizationTeamMember
@@ -322,6 +322,7 @@ def _payload(request, venue):
             'pointsToReward': program.points_to_reward if program else 100,
             'pointsPerCurrency': str(program.points_per_currency) if program else '1.00',
         },
+        'ordering': {'enabled': 'ordering' in enabled_modules},
     }
 
 
@@ -1362,10 +1363,11 @@ def venue_staff_editor_api(request, public_identifier, staff_identifier):
 
 
 def _touchpoint_destination(request, touchpoint, entry='qr'):
-    tab = {'profile': 'home', 'menu': 'menu', 'feedback': 'home'}[touchpoint.destination]
+    tab = {'profile': 'home', 'menu': 'menu', 'feedback': 'home', 'ordering': 'menu'}[touchpoint.destination]
     fragment = '#feedback' if touchpoint.destination == 'feedback' else ''
+    order = '&order=1' if touchpoint.destination == 'ordering' else ''
     return request.build_absolute_uri(
-        f'/venue/{touchpoint.venue.public_identifier}/?tab={tab}&source={touchpoint.public_identifier}&entry={entry}{fragment}'
+        f'/venue/{touchpoint.venue.public_identifier}/?tab={tab}&source={touchpoint.public_identifier}&entry={entry}{order}{fragment}'
     )
 
 
@@ -1502,6 +1504,77 @@ def venue_staff_public_api(request, public_identifier, staff_identifier):
         'branding': {'primaryColor': venue.primary_color, 'secondaryColor': venue.secondary_color, 'coverImage': _file_url(request, venue.cover_image or venue.organization.cover_photo)},
         'staff': _staff_payload(request, staff) if staff.is_active else {'name': staff.name, 'position': staff.position, 'isActive': False},
     })
+
+
+def _order_payload(order):
+    return {
+        'id': order.pk, 'publicIdentifier': order.public_identifier, 'number': order.order_number,
+        'table': order.table.name if order.table_id else 'Counter', 'status': order.status,
+        'customerName': order.customer_name, 'customerPhone': order.customer_phone, 'note': order.note,
+        'total': str(order.total), 'createdAt': order.created_at.isoformat(),
+        'items': [{'name': item.name, 'unitPrice': str(item.unit_price), 'quantity': item.quantity, 'note': item.note} for item in order.items.all()],
+    }
+
+
+@require_http_methods(['POST'])
+def venue_public_order_api(request, public_identifier):
+    venue = get_object_or_404(VenueProfile.objects.select_related('organization'), public_identifier=public_identifier, is_active=True)
+    if 'ordering' not in enabled_organization_modules(venue.organization):
+        return JsonResponse({'error': 'Online ordering is not available for this café.'}, status=404)
+    data = _body(request) or {}
+    rows = data.get('items')
+    if not isinstance(rows, list) or not rows or len(rows) > 30:
+        return JsonResponse({'error': 'Add at least one menu item to place an order.'}, status=400)
+    table_identifier = str(data.get('table') or '').strip()
+    table = VenueTouchpoint.objects.filter(venue=venue, public_identifier=table_identifier, destination='ordering', is_active=True).first()
+    if not table:
+        return JsonResponse({'error': 'This table QR code is no longer active. Ask the café for help.'}, status=400)
+    try:
+        with transaction.atomic():
+            ordered_items, total = [], Decimal('0.00')
+            for row in rows:
+                if not isinstance(row, dict): raise ValidationError('One of the order items is invalid.')
+                item = VenueMenuItem.objects.filter(venue=venue, public_identifier=str(row.get('id') or ''), is_published=True, is_available=True).first()
+                quantity = int(row.get('quantity') or 0)
+                if not item or quantity < 1 or quantity > 50: raise ValidationError('Choose available menu items and valid quantities.')
+                total += item.price * quantity
+                ordered_items.append((item, quantity, str(row.get('note') or '').strip()[:300]))
+            latest = venue.orders.select_for_update().order_by('-order_number').first()
+            order = VenueOrder.objects.create(venue=venue, table=table, order_number=(latest.order_number if latest else 0) + 1, customer_name=str(data.get('customerName') or '').strip()[:120], customer_phone=str(data.get('customerPhone') or '').strip()[:40], note=str(data.get('note') or '').strip()[:1000], total=total)
+            VenueOrderItem.objects.bulk_create([VenueOrderItem(order=order, menu_item=item, name=item.name, unit_price=item.price, quantity=quantity, note=note) for item, quantity, note in ordered_items])
+    except (ValidationError, ValueError) as exc:
+        return JsonResponse({'error': _validation_message(exc) if isinstance(exc, ValidationError) else 'Choose valid order quantities.'}, status=400)
+    _record_operational_activity(venue, 'order_created', f'New table order #{order.order_number} from {table.name}', request, {'orderId': order.public_identifier, 'table': table.name})
+    return JsonResponse({'order': _order_payload(VenueOrder.objects.prefetch_related('items').select_related('table').get(pk=order.pk))}, status=201)
+
+
+@require_http_methods(['GET', 'POST', 'PATCH'])
+def venue_orders_manage_api(request, organization_id):
+    venue = _venue_for(request, organization_id, 'ordering')
+    if not venue:
+        return JsonResponse({'error': 'Ordering is not included in this organization’s plan.'}, status=403)
+    if request.method == 'POST':
+        data = _body(request) or {}
+        name = str(data.get('tableName') or '').strip()
+        if not name:
+            return JsonResponse({'error': 'Enter a table name.'}, status=400)
+        try:
+            table = VenueTouchpoint.objects.create(venue=venue, name=name[:120], destination='ordering', is_active=True)
+        except IntegrityError:
+            return JsonResponse({'error': 'A table with that name already exists.'}, status=409)
+        _record_operational_activity(venue, 'ordering_table_created', f'Created table ordering QR for {table.name}', request)
+    if request.method == 'PATCH':
+        data = _body(request) or {}
+        order = get_object_or_404(VenueOrder, venue=venue, pk=data.get('id'))
+        status = str(data.get('status') or '')
+        if status not in dict(VenueOrder.STATUS_CHOICES):
+            return JsonResponse({'error': 'Choose a valid order status.'}, status=400)
+        order.status = status; order.save(update_fields=['status', 'updated_at'])
+        _record_operational_activity(venue, 'order_status_updated', f'Order #{order.order_number} marked {order.get_status_display().lower()}', request, {'orderId': order.public_identifier})
+    status_filter = request.GET.get('status', '')
+    orders = venue.orders.select_related('table').prefetch_related('items')
+    if status_filter in dict(VenueOrder.STATUS_CHOICES): orders = orders.filter(status=status_filter)
+    return JsonResponse({'orders': [_order_payload(order) for order in orders[:100]], 'tables': [{'id': item.pk, 'name': item.name, 'publicIdentifier': item.public_identifier, 'qrUrl': request.build_absolute_uri(f'/venue/{venue.public_identifier}/?tab=menu&table={item.public_identifier}&order=1')} for item in venue.touchpoints.filter(destination='ordering').order_by('name')]})
 
 
 @require_http_methods(['GET'])
