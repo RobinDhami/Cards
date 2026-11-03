@@ -1574,7 +1574,7 @@ def venue_orders_manage_api(request, organization_id):
     status_filter = request.GET.get('status', '')
     orders = venue.orders.select_related('table').prefetch_related('items')
     if status_filter in dict(VenueOrder.STATUS_CHOICES): orders = orders.filter(status=status_filter)
-    return JsonResponse({'orders': [_order_payload(order) for order in orders[:100]], 'tables': [{'id': item.pk, 'name': item.name, 'publicIdentifier': item.public_identifier, 'qrUrl': request.build_absolute_uri(f'/venue/{venue.public_identifier}/?tab=menu&table={item.public_identifier}&order=1')} for item in venue.touchpoints.filter(destination='ordering').order_by('name')]})
+    return JsonResponse({'orders': [_order_payload(order) for order in orders[:100]], 'tables': [{'id': item.pk, 'name': item.name, 'publicIdentifier': item.public_identifier, 'qrUrl': request.build_absolute_uri(f'/venue/{venue.public_identifier}/?tab=menu&source={item.public_identifier}&entry=qr&order=1')} for item in venue.touchpoints.filter(destination='ordering').order_by('name')]})
 
 
 @require_http_methods(['GET'])

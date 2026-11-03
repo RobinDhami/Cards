@@ -1940,6 +1940,7 @@ export function PublicHospitalityProfile() {
   const [orderItems, setOrderItems] = useState<Array<{ id: string; name: string; price: string; quantity: number }>>([]);
   const [orderName, setOrderName] = useState("");
   const [orderMessage, setOrderMessage] = useState("");
+  const [orderCode, setOrderCode] = useState("");
   const [placingOrder, setPlacingOrder] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const activeTab = usePublicCafeUIStore((state) => state.activeTab);
@@ -1974,7 +1975,7 @@ export function PublicHospitalityProfile() {
   const detailRef = useRef<HTMLElement>(null);
   const orderingAvailable = Boolean(venue?.ordering?.enabled && tableIdentifier);
   function addOrderItem(item: Item) { const id = String(item.id || ''); if (!id) return; setOrderItems((rows) => { const current = rows.find((row) => row.id === id); return current ? rows.map((row) => row.id === id ? { ...row, quantity: row.quantity + 1 } : row) : [...rows, { id, name: item.name, price: item.price, quantity: 1 }] }); setSelectedMenuItem(null); }
-  async function placeOrder() { if (!orderItems.length) return; setPlacingOrder(true); setOrderMessage(''); try { const result = await apiFetch<{ order: { number: number } }>(`/api/venue/${identifier}/orders/`, { method: 'POST', body: jsonBody({ table: tableIdentifier, customerName: orderName, items: orderItems.map(({ id, quantity }) => ({ id, quantity })) }) }); setOrderItems([]); setOrderMessage(`Order #${result.order.number} sent to the café. Please pay at the counter.`); } catch (reason) { setOrderMessage(displayError(reason)) } finally { setPlacingOrder(false) } }
+  async function placeOrder() { if (!orderItems.length) return; setPlacingOrder(true); setOrderMessage(''); try { const result = await apiFetch<{ order: { number: number } }>(`/api/venue/${identifier}/orders/`, { method: 'POST', body: jsonBody({ table: tableIdentifier, customerName: orderName, items: orderItems.map(({ id, quantity }) => ({ id, quantity })) }) }); setOrderItems([]); setOrderCode(String(result.order.number)); setOrderMessage('Show this code to your waiter. They will lock the order before it goes to preparation.'); } catch (reason) { setOrderMessage(displayError(reason)) } finally { setPlacingOrder(false) } }
   useEffect(() => {
     resetPublicCafeUI(feedbackSource, new URLSearchParams(window.location.search).get("tab") === "menu" ? "menu" : "home");
   }, [feedbackSource, resetPublicCafeUI]);
@@ -2265,7 +2266,7 @@ export function PublicHospitalityProfile() {
             <article key={category.slug}>
               <h3>{category.name}<span>{category.items?.length || 0} {category.items?.length === 1 ? "item" : "items"}</span></h3>
               {category.items?.map((entry) => (
-                <button type="button" className="hospitality-menu-item" key={entry.id} onClick={() => { setSelectedMenuItem(entry); track("menu_item_click", "menu_item", entry.name); }} aria-label={`View details for ${entry.name}`}>
+                <div role="button" tabIndex={0} className="hospitality-menu-item" key={entry.id} onClick={() => { setSelectedMenuItem(entry); track("menu_item_click", "menu_item", entry.name); }} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setSelectedMenuItem(entry); } }} aria-label={`View details for ${entry.name}`}>
                   {entry.image ? (
                     <img
                       className="hospitality-menu-image"
@@ -2291,7 +2292,8 @@ export function PublicHospitalityProfile() {
                     {itemHasReducedPrice(entry) ? <del>Rs. {itemOriginalPrice(entry)}</del> : null}
                     <b>Rs. {entry.price}</b>
                   </span>
-                </button>
+                  {orderingAvailable && entry.isAvailable !== false ? <button type="button" className="cafe-menu-add" aria-label={`Add ${entry.name} to order`} onClick={(event) => { event.stopPropagation(); addOrderItem(entry); }}><Plus size={18} /></button> : null}
+                </div>
               ))}
             </article>
           ))}
@@ -2313,7 +2315,7 @@ export function PublicHospitalityProfile() {
         </div>
         {orderingAvailable && selectedMenuItem.isAvailable !== false ? <button type="button" className="cafe-primary" onClick={() => addOrderItem(selectedMenuItem)}>Add to table order</button> : null}
       </section> : null}
-      {orderingAvailable && (orderItems.length || orderMessage) ? <aside className="cafe-order-cart" aria-live="polite"><header><span><ShoppingCart size={18} /> Table order</span><small>{orderItems.reduce((total, item) => total + item.quantity, 0)} items</small></header>{orderItems.map((item) => <div key={item.id}><span>{item.quantity}× {item.name}</span><button type="button" aria-label={`Remove ${item.name}`} onClick={() => setOrderItems((rows) => rows.filter((row) => row.id !== item.id))}><X size={15} /></button></div>)}{orderItems.length ? <><label>Your name <input value={orderName} onChange={(event) => setOrderName(event.target.value)} placeholder="Optional" /></label><button className="cafe-primary" type="button" disabled={placingOrder} onClick={() => void placeOrder()}>{placingOrder ? 'Sending…' : 'Place order'}</button></> : null}{orderMessage ? <p>{orderMessage}</p> : null}</aside> : null}
+      {orderingAvailable && (orderItems.length || orderMessage) ? <aside className="cafe-order-cart" aria-live="polite"><header><span><ShoppingCart size={18} /> Table order</span><small>{orderItems.reduce((total, item) => total + item.quantity, 0)} items</small></header>{orderItems.map((item) => <div key={item.id}><span>{item.quantity}× {item.name}</span><button type="button" aria-label={`Remove ${item.name}`} onClick={() => setOrderItems((rows) => rows.filter((row) => row.id !== item.id))}><X size={15} /></button></div>)}{orderItems.length ? <><label>Your name <input value={orderName} onChange={(event) => setOrderName(event.target.value)} placeholder="Optional" /></label><button className="cafe-primary" type="button" disabled={placingOrder} onClick={() => void placeOrder()}>{placingOrder ? 'Sending…' : 'Checkout order'}</button></> : null}{orderCode ? <strong className="cafe-order-code">Order code #{orderCode}</strong> : null}{orderMessage ? <p>{orderMessage}</p> : null}</aside> : null}
       {orderingAvailable && !orderItems.length && !orderMessage ? <button className="cafe-order-fab" type="button" onClick={() => setActiveTab('menu')}><ShoppingCart size={18} /> Order from this table</button> : null}
       <footer className="cafe-footer">Powered by <a href="/">Tap2Connect</a></footer>
       {loyaltySheet !== "closed" ? <CafeLoyaltySheet
