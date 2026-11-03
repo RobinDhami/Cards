@@ -1940,6 +1940,7 @@ export function PublicHospitalityProfile() {
   const tableIdentifier = publicParams.get("order") === "1" ? touchpointSource : "";
   const [venue, setVenue] = useState<Venue | null>(null);
   const [orderItems, setOrderItems] = useState<Array<{ id: string; name: string; price: string; quantity: number }>>([]);
+  const [cartOpen, setCartOpen] = useState(false);
   const [orderName, setOrderName] = useState("");
   const [orderMessage, setOrderMessage] = useState("");
   const [orderCode, setOrderCode] = useState("");
@@ -2151,7 +2152,7 @@ export function PublicHospitalityProfile() {
       <header className="cafe-header">
         <div className="cafe-toolbar">
           <button type="button" aria-label="Back to café home" onClick={() => { setActiveTab("home"); setSelectedCategory(null); }}><ArrowLeft size={21} /></button>
-          <button type="button" aria-label="Share café profile" onClick={() => void shareProfile()}><Share2 size={21} /></button>
+          <span className="cafe-toolbar-actions">{orderingAvailable ? <button type="button" className="cafe-cart-icon" aria-label="View order" onClick={() => setCartOpen(true)}><ShoppingCart size={22} /><b>{orderItems.reduce((total, item) => total + item.quantity, 0)}</b></button> : null}<button type="button" aria-label="Share café profile" onClick={() => void shareProfile()}><Share2 size={21} /></button></span>
         </div>
         {shareMessage ? <p role="status" className="cafe-share-status">{shareMessage}</p> : null}
         {venue.venue.coverImage ? <img className="cafe-cover" src={venue.venue.coverImage} alt={`${venue.organization.name} café`} fetchPriority="high" /> : null}
@@ -2317,8 +2318,8 @@ export function PublicHospitalityProfile() {
         </div>
         {orderingAvailable && selectedMenuItem.isAvailable !== false ? <button type="button" className="cafe-primary" onClick={() => addOrderItem(selectedMenuItem)}>Add to table order</button> : null}
       </section> : null}
-      {orderingAvailable && (orderItems.length || orderMessage) ? <aside className="cafe-order-cart" aria-live="polite"><header><span><ShoppingCart size={18} /> Table order</span><small>{orderItems.reduce((total, item) => total + item.quantity, 0)} items</small></header>{orderItems.map((item) => <div key={item.id}><span>{item.quantity}× {item.name}</span><button type="button" aria-label={`Remove ${item.name}`} onClick={() => setOrderItems((rows) => rows.filter((row) => row.id !== item.id))}><X size={15} /></button></div>)}{orderItems.length ? <><label>Your name <input value={orderName} onChange={(event) => setOrderName(event.target.value)} placeholder="Optional" /></label><button className="cafe-primary" type="button" disabled={placingOrder} onClick={() => void placeOrder()}>{placingOrder ? 'Sending…' : 'Checkout order'}</button></> : null}{orderCode ? <strong className="cafe-order-code">Order code #{orderCode}</strong> : null}{orderMessage ? <p>{orderMessage}</p> : null}</aside> : null}
-      {orderingAvailable && !orderItems.length && !orderMessage ? <button className="cafe-order-fab" type="button" onClick={() => setActiveTab('menu')}><ShoppingCart size={18} /> Order from this table</button> : null}
+      {orderingAvailable && cartOpen ? <><button className="cafe-order-backdrop" type="button" aria-label="Close order" onClick={() => setCartOpen(false)} /><aside className="cafe-order-cart" aria-live="polite"><header><span><ShoppingCart size={18} /> Your order</span><button type="button" aria-label="Close order" onClick={() => setCartOpen(false)}><X size={18} /></button></header>{orderItems.length ? orderItems.map((item) => <div key={item.id}><span>{item.quantity}× {item.name}</span><button type="button" aria-label={`Remove ${item.name}`} onClick={() => setOrderItems((rows) => rows.filter((row) => row.id !== item.id))}><X size={15} /></button></div>) : <p>Your cart is empty. Add items from the menu.</p>}{orderItems.length ? <><label>Your name <input value={orderName} onChange={(event) => setOrderName(event.target.value)} placeholder="Optional" /></label><button className="cafe-primary" type="button" disabled={placingOrder} onClick={() => void placeOrder()}>{placingOrder ? 'Sending…' : 'Checkout order'}</button></> : null}{orderCode ? <strong className="cafe-order-code">Order code #{orderCode}</strong> : null}{orderMessage ? <p>{orderMessage}</p> : null}</aside></> : null}
+      {orderingAvailable && !cartOpen ? <button className="cafe-order-fab" type="button" onClick={() => setCartOpen(true)}><ShoppingCart size={20} /> View order <span>· {orderItems.reduce((total, item) => total + item.quantity, 0)}</span></button> : null}
       <footer className="cafe-footer">Powered by <a href="/">Tap2Connect</a></footer>
       {loyaltySheet !== "closed" ? <CafeLoyaltySheet
         cafeName={venue.organization.name}
