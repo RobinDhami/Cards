@@ -1931,7 +1931,9 @@ export function PublicHospitalityProfile() {
   const identifier =
     window.location.pathname.match(/^\/venue\/([^/]+)/)?.[1] || "";
   const publicParams = new URLSearchParams(window.location.search);
-  const touchpointSource = publicParams.get("source") || "public_profile";
+  // Older printed table QRs used `table`; current QRs use the common tracked
+  // `source` parameter. Accept both so a café never has to reprint a table code.
+  const touchpointSource = publicParams.get("source") || publicParams.get("table") || "public_profile";
   const entryChannel = publicParams.get("entry") || "";
   const dashboardPreview = publicParams.get("preview") === "dashboard" ? "dashboard" : "";
   const feedbackSource = entryChannel ? `${touchpointSource}:${entryChannel}` : touchpointSource;

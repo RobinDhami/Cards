@@ -288,7 +288,9 @@ def _record_event(request, venue, event_type, target='', dedupe_seconds=3):
 def _payload(request, venue):
     enabled_modules = enabled_organization_modules(venue.organization)
     categories = []
-    for category in (venue.menu_categories.filter(is_active=True) if 'menu' in enabled_modules else []):
+    # Ordering uses the same customer menu as the public profile. A café can
+    # sell table ordering without separately exposing the menu-management module.
+    for category in (venue.menu_categories.filter(is_active=True) if {'menu', 'ordering'} & enabled_modules else []):
         items = [{
             'id': str(item.public_identifier), 'name': item.name,
             'description': item.description, 'image': _file_url(request, item.image),
