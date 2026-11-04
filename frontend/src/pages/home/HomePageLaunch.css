@@ -234,6 +234,35 @@
   .launch .launch-footer-main { grid-template-columns: 1fr; gap: 20px; }
   .launch .launch-footer-brand { grid-column: auto; }
 }
+
+/* Footer panel: intentionally sparse, using only the content already in the footer. */
+.launch .launch-footer {
+  padding: 34px 0 0;
+  border-top: 0;
+  background: #eef2f6;
+}
+.launch .launch-footer-main {
+  align-items: start;
+  padding: 32px clamp(26px, 4vw, 56px) 28px;
+  border: 1px solid #dfe5ed;
+  border-bottom: 0;
+  border-radius: 18px 18px 0 0;
+  background: #fff;
+}
+.launch .launch-footer-bottom {
+  min-height: 56px;
+  margin-top: 0;
+  padding: 0 clamp(26px, 4vw, 56px);
+  border: 1px solid #dfe5ed;
+  border-top-color: #edf0f4;
+  border-radius: 0 0 18px 18px;
+  background: #fff;
+}
+@media (max-width: 700px) {
+  .launch .launch-footer { padding-top: 22px; }
+  .launch .launch-footer-main { padding: 26px 20px 24px; border-radius: 14px 14px 0 0; }
+  .launch .launch-footer-bottom { min-height: 50px; padding: 0 20px; border-radius: 0 0 14px 14px; }
+}
 @media (max-width: 600px) {
   .launch .fig-studio__layout { display: flex; flex-direction: column; }
   .launch .fig-studio__controls { display: contents; }
