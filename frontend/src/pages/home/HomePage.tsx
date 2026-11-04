@@ -4,9 +4,6 @@ import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left.js'
 import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right.js'
 import CircleSlash2 from 'lucide-react/dist/esm/icons/circle-slash-2.js'
 import Coffee from 'lucide-react/dist/esm/icons/coffee.js'
-import Facebook from 'lucide-react/dist/esm/icons/facebook.js'
-import Instagram from 'lucide-react/dist/esm/icons/instagram.js'
-import Mail from 'lucide-react/dist/esm/icons/mail.js'
 import Menu from 'lucide-react/dist/esm/icons/menu.js'
 import MessageCircle from 'lucide-react/dist/esm/icons/message-circle.js'
 import QrCode from 'lucide-react/dist/esm/icons/qr-code.js'
@@ -16,6 +13,7 @@ import UserRound from 'lucide-react/dist/esm/icons/user-round.js'
 import UsersRound from 'lucide-react/dist/esm/icons/users-round.js'
 import X from 'lucide-react/dist/esm/icons/x.js'
 import { apiFetch, displayError } from '../../lib/api'
+import { socialIconAssets } from '../../components/social/socialIconAssets'
 import brandLogo from '../../../../theme/static/branding/tap2connect-logo-optimized.webp'
 import heroPerson from '../../../../theme/static/home/hero-person-phone-card-transparent.webp'
 import audienceStudent from '../../../../theme/static/home/figma-assets/audience-student-mobile.webp'
@@ -241,10 +239,10 @@ function Footer({ onSelect }: { onSelect: (id: Enquiry) => void }) {
       <div className="launch-footer-contact">
         <h3>Get in touch</h3>
         <div className="launch-footer-socials" aria-label="Contact and social links">
-          <a href="mailto:hello@tap2connect.com.np" aria-label="Email Tap2Connect Nepal" title="Email"><Mail aria-hidden="true" /></a>
-          <a href="https://wa.me/9779767452069" target="_blank" rel="noreferrer" aria-label="Chat with Tap2Connect Nepal on WhatsApp" title="WhatsApp"><MessageCircle aria-hidden="true" /></a>
-          <a href="https://www.facebook.com/Tap2connectnepal/" target="_blank" rel="noreferrer" aria-label="Tap2Connect Nepal on Facebook" title="Facebook"><Facebook aria-hidden="true" /></a>
-          <a href="https://www.instagram.com/tap2connectnepal/" target="_blank" rel="noreferrer" aria-label="Tap2Connect Nepal on Instagram" title="Instagram"><Instagram aria-hidden="true" /></a>
+          <a href="mailto:hello@tap2connect.com.np" aria-label="Email Tap2Connect Nepal" title="Email"><img src={socialIconAssets.email} alt="" /></a>
+          <a href="https://wa.me/9779767452069" target="_blank" rel="noreferrer" aria-label="Chat with Tap2Connect Nepal on WhatsApp" title="WhatsApp"><img src={socialIconAssets.whatsapp} alt="" /></a>
+          <a href="https://www.facebook.com/Tap2connectnepal/" target="_blank" rel="noreferrer" aria-label="Tap2Connect Nepal on Facebook" title="Facebook"><img src={socialIconAssets.facebook} alt="" /></a>
+          <a href="https://www.instagram.com/tap2connectnepal/" target="_blank" rel="noreferrer" aria-label="Tap2Connect Nepal on Instagram" title="Instagram"><img src={socialIconAssets.instagram} alt="" /></a>
         </div>
         <a className="launch-footer-contact-button" href="#contact">Contact us <ArrowRight aria-hidden="true" /></a>
       </div>
