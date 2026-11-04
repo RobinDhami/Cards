@@ -194,6 +194,46 @@
   .launch .launch-footer-main { grid-template-columns: 1fr; gap: 23px; }
   .launch-footer-brand { grid-column: auto; }
 }
+
+/* Keep the footer quiet: the existing information gets a compact, easy-to-scan hierarchy. */
+.launch .launch-footer {
+  border-top-width: 1px;
+}
+.launch .launch-footer-main {
+  grid-template-columns: minmax(0, 1.35fr) minmax(140px, .55fr) minmax(170px, .65fr);
+  gap: clamp(28px, 4vw, 64px);
+  padding-top: 34px;
+  padding-bottom: 32px;
+}
+.launch .launch-footer-brand .launch-logo img { width: 42px; height: 42px; }
+.launch .launch-footer-brand .launch-logo strong { font-size: 17px; }
+.launch .launch-footer-brand > strong { margin-top: 15px; font-size: 14px; }
+.launch .launch-footer-brand p { max-width: 285px; margin-top: 5px; font-size: 12px; line-height: 1.45; }
+.launch .launch-footer-main h3 { margin-bottom: 10px; font-size: 13px; letter-spacing: 0; }
+.launch .launch-footer .launch-footer-fit,
+.launch .launch-footer-contact { gap: 9px; }
+.launch .launch-footer-fit a { gap: 6px; font-size: 12px; }
+.launch .launch-footer-fit a svg { width: 13px; height: 13px; }
+.launch .launch-footer-socials { gap: 7px; }
+.launch .launch-footer-socials a { width: 29px; height: 29px; }
+.launch .launch-footer-socials img { width: 25px; height: 25px; }
+.launch .launch-footer-contact-button { min-height: 33px; margin-top: 4px; padding: 0 10px; font-size: 12px; }
+.launch .launch-footer-bottom { padding: 14px 0 18px; font-size: 11px; }
+.launch .launch-footer-bottom > span:last-child { gap: 6px; }
+.launch .launch-footer-bottom > span:last-child span { font-size: 16px; }
+@media (max-width: 700px) {
+  .launch .launch-footer-main { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 25px 18px; padding-top: 28px; padding-bottom: 27px; }
+  .launch .launch-footer-brand { grid-column: 1 / -1; }
+  .launch .launch-footer-brand > strong { margin-top: 12px; font-size: 13px; }
+  .launch .launch-footer-brand p { font-size: 12px; }
+  .launch .launch-footer-main h3 { font-size: 13px; }
+  .launch .launch-footer-fit a { font-size: 12px; }
+  .launch .launch-footer-bottom { padding: 13px 0 18px; font-size: 10px; }
+}
+@media (max-width: 360px) {
+  .launch .launch-footer-main { grid-template-columns: 1fr; gap: 20px; }
+  .launch .launch-footer-brand { grid-column: auto; }
+}
 @media (max-width: 600px) {
   .launch .fig-studio__layout { display: flex; flex-direction: column; }
   .launch .fig-studio__controls { display: contents; }
