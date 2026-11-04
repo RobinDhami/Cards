@@ -59,6 +59,12 @@ const enquiryOptions = [
 
 type Enquiry = (typeof enquiryOptions)[number]['id']
 
+const footerFitOptions: Array<{ id: Enquiry; label: string }> = [
+  { id: 'personal', label: 'Personal' },
+  { id: 'cafe', label: 'Café' },
+  { id: 'team', label: 'School' },
+]
+
 const contactArtwork = {
   personal: {
     image: personalContactArtwork,
@@ -235,7 +241,16 @@ function Footer({ onSelect }: { onSelect: (id: Enquiry) => void }) {
       <nav className="launch-footer-fit" aria-label="Find your fit">
         <h3>Find your fit</h3>
         <ul>
-          {enquiryOptions.map(({ id, label }) => <li key={id}><a href="#contact" onClick={() => onSelect(id)}>{label}</a></li>)}
+          {footerFitOptions.map(({ id, label }) => <li key={id}><a href="#contact" onClick={() => onSelect(id)}>{label}</a></li>)}
+        </ul>
+      </nav>
+      <nav className="launch-footer-cards" aria-label="Cards">
+        <h3>Cards</h3>
+        <ul>
+          <li><a href="#contact">Professional</a></li>
+          <li><a href="#contact">Café</a></li>
+          <li><a href="#contact">Gym &amp; club</a></li>
+          <li><a href="#contact">Membership</a></li>
         </ul>
       </nav>
       <div className="launch-footer-contact">

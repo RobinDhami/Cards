@@ -836,9 +836,15 @@
 @media (max-width: 480px) { .launch .launch-footer { padding-top: 40px; } .launch .launch-footer-main { grid-template-columns: 1fr; gap: 32px; padding-bottom: 32px; } .launch .launch-footer-brand { grid-column: auto; } .launch .launch-footer-bottom { align-items: flex-start; flex-direction: column; justify-content: center; gap: 6px; min-height: 72px; } }
 
 /* Footer finish: supplied social assets and a distinct, softly rounded section. */
-.launch .launch-footer { border-radius: 28px 28px 0 0; background: #edf3fb; }
+.launch .launch-footer { padding-top: 48px; border-radius: 28px 28px 0 0; background: #edf3fb; }
+.launch .launch-footer-main { grid-template-columns: minmax(0,1.25fr) repeat(3,minmax(145px,.6fr)); gap: 40px; padding-bottom: 40px; }
 .launch .launch-footer-main h3 { color: var(--ink); font-size: 14px; font-weight: 750; letter-spacing: 0; text-transform: none; }
+.launch .launch-footer-cards { display: flex; flex-direction: column; align-items: flex-start; }
+.launch .launch-footer-cards ul { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.launch .launch-footer-cards a { color: #42536d; font-size: 15px; font-weight: 400; line-height: 1.4; text-decoration: none; transition: color .2s ease; }
+.launch .launch-footer-cards a:hover { color: var(--blue); }
 .launch .launch-footer-socials a { width: 24px; height: 24px; color: inherit; }
 .launch .launch-footer-socials a:hover { color: inherit; transform: translateY(-2px); }
 .launch .launch-footer-socials img { display: block; width: 24px; height: 24px; object-fit: contain; }
-@media (max-width: 700px) { .launch .launch-footer { border-radius: 22px 22px 0 0; } }
+@media (max-width: 850px) { .launch .launch-footer-main { grid-template-columns: minmax(0,1fr) repeat(2,minmax(145px,.7fr)); gap: 32px 40px; } .launch .launch-footer-brand { grid-column: 1 / -1; } }
+@media (max-width: 700px) { .launch .launch-footer { border-radius: 22px 22px 0 0; } .launch .launch-footer-main { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 32px; } }
