@@ -38,3 +38,34 @@
 .manage-app--hospitality-theme-dark .hospitality-staff-modal>section { background: #1f2937; color: #f8fafc; }
 .manage-app--hospitality-theme-dark .hospitality-staff-modal p { color: #aebcd0; }
 .manage-app--hospitality-theme-dark .hospitality-staff-modal input { border-color: #475a76; background: #101827; color: #f8fafc; }
+
+/* Compact staff and touchpoint workspace hierarchy. */
+.hospitality-staff-page { gap: 20px; }
+.hospitality-staff-summary { grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: 0; overflow: hidden; border: 1px solid #dce5ef; border-radius: 14px; background: #fff; }
+.hospitality-staff-summary article { min-height: 72px; gap: 12px; padding: 0 24px; border: 0; border-radius: 0; background: transparent; }
+.hospitality-staff-summary article + article { border-left: 1px solid #e5ebf1; }
+.hospitality-staff-summary article>span { width: 34px; height: 34px; border-radius: 9px; }
+.hospitality-staff-summary article>div { display: flex; align-items: baseline; gap: 7px; }
+.hospitality-staff-summary strong { font-size: 18px; }
+.hospitality-staff-summary p { margin: 0; font-size: 13px; font-weight: 600; }
+.hospitality-staff-summary>.manage-button { align-self: center; min-height: 42px; margin: 0 16px; padding-inline: 16px; }
+.hospitality-staff-tabs { gap: 30px; padding: 0 4px; }
+.hospitality-staff-tabs button { padding: 13px 4px; font-size: 14px; }
+.hospitality-touchpoint-layout { grid-template-columns: minmax(0, 1fr); }
+.hospitality-card-policy { display: none; }
+.hospitality-touchpoint-card>header { display: flex; align-items: center; min-height: 88px; padding: 18px 28px; }
+.hospitality-touchpoint-card h2 { font-size: 18px; }
+.hospitality-touchpoint-card header p { margin-top: 5px; font-size: 13px; }
+.hospitality-touchpoint-create { grid-template-columns: minmax(0, 1.35fr) minmax(190px, .9fr) auto; gap: 16px; padding: 18px 28px; }
+.hospitality-touchpoint-create .form-field { gap: 7px; }
+.hospitality-touchpoint-create .manage-button { min-height: 44px; padding-inline: 20px; }
+.hospitality-touchpoint-list article { grid-template-columns: 42px minmax(0, 1fr) auto auto auto; min-height: 74px; gap: 14px; padding: 12px 28px; }
+.hospitality-touchpoint-icon { width: 40px; height: 40px; border-radius: 10px; }
+.hospitality-touchpoint-list strong { font-size: 14px; }
+.hospitality-touchpoint-list p { margin-top: 3px; font-size: 11px; }
+.hospitality-touchpoint-list>article>span { font-size: 11px; }
+.hospitality-touchpoint-list button { min-width: 62px; min-height: 36px; font-size: 11px; }
+.manage-app--hospitality-theme-dark .hospitality-staff-summary { border-color: rgba(148,163,184,.22); background: #1f2937; }
+.manage-app--hospitality-theme-dark .hospitality-staff-summary article + article { border-color: rgba(148,163,184,.18); }
+@media(max-width:1100px) { .hospitality-staff-summary { grid-template-columns: repeat(3, minmax(0,1fr)); } .hospitality-staff-summary>.manage-button { grid-column: 1 / -1; justify-self: stretch; margin: 0; border-radius: 0; } }
+@media(max-width:700px) { .hospitality-staff-summary { grid-template-columns: 1fr; } .hospitality-staff-summary article { min-height: 58px; padding: 0 16px; } .hospitality-staff-summary article + article { border-top: 1px solid #e5ebf1; border-left: 0; } .hospitality-staff-summary>.manage-button { min-height: 46px; margin: 0; border-radius: 0; } .hospitality-touchpoint-card>header { min-height: 0; padding: 18px; } .hospitality-touchpoint-card h2 { font-size: 16px; } .hospitality-touchpoint-card header p { font-size: 12px; } .hospitality-touchpoint-create { grid-template-columns: 1fr; gap: 12px; padding: 16px 18px; } .hospitality-touchpoint-list article { grid-template-columns: 40px minmax(0,1fr) auto; gap: 10px; padding: 12px 18px; } .hospitality-touchpoint-list article>span:nth-child(3), .hospitality-touchpoint-list article>.form-control { grid-column: 2 / -1; } }
