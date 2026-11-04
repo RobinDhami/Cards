@@ -834,3 +834,11 @@
 .launch .launch-footer-bottom > span:last-child span { font-size: 16px; }
 @media (max-width: 700px) { .launch .launch-footer { padding-top: 52px; } .launch .launch-footer-main { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 32px 48px; padding-bottom: 40px; } .launch .launch-footer-brand { grid-column: 1 / -1; } }
 @media (max-width: 480px) { .launch .launch-footer { padding-top: 40px; } .launch .launch-footer-main { grid-template-columns: 1fr; gap: 32px; padding-bottom: 32px; } .launch .launch-footer-brand { grid-column: auto; } .launch .launch-footer-bottom { align-items: flex-start; flex-direction: column; justify-content: center; gap: 6px; min-height: 72px; } }
+
+/* Footer finish: supplied social assets and a distinct, softly rounded section. */
+.launch .launch-footer { border-radius: 28px 28px 0 0; background: #edf3fb; }
+.launch .launch-footer-main h3 { color: var(--ink); font-size: 14px; font-weight: 750; letter-spacing: 0; text-transform: none; }
+.launch .launch-footer-socials a { width: 24px; height: 24px; color: inherit; }
+.launch .launch-footer-socials a:hover { color: inherit; transform: translateY(-2px); }
+.launch .launch-footer-socials img { display: block; width: 24px; height: 24px; object-fit: contain; }
+@media (max-width: 700px) { .launch .launch-footer { border-radius: 22px 22px 0 0; } }
