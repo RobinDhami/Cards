@@ -848,3 +848,31 @@
 .launch .launch-footer-socials img { display: block; width: 24px; height: 24px; object-fit: contain; }
 @media (max-width: 850px) { .launch .launch-footer-main { grid-template-columns: minmax(0,1fr) repeat(2,minmax(145px,.7fr)); gap: 32px 40px; } .launch .launch-footer-brand { grid-column: 1 / -1; } }
 @media (max-width: 700px) { .launch .launch-footer { border-radius: 22px 22px 0 0; } .launch .launch-footer-main { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 32px; } }
+
+/* Four-column public footer. */
+.launch .launch-footer {
+  padding-top: 58px;
+  border-top: 1px solid #c5d9f6;
+  border-radius: 0;
+  background: radial-gradient(circle at 35% 18%, #f9fbff 0, #edf4ff 43%, #e8f1fd 100%);
+}
+.launch .launch-footer-main {
+  grid-template-columns: minmax(0, 1.7fr) repeat(3, minmax(150px, .9fr));
+  gap: clamp(36px, 6vw, 96px);
+  padding-bottom: 54px;
+}
+.launch .launch-footer-brand .launch-logo img { width: 58px; height: 58px; }
+.launch .launch-footer-brand .launch-logo strong { font-size: 23px; }
+.launch .launch-footer-brand > strong { margin-top: 24px; font-size: 17px; }
+.launch .launch-footer-brand p { max-width: 315px; margin-top: 10px; font-size: 14px; line-height: 1.55; }
+.launch .launch-footer-main h3 { margin: 6px 0 20px; font-size: 17px; font-weight: 750; }
+.launch .launch-footer-fit ul,
+.launch .launch-footer-cards ul { gap: 13px; }
+.launch .launch-footer-fit a,
+.launch .launch-footer-cards a { color: #364b70; font-size: 15px; }
+.launch .launch-footer-socials { gap: 14px; }
+.launch .launch-footer-socials a { width: 46px; height: 46px; border-radius: 50%; background: #fff; box-shadow: 0 5px 15px rgba(29, 70, 133, .07); }
+.launch .launch-footer-socials img { width: 29px; height: 29px; }
+.launch .launch-footer-bottom { min-height: 78px; border-top-color: #b9cce6; color: #415675; font-size: 14px; }
+@media (max-width: 850px) { .launch .launch-footer-main { grid-template-columns: minmax(0, 1fr) repeat(2, minmax(145px, .8fr)); gap: 34px 44px; } }
+@media (max-width: 700px) { .launch .launch-footer { padding-top: 42px; } .launch .launch-footer-main { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 24px; padding-bottom: 40px; } .launch .launch-footer-brand .launch-logo img { width: 48px; height: 48px; } .launch .launch-footer-brand .launch-logo strong { font-size: 18px; } .launch .launch-footer-main h3 { margin-top: 0; font-size: 15px; } .launch .launch-footer-socials a { width: 40px; height: 40px; } .launch .launch-footer-socials img { width: 25px; height: 25px; } }

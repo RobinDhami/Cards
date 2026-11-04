@@ -239,13 +239,13 @@ function Footer({ onSelect }: { onSelect: (id: Enquiry) => void }) {
         <p>Digital profiles and NFC cards made for real connections.</p>
       </div>
       <nav className="launch-footer-fit" aria-label="Find your fit">
-        <h3>Find your fit</h3>
+        <h3>Explore</h3>
         <ul>
           {footerFitOptions.map(({ id, label }) => <li key={id}><a href="#contact" onClick={() => onSelect(id)}>{label}</a></li>)}
         </ul>
       </nav>
       <nav className="launch-footer-cards" aria-label="Cards">
-        <h3>Cards</h3>
+        <h3>NFC cards</h3>
         <ul>
           <li><a href="#contact">Professional</a></li>
           <li><a href="#contact">Café</a></li>
@@ -254,7 +254,7 @@ function Footer({ onSelect }: { onSelect: (id: Enquiry) => void }) {
         </ul>
       </nav>
       <div className="launch-footer-contact">
-        <h3>Get in touch</h3>
+        <h3>Connect</h3>
         <div className="launch-footer-socials" aria-label="Contact and social links">
           <a href="mailto:hello@tap2connect.com.np" aria-label="Email Tap2Connect Nepal"><img src={socialIconAssets.email} alt="" /></a>
           <a href="https://wa.me/9779767452069" target="_blank" rel="noreferrer" aria-label="Chat with Tap2Connect Nepal on WhatsApp"><img src={socialIconAssets.whatsapp} alt="" /></a>
