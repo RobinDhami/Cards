@@ -808,3 +808,29 @@
   .launch .launch-hero h1 { max-width: 350px; }
   .launch .launch-how .launch-step-copy > div { background: transparent; }
 }
+
+/* Minimal landing footer. */
+.launch .launch-footer { padding: 64px 0 0; border: 0; background: var(--page-surface); }
+.launch .launch-footer-main { display: grid; grid-template-columns: minmax(0,1.35fr) minmax(180px,.7fr) minmax(180px,.7fr); align-items: start; gap: 48px; padding: 0 0 56px; border: 0; border-radius: 0; background: transparent; }
+.launch .launch-footer-brand .launch-logo img { width: 40px; height: 40px; }
+.launch .launch-footer-brand .launch-logo strong { font-size: 17px; }
+.launch .launch-footer-brand > strong { margin-top: 18px; color: var(--ink); font-size: 15px; font-weight: 600; }
+.launch .launch-footer-brand p { max-width: 280px; margin-top: 7px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.launch .launch-footer-main h3 { margin: 2px 0 16px; color: var(--muted); font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.launch .launch-footer-fit, .launch .launch-footer-contact { display: flex; flex-direction: column; align-items: flex-start; gap: 0; }
+.launch .launch-footer-fit ul { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.launch .launch-footer-fit a { color: #42536d; font-size: 15px; font-weight: 400; line-height: 1.4; text-decoration: none; transition: color .2s ease; }
+.launch .launch-footer-fit a:hover { color: var(--blue); }
+.launch .launch-footer-fit a svg { display: none; }
+.launch .launch-footer-socials { display: flex; align-items: center; gap: 16px; margin: 0; }
+.launch .launch-footer-socials a { display: grid; width: 20px; height: 20px; place-items: center; color: #52627a; transition: color .2s ease; }
+.launch .launch-footer-socials a:hover { color: var(--blue); transform: none; }
+.launch .launch-footer-socials svg { width: 20px !important; height: 20px !important; margin: 0 !important; }
+.launch .launch-footer-socials img { display: none; }
+.launch .launch-footer-contact-button { min-height: auto; margin-top: 20px; padding: 0; border: 0; border-radius: 0; color: var(--blue) !important; background: transparent; font-size: 15px; font-weight: 500; text-decoration: none; }
+.launch .launch-footer-contact-button:hover { text-decoration: underline; }
+.launch .launch-footer-bottom { display: flex; align-items: center; justify-content: space-between; min-height: 56px; margin: 0; padding: 0; border: 0; border-top: 1px solid #dfe4eb; border-radius: 0; color: var(--muted); background: transparent; font-size: 13px; }
+.launch .launch-footer-bottom > span:last-child { gap: 0; }
+.launch .launch-footer-bottom > span:last-child span { font-size: 16px; }
+@media (max-width: 700px) { .launch .launch-footer { padding-top: 52px; } .launch .launch-footer-main { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 32px 48px; padding-bottom: 40px; } .launch .launch-footer-brand { grid-column: 1 / -1; } }
+@media (max-width: 480px) { .launch .launch-footer { padding-top: 40px; } .launch .launch-footer-main { grid-template-columns: 1fr; gap: 32px; padding-bottom: 32px; } .launch .launch-footer-brand { grid-column: auto; } .launch .launch-footer-bottom { align-items: flex-start; flex-direction: column; justify-content: center; gap: 6px; min-height: 72px; } }
