@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import json
 import re
+import secrets
 from decimal import Decimal, InvalidOperation
 from datetime import date, datetime, time, timedelta
 from urllib.parse import urlparse
@@ -1513,9 +1514,17 @@ def _order_payload(order):
         'id': order.pk, 'publicIdentifier': order.public_identifier, 'number': order.order_number,
         'table': order.table.name if order.table_id else 'Counter', 'status': order.status,
         'customerName': order.customer_name, 'customerPhone': order.customer_phone, 'note': order.note,
+        'verificationCode': order.verification_code, 'verificationExpiresAt': order.verification_expires_at.isoformat() if order.verification_expires_at else None,
+        'verifiedAt': order.verified_at.isoformat() if order.verified_at else None, 'verifiedBy': order.verified_by,
         'total': str(order.total), 'createdAt': order.created_at.isoformat(),
-        'items': [{'name': item.name, 'unitPrice': str(item.unit_price), 'quantity': item.quantity, 'note': item.note} for item in order.items.all()],
+        'items': [{'id': item.pk, 'name': item.name, 'unitPrice': str(item.unit_price), 'quantity': item.quantity, 'note': item.note} for item in order.items.all()],
     }
+
+
+def _expire_pending_orders(venue):
+    """A photographed table QR may create a request, never a kitchen order."""
+    now = timezone.now()
+    return VenueOrder.objects.filter(venue=venue, status='new', verification_expires_at__isnull=False, verification_expires_at__lte=now).update(status='expired')
 
 
 @require_http_methods(['POST'])
@@ -1533,6 +1542,9 @@ def venue_public_order_api(request, public_identifier):
         return JsonResponse({'error': 'This table QR code is no longer active. Ask the café for help.'}, status=400)
     try:
         with transaction.atomic():
+            _expire_pending_orders(venue)
+            if venue.orders.filter(table=table, status='new', verification_expires_at__gt=timezone.now()).count() >= 3:
+                return JsonResponse({'error': 'This table already has orders waiting for waiter verification. Please ask your waiter for help.'}, status=429)
             ordered_items, total = [], Decimal('0.00')
             for row in rows:
                 if not isinstance(row, dict): raise ValidationError('One of the order items is invalid.')
@@ -1542,7 +1554,7 @@ def venue_public_order_api(request, public_identifier):
                 total += item.price * quantity
                 ordered_items.append((item, quantity, str(row.get('note') or '').strip()[:300]))
             latest = venue.orders.select_for_update().order_by('-order_number').first()
-            order = VenueOrder.objects.create(venue=venue, table=table, order_number=(latest.order_number if latest else 0) + 1, customer_name=str(data.get('customerName') or '').strip()[:120], customer_phone=str(data.get('customerPhone') or '').strip()[:40], note=str(data.get('note') or '').strip()[:1000], total=total)
+            order = VenueOrder.objects.create(venue=venue, table=table, order_number=(latest.order_number if latest else 0) + 1, customer_name=str(data.get('customerName') or '').strip()[:120], customer_phone=str(data.get('customerPhone') or '').strip()[:40], note=str(data.get('note') or '').strip()[:1000], total=total, verification_code=f'{secrets.randbelow(10000):04d}', verification_expires_at=timezone.now() + timedelta(minutes=10))
             VenueOrderItem.objects.bulk_create([VenueOrderItem(order=order, menu_item=item, name=item.name, unit_price=item.price, quantity=quantity, note=note) for item, quantity, note in ordered_items])
     except (ValidationError, ValueError) as exc:
         return JsonResponse({'error': _validation_message(exc) if isinstance(exc, ValidationError) else 'Choose valid order quantities.'}, status=400)
@@ -1565,14 +1577,51 @@ def venue_orders_manage_api(request, organization_id):
         except IntegrityError:
             return JsonResponse({'error': 'A table with that name already exists.'}, status=409)
         _record_operational_activity(venue, 'ordering_table_created', f'Created table ordering QR for {table.name}', request)
+    _expire_pending_orders(venue)
     if request.method == 'PATCH':
         data = _body(request) or {}
         order = get_object_or_404(VenueOrder, venue=venue, pk=data.get('id'))
-        status = str(data.get('status') or '')
-        if status not in dict(VenueOrder.STATUS_CHOICES):
-            return JsonResponse({'error': 'Choose a valid order status.'}, status=400)
-        order.status = status; order.save(update_fields=['status', 'updated_at'])
-        _record_operational_activity(venue, 'order_status_updated', f'Order #{order.order_number} marked {order.get_status_display().lower()}', request, {'orderId': order.public_identifier})
+        action = str(data.get('action') or '')
+        if action == 'approve':
+            code = str(data.get('verificationCode') or '').strip()
+            if order.status != 'new':
+                return JsonResponse({'error': 'Only pending orders can be verified.'}, status=400)
+            if not order.verification_expires_at or order.verification_expires_at <= timezone.now():
+                order.status = 'expired'; order.save(update_fields=['status', 'updated_at'])
+                return JsonResponse({'error': 'This verification code has expired. Ask the customer to place a new order.'}, status=400)
+            if not hmac.compare_digest(order.verification_code, code):
+                return JsonResponse({'error': 'That verification code does not match this order.'}, status=400)
+            order.status = 'accepted'; order.verified_at = timezone.now(); order.verified_by = request.user.get_full_name() or request.user.username
+            order.save(update_fields=['status', 'verified_at', 'verified_by', 'updated_at'])
+            _record_operational_activity(venue, 'order_verified', f'Order #{order.order_number} verified at {order.table.name if order.table_id else "Counter"}', request, {'orderId': order.public_identifier})
+        elif action == 'reject':
+            if order.status != 'new': return JsonResponse({'error': 'Only pending orders can be rejected.'}, status=400)
+            order.status = 'cancelled'; order.save(update_fields=['status', 'updated_at'])
+            _record_operational_activity(venue, 'order_rejected', f'Order #{order.order_number} rejected', request, {'orderId': order.public_identifier})
+        elif action == 'edit':
+            if order.status != 'new': return JsonResponse({'error': 'Only pending orders can be edited.'}, status=400)
+            rows = data.get('items')
+            if not isinstance(rows, list) or not rows: return JsonResponse({'error': 'Keep at least one item in the order.'}, status=400)
+            existing = {item.pk: item for item in order.items.all()}
+            total = Decimal('0.00'); kept = set()
+            try:
+                for row in rows:
+                    item = existing.get(int(row.get('id')))
+                    quantity = int(row.get('quantity'))
+                    if not item or quantity < 1 or quantity > 50: raise ValueError
+                    item.quantity = quantity; item.save(update_fields=['quantity']); total += item.unit_price * quantity; kept.add(item.pk)
+            except (TypeError, ValueError):
+                return JsonResponse({'error': 'Use valid quantities between 1 and 50.'}, status=400)
+            order.items.exclude(pk__in=kept).delete(); order.total = total; order.save(update_fields=['total', 'updated_at'])
+            _record_operational_activity(venue, 'order_edited', f'Order #{order.order_number} edited before verification', request, {'orderId': order.public_identifier})
+        else:
+            status = str(data.get('status') or '')
+            if order.status == 'new' or status == 'accepted':
+                return JsonResponse({'error': 'Verify the customer code before changing this order.'}, status=400)
+            if status not in dict(VenueOrder.STATUS_CHOICES):
+                return JsonResponse({'error': 'Choose a valid order status.'}, status=400)
+            order.status = status; order.save(update_fields=['status', 'updated_at'])
+            _record_operational_activity(venue, 'order_status_updated', f'Order #{order.order_number} marked {order.get_status_display().lower()}', request, {'orderId': order.public_identifier})
     status_filter = request.GET.get('status', '')
     orders = venue.orders.select_related('table').prefetch_related('items')
     if status_filter in dict(VenueOrder.STATUS_CHOICES): orders = orders.filter(status=status_filter)

@@ -277,7 +277,7 @@ class VenueTouchpoint(models.Model):
 
 
 class VenueOrder(models.Model):
-    STATUS_CHOICES = [('new', 'New'), ('accepted', 'Accepted'), ('preparing', 'Preparing'), ('ready', 'Ready'), ('completed', 'Completed'), ('cancelled', 'Cancelled')]
+    STATUS_CHOICES = [('new', 'Pending verification'), ('accepted', 'Verified'), ('preparing', 'Preparing'), ('ready', 'Ready'), ('completed', 'Served'), ('cancelled', 'Rejected'), ('expired', 'Expired')]
     venue = models.ForeignKey(VenueProfile, on_delete=models.CASCADE, related_name='orders')
     table = models.ForeignKey(VenueTouchpoint, on_delete=models.SET_NULL, blank=True, null=True, related_name='orders')
     public_identifier = models.CharField(max_length=64, unique=True, default=public_identifier, editable=False)
@@ -286,6 +286,10 @@ class VenueOrder(models.Model):
     customer_phone = models.CharField(max_length=40, blank=True)
     note = models.TextField(blank=True, max_length=1000)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new')
+    verification_code = models.CharField(max_length=6, blank=True)
+    verification_expires_at = models.DateTimeField(blank=True, null=True)
+    verified_at = models.DateTimeField(blank=True, null=True)
+    verified_by = models.CharField(max_length=120, blank=True)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
