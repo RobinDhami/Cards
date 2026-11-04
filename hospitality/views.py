@@ -1517,7 +1517,7 @@ def _order_payload(order):
         'verificationCode': order.verification_code, 'verificationExpiresAt': order.verification_expires_at.isoformat() if order.verification_expires_at else None,
         'verifiedAt': order.verified_at.isoformat() if order.verified_at else None, 'verifiedBy': order.verified_by,
         'total': str(order.total), 'createdAt': order.created_at.isoformat(),
-        'items': [{'id': item.pk, 'name': item.name, 'unitPrice': str(item.unit_price), 'quantity': item.quantity, 'note': item.note} for item in order.items.all()],
+        'items': [{'id': item.pk, 'menuItemId': item.menu_item_id, 'name': item.name, 'unitPrice': str(item.unit_price), 'quantity': item.quantity, 'note': item.note} for item in order.items.all()],
     }
 
 
@@ -1599,20 +1599,45 @@ def venue_orders_manage_api(request, organization_id):
             order.status = 'cancelled'; order.save(update_fields=['status', 'updated_at'])
             _record_operational_activity(venue, 'order_rejected', f'Order #{order.order_number} rejected', request, {'orderId': order.public_identifier})
         elif action == 'edit':
-            if order.status != 'new': return JsonResponse({'error': 'Only pending orders can be edited.'}, status=400)
+            if order.status not in {'new', 'accepted', 'preparing'}:
+                return JsonResponse({'error': 'Only pending, verified, or preparing orders can be changed.'}, status=400)
             rows = data.get('items')
             if not isinstance(rows, list) or not rows: return JsonResponse({'error': 'Keep at least one item in the order.'}, status=400)
             existing = {item.pk: item for item in order.items.all()}
-            total = Decimal('0.00'); kept = set()
+            total = Decimal('0.00'); kept = set(); changes = []
             try:
                 for row in rows:
-                    item = existing.get(int(row.get('id')))
+                    if not isinstance(row, dict): raise ValueError
                     quantity = int(row.get('quantity'))
-                    if not item or quantity < 1 or quantity > 50: raise ValueError
-                    item.quantity = quantity; item.save(update_fields=['quantity']); total += item.unit_price * quantity; kept.add(item.pk)
+                    if quantity < 1 or quantity > 50: raise ValueError
+                    note = str(row.get('note') or '').strip()[:300]
+                    item_id = row.get('id')
+                    if item_id:
+                        item = existing.get(int(item_id))
+                        if not item: raise ValueError
+                        changes.append((item, quantity, note))
+                    else:
+                        menu_item = VenueMenuItem.objects.filter(
+                            venue=venue, pk=int(row.get('menuItemId')), is_published=True, is_available=True,
+                        ).first()
+                        if not menu_item: raise ValueError
+                        item = VenueOrderItem(order=order, menu_item=menu_item, name=menu_item.name, unit_price=menu_item.price)
+                        changes.append((item, quantity, note))
+                    total += item.unit_price * quantity
             except (TypeError, ValueError):
-                return JsonResponse({'error': 'Use valid quantities between 1 and 50.'}, status=400)
-            order.items.exclude(pk__in=kept).delete(); order.total = total; order.save(update_fields=['total', 'updated_at'])
+                return JsonResponse({'error': 'Use available menu items and quantities between 1 and 50.'}, status=400)
+            with transaction.atomic():
+                for item, quantity, note in changes:
+                    item.quantity = quantity; item.note = note
+                    if item.pk:
+                        item.save(update_fields=['quantity', 'note'])
+                    else:
+                        item.save()
+                    kept.add(item.pk)
+                order.items.exclude(pk__in=kept).delete()
+                order.note = str(data.get('note') or '').strip()[:1000]
+                order.total = total
+                order.save(update_fields=['note', 'total', 'updated_at'])
             _record_operational_activity(venue, 'order_edited', f'Order #{order.order_number} edited before verification', request, {'orderId': order.public_identifier})
         else:
             status = str(data.get('status') or '')
@@ -1625,7 +1650,12 @@ def venue_orders_manage_api(request, organization_id):
     status_filter = request.GET.get('status', '')
     orders = venue.orders.select_related('table').prefetch_related('items')
     if status_filter in dict(VenueOrder.STATUS_CHOICES): orders = orders.filter(status=status_filter)
-    return JsonResponse({'orders': [_order_payload(order) for order in orders[:100]], 'tables': [{'id': item.pk, 'name': item.name, 'publicIdentifier': item.public_identifier, 'qrUrl': request.build_absolute_uri(f'/venue/{venue.public_identifier}/?tab=menu&source={item.public_identifier}&entry=qr&order=1')} for item in venue.touchpoints.filter(destination='ordering').order_by('name')]})
+    menu_items = venue.menu_items.filter(is_published=True, is_available=True).order_by('category__display_order', 'display_order', 'name')
+    return JsonResponse({
+        'orders': [_order_payload(order) for order in orders[:100]],
+        'tables': [{'id': item.pk, 'name': item.name, 'publicIdentifier': item.public_identifier, 'qrUrl': request.build_absolute_uri(f'/venue/{venue.public_identifier}/?tab=menu&source={item.public_identifier}&entry=qr&order=1')} for item in venue.touchpoints.filter(destination='ordering').order_by('name')],
+        'menuItems': [{'id': item.pk, 'name': item.name, 'price': str(item.price)} for item in menu_items],
+    })
 
 
 @require_http_methods(['GET'])
