@@ -1645,6 +1645,13 @@ def venue_orders_manage_api(request, organization_id):
                 return JsonResponse({'error': 'Verify the customer code before changing this order.'}, status=400)
             if status not in dict(VenueOrder.STATUS_CHOICES):
                 return JsonResponse({'error': 'Choose a valid order status.'}, status=400)
+            allowed_transitions = {
+                'accepted': {'preparing', 'cancelled'},
+                'preparing': {'ready', 'cancelled'},
+                'ready': {'completed', 'cancelled'},
+            }
+            if status not in allowed_transitions.get(order.status, set()):
+                return JsonResponse({'error': 'Use the next order step shown in the queue.'}, status=400)
             order.status = status; order.save(update_fields=['status', 'updated_at'])
             _record_operational_activity(venue, 'order_status_updated', f'Order #{order.order_number} marked {order.get_status_display().lower()}', request, {'orderId': order.public_identifier})
     status_filter = request.GET.get('status', '')
