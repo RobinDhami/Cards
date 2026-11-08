@@ -122,6 +122,8 @@ type Item = {
   image?: string;
   display_order?: number;
   priceVariants?: Array<{ label: string; price: string }>;
+  addOns?: Array<{ name: string; price: string }>;
+  spiceLevels?: string[];
 };
 
 type CafeFeedbackDraft = {
@@ -1939,7 +1941,7 @@ export function PublicHospitalityProfile() {
   const feedbackSource = entryChannel ? `${touchpointSource}:${entryChannel}` : touchpointSource;
   const tableIdentifier = publicParams.get("order") === "1" ? touchpointSource : "";
   const [venue, setVenue] = useState<Venue | null>(null);
-  const [orderItems, setOrderItems] = useState<Array<{ id: string; name: string; price: string; quantity: number }>>([]);
+  const [orderItems, setOrderItems] = useState<Array<{ id: string; menuItemId: string; name: string; price: string; quantity: number; variant?: string; addOns?: string[]; spiceLevel?: string }>>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [orderName, setOrderName] = useState("");
   const [orderMessage, setOrderMessage] = useState("");
@@ -1947,6 +1949,9 @@ export function PublicHospitalityProfile() {
   const [placingOrder, setPlacingOrder] = useState(false);
   const [callingWaiter, setCallingWaiter] = useState(false);
   const [waiterCallMessage, setWaiterCallMessage] = useState("");
+  const [selectedVariant, setSelectedVariant] = useState("");
+  const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
+  const [selectedSpiceLevel, setSelectedSpiceLevel] = useState("");
   const [loadError, setLoadError] = useState(false);
   const activeTab = usePublicCafeUIStore((state) => state.activeTab);
   const feedback = usePublicCafeUIStore((state) => state.feedback);
@@ -1979,14 +1984,15 @@ export function PublicHospitalityProfile() {
   const setLoyaltyMembership = usePublicCafeUIStore((state) => state.setLoyaltyMembership);
   const detailRef = useRef<HTMLElement>(null);
   const orderingAvailable = Boolean(venue?.ordering?.enabled && tableIdentifier);
-  function addOrderItem(item: Item) { const id = String(item.id || ''); if (!id) return; setOrderItems((rows) => { const current = rows.find((row) => row.id === id); return current ? rows.map((row) => row.id === id ? { ...row, quantity: row.quantity + 1 } : row) : [...rows, { id, name: item.name, price: item.price, quantity: 1 }] }); setSelectedMenuItem(null); }
-  async function placeOrder() { if (!orderItems.length) return; setPlacingOrder(true); setOrderMessage(''); try { const result = await apiFetch<{ order: { verificationCode: string } }>(`/api/venue/${identifier}/orders/`, { method: 'POST', body: jsonBody({ table: tableIdentifier, customerName: orderName, items: orderItems.map(({ id, quantity }) => ({ id, quantity })) }) }); setOrderItems([]); setOrderCode(result.order.verificationCode); setOrderMessage('Show this four-digit code to your waiter within 10 minutes. Your order starts after they approve it at your table.'); } catch (reason) { setOrderMessage(displayError(reason)) } finally { setPlacingOrder(false) } }
+  function addOrderItem(item: Item, options: { variant?: string; addOns?: string[]; spiceLevel?: string } = {}) { const itemId = String(item.id || ''); if (!itemId) return; const id = `${itemId}:${options.variant || ''}:${[...(options.addOns || [])].sort().join('|')}:${options.spiceLevel || ''}`; const variantPrice = item.priceVariants?.find((variant) => variant.label === options.variant)?.price || item.price; const extras = (options.addOns || []).reduce((total, name) => total + Number(item.addOns?.find((addOn) => addOn.name === name)?.price || 0), 0); const price = (Number(variantPrice) + extras).toFixed(2); setOrderItems((rows) => { const current = rows.find((row) => row.id === id); return current ? rows.map((row) => row.id === id ? { ...row, quantity: row.quantity + 1 } : row) : [...rows, { id, menuItemId: itemId, name: item.name, price, quantity: 1, ...options }] }); setSelectedMenuItem(null); }
+  async function placeOrder() { if (!orderItems.length) return; setPlacingOrder(true); setOrderMessage(''); try { const result = await apiFetch<{ order: { verificationCode: string } }>(`/api/venue/${identifier}/orders/`, { method: 'POST', body: jsonBody({ table: tableIdentifier, customerName: orderName, items: orderItems.map(({ menuItemId, quantity, variant, addOns, spiceLevel }) => ({ id: menuItemId, quantity, variant, addOns, spiceLevel })) }) }); setOrderItems([]); setOrderCode(result.order.verificationCode); setOrderMessage('Show this four-digit code to your waiter within 10 minutes. Your order starts after they approve it at your table.'); } catch (reason) { setOrderMessage(displayError(reason)) } finally { setPlacingOrder(false) } }
   async function callWaiter() { if (!tableIdentifier) return; setCallingWaiter(true); setWaiterCallMessage(''); try { await apiFetch(`/api/venue/${identifier}/waiter-call/`, { method: 'POST', body: jsonBody({ table: tableIdentifier }) }); setWaiterCallMessage('A waiter has been notified for your table.'); } catch (reason) { setWaiterCallMessage(displayError(reason)); } finally { setCallingWaiter(false); } }
   useEffect(() => {
     resetPublicCafeUI(feedbackSource, new URLSearchParams(window.location.search).get("tab") === "menu" ? "menu" : "home");
   }, [feedbackSource, resetPublicCafeUI]);
   useEffect(() => {
     if (!selectedMenuItem) return;
+    setSelectedVariant(selectedMenuItem.priceVariants?.[0]?.label || ''); setSelectedAddOns([]); setSelectedSpiceLevel(selectedMenuItem.spiceLevels?.[0] || '');
     const previousFocus = document.activeElement as HTMLElement | null;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -2298,7 +2304,7 @@ export function PublicHospitalityProfile() {
                     {itemHasReducedPrice(entry) ? <del>Rs. {itemOriginalPrice(entry)}</del> : null}
                     <b>Rs. {entry.price}</b>
                   </span>
-                  {orderingAvailable && entry.isAvailable !== false ? <button type="button" className="cafe-menu-add" aria-label={`Add ${entry.name} to order`} onClick={(event) => { event.stopPropagation(); addOrderItem(entry); }}><Plus size={18} /></button> : null}
+                  {orderingAvailable && entry.isAvailable !== false ? <button type="button" className="cafe-menu-add" aria-label={`Add ${entry.name} to order`} onClick={(event) => { event.stopPropagation(); if (entry.priceVariants?.length || entry.addOns?.length || entry.spiceLevels?.length) setSelectedMenuItem(entry); else addOrderItem(entry); }}><Plus size={18} /></button> : null}
                 </div>
               ))}
             </article>
@@ -2315,13 +2321,16 @@ export function PublicHospitalityProfile() {
         <h3 id="hospitality-menu-detail-title">{selectedMenuItem.name}</h3>
         <p>{selectedMenuItem.description || 'No additional description has been provided.'}</p>
         {selectedMenuItem.priceVariants?.length ? <ul>{selectedMenuItem.priceVariants.map((variant) => <li key={variant.label}>{variant.label}: Rs. {variant.price}</li>)}</ul> : null}
+        {orderingAvailable && selectedMenuItem.priceVariants?.length ? <label className="cafe-order-option">Size<select value={selectedVariant} onChange={(event) => setSelectedVariant(event.target.value)}>{selectedMenuItem.priceVariants.map((variant) => <option key={variant.label} value={variant.label}>{variant.label} · Rs. {variant.price}</option>)}</select></label> : null}
+        {orderingAvailable && selectedMenuItem.addOns?.length ? <fieldset className="cafe-order-options"><legend>Add-ons</legend>{selectedMenuItem.addOns.map((addOn) => <label key={addOn.name}><input type="checkbox" checked={selectedAddOns.includes(addOn.name)} onChange={(event) => setSelectedAddOns((items) => event.target.checked ? [...items, addOn.name] : items.filter((item) => item !== addOn.name))} /> {addOn.name} · Rs. {addOn.price}</label>)}</fieldset> : null}
+        {orderingAvailable && selectedMenuItem.spiceLevels?.length ? <label className="cafe-order-option">Spice level<select value={selectedSpiceLevel} onChange={(event) => setSelectedSpiceLevel(event.target.value)}>{selectedMenuItem.spiceLevels.map((level) => <option key={level} value={level}>{level}</option>)}</select></label> : null}
         <div className="cafe-detail-price">
           {itemHasReducedPrice(selectedMenuItem) ? <span>Was <del>Rs. {itemOriginalPrice(selectedMenuItem)}</del></span> : null}
           <strong>{itemHasReducedPrice(selectedMenuItem) ? 'Now ' : ''}Rs. {selectedMenuItem.price}</strong>
         </div>
-        {orderingAvailable && selectedMenuItem.isAvailable !== false ? <button type="button" className="cafe-primary" onClick={() => addOrderItem(selectedMenuItem)}>Add to table order</button> : null}
+        {orderingAvailable && selectedMenuItem.isAvailable !== false ? <button type="button" className="cafe-primary" onClick={() => addOrderItem(selectedMenuItem, { variant: selectedVariant, addOns: selectedAddOns, spiceLevel: selectedSpiceLevel })}>Add to table order</button> : null}
       </section> : null}
-      {orderingAvailable && cartOpen ? <><button className="cafe-order-backdrop" type="button" aria-label="Close order" onClick={() => setCartOpen(false)} /><aside className="cafe-order-cart" aria-live="polite"><header><span><ShoppingCart size={18} /> Your order</span><button type="button" aria-label="Close order" onClick={() => setCartOpen(false)}><X size={18} /></button></header>{orderItems.length ? orderItems.map((item) => <div key={item.id}><span>{item.quantity}× {item.name}</span><button type="button" aria-label={`Remove ${item.name}`} onClick={() => setOrderItems((rows) => rows.filter((row) => row.id !== item.id))}><X size={15} /></button></div>) : <p>Your cart is empty. Add items from the menu.</p>}{orderItems.length ? <><label>Your name <input value={orderName} onChange={(event) => setOrderName(event.target.value)} placeholder="Optional" /></label><button className="cafe-primary" type="button" disabled={placingOrder} onClick={() => void placeOrder()}>{placingOrder ? 'Sending…' : 'Place order'}</button></> : null}{orderCode ? <strong className="cafe-order-code">Waiter code {orderCode}</strong> : null}{orderMessage ? <p>{orderMessage}</p> : null}</aside></> : null}
+      {orderingAvailable && cartOpen ? <><button className="cafe-order-backdrop" type="button" aria-label="Close order" onClick={() => setCartOpen(false)} /><aside className="cafe-order-cart" aria-live="polite"><header><span><ShoppingCart size={18} /> Your order</span><button type="button" aria-label="Close order" onClick={() => setCartOpen(false)}><X size={18} /></button></header>{orderItems.length ? orderItems.map((item) => <div key={item.id}><span>{item.quantity}× {item.name}{item.variant ? ` · ${item.variant}` : ''}{item.addOns?.length ? ` · ${item.addOns.join(', ')}` : ''}{item.spiceLevel ? ` · ${item.spiceLevel}` : ''}</span><button type="button" aria-label={`Remove ${item.name}`} onClick={() => setOrderItems((rows) => rows.filter((row) => row.id !== item.id))}><X size={15} /></button></div>) : <p>Your cart is empty. Add items from the menu.</p>}{orderItems.length ? <><label>Your name <input value={orderName} onChange={(event) => setOrderName(event.target.value)} placeholder="Optional" /></label><button className="cafe-primary" type="button" disabled={placingOrder} onClick={() => void placeOrder()}>{placingOrder ? 'Sending…' : 'Place order'}</button></> : null}{orderCode ? <strong className="cafe-order-code">Waiter code {orderCode}</strong> : null}{orderMessage ? <p>{orderMessage}</p> : null}</aside></> : null}
       {orderingAvailable ? <div className="cafe-table-service-actions">
         <button className="cafe-call-waiter" type="button" disabled={callingWaiter} onClick={() => void callWaiter()}><MessageSquare size={18} /> {callingWaiter ? 'Calling…' : 'Call waiter'}</button>
         {!cartOpen ? <button className="cafe-order-fab" type="button" onClick={() => setCartOpen(true)}><ShoppingCart size={20} /> View order <span>· {orderItems.reduce((total, item) => total + item.quantity, 0)}</span></button> : null}

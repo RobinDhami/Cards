@@ -297,10 +297,11 @@ def _payload(request, venue):
             'description': item.description, 'image': _file_url(request, item.image),
             'price': str(item.price), 'originalPrice': str(item.original_price) if item.original_price is not None else '', 'offerLabel': item.offer_label, 'dietaryInfo': item.dietary_info,
             'isVegetarian': item.is_vegetarian, 'isAvailable': item.is_available,
+            'addOns': item.add_ons, 'spiceLevels': item.spice_levels,
             'isTodaySpecial': _timed_attribute_active(item.is_today_special, item.special_starts_at, item.special_ends_at),
             'isOffer': _timed_attribute_active(item.is_offer, item.offer_starts_at, item.offer_ends_at),
             'priceVariants': [{'label': variant.label, 'price': str(variant.price)} for variant in item.price_variants.all()],
-        } for item in category.items.filter(is_published=True).prefetch_related('price_variants')]
+        } for item in category.items.filter(is_published=True, is_available=True).prefetch_related('price_variants')]
         if items:
             categories.append({'name': category.name, 'slug': category.slug, 'items': items})
     program = VenueRewardsProgram.objects.filter(venue=venue).first()
@@ -1063,6 +1064,7 @@ def _menu_item_payload(request, item):
         'description': item.description, 'price': str(item.price),
         'original_price': str(item.original_price) if item.original_price is not None else '',
         'offer_label': item.offer_label, 'dietary_info': item.dietary_info,
+        'add_ons': item.add_ons, 'spice_levels': item.spice_levels,
         'is_vegetarian': item.is_vegetarian, 'is_available': item.is_available,
         'is_published': item.is_published, 'is_today_special': item.is_today_special,
         'is_offer': item.is_offer, 'image': _file_url(request, item.image),
@@ -1154,7 +1156,7 @@ def venue_menu_items_api(request, organization_id):
             duplicate = VenueMenuItem.objects.create(
                 venue=venue, category=source.category, name=f'{source.name} copy', description=source.description,
                 image=source.image, price=source.price, original_price=source.original_price, offer_label=source.offer_label,
-                dietary_info=source.dietary_info, is_vegetarian=source.is_vegetarian, is_available=source.is_available,
+                dietary_info=source.dietary_info, add_ons=source.add_ons, spice_levels=source.spice_levels, is_vegetarian=source.is_vegetarian, is_available=source.is_available,
                 is_published=False, is_today_special=source.is_today_special, is_offer=source.is_offer,
                 special_starts_at=source.special_starts_at, special_ends_at=source.special_ends_at,
                 offer_starts_at=source.offer_starts_at, offer_ends_at=source.offer_ends_at,
@@ -1174,6 +1176,22 @@ def venue_menu_items_api(request, organization_id):
                         value = value.strip().lower() in {'1', 'true', 'yes', 'on'}
                     if key in {'original_price', 'special_starts_at', 'special_ends_at', 'offer_starts_at', 'offer_ends_at'} and value == '':
                         value = None
+                    setattr(item, key, value)
+            for key in ('add_ons', 'spice_levels'):
+                if key in data:
+                    value = _json_field(data, key, [])
+                    if not isinstance(value, list) or len(value) > 20:
+                        raise ValidationError(f'{key.replace("_", " ").title()} are invalid.')
+                    if key == 'add_ons':
+                        normalized = []
+                        for row in value:
+                            if not isinstance(row, dict) or not str(row.get('name') or '').strip():
+                                raise ValidationError('Every add-on needs a name.')
+                            price = _bill_amount(row.get('price'), 'add-on price')
+                            normalized.append({'name': str(row.get('name')).strip()[:80], 'price': str(price)})
+                        value = normalized
+                    else:
+                        value = [str(row).strip()[:80] for row in value if str(row).strip()]
                     setattr(item, key, value)
             if request.FILES.get('image'):
                 item.image = request.FILES['image']
@@ -1522,7 +1540,7 @@ def _order_payload(order):
         'serviceChargeAmount': str(order.service_charge_amount), 'discountAmount': str(order.discount_amount),
         'finalTotal': str(order.final_total), 'paymentStatus': order.payment_status,
         'paidAt': order.paid_at.isoformat() if order.paid_at else None, 'createdAt': order.created_at.isoformat(),
-        'items': [{'id': item.pk, 'menuItemId': item.menu_item_id, 'name': item.name, 'unitPrice': str(item.unit_price), 'quantity': item.quantity, 'note': item.note} for item in order.items.all()],
+        'items': [{'id': item.pk, 'menuItemId': item.menu_item_id, 'name': item.name, 'unitPrice': str(item.unit_price), 'quantity': item.quantity, 'note': item.note, 'selectedVariant': item.selected_variant, 'addOns': item.add_ons, 'spiceLevel': item.spice_level} for item in order.items.all()],
     }
 
 
@@ -1581,7 +1599,7 @@ def _kitchen_order_payload(order):
         'status': order.status,
         'note': order.note,
         'createdAt': order.created_at.isoformat(),
-        'items': [{'name': item.name, 'quantity': item.quantity, 'note': item.note} for item in order.items.all()],
+        'items': [{'name': item.name, 'quantity': item.quantity, 'note': item.note, 'selectedVariant': item.selected_variant, 'addOns': item.add_ons, 'spiceLevel': item.spice_level} for item in order.items.all()],
     }
 
 
@@ -1635,11 +1653,28 @@ def venue_public_order_api(request, public_identifier):
                 item = VenueMenuItem.objects.filter(venue=venue, public_identifier=str(row.get('id') or ''), is_published=True, is_available=True).first()
                 quantity = int(row.get('quantity') or 0)
                 if not item or quantity < 1 or quantity > 50: raise ValidationError('Choose available menu items and valid quantities.')
-                total += item.price * quantity
-                ordered_items.append((item, quantity, str(row.get('note') or '').strip()[:300]))
+                variant_label = str(row.get('variant') or '').strip()[:80]
+                variant_price = item.price
+                if variant_label:
+                    variant = item.price_variants.filter(label=variant_label).first()
+                    if not variant: raise ValidationError('Choose a valid item size or variant.')
+                    variant_price = variant.price
+                selected_add_ons = row.get('addOns') or []
+                if not isinstance(selected_add_ons, list) or len(selected_add_ons) > 20: raise ValidationError('Choose valid add-ons.')
+                available_add_ons = {str(option.get('name') or ''): _bill_amount(option.get('price'), 'add-on price') for option in item.add_ons if isinstance(option, dict)}
+                clean_add_ons = []
+                for add_on in selected_add_ons:
+                    name = str(add_on).strip()[:80]
+                    if name not in available_add_ons: raise ValidationError('One of the selected add-ons is unavailable.')
+                    clean_add_ons.append({'name': name, 'price': str(available_add_ons[name])})
+                spice_level = str(row.get('spiceLevel') or '').strip()[:80]
+                if spice_level and spice_level not in item.spice_levels: raise ValidationError('Choose a valid spice level.')
+                unit_price = variant_price + sum((Decimal(option['price']) for option in clean_add_ons), Decimal('0.00'))
+                total += unit_price * quantity
+                ordered_items.append((item, unit_price, quantity, str(row.get('note') or '').strip()[:300], variant_label, clean_add_ons, spice_level))
             latest = venue.orders.select_for_update().order_by('-order_number').first()
             order = VenueOrder.objects.create(venue=venue, table=table, order_number=(latest.order_number if latest else 0) + 1, customer_name=str(data.get('customerName') or '').strip()[:120], customer_phone=str(data.get('customerPhone') or '').strip()[:40], note=str(data.get('note') or '').strip()[:1000], total=total, final_total=total, verification_code=f'{secrets.randbelow(10000):04d}', verification_expires_at=timezone.now() + timedelta(minutes=10), table_session_expires_at=timezone.now() + timedelta(hours=4))
-            VenueOrderItem.objects.bulk_create([VenueOrderItem(order=order, menu_item=item, name=item.name, unit_price=item.price, quantity=quantity, note=note) for item, quantity, note in ordered_items])
+            VenueOrderItem.objects.bulk_create([VenueOrderItem(order=order, menu_item=item, name=item.name, unit_price=unit_price, quantity=quantity, note=note, selected_variant=variant, add_ons=add_ons, spice_level=spice) for item, unit_price, quantity, note, variant, add_ons, spice in ordered_items])
     except (ValidationError, ValueError) as exc:
         return JsonResponse({'error': _validation_message(exc) if isinstance(exc, ValidationError) else 'Choose valid order quantities.'}, status=400)
     _record_operational_activity(venue, 'order_created', f'New table order #{order.order_number} from {table.name}', request, {'orderId': order.public_identifier, 'table': table.name})

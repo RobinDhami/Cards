@@ -24,11 +24,12 @@ import './HospitalityMenuManagement.css'
 
 type Category = { id: number; name: string; slug: string; display_order: number; is_active: boolean }
 type PriceVariant = { id?: number; label: string; price: string; display_order?: number }
+type AddOn = { name: string; price: string }
 type MenuItem = {
   id: number; category_id: number; name: string; description: string; price: string; original_price: string;
   offer_label: string; image: string; is_available: boolean; is_published: boolean; is_today_special: boolean;
   is_offer: boolean; display_order: number; special_starts_at: string; special_ends_at: string;
-  offer_starts_at: string; offer_ends_at: string; price_variants: PriceVariant[]
+  offer_starts_at: string; offer_ends_at: string; price_variants: PriceVariant[]; add_ons: AddOn[]; spice_levels: string[]
 }
 type Draft = Omit<MenuItem, 'id' | 'image' | 'display_order'> & { id?: number; image: File | null; currentImage: string; removeImage: boolean }
 type MenuTab = 'categories' | 'items' | 'specials' | 'offers'
@@ -37,7 +38,7 @@ const emptyDraft = (categoryId = 0): Draft => ({
   category_id: categoryId, name: '', description: '', price: '', original_price: '', offer_label: '',
   image: null, currentImage: '', removeImage: false, is_available: true, is_published: true,
   is_today_special: false, is_offer: false, special_starts_at: '', special_ends_at: '',
-  offer_starts_at: '', offer_ends_at: '', price_variants: [],
+  offer_starts_at: '', offer_ends_at: '', price_variants: [], add_ons: [], spice_levels: [],
 })
 
 function localDateTime(value: string) {
@@ -151,6 +152,9 @@ export function HospitalityMenuManagement({ organizationId, publicIdentifier }: 
     for (const variant of value.price_variants) {
       if (!variant.label.trim() || !(Number(variant.price) > 0)) return 'Every price variant needs a name and a price greater than zero.'
     }
+    for (const addOn of value.add_ons) {
+      if (!addOn.name.trim() || Number(addOn.price) < 0 || !Number.isFinite(Number(addOn.price))) return 'Every add-on needs a name and a valid price.'
+    }
     if (value.is_offer && value.original_price && Number(value.original_price) <= Number(value.price)) return 'Original price must be greater than the current price.'
     if (value.is_offer && !value.original_price && !value.offer_label.trim()) return 'Add an offer label or an original price.'
     if (value.special_starts_at && value.special_ends_at && value.special_starts_at >= value.special_ends_at) return 'Special end time must be after its start time.'
@@ -173,6 +177,8 @@ export function HospitalityMenuManagement({ organizationId, publicIdentifier }: 
         special_starts_at: apiDateTime(draft.special_starts_at), special_ends_at: apiDateTime(draft.special_ends_at),
         offer_starts_at: apiDateTime(draft.offer_starts_at), offer_ends_at: apiDateTime(draft.offer_ends_at),
         price_variants: JSON.stringify(draft.price_variants.map(({ label, price }) => ({ label: label.trim(), price }))),
+        add_ons: JSON.stringify(draft.add_ons.map(({ name, price }) => ({ name: name.trim(), price }))),
+        spice_levels: JSON.stringify(draft.spice_levels.map((level) => level.trim()).filter(Boolean)),
         remove_image: draft.removeImage,
       }
       Object.entries(fields).forEach(([key, value]) => { if (value !== undefined) body.append(key, String(value ?? '')) })
@@ -320,8 +326,10 @@ export function HospitalityMenuManagement({ organizationId, publicIdentifier }: 
         <Field label="Description" hint={`${draft.description.length}/500`}><TextArea maxLength={500} value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} /></Field>
         <Field label="Item image"><ImageAdjustInput key={draft.removeImage ? 'removed' : 'active'} label={draft.currentImage || draft.image ? 'Replace item image' : 'Choose and crop image'} mode="featured" currentUrl={draft.removeImage ? '' : draft.currentImage} onChange={(file) => setDraft({ ...draft, image: file, removeImage: false })} />{draft.currentImage || draft.image ? <button type="button" className="menu-remove-image" onClick={() => setDraft({ ...draft, image: null, currentImage: '', removeImage: true })} aria-label="Remove item image" title="Remove item image"><Trash2 size={13} /></button> : null}</Field>
         <label className="menu-editor-toggle"><span><strong>Published</strong><small>Show this item on the public menu</small></span><input type="checkbox" checked={draft.is_published} onChange={(event) => setDraft({ ...draft, is_published: event.target.checked })} /></label>
-        <label className="menu-editor-toggle"><span><strong>Availability</strong><small>Published sold-out items remain visible</small></span><input type="checkbox" checked={draft.is_available} onChange={(event) => setDraft({ ...draft, is_available: event.target.checked })} /></label>
+        <label className="menu-editor-toggle"><span><strong>In stock</strong><small>Turn off to hide this item from the public menu and ordering immediately</small></span><input type="checkbox" checked={draft.is_available} onChange={(event) => setDraft({ ...draft, is_available: event.target.checked })} /></label>
         <details className="menu-editor-section"><summary><span><strong>Price variants</strong><small>Add sizes or options such as small / large</small></span><Plus size={15} /></summary><div>{draft.price_variants.map((variant, index) => <div className="menu-variant-row" key={index}><TextInput aria-label={`Variant ${index + 1} name`} value={variant.label} onChange={(event) => setDraft({ ...draft, price_variants: draft.price_variants.map((item, itemIndex) => itemIndex === index ? { ...item, label: event.target.value } : item) })} placeholder="Large" /><TextInput aria-label={`Variant ${index + 1} price`} inputMode="decimal" value={variant.price} onChange={(event) => setDraft({ ...draft, price_variants: draft.price_variants.map((item, itemIndex) => itemIndex === index ? { ...item, price: event.target.value } : item) })} placeholder="300" /><button type="button" aria-label={`Remove variant ${index + 1}`} onClick={() => setDraft({ ...draft, price_variants: draft.price_variants.filter((_, itemIndex) => itemIndex !== index) })}><Trash2 size={14} /></button></div>)}<button type="button" className="manage-button" onClick={() => setDraft({ ...draft, price_variants: [...draft.price_variants, { label: '', price: '' }] })}><Plus size={14} /> Add variant</button></div></details>
+        <details className="menu-editor-section"><summary><span><strong>Add-ons</strong><small>Add extras customers can include with this item</small></span><Plus size={15} /></summary><div>{draft.add_ons.map((addOn, index) => <div className="menu-variant-row" key={index}><TextInput aria-label={`Add-on ${index + 1} name`} value={addOn.name} onChange={(event) => setDraft({ ...draft, add_ons: draft.add_ons.map((item, itemIndex) => itemIndex === index ? { ...item, name: event.target.value } : item) })} placeholder="Extra cheese" /><TextInput aria-label={`Add-on ${index + 1} price`} inputMode="decimal" value={addOn.price} onChange={(event) => setDraft({ ...draft, add_ons: draft.add_ons.map((item, itemIndex) => itemIndex === index ? { ...item, price: event.target.value } : item) })} placeholder="50" /><button type="button" aria-label={`Remove add-on ${index + 1}`} onClick={() => setDraft({ ...draft, add_ons: draft.add_ons.filter((_, itemIndex) => itemIndex !== index) })}><Trash2 size={14} /></button></div>)}<button type="button" className="manage-button" onClick={() => setDraft({ ...draft, add_ons: [...draft.add_ons, { name: '', price: '' }] })}><Plus size={14} /> Add add-on</button></div></details>
+        <details className="menu-editor-section"><summary><span><strong>Spice levels</strong><small>Comma-separated choices such as Mild, Medium, Hot</small></span><Plus size={15} /></summary><div><TextInput value={draft.spice_levels.join(', ')} onChange={(event) => setDraft({ ...draft, spice_levels: event.target.value.split(',').map((level) => level.trim()).filter(Boolean) })} placeholder="Mild, Medium, Hot" /></div></details>
         <details className="menu-editor-section"><summary><span><strong>Today&apos;s special</strong><small>Highlight now or during an optional period</small></span><Tag size={15} /></summary><div><label className="menu-editor-check"><input type="checkbox" checked={draft.is_today_special} onChange={(event) => setDraft({ ...draft, is_today_special: event.target.checked })} /> Mark as today&apos;s special</label>{draft.is_today_special ? <div className="menu-drawer-pair"><Field label="Starts (optional)"><TextInput type="datetime-local" value={draft.special_starts_at} onChange={(event) => setDraft({ ...draft, special_starts_at: event.target.value })} /></Field><Field label="Ends (optional)"><TextInput type="datetime-local" value={draft.special_ends_at} onChange={(event) => setDraft({ ...draft, special_ends_at: event.target.value })} /></Field></div> : null}</div></details>
         <details className="menu-editor-section"><summary><span><strong>Offer settings</strong><small>Add a discount or timed offer</small></span><Tag size={15} /></summary><div><label className="menu-editor-check"><input type="checkbox" checked={draft.is_offer} onChange={(event) => setDraft({ ...draft, is_offer: event.target.checked })} /> Show as offer</label>{draft.is_offer ? <><div className="menu-drawer-pair"><Field label="Original price"><TextInput inputMode="decimal" value={draft.original_price} onChange={(event) => setDraft({ ...draft, original_price: event.target.value })} /></Field><Field label="Offer label"><TextInput value={draft.offer_label} onChange={(event) => setDraft({ ...draft, offer_label: event.target.value })} placeholder="e.g. Save 20%" /></Field></div><div className="menu-drawer-pair"><Field label="Starts (optional)"><TextInput type="datetime-local" value={draft.offer_starts_at} onChange={(event) => setDraft({ ...draft, offer_starts_at: event.target.value })} /></Field><Field label="Ends (optional)"><TextInput type="datetime-local" value={draft.offer_ends_at} onChange={(event) => setDraft({ ...draft, offer_ends_at: event.target.value })} /></Field></div></> : null}</div></details>
       </div><footer><button type="button" className="manage-button" onClick={() => setDraft(null)}>Cancel</button><button className="manage-button is-primary" disabled={saving}>{saving ? 'Saving…' : 'Save item'}</button></footer></form></aside></> : null}

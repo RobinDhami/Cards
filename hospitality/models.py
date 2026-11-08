@@ -174,6 +174,8 @@ class VenueMenuItem(models.Model):
     original_price = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True, validators=[MinValueValidator(Decimal('0'))])
     offer_label = models.CharField(max_length=120, blank=True)
     dietary_info = models.CharField(max_length=255, blank=True)
+    add_ons = models.JSONField(default=list, blank=True)
+    spice_levels = models.JSONField(default=list, blank=True)
     is_vegetarian = models.BooleanField(default=False)
     is_available = models.BooleanField(default=True)
     is_published = models.BooleanField(default=True)
@@ -320,6 +322,9 @@ class VenueOrderItem(models.Model):
     unit_price = models.DecimalField(max_digits=12, decimal_places=2)
     quantity = models.PositiveSmallIntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(50)])
     note = models.CharField(max_length=300, blank=True)
+    selected_variant = models.CharField(max_length=80, blank=True)
+    add_ons = models.JSONField(default=list, blank=True)
+    spice_level = models.CharField(max_length=80, blank=True)
 
 
 class VenueWaiterCall(models.Model):
