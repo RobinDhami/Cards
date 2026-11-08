@@ -1518,9 +1518,43 @@ def _order_payload(order):
         'verifiedAt': order.verified_at.isoformat() if order.verified_at else None, 'verifiedBy': order.verified_by,
         'cancellationReason': order.cancellation_reason,
         'tableSessionExpiresAt': order.table_session_expires_at.isoformat() if order.table_session_expires_at else None,
-        'total': str(order.total), 'createdAt': order.created_at.isoformat(),
+        'total': str(order.total), 'taxAmount': str(order.tax_amount),
+        'serviceChargeAmount': str(order.service_charge_amount), 'discountAmount': str(order.discount_amount),
+        'finalTotal': str(order.final_total), 'paymentStatus': order.payment_status,
+        'paidAt': order.paid_at.isoformat() if order.paid_at else None, 'createdAt': order.created_at.isoformat(),
         'items': [{'id': item.pk, 'menuItemId': item.menu_item_id, 'name': item.name, 'unitPrice': str(item.unit_price), 'quantity': item.quantity, 'note': item.note} for item in order.items.all()],
     }
+
+
+def _bill_amount(value, label):
+    try:
+        amount = Decimal(str(value or '0')).quantize(Decimal('0.01'))
+    except (InvalidOperation, ValueError, TypeError):
+        raise ValidationError(f'Enter a valid {label}.')
+    if amount < 0:
+        raise ValidationError(f'{label.capitalize()} cannot be negative.')
+    return amount
+
+
+def _refresh_order_bill(order, *, tax_amount=None, service_charge_amount=None, discount_amount=None, payment_status=None):
+    """Keep the payable amount consistent whenever an order or its bill changes."""
+    tax = _bill_amount(order.tax_amount if tax_amount is None else tax_amount, 'tax amount')
+    service = _bill_amount(order.service_charge_amount if service_charge_amount is None else service_charge_amount, 'service charge')
+    discount = _bill_amount(order.discount_amount if discount_amount is None else discount_amount, 'discount')
+    status = payment_status or order.payment_status
+    if status not in dict(VenueOrder.PAYMENT_STATUS_CHOICES):
+        raise ValidationError('Choose a valid payment status.')
+    before_discount = order.total + tax + service
+    if status == 'complimentary':
+        discount = before_discount
+    if discount > before_discount:
+        raise ValidationError('Discount cannot be more than the bill total.')
+    order.tax_amount = tax
+    order.service_charge_amount = service
+    order.discount_amount = discount
+    order.final_total = before_discount - discount
+    order.payment_status = status
+    order.paid_at = timezone.now() if status in {'paid_cash', 'paid_online'} else None
 
 
 def _expire_pending_orders(venue):
@@ -1604,7 +1638,7 @@ def venue_public_order_api(request, public_identifier):
                 total += item.price * quantity
                 ordered_items.append((item, quantity, str(row.get('note') or '').strip()[:300]))
             latest = venue.orders.select_for_update().order_by('-order_number').first()
-            order = VenueOrder.objects.create(venue=venue, table=table, order_number=(latest.order_number if latest else 0) + 1, customer_name=str(data.get('customerName') or '').strip()[:120], customer_phone=str(data.get('customerPhone') or '').strip()[:40], note=str(data.get('note') or '').strip()[:1000], total=total, verification_code=f'{secrets.randbelow(10000):04d}', verification_expires_at=timezone.now() + timedelta(minutes=10), table_session_expires_at=timezone.now() + timedelta(hours=4))
+            order = VenueOrder.objects.create(venue=venue, table=table, order_number=(latest.order_number if latest else 0) + 1, customer_name=str(data.get('customerName') or '').strip()[:120], customer_phone=str(data.get('customerPhone') or '').strip()[:40], note=str(data.get('note') or '').strip()[:1000], total=total, final_total=total, verification_code=f'{secrets.randbelow(10000):04d}', verification_expires_at=timezone.now() + timedelta(minutes=10), table_session_expires_at=timezone.now() + timedelta(hours=4))
             VenueOrderItem.objects.bulk_create([VenueOrderItem(order=order, menu_item=item, name=item.name, unit_price=item.price, quantity=quantity, note=note) for item, quantity, note in ordered_items])
     except (ValidationError, ValueError) as exc:
         return JsonResponse({'error': _validation_message(exc) if isinstance(exc, ValidationError) else 'Choose valid order quantities.'}, status=400)
@@ -1678,6 +1712,8 @@ def venue_orders_manage_api(request, organization_id):
                 return JsonResponse({'error': 'Choose another active order from the same table.'}, status=400)
             if order.status not in {'new', 'accepted'} or source.status != order.status:
                 return JsonResponse({'error': 'Only orders at the same pending or verified stage can be merged.'}, status=400)
+            if order.payment_status != 'unpaid' or source.payment_status != 'unpaid':
+                return JsonResponse({'error': 'Only unpaid orders can be merged. Settle the orders separately instead.'}, status=400)
             with transaction.atomic():
                 for row in source.items.all():
                     matching = order.items.filter(menu_item_id=row.menu_item_id, name=row.name, unit_price=row.unit_price, note=row.note).first()
@@ -1687,10 +1723,26 @@ def venue_orders_manage_api(request, organization_id):
                     else:
                         VenueOrderItem.objects.create(order=order, menu_item=row.menu_item, name=row.name, unit_price=row.unit_price, quantity=row.quantity, note=row.note)
                 order.total += source.total
-                order.save(update_fields=['total', 'updated_at'])
+                _refresh_order_bill(order)
+                order.save(update_fields=['total', 'tax_amount', 'service_charge_amount', 'discount_amount', 'final_total', 'payment_status', 'paid_at', 'updated_at'])
                 source.status = 'cancelled'; source.cancellation_reason = f'Merged into order #{order.order_number}'
                 source.save(update_fields=['status', 'cancellation_reason', 'updated_at'])
             _record_operational_activity(venue, 'orders_merged', f'Merged order #{source.order_number} into #{order.order_number} at {order.table.name}', request, {'orderId': order.public_identifier, 'mergedOrderId': source.public_identifier})
+        elif action == 'billing':
+            if order.status in {'new', 'cancelled', 'expired'}:
+                return JsonResponse({'error': 'Verify an active order before updating its bill.'}, status=400)
+            try:
+                _refresh_order_bill(
+                    order,
+                    tax_amount=data.get('taxAmount'),
+                    service_charge_amount=data.get('serviceChargeAmount'),
+                    discount_amount=data.get('discountAmount'),
+                    payment_status=str(data.get('paymentStatus') or 'unpaid'),
+                )
+            except ValidationError as exc:
+                return JsonResponse({'error': _validation_message(exc)}, status=400)
+            order.save(update_fields=['tax_amount', 'service_charge_amount', 'discount_amount', 'final_total', 'payment_status', 'paid_at', 'updated_at'])
+            _record_operational_activity(venue, 'order_billing_updated', f'Billing updated for order #{order.order_number}', request, {'orderId': order.public_identifier, 'paymentStatus': order.payment_status, 'finalTotal': str(order.final_total)})
         elif action == 'edit':
             if order.status not in {'new', 'accepted', 'preparing'}:
                 return JsonResponse({'error': 'Only pending, verified, or preparing orders can be changed.'}, status=400)
@@ -1730,7 +1782,8 @@ def venue_orders_manage_api(request, organization_id):
                 order.items.exclude(pk__in=kept).delete()
                 order.note = str(data.get('note') or '').strip()[:1000]
                 order.total = total
-                order.save(update_fields=['note', 'total', 'updated_at'])
+                _refresh_order_bill(order)
+                order.save(update_fields=['note', 'total', 'tax_amount', 'service_charge_amount', 'discount_amount', 'final_total', 'payment_status', 'paid_at', 'updated_at'])
             _record_operational_activity(venue, 'order_edited', f'Order #{order.order_number} edited before verification', request, {'orderId': order.public_identifier})
         else:
             status = str(data.get('status') or '')
