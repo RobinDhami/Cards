@@ -1527,6 +1527,45 @@ def _expire_pending_orders(venue):
     return VenueOrder.objects.filter(venue=venue, status='new', verification_expires_at__isnull=False, verification_expires_at__lte=now).update(status='expired')
 
 
+def _kitchen_order_payload(order):
+    """The kitchen needs food details, never customer or verification data."""
+    return {
+        'publicIdentifier': order.public_identifier,
+        'number': order.order_number,
+        'table': order.table.name if order.table_id else 'Counter',
+        'status': order.status,
+        'note': order.note,
+        'createdAt': order.created_at.isoformat(),
+        'items': [{'name': item.name, 'quantity': item.quantity, 'note': item.note} for item in order.items.all()],
+    }
+
+
+@require_http_methods(['GET', 'PATCH'])
+def venue_kitchen_orders_api(request, public_identifier, access_token):
+    venue = get_object_or_404(
+        VenueProfile.objects.select_related('organization'), public_identifier=public_identifier,
+        kitchen_access_token=access_token, is_active=True,
+    )
+    if 'ordering' not in enabled_organization_modules(venue.organization):
+        return JsonResponse({'error': 'Kitchen ordering is not available for this café.'}, status=404)
+    _expire_pending_orders(venue)
+    if request.method == 'PATCH':
+        data = _body(request) or {}
+        order = get_object_or_404(VenueOrder, venue=venue, public_identifier=str(data.get('order') or ''))
+        target_status = str(data.get('status') or '')
+        allowed_transitions = {'accepted': 'preparing', 'preparing': 'ready'}
+        if allowed_transitions.get(order.status) != target_status:
+            return JsonResponse({'error': 'Use the next order step shown on the kitchen display.'}, status=400)
+        order.status = target_status
+        order.save(update_fields=['status', 'updated_at'])
+        _record_operational_activity(venue, 'kitchen_order_updated', f'Kitchen marked order #{order.order_number} {order.get_status_display().lower()}', request, {'orderId': order.public_identifier})
+    orders = venue.orders.filter(status__in=['accepted', 'preparing']).select_related('table').prefetch_related('items')
+    return JsonResponse({
+        'organization': {'name': venue.organization.name, 'logo': _file_url(request, venue.logo or venue.organization.logo)},
+        'orders': [_kitchen_order_payload(order) for order in orders],
+    })
+
+
 @require_http_methods(['POST'])
 def venue_public_order_api(request, public_identifier):
     venue = get_object_or_404(VenueProfile.objects.select_related('organization'), public_identifier=public_identifier, is_active=True)
@@ -1662,6 +1701,7 @@ def venue_orders_manage_api(request, organization_id):
         'orders': [_order_payload(order) for order in orders[:100]],
         'tables': [{'id': item.pk, 'name': item.name, 'publicIdentifier': item.public_identifier, 'qrUrl': request.build_absolute_uri(f'/venue/{venue.public_identifier}/?tab=menu&source={item.public_identifier}&entry=qr&order=1')} for item in venue.touchpoints.filter(destination='ordering').order_by('name')],
         'menuItems': [{'id': item.pk, 'name': item.name, 'price': str(item.price)} for item in menu_items],
+        'kitchenUrl': request.build_absolute_uri(f'/venue/{venue.public_identifier}/kitchen/{venue.kitchen_access_token}/'),
     })
 
 

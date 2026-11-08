@@ -12,11 +12,16 @@ def public_identifier():
     return secrets.token_urlsafe(18)
 
 
+def kitchen_access_token():
+    return secrets.token_urlsafe(24)
+
+
 class VenueProfile(models.Model):
     VENUE_TYPES = [('hotel', 'Hotel'), ('restaurant', 'Restaurant'), ('cafe', 'Café'), ('bar', 'Bar'), ('other', 'Other venue')]
     organization = models.OneToOneField('vcards.College', on_delete=models.CASCADE, related_name='venue_profile')
     venue_type = models.CharField(max_length=20, choices=VENUE_TYPES, default='restaurant')
     public_identifier = models.CharField(max_length=64, unique=True, default=public_identifier, editable=False)
+    kitchen_access_token = models.CharField(max_length=64, unique=True, default=kitchen_access_token, editable=False)
     logo = models.ImageField(upload_to='venue_logos/', blank=True, null=True)
     cover_image = models.ImageField(upload_to='venue_covers/', blank=True, null=True)
     description = models.TextField(blank=True)

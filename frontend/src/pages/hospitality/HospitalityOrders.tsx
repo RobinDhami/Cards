@@ -39,6 +39,7 @@ export function HospitalityOrders({ organizationId }: { organizationId: number }
   const [orders, setOrders] = useState<Order[]>([])
   const [tables, setTables] = useState<Table[]>([])
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
+  const [kitchenUrl, setKitchenUrl] = useState('')
   const [tableName, setTableName] = useState('')
   const [queue, setQueue] = useState<Queue>('waiter')
   const [error, setError] = useState('')
@@ -48,8 +49,8 @@ export function HospitalityOrders({ organizationId }: { organizationId: number }
 
   const load = useCallback(async () => {
     try {
-      const data = await apiFetch<{ orders: Order[]; tables: Table[]; menuItems: MenuItem[] }>(`/api/organizations/${organizationId}/venue/orders/`)
-      setOrders(data.orders); setTables(data.tables); setMenuItems(data.menuItems)
+      const data = await apiFetch<{ orders: Order[]; tables: Table[]; menuItems: MenuItem[]; kitchenUrl: string }>(`/api/organizations/${organizationId}/venue/orders/`)
+      setOrders(data.orders); setTables(data.tables); setMenuItems(data.menuItems); setKitchenUrl(data.kitchenUrl)
     } catch (reason) { setError(displayError(reason)) }
   }, [organizationId])
   useEffect(() => { void load() }, [load])
@@ -106,7 +107,7 @@ export function HospitalityOrders({ organizationId }: { organizationId: number }
     {notice ? <div className="manage-alert is-success">{notice}</div> : null}
 
     <section className="hospitality-order-card hospitality-order-workspace">
-      <header><div><h2>Order workspace</h2><p>Verify requests at the table, then prepare and serve them in order.</p></div></header>
+      <header><div><h2>Order workspace</h2><p>Verify requests at the table, then prepare and serve them in order.</p></div>{kitchenUrl ? <a className="manage-button" href={kitchenUrl} target="_blank" rel="noreferrer"><ChefHat size={16} /> Open kitchen display</a> : null}</header>
       <div className="hospitality-order-metrics" aria-label="Live order counts"><span><Clock3 size={17} /><b>{counts.pending}</b> awaiting code</span><span><ClipboardCheck size={17} /><b>{counts.verified}</b> verified</span><span><ChefHat size={17} /><b>{counts.preparing}</b> preparing</span><span><BellRing size={17} /><b>{counts.ready}</b> ready</span></div>
       <nav className="hospitality-order-queue-tabs" aria-label="Order workspace"><button type="button" className={queue === 'waiter' ? 'is-active' : ''} onClick={() => setQueue('waiter')}><UserRound size={17} /> Waiter queue <span>{counts.pending + counts.ready}</span></button><button type="button" className={queue === 'kitchen' ? 'is-active' : ''} onClick={() => setQueue('kitchen')}><ChefHat size={17} /> Kitchen queue <span>{counts.verified + counts.preparing}</span></button></nav>
       <div className="hospitality-order-list hospitality-order-queue-list">{queueOrders.map((order) => <article key={order.id} className={`is-${order.status}`}><div className="hospitality-order-copy"><span className={`hospitality-order-status is-${order.status}`}>{statusLabel[order.status]}</span><strong>#{order.number} · {order.table}</strong><small>{order.items.map((item) => `${item.quantity}× ${item.name}`).join(', ')}</small>{order.note ? <small>Request: {order.note}</small> : null}<small className="hospitality-order-age"><Clock3 size={12} /> {orderAge(order.createdAt)}</small></div><b>Rs. {order.total}</b>{order.status === 'new' ? <div className="hospitality-order-verify"><label>Customer code<input inputMode="numeric" maxLength={4} value={codes[order.id] || ''} onChange={(event) => setCodes((current) => ({ ...current, [order.id]: event.target.value.replace(/\D/g, '') }))} placeholder="0000" /></label><button className="hospitality-order-icon is-approve" type="button" title="Approve order" aria-label="Approve order" onClick={() => void approve(order)}><Check size={17} /></button><button className="hospitality-order-icon" type="button" title="Edit order" aria-label="Edit order" onClick={() => openEdit(order)}><Pencil size={16} /></button><button className="hospitality-order-icon is-reject" type="button" title="Reject order" aria-label="Reject order" onClick={() => void updateOrder({ id: order.id, action: 'reject' }, `Order #${order.number} rejected.`)}><X size={18} /></button></div> : <div className="hospitality-order-active-actions">{['accepted', 'preparing'].includes(order.status) ? <button className="hospitality-order-icon" type="button" title="Edit order" aria-label="Edit order" onClick={() => openEdit(order)}><Pencil size={16} /></button> : null}{nextAction(order)}</div>}</article>)}{!queueOrders.length ? <div className="hospitality-orders-empty is-queue">{queue === 'waiter' ? <UserRound size={48} /> : <ChefHat size={48} />}<strong>{queue === 'waiter' ? 'No waiter actions right now' : 'Kitchen queue is clear'}</strong><p>{queue === 'waiter' ? 'New table orders and meals ready to serve will appear here.' : 'Verified orders will appear here once a waiter confirms them.'}</p></div> : null}</div>

@@ -35,6 +35,7 @@ const PublicHospitalityStaffProfile = lazy(() => import('./pages/hospitality/Hos
 const HospitalityStaffEditLogin = lazy(() => import('./pages/hospitality/HospitalityStaffCards').then((module) => ({ default: module.HospitalityStaffEditLogin })))
 const HospitalityStaffEditor = lazy(() => import('./pages/hospitality/HospitalityStaffCards').then((module) => ({ default: module.HospitalityStaffEditor })))
 const PublicVenueCard = lazy(() => import('./pages/hospitality/HospitalityStaffCards').then((module) => ({ default: module.PublicVenueCard })))
+const HospitalityKitchenDisplay = lazy(() => import('./pages/hospitality/HospitalityKitchenDisplay').then((module) => ({ default: module.HospitalityKitchenDisplay })))
 const MigrationNeededPage = lazy(() => import('./pages/migration/MigrationNeededPage').then((module) => ({ default: module.MigrationNeededPage })))
 
 const CardEditorPage = lazy(() =>
@@ -173,6 +174,7 @@ function AppRoutes() {
   }
 
   if (/^\/venue\/card\/[^/]+\/?$/.test(path)) return <PublicVenueCard />
+  if (/^\/venue\/[^/]+\/kitchen\/[^/]+\/?$/.test(path)) return <HospitalityKitchenDisplay />
   if (/^\/venue\/[^/]+\/staff\/[^/]+\/edit-login\/?$/.test(path)) return <HospitalityStaffEditLogin />
   if (/^\/venue\/[^/]+\/staff\/[^/]+\/edit\/?$/.test(path)) return <HospitalityStaffEditor />
   if (/^\/venue\/[^/]+\/staff\/[^/]+\/?$/.test(path)) return <PublicHospitalityStaffProfile />
