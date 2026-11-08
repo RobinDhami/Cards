@@ -147,6 +147,7 @@ urlpatterns = [
     path('api/venue/<str:public_identifier>/loyalty/card/<str:member_identifier>/', hospitality_views.venue_loyalty_card_api, name='venue_loyalty_card_api'),
     path('api/venue/<str:public_identifier>/track/', hospitality_views.venue_track_api, name='venue_track_api'),
     path('api/venue/<str:public_identifier>/orders/', hospitality_views.venue_public_order_api, name='venue_public_order_api'),
+    path('api/venue/<str:public_identifier>/waiter-call/', hospitality_views.venue_public_waiter_call_api, name='venue_public_waiter_call_api'),
     path('api/venue/<str:public_identifier>/kitchen/<str:access_token>/orders/', hospitality_views.venue_kitchen_orders_api, name='venue_kitchen_orders_api'),
     path('api/venue/<str:public_identifier>/staff/<str:staff_identifier>/', hospitality_views.venue_staff_public_api, name='venue_staff_public_api'),
     path('api/venue/<str:public_identifier>/staff/<str:staff_identifier>/edit-login/', hospitality_views.venue_staff_edit_login_api, name='venue_staff_edit_login_api'),

@@ -1945,6 +1945,8 @@ export function PublicHospitalityProfile() {
   const [orderMessage, setOrderMessage] = useState("");
   const [orderCode, setOrderCode] = useState("");
   const [placingOrder, setPlacingOrder] = useState(false);
+  const [callingWaiter, setCallingWaiter] = useState(false);
+  const [waiterCallMessage, setWaiterCallMessage] = useState("");
   const [loadError, setLoadError] = useState(false);
   const activeTab = usePublicCafeUIStore((state) => state.activeTab);
   const feedback = usePublicCafeUIStore((state) => state.feedback);
@@ -1979,6 +1981,7 @@ export function PublicHospitalityProfile() {
   const orderingAvailable = Boolean(venue?.ordering?.enabled && tableIdentifier);
   function addOrderItem(item: Item) { const id = String(item.id || ''); if (!id) return; setOrderItems((rows) => { const current = rows.find((row) => row.id === id); return current ? rows.map((row) => row.id === id ? { ...row, quantity: row.quantity + 1 } : row) : [...rows, { id, name: item.name, price: item.price, quantity: 1 }] }); setSelectedMenuItem(null); }
   async function placeOrder() { if (!orderItems.length) return; setPlacingOrder(true); setOrderMessage(''); try { const result = await apiFetch<{ order: { verificationCode: string } }>(`/api/venue/${identifier}/orders/`, { method: 'POST', body: jsonBody({ table: tableIdentifier, customerName: orderName, items: orderItems.map(({ id, quantity }) => ({ id, quantity })) }) }); setOrderItems([]); setOrderCode(result.order.verificationCode); setOrderMessage('Show this four-digit code to your waiter within 10 minutes. Your order starts after they approve it at your table.'); } catch (reason) { setOrderMessage(displayError(reason)) } finally { setPlacingOrder(false) } }
+  async function callWaiter() { if (!tableIdentifier) return; setCallingWaiter(true); setWaiterCallMessage(''); try { await apiFetch(`/api/venue/${identifier}/waiter-call/`, { method: 'POST', body: jsonBody({ table: tableIdentifier }) }); setWaiterCallMessage('A waiter has been notified for your table.'); } catch (reason) { setWaiterCallMessage(displayError(reason)); } finally { setCallingWaiter(false); } }
   useEffect(() => {
     resetPublicCafeUI(feedbackSource, new URLSearchParams(window.location.search).get("tab") === "menu" ? "menu" : "home");
   }, [feedbackSource, resetPublicCafeUI]);
@@ -2319,7 +2322,11 @@ export function PublicHospitalityProfile() {
         {orderingAvailable && selectedMenuItem.isAvailable !== false ? <button type="button" className="cafe-primary" onClick={() => addOrderItem(selectedMenuItem)}>Add to table order</button> : null}
       </section> : null}
       {orderingAvailable && cartOpen ? <><button className="cafe-order-backdrop" type="button" aria-label="Close order" onClick={() => setCartOpen(false)} /><aside className="cafe-order-cart" aria-live="polite"><header><span><ShoppingCart size={18} /> Your order</span><button type="button" aria-label="Close order" onClick={() => setCartOpen(false)}><X size={18} /></button></header>{orderItems.length ? orderItems.map((item) => <div key={item.id}><span>{item.quantity}× {item.name}</span><button type="button" aria-label={`Remove ${item.name}`} onClick={() => setOrderItems((rows) => rows.filter((row) => row.id !== item.id))}><X size={15} /></button></div>) : <p>Your cart is empty. Add items from the menu.</p>}{orderItems.length ? <><label>Your name <input value={orderName} onChange={(event) => setOrderName(event.target.value)} placeholder="Optional" /></label><button className="cafe-primary" type="button" disabled={placingOrder} onClick={() => void placeOrder()}>{placingOrder ? 'Sending…' : 'Place order'}</button></> : null}{orderCode ? <strong className="cafe-order-code">Waiter code {orderCode}</strong> : null}{orderMessage ? <p>{orderMessage}</p> : null}</aside></> : null}
-      {orderingAvailable && !cartOpen ? <button className="cafe-order-fab" type="button" onClick={() => setCartOpen(true)}><ShoppingCart size={20} /> View order <span>· {orderItems.reduce((total, item) => total + item.quantity, 0)}</span></button> : null}
+      {orderingAvailable ? <div className="cafe-table-service-actions">
+        <button className="cafe-call-waiter" type="button" disabled={callingWaiter} onClick={() => void callWaiter()}><MessageSquare size={18} /> {callingWaiter ? 'Calling…' : 'Call waiter'}</button>
+        {!cartOpen ? <button className="cafe-order-fab" type="button" onClick={() => setCartOpen(true)}><ShoppingCart size={20} /> View order <span>· {orderItems.reduce((total, item) => total + item.quantity, 0)}</span></button> : null}
+      </div> : null}
+      {waiterCallMessage ? <p className="cafe-waiter-call-message" role="status">{waiterCallMessage}</p> : null}
       <footer className="cafe-footer">Powered by <a href="/">Tap2Connect</a></footer>
       {loyaltySheet !== "closed" ? <CafeLoyaltySheet
         cafeName={venue.organization.name}

@@ -295,6 +295,8 @@ class VenueOrder(models.Model):
     verification_expires_at = models.DateTimeField(blank=True, null=True)
     verified_at = models.DateTimeField(blank=True, null=True)
     verified_by = models.CharField(max_length=120, blank=True)
+    cancellation_reason = models.CharField(max_length=300, blank=True)
+    table_session_expires_at = models.DateTimeField(blank=True, null=True)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -311,6 +313,20 @@ class VenueOrderItem(models.Model):
     unit_price = models.DecimalField(max_digits=12, decimal_places=2)
     quantity = models.PositiveSmallIntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(50)])
     note = models.CharField(max_length=300, blank=True)
+
+
+class VenueWaiterCall(models.Model):
+    STATUS_CHOICES = [('pending', 'Pending'), ('acknowledged', 'Acknowledged')]
+    venue = models.ForeignKey(VenueProfile, on_delete=models.CASCADE, related_name='waiter_calls')
+    table = models.ForeignKey(VenueTouchpoint, on_delete=models.CASCADE, related_name='waiter_calls')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    note = models.CharField(max_length=300, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    acknowledged_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['-created_at', '-id']
+        indexes = [models.Index(fields=['venue', 'status', 'created_at'])]
 
 
 class VenueCardAssignment(models.Model):
