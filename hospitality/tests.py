@@ -9,7 +9,7 @@ from django.utils import timezone
 from datetime import timedelta
 
 from vcards.models import CardBatch, CardBatchCard, College, OrganizationModuleAccess, OrganizationServicePlan, OrganizationTeamMember
-from .models import LoyaltyCustomer, VenueAnalyticsEvent, VenueCardAssignment, VenueFeedback, VenueLink, VenueLoyaltyMembership, VenueMenuCategory, VenueMenuItem, VenueMenuItemVariant, VenueProfile, VenueRewardsProgram, VenueRewardsTransaction, VenueStaffProfile, VenueTouchpoint
+from .models import LoyaltyCustomer, VenueAnalyticsEvent, VenueCardAssignment, VenueFeedback, VenueLink, VenueLoyaltyMembership, VenueMenuCategory, VenueMenuItem, VenueMenuItemVariant, VenueOrder, VenueOrderItem, VenueProfile, VenueRewardsProgram, VenueRewardsTransaction, VenueStaffProfile, VenueTouchpoint
 
 
 class HospitalityWorkspaceTests(TestCase):
@@ -647,6 +647,25 @@ class HospitalityWorkspaceTests(TestCase):
         self.assertEqual(analytics['metrics']['googleReviewClicks'], 1)
         self.assertEqual(analytics['linkDestinations'][0], {'destination': 'google_review', 'count': 1})
         self.assertIn('not orders or sales', analytics['definitions']['menuItemDetailViews'])
+
+    def test_analytics_includes_scoped_order_reporting(self):
+        table = VenueTouchpoint.objects.create(venue=self.venue, name='Table 4', destination='ordering')
+        drinks = VenueMenuCategory.objects.create(venue=self.venue, name='Drinks', slug='drinks')
+        coffee = VenueMenuItem.objects.create(venue=self.venue, category=drinks, name='Coffee', price='6.00')
+        first = VenueOrder.objects.create(venue=self.venue, table=table, order_number=1, status='completed', total='24.00', final_total='24.00')
+        VenueOrderItem.objects.create(order=first, menu_item=self.category.items.get(name='Pancakes'), name='Pancakes', unit_price='12.00', quantity=2)
+        second = VenueOrder.objects.create(venue=self.venue, table=table, order_number=2, status='accepted', total='6.00', final_total='6.00')
+        VenueOrderItem.objects.create(order=second, menu_item=coffee, name='Coffee', unit_price='6.00', quantity=1)
+        VenueOrder.objects.create(venue=self.venue, table=table, order_number=3, status='cancelled', total='20.00', final_total='20.00')
+
+        self.client.force_login(self.user)
+        response = self.client.get(f'/api/organizations/{self.org.pk}/venue/analytics/?range=today')
+        self.assertEqual(response.status_code, 200, response.content)
+        orders = response.json()['analytics']['orders']
+        self.assertEqual(orders['summary'], {'orders': 2, 'averageOrderValue': '15.00', 'cancelledOrders': 1, 'grossSales': '30.00'})
+        self.assertEqual(orders['tables'], [{'name': 'Table 4', 'orders': 2, 'amount': '30.00'}])
+        self.assertEqual(orders['items'][0], {'name': 'Pancakes', 'quantity': 2, 'amount': '24.00'})
+        self.assertEqual({row['name'] for row in orders['categories']}, {'Breakfast', 'Drinks'})
 
     def test_authenticated_dashboard_preview_does_not_record_a_view(self):
         self.client.force_login(self.user)

@@ -16,6 +16,13 @@ type AnalyticsData = {
   linkDestinations: Array<{ destination: string; count: number }>
   menuItems: Array<{ name: string; count: number }>
   touchpointActivity: Array<{ source: string; name: string; profileViews: number; menuOpens: number; linkClicks: number; feedbackSubmissions: number }>
+  orders: {
+    summary: { orders: number; averageOrderValue: string; cancelledOrders: number; grossSales: string }
+    daily: Array<{ date: string; orders: number; amount: string }>
+    tables: Array<{ name: string; orders: number; amount: string }>
+    items: Array<{ name: string; quantity: number; amount: string }>
+    categories: Array<{ name: string; quantity: number; amount: string }>
+  }
   definitions: Record<string, string>
 }
 
@@ -50,6 +57,11 @@ function HorizontalBars({ rows }: { rows: AnalyticsData['linkDestinations'] }) {
   const max = Math.max(1, ...rows.map((row) => row.count))
   if (!rows.length) return <div className="hospitality-analytics-empty">No public link clicks have been recorded in this date range.</div>
   return <div className="hospitality-analytics-bars">{rows.map((row) => <div key={row.destination}><span>{row.destination.replaceAll('_', ' ')}</span><i><b style={{ width: `${(row.count / max) * 100}%` }} /></i><strong>{row.count}</strong></div>)}</div>
+}
+
+function OrderRanking({ rows, countLabel }: { rows: Array<{ name: string; quantity?: number; orders?: number; amount: string }>; countLabel: string }) {
+  if (!rows.length) return <div className="hospitality-analytics-empty">No verified orders in this date range.</div>
+  return <ol className="hospitality-analytics-ranking hospitality-order-ranking">{rows.map((row) => <li key={row.name}><span>{row.name}<small>{row.quantity ?? row.orders ?? 0} {countLabel}</small></span><strong>Rs. {Number(row.amount).toFixed(2)}</strong></li>)}</ol>
 }
 
 function AnalyticsStatCard({ label, value, previous, tint, note }: { label: string; value: number; previous: number; tint: string; note?: string }) {
@@ -87,6 +99,12 @@ export function HospitalityAnalytics({ organizationId }: { organizationId: numbe
     { label: 'Google review clicks', value: data.metrics.googleReviewClicks, previous: data.previousMetrics.googleReviewClicks, tint: 'amber', note: 'Clicks only · not posted reviews' },
     { label: 'Feedback submitted', value: data.metrics.feedbackSubmissions, previous: data.previousMetrics.feedbackSubmissions, tint: 'red' },
   ] : []
+  const orderMetricRows = data ? [
+    { label: 'Verified orders', value: data.orders.summary.orders, previous: 0, tint: 'blue' },
+    { label: 'Average order value', value: Number(data.orders.summary.averageOrderValue), previous: 0, tint: 'green', note: 'Rs. per verified order' },
+    { label: 'Cancelled orders', value: data.orders.summary.cancelledOrders, previous: 0, tint: 'red' },
+    { label: 'Gross sales', value: Number(data.orders.summary.grossSales), previous: 0, tint: 'amber', note: 'Rs. from verified orders' },
+  ] : []
   const selectedPreset = presets.find(([value]) => value === preset)?.[1] ?? 'Last 7 days'
   const selectPreset = (nextPreset: string, target: HTMLButtonElement) => {
     setPreset(nextPreset)
@@ -99,6 +117,9 @@ export function HospitalityAnalytics({ organizationId }: { organizationId: numbe
     {data ? <><div className={`hospitality-analytics-stat-grid${loading ? ' is-refreshing' : ''}`} aria-busy={loading}>{metricRows.map((metric) => <AnalyticsStatCard key={metric.label} {...metric} />)}</div>
       <div className="hospitality-analytics-layout"><section className="hospitality-analytics-panel is-trend"><header><div><h3>Daily visitor trend</h3></div><div className="hospitality-analytics-legend"><span><i className="is-profile" />Profile views</span><span><i className="is-menu" />Menu opens</span></div></header><TrendChart rows={data.daily} /></section><section className="hospitality-analytics-panel"><header><div><h3>Link clicks by destination</h3></div></header><HorizontalBars rows={data.linkDestinations} /></section></div>
       <div className="hospitality-analytics-layout"><section className="hospitality-analytics-panel"><header><div><h3>Top viewed menu items</h3></div><FileText size={18} /></header>{data.menuItems.length ? <ol className="hospitality-analytics-ranking">{data.menuItems.map((item) => <li key={item.name}><span>{item.name}</span><strong>{item.count}</strong></li>)}</ol> : <div className="hospitality-analytics-empty">No menu-item views yet.</div>}</section><section className="hospitality-analytics-panel"><header><div><h3>Touchpoint activity</h3></div><BarChart3 size={18} /></header>{data.touchpointActivity.length ? <div className="hospitality-touchpoint-table"><div className="hospitality-touchpoint-head"><span>Touchpoint</span><span>Profile</span><span>Menu</span><span>Links</span><span>Feedback</span></div>{data.touchpointActivity.map((touchpoint) => <div key={touchpoint.source}><strong>{touchpoint.name}</strong><span>{touchpoint.profileViews}</span><span>{touchpoint.menuOpens}</span><span>{touchpoint.linkClicks}</span><span>{touchpoint.feedbackSubmissions}</span></div>)}</div> : <div className="hospitality-analytics-empty">No touchpoint activity yet.</div>}</section></div>
+      <section className="hospitality-order-analytics"><header><div><h3>Order reporting</h3><p>Verified orders only. Cancelled and expired requests are tracked separately.</p></div></header><div className="hospitality-analytics-stat-grid">{orderMetricRows.map((metric) => <AnalyticsStatCard key={metric.label} {...metric} />)}</div></section>
+      <div className="hospitality-analytics-layout"><section className="hospitality-analytics-panel"><header><div><h3>Orders by day</h3><p>Order volume and gross sales</p></div></header><div className="hospitality-order-day-table"><div><span>Date</span><span>Orders</span><span>Sales</span></div>{data.orders.daily.map((row) => <div key={row.date}><strong>{dateLabel(row.date)}</strong><span>{row.orders}</span><span>Rs. {Number(row.amount).toFixed(2)}</span></div>)}</div></section><section className="hospitality-analytics-panel"><header><div><h3>Busiest tables</h3><p>By verified orders</p></div></header><OrderRanking rows={data.orders.tables} countLabel="orders" /></section></div>
+      <div className="hospitality-analytics-layout"><section className="hospitality-analytics-panel"><header><div><h3>Popular menu items</h3><p>By quantity ordered</p></div></header><OrderRanking rows={data.orders.items} countLabel="sold" /></section><section className="hospitality-analytics-panel"><header><div><h3>Orders by category</h3><p>By quantity ordered</p></div></header><OrderRanking rows={data.orders.categories} countLabel="sold" /></section></div>
     </> : null}
   </div>
 }

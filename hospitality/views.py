@@ -2001,6 +2001,45 @@ def _analytics_payload(request, venue, overview_days=None):
     rating_breakdown = {str(value): 0 for value in range(1, 6)}
     for row in feedback.values('rating').annotate(count=Count('id')):
         rating_breakdown[str(row['rating'])] = row['count']
+    order_rows = list(
+        venue.orders.filter(created_at__gte=start, created_at__lt=end)
+        .select_related('table').prefetch_related('items__menu_item__category')
+    )
+    fulfilled_orders = [row for row in order_rows if row.status in {'accepted', 'preparing', 'ready', 'completed'}]
+    cancelled_orders = [row for row in order_rows if row.status in {'cancelled', 'expired'}]
+    daily_orders = {str(first_day + timedelta(days=index)): {'orders': 0, 'amount': Decimal('0.00')} for index in range(length)}
+    tables, ordered_items, categories = {}, {}, {}
+    order_total = Decimal('0.00')
+    for order in fulfilled_orders:
+        day = timezone.localtime(order.created_at, tz).date().isoformat()
+        if day in daily_orders:
+            daily_orders[day]['orders'] += 1
+            daily_orders[day]['amount'] += order.final_total
+        order_total += order.final_total
+        table_name = order.table.name if order.table_id else 'Counter'
+        table = tables.setdefault(table_name, {'name': table_name, 'orders': 0, 'amount': Decimal('0.00')})
+        table['orders'] += 1
+        table['amount'] += order.final_total
+        for item in order.items.all():
+            item_row = ordered_items.setdefault(item.name, {'name': item.name, 'quantity': 0, 'amount': Decimal('0.00')})
+            item_row['quantity'] += item.quantity
+            item_row['amount'] += item.unit_price * item.quantity
+            category_name = item.menu_item.category.name if item.menu_item_id and item.menu_item and item.menu_item.category_id else 'Uncategorised'
+            category = categories.setdefault(category_name, {'name': category_name, 'quantity': 0, 'amount': Decimal('0.00')})
+            category['quantity'] += item.quantity
+            category['amount'] += item.unit_price * item.quantity
+    order_analytics = {
+        'summary': {
+            'orders': len(fulfilled_orders),
+            'averageOrderValue': str((order_total / len(fulfilled_orders)).quantize(Decimal('0.01')) if fulfilled_orders else Decimal('0.00')),
+            'cancelledOrders': len(cancelled_orders),
+            'grossSales': str(order_total.quantize(Decimal('0.01'))),
+        },
+        'daily': [{'date': day, 'orders': values['orders'], 'amount': str(values['amount'].quantize(Decimal('0.01')))} for day, values in daily_orders.items()],
+        'tables': [{'name': row['name'], 'orders': row['orders'], 'amount': str(row['amount'].quantize(Decimal('0.01')))} for row in sorted(tables.values(), key=lambda row: (-row['orders'], -row['amount'], row['name']))[:10]],
+        'items': [{'name': row['name'], 'quantity': row['quantity'], 'amount': str(row['amount'].quantize(Decimal('0.01')))} for row in sorted(ordered_items.values(), key=lambda row: (-row['quantity'], -row['amount'], row['name']))[:10]],
+        'categories': [{'name': row['name'], 'quantity': row['quantity'], 'amount': str(row['amount'].quantize(Decimal('0.01')))} for row in sorted(categories.values(), key=lambda row: (-row['quantity'], -row['amount'], row['name']))[:10]],
+    }
     return {
         'range': {'preset': preset, 'startDate': first_day.isoformat(), 'endDate': last_day.isoformat(), 'timezone': str(tz)},
         'metrics': {**metrics, 'estimatedUniqueVisitors': unique_estimate},
@@ -2010,6 +2049,7 @@ def _analytics_payload(request, venue, overview_days=None):
         'menuItems': [{'name': key, 'count': value} for key, value in sorted(menu_items.items(), key=lambda item: (-item[1], item[0]))[:10]],
         'touchpointActivity': [dict(source=source, **value) for source, value in sorted(touchpoints.items(), key=lambda item: (-sum(item[1][key] for key in ('profileViews', 'menuOpens', 'linkClicks', 'feedbackSubmissions')), item[1]['name']))],
         'feedback': {'count': feedback_summary['count'], 'average': feedback_summary['average'], 'ratingBreakdown': rating_breakdown},
+        'orders': order_analytics,
         'definitions': {
             'profileViews': 'Recorded customer public-profile loads. Dashboard previews marked as previews are excluded; rapid repeats are deduplicated.',
             'estimatedUniqueVisitors': 'Estimate from a privacy-preserving browser and network fingerprint. Shared devices and changing networks can affect it.',
