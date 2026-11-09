@@ -65,6 +65,30 @@ class HospitalityWorkspaceTests(TestCase):
         self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/rewards/members/').status_code, 200)
         self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/orders/').status_code, 403)
 
+    def test_pending_team_member_can_be_activated_with_login_credentials(self):
+        self.client.force_login(self.user)
+        invite = self.client.post(
+            f'/api/organizations/{self.org.pk}/venue/settings/',
+            data=json.dumps({'action': 'invite', 'email': 'waiter@example.com', 'role': 'waiter'}), content_type='application/json',
+        )
+        self.assertEqual(invite.status_code, 201, invite.content)
+        member = OrganizationTeamMember.objects.get(organization=self.org, invite_email='waiter@example.com')
+        self.assertEqual(member.status, 'invited')
+        self.assertIsNone(member.user_id)
+
+        activate = self.client.patch(
+            f'/api/organizations/{self.org.pk}/venue/settings/',
+            data=json.dumps({'action': 'activate', 'id': member.pk, 'username': 'aurora.waiter', 'password': 'WaiterPass123!'}), content_type='application/json',
+        )
+        self.assertEqual(activate.status_code, 200, activate.content)
+        member.refresh_from_db()
+        self.assertEqual(member.status, 'active')
+        self.assertEqual(member.user.username, 'aurora.waiter')
+        self.client.logout()
+        login_response = self.client.post('/api/session/login/', data=json.dumps({'username': 'aurora.waiter', 'password': 'WaiterPass123!'}), content_type='application/json')
+        self.assertEqual(login_response.status_code, 200, login_response.content)
+        self.assertIn(f'/{self.org.workspace_slug}/dashboard/', login_response.json()['redirectPath'])
+
     def test_super_admin_plan_controls_loyalty_visibility_and_api_access(self):
         super_admin = get_user_model().objects.create_superuser(username='platform-admin', password='pass')
         self.client.force_login(super_admin)

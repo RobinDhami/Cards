@@ -911,7 +911,20 @@ def venue_settings_api(request, organization_id):
             return JsonResponse({'error': 'Choose a valid team role.'}, status=400)
         try: validate_email(email)
         except ValidationError: return JsonResponse({'error': 'Enter a valid email address.'}, status=400)
-        user = get_user_model().objects.filter(email__iexact=email).first()
+        User = get_user_model()
+        user = User.objects.filter(email__iexact=email).first()
+        username = str(data.get('username') or '').strip()
+        password = str(data.get('password') or '')
+        if not user and (username or password):
+            if not username or not password:
+                return JsonResponse({'error': 'Enter both a login username and a temporary password, or leave both blank to keep this invitation pending.'}, status=400)
+            if len(username) > 150 or any(char.isspace() for char in username):
+                return JsonResponse({'error': 'Use a login username without spaces.'}, status=400)
+            if len(password) < 8:
+                return JsonResponse({'error': 'Use a temporary password with at least 8 characters.'}, status=400)
+            if User.objects.filter(username__iexact=username).exists():
+                return JsonResponse({'error': 'That login username is already in use.'}, status=409)
+            user = User.objects.create_user(username=username, email=email, password=password)
         member = OrganizationTeamMember.objects.filter(organization=organization, invite_email__iexact=email).first()
         if not member and user:
             member = OrganizationTeamMember.objects.filter(organization=organization, user=user).first()
@@ -922,6 +935,24 @@ def venue_settings_api(request, organization_id):
         member.save()
         return JsonResponse({'ok': True, 'member': _team_payload(member)}, status=201)
     member = get_object_or_404(OrganizationTeamMember, pk=data.get('id'), organization=organization)
+    if request.method == 'PATCH' and action == 'activate':
+        if member.user_id:
+            return JsonResponse({'error': 'This person already has an active account.'}, status=400)
+        username = str(data.get('username') or '').strip()
+        password = str(data.get('password') or '')
+        if not username or not password:
+            return JsonResponse({'error': 'Enter a login username and a temporary password.'}, status=400)
+        if len(username) > 150 or any(char.isspace() for char in username):
+            return JsonResponse({'error': 'Use a login username without spaces.'}, status=400)
+        if len(password) < 8:
+            return JsonResponse({'error': 'Use a temporary password with at least 8 characters.'}, status=400)
+        User = get_user_model()
+        if User.objects.filter(username__iexact=username).exists():
+            return JsonResponse({'error': 'That login username is already in use.'}, status=409)
+        member.user = User.objects.create_user(username=username, email=member.invite_email, password=password)
+        member.status = 'active'
+        member.save(update_fields=['user', 'status', 'updated_at'])
+        return JsonResponse({'ok': True, 'member': _team_payload(member)})
     if request.method == 'PATCH' and action == 'role':
         new_role = str(data.get('role') or '')
         if new_role not in {'owner', 'manager', 'waiter', 'kitchen', 'reception'}:
