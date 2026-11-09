@@ -533,6 +533,8 @@ def venue_rewards_member_detail_api(request, organization_id, member_identifier)
     venue = _venue_for(request, organization_id, 'loyalty')
     if not venue:
         return JsonResponse({'error': 'Not authorized.'}, status=403)
+    if request.method in {'PATCH', 'DELETE'} and organization_role(request.user, venue.organization) != 'owner':
+        return JsonResponse({'error': 'Only the owner can edit or archive loyalty members.'}, status=403)
     membership = get_object_or_404(VenueLoyaltyMembership.objects.select_related('customer'), venue=venue, public_identifier=member_identifier)
     if request.method == 'DELETE':
         phone = membership.customer.phone_e164
@@ -905,7 +907,7 @@ def venue_settings_api(request, organization_id):
     if request.method == 'POST' and action == 'invite':
         email = str(data.get('email') or '').strip().lower()
         invite_role = str(data.get('role') or 'manager')
-        if invite_role not in {'owner', 'manager', 'menu_editor'}:
+        if invite_role not in {'owner', 'manager', 'waiter', 'kitchen', 'reception'}:
             return JsonResponse({'error': 'Choose a valid team role.'}, status=400)
         try: validate_email(email)
         except ValidationError: return JsonResponse({'error': 'Enter a valid email address.'}, status=400)
@@ -922,7 +924,7 @@ def venue_settings_api(request, organization_id):
     member = get_object_or_404(OrganizationTeamMember, pk=data.get('id'), organization=organization)
     if request.method == 'PATCH' and action == 'role':
         new_role = str(data.get('role') or '')
-        if new_role not in {'owner', 'manager', 'menu_editor'}:
+        if new_role not in {'owner', 'manager', 'waiter', 'kitchen', 'reception'}:
             return JsonResponse({'error': 'Choose a valid team role.'}, status=400)
         if member.role == 'owner' and new_role != 'owner' and organization.team_members.filter(role='owner', status='active').count() <= 1:
             return JsonResponse({'error': 'Assign another owner before changing the last owner.'}, status=400)
@@ -1703,7 +1705,12 @@ def venue_orders_manage_api(request, organization_id):
     venue = _venue_for(request, organization_id, 'ordering')
     if not venue:
         return JsonResponse({'error': 'Ordering is not included in this organization’s plan.'}, status=403)
+    role = organization_role(request.user, venue.organization)
+    if role not in {'owner', 'manager', 'waiter', 'kitchen'}:
+        return JsonResponse({'error': 'This role cannot access the order workspace.'}, status=403)
     if request.method == 'POST':
+        if role not in {'owner', 'manager'}:
+            return JsonResponse({'error': 'Only owners and managers can create table QR codes.'}, status=403)
         data = _body(request) or {}
         name = str(data.get('tableName') or '').strip()
         if not name:
@@ -1717,6 +1724,10 @@ def venue_orders_manage_api(request, organization_id):
     if request.method == 'PATCH':
         data = _body(request) or {}
         action = str(data.get('action') or '')
+        if role == 'kitchen' and action:
+            return JsonResponse({'error': 'Kitchen staff can only update preparation status.'}, status=403)
+        if role == 'waiter' and action not in {'', 'approve', 'edit'}:
+            return JsonResponse({'error': 'Waiters can verify, edit, and complete orders only.'}, status=403)
         order = None if action == 'acknowledge_waiter_call' else get_object_or_404(VenueOrder, venue=venue, pk=data.get('id'))
         if action == 'acknowledge_waiter_call':
             call = get_object_or_404(VenueWaiterCall, venue=venue, pk=data.get('waiterCallId'), status='pending')
@@ -1822,6 +1833,10 @@ def venue_orders_manage_api(request, organization_id):
             _record_operational_activity(venue, 'order_edited', f'Order #{order.order_number} edited before verification', request, {'orderId': order.public_identifier})
         else:
             status = str(data.get('status') or '')
+            if role == 'kitchen' and (order.status, status) not in {('accepted', 'preparing'), ('preparing', 'ready')}:
+                return JsonResponse({'error': 'Kitchen staff can only start preparing or mark an order ready.'}, status=403)
+            if role == 'waiter' and (order.status, status) != ('ready', 'completed'):
+                return JsonResponse({'error': 'Waiters can only mark ready orders as served.'}, status=403)
             if order.status == 'new' or status == 'accepted':
                 return JsonResponse({'error': 'Verify the customer code before changing this order.'}, status=400)
             if status not in dict(VenueOrder.STATUS_CHOICES):
@@ -1841,15 +1856,30 @@ def venue_orders_manage_api(request, organization_id):
             _record_operational_activity(venue, 'order_status_updated', f'Order #{order.order_number} marked {order.get_status_display().lower()}', request, {'orderId': order.public_identifier})
     status_filter = request.GET.get('status', '')
     orders = venue.orders.select_related('table').prefetch_related('items')
+    if role == 'kitchen':
+        orders = orders.filter(status__in=['accepted', 'preparing'])
     if status_filter in dict(VenueOrder.STATUS_CHOICES): orders = orders.filter(status=status_filter)
     menu_items = venue.menu_items.filter(is_published=True, is_available=True).order_by('category__display_order', 'display_order', 'name')
     calls = venue.waiter_calls.filter(status='pending').select_related('table')[:50]
+    if role == 'kitchen':
+        order_payloads = [{
+            'id': order.pk, 'number': order.order_number, 'table': order.table.name if order.table_id else 'Counter',
+            'status': order.status, 'note': order.note, 'createdAt': order.created_at.isoformat(),
+            'total': '0.00', 'taxAmount': '0.00', 'serviceChargeAmount': '0.00', 'discountAmount': '0.00',
+            'finalTotal': '0.00', 'paymentStatus': 'unpaid', 'items': [
+                {'id': item.pk, 'name': item.name, 'quantity': item.quantity, 'note': item.note,
+                 'selectedVariant': item.selected_variant, 'addOns': item.add_ons, 'spiceLevel': item.spice_level}
+                for item in order.items.all()
+            ],
+        } for order in orders[:100]]
+    else:
+        order_payloads = [_order_payload(order) for order in orders[:100]]
     return JsonResponse({
-        'orders': [_order_payload(order) for order in orders[:100]],
-        'tables': [{'id': item.pk, 'name': item.name, 'publicIdentifier': item.public_identifier, 'qrUrl': request.build_absolute_uri(f'/venue/{venue.public_identifier}/?tab=menu&source={item.public_identifier}&entry=qr&order=1')} for item in venue.touchpoints.filter(destination='ordering').order_by('name')],
-        'menuItems': [{'id': item.pk, 'name': item.name, 'price': str(item.price)} for item in menu_items],
-        'kitchenUrl': request.build_absolute_uri(f'/venue/{venue.public_identifier}/kitchen/{venue.kitchen_access_token}/'),
-        'waiterCalls': [{'id': row.pk, 'table': row.table.name, 'note': row.note, 'createdAt': row.created_at.isoformat()} for row in calls],
+        'orders': order_payloads,
+        'tables': [] if role == 'kitchen' else [{'id': item.pk, 'name': item.name, 'publicIdentifier': item.public_identifier, 'qrUrl': request.build_absolute_uri(f'/venue/{venue.public_identifier}/?tab=menu&source={item.public_identifier}&entry=qr&order=1')} for item in venue.touchpoints.filter(destination='ordering').order_by('name')],
+        'menuItems': [] if role == 'kitchen' else [{'id': item.pk, 'name': item.name, 'price': str(item.price)} for item in menu_items],
+        'kitchenUrl': '' if role == 'kitchen' else request.build_absolute_uri(f'/venue/{venue.public_identifier}/kitchen/{venue.kitchen_access_token}/'),
+        'waiterCalls': [] if role == 'kitchen' else [{'id': row.pk, 'table': row.table.name, 'note': row.note, 'createdAt': row.created_at.isoformat()} for row in calls],
     })
 
 

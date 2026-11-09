@@ -44,19 +44,26 @@ class HospitalityWorkspaceTests(TestCase):
 
     def test_team_roles_are_enforced_by_hospitality_endpoints(self):
         manager = get_user_model().objects.create_user(username='venue-manager', password='pass', email='manager@example.com')
-        editor = get_user_model().objects.create_user(username='venue-editor', password='pass', email='editor@example.com')
+        waiter = get_user_model().objects.create_user(username='venue-waiter', password='pass', email='waiter@example.com')
+        reception = get_user_model().objects.create_user(username='venue-reception', password='pass', email='reception@example.com')
         OrganizationTeamMember.objects.create(organization=self.org, user=manager, invite_email=manager.email, role='manager')
-        OrganizationTeamMember.objects.create(organization=self.org, user=editor, invite_email=editor.email, role='menu_editor')
+        OrganizationTeamMember.objects.create(organization=self.org, user=waiter, invite_email=waiter.email, role='waiter')
+        OrganizationTeamMember.objects.create(organization=self.org, user=reception, invite_email=reception.email, role='reception')
+        OrganizationModuleAccess.objects.update_or_create(organization=self.org, module_key='ordering', defaults={'is_enabled': True, 'enabled_at': timezone.now()})
 
-        self.client.force_login(editor)
-        self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/menu/items/').status_code, 200)
-        self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/feedback/').status_code, 403)
+        self.client.force_login(waiter)
+        self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/menu/items/').status_code, 403)
+        self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/orders/').status_code, 200)
         self.assertEqual(self.client.post(f'/api/organizations/{self.org.pk}/venue/settings/', data='{"action":"invite","email":"new@example.com","role":"manager"}', content_type='application/json').status_code, 403)
 
         self.client.force_login(manager)
-        self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/feedback/').status_code, 200)
+        self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/menu/items/').status_code, 200)
         self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/analytics/').status_code, 200)
         self.assertEqual(self.client.post(f'/api/organizations/{self.org.pk}/venue/settings/', data='{"action":"invite","email":"new@example.com","role":"manager"}', content_type='application/json').status_code, 403)
+
+        self.client.force_login(reception)
+        self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/rewards/members/').status_code, 200)
+        self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/orders/').status_code, 403)
 
     def test_super_admin_plan_controls_loyalty_visibility_and_api_access(self):
         super_admin = get_user_model().objects.create_superuser(username='platform-admin', password='pass')
@@ -509,7 +516,7 @@ class HospitalityWorkspaceTests(TestCase):
         self.assertEqual(item.name, 'Toast with jam')
         self.assertTrue(item.image.name.startswith('venue_menu/toast'))
 
-    def test_published_sold_out_item_stays_public_and_unpublished_item_is_hidden(self):
+    def test_published_sold_out_item_is_hidden_and_unpublished_item_is_hidden(self):
         sold_out = VenueMenuItem.objects.create(
             venue=self.venue, category=self.category, name='Sold out cake', price='250', is_available=False, is_published=True,
         )
@@ -518,8 +525,7 @@ class HospitalityWorkspaceTests(TestCase):
         )
         payload = self.client.get(f'/api/venue/{self.venue.public_identifier}/').json()
         items = {item['name']: item for item in payload['categories'][0]['items']}
-        self.assertIn(sold_out.name, items)
-        self.assertFalse(items[sold_out.name]['isAvailable'])
+        self.assertNotIn(sold_out.name, items)
         self.assertNotIn('Draft cake', items)
 
     def test_menu_item_create_edit_variants_and_offer_validation(self):

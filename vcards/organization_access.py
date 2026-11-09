@@ -7,8 +7,10 @@ from .models import College, OrganizationModuleAccess, OrganizationTeamMember
 
 ROLE_CAPABILITIES = {
     'owner': {'overview', 'profile', 'menu', 'feedback', 'staff', 'loyalty', 'ordering', 'analytics', 'settings', 'team'},
-    'manager': {'overview', 'profile', 'menu', 'feedback', 'staff', 'loyalty', 'ordering', 'analytics'},
-    'menu_editor': {'menu'},
+    'manager': {'overview', 'menu', 'ordering', 'analytics'},
+    'waiter': {'ordering'},
+    'kitchen': {'ordering'},
+    'reception': {'loyalty'},
 }
 
 MODULE_CAPABILITIES = {

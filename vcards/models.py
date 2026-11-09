@@ -273,7 +273,9 @@ class OrganizationTeamMember(models.Model):
     ROLE_CHOICES = [
         ('owner', 'Owner'),
         ('manager', 'Manager'),
-        ('menu_editor', 'Menu editor'),
+        ('waiter', 'Waiter'),
+        ('kitchen', 'Kitchen'),
+        ('reception', 'Reception'),
     ]
     STATUS_CHOICES = [('active', 'Active'), ('invited', 'Invited')]
     organization = models.ForeignKey(College, on_delete=models.CASCADE, related_name='team_members')

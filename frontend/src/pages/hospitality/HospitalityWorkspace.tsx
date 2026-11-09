@@ -307,7 +307,9 @@ function VenueShell({
 }) {
   const school = shell.currentSchool;
   const details = hospitalitySectionDetails[section];
-  const navigation = schoolWorkspaceNav(school?.id, shell.isSuperAdmin, "hospitality", shell.capabilities);
+  const baseNavigation = schoolWorkspaceNav(school?.id, shell.isSuperAdmin, "hospitality", shell.capabilities);
+  const roleNavigation = shell.role === "manager" ? ["Overview", "Menu", "Ordering", "Analytics"] : shell.role === "waiter" || shell.role === "kitchen" ? ["Ordering"] : shell.role === "reception" ? ["Members"] : null;
+  const navigation = roleNavigation ? baseNavigation.filter((item) => roleNavigation.includes(item.label)) : baseNavigation;
   const [moreOpen, setMoreOpen] = useState(false);
   const [darkTheme, setDarkTheme] = useState(() => window.localStorage.getItem("tap2connect:hospitality-theme") !== "light");
   const toggleTheme = () => setDarkTheme((current) => {
@@ -1448,8 +1450,8 @@ function HospitalityAdminPanel() {
       {activeTab === "feedback" ? <HospitalityFeedback organizationId={id} googleReviewUrl={venue.venue.googleReviewUrl} /> : null}
       {activeTab === "staff" ? <HospitalityStaffCards organizationId={id} organizationName={venue.organization.name} logo={venue.venue.logo} /> : null}
       {activeTab === "loyalty" ? <HospitalityRewardsProgram organizationId={id} /> : null}
-      {activeTab === "members" ? <HospitalityRewardsMembers organizationId={id} /> : null}
-      {activeTab === "orders" ? <HospitalityOrders organizationId={id} /> : null}
+      {activeTab === "members" ? <HospitalityRewardsMembers organizationId={id} role={shell.role} /> : null}
+      {activeTab === "orders" ? <HospitalityOrders organizationId={id} role={shell.role} /> : null}
       <div hidden>
         {venue && legacyProfileEnabled ? (
           <div className="hospitality-profile-grid">

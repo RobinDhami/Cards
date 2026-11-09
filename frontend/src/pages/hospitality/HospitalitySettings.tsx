@@ -23,7 +23,7 @@ import "./HospitalityWorkspace.css";
 import "./HospitalitySettings.css";
 import "./HospitalityDashboardSystem.css";
 
-type Role = "owner" | "manager" | "menu_editor";
+type Role = "owner" | "manager" | "waiter" | "kitchen" | "reception";
 type TeamMember = { id: number; name: string; email: string; role: Role; status: "active" | "invited"; isCurrentUser: boolean };
 type SettingsPayload = {
   shell: { isSuperAdmin: boolean; role: Role; capabilities: string[]; currentSchool: { id: number; name: string; logo: string | null; organizationType: string; publicIdentifier: string }; schools: Array<{ id: number; name: string }>; user: { displayName: string } };
@@ -35,8 +35,10 @@ const tabs = ["General", "Staff & Access", "Notifications", "Integrations", "Adv
 type Tab = (typeof tabs)[number];
 const roles: Array<{ value: Role; label: string; detail: string }> = [
   { value: "owner", label: "Owner", detail: "Full control, including team access and internal settings." },
-  { value: "manager", label: "Manager", detail: "Can manage profile, menu, feedback, staff, and analytics." },
-  { value: "menu_editor", label: "Menu editor", detail: "Can manage menu categories, items, availability, and offers only." },
+  { value: "manager", label: "Manager", detail: "Can manage menu, orders, and reports." },
+  { value: "waiter", label: "Waiter", detail: "Can verify, edit, and progress table orders." },
+  { value: "kitchen", label: "Kitchen", detail: "Can only start preparing and mark orders ready." },
+  { value: "reception", label: "Reception", detail: "Can scan loyalty members and add or redeem their loyalty balance." },
 ];
 
 function organizationId() {
@@ -139,7 +141,7 @@ export function HospitalitySettingsPage() {
           <div role="row" className="hospitality-team-head"><span>Member</span><span>Role</span><span>Status</span><span>Action</span></div>
           {(payload.team || []).map((member) => <div role="row" className="hospitality-team-row" key={member.id}>
             <div className="hospitality-team-member"><span><strong>{member.name}</strong>{member.isCurrentUser ? <small>You</small> : null}</span><span className="hospitality-team-email">{member.email}</span></div>
-            {member.isCurrentUser ? <span className="hospitality-role-badge">{roles.find((role) => role.value === member.role)?.label}</span> : <select aria-label={`${member.name} role`} value={member.role} onChange={(event) => changeRole(member, event.target.value as Role)} disabled={saving}><option value="owner">Owner</option><option value="manager">Manager</option><option value="menu_editor">Menu editor</option></select>}
+            {member.isCurrentUser ? <span className="hospitality-role-badge">{roles.find((role) => role.value === member.role)?.label}</span> : <select aria-label={`${member.name} role`} value={member.role} onChange={(event) => changeRole(member, event.target.value as Role)} disabled={saving}>{roles.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}</select>}
             <em className={member.status === "active" ? "is-active" : ""}><i aria-hidden="true" />{member.status === "active" ? "Active" : "Invited"}</em>
             <div className="hospitality-member-actions"><button type="button" className="hospitality-member-menu-button" aria-label={`Actions for ${member.name}`} aria-expanded={memberMenuId === member.id} onClick={() => setMemberMenuId((current) => current === member.id ? null : member.id)}><Ellipsis size={19} /></button>{memberMenuId === member.id ? <div className="hospitality-member-menu">{member.isCurrentUser ? <span>Current account</span> : <button type="button" onClick={() => { setMemberMenuId(null); removeMember(member); }} disabled={saving}>Remove access</button>}</div> : null}</div>
           </div>)}
