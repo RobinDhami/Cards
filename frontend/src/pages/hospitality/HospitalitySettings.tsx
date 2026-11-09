@@ -24,7 +24,8 @@ import "./HospitalitySettings.css";
 import "./HospitalityDashboardSystem.css";
 
 type Role = "owner" | "manager" | "waiter" | "kitchen" | "reception";
-type TeamMember = { id: number; name: string; email: string; role: Role; status: "active" | "invited"; isCurrentUser: boolean };
+type TeamRole = Role | "none";
+type TeamMember = { id: number; name: string; email: string; role: TeamRole; status: "active" | "invited"; isCurrentUser: boolean };
 type SettingsPayload = {
   shell: { isSuperAdmin: boolean; role: Role; capabilities: string[]; currentSchool: { id: number; name: string; logo: string | null; organizationType: string; publicIdentifier: string }; schools: Array<{ id: number; name: string }>; user: { displayName: string } };
   settings: { notifications: { newFeedbackEmail: boolean; lowRatingFeedbackEmail: boolean; weeklySummaryEmail: boolean }; organizationCode: string };
@@ -55,7 +56,7 @@ export function HospitalitySettingsPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteUsername, setInviteUsername] = useState("");
   const [invitePassword, setInvitePassword] = useState("");
-  const [inviteRole, setInviteRole] = useState<Role>("manager");
+  const [inviteRole, setInviteRole] = useState<TeamRole>("none");
   const [permissionsOpen, setPermissionsOpen] = useState(false);
   const [memberMenuId, setMemberMenuId] = useState<number | null>(null);
   const [activatingMember, setActivatingMember] = useState<TeamMember | null>(null);
@@ -102,7 +103,7 @@ export function HospitalitySettingsPage() {
   const { shell, settings } = payload;
   const school = shell.currentSchool;
   const navigation = schoolWorkspaceNav(school.id, shell.isSuperAdmin, "hospitality", shell.capabilities);
-  const changeRole = (member: TeamMember, role: Role) => void request({ action: "role", id: member.id, role });
+  const changeRole = (member: TeamMember, role: TeamRole) => void request({ action: "role", id: member.id, role });
   const removeMember = (member: TeamMember) => {
     if (!window.confirm(`Remove ${member.name} from this dashboard?`)) return;
     void request({ action: "remove", id: member.id }, "DELETE");
@@ -144,7 +145,7 @@ export function HospitalitySettingsPage() {
           <label>Email address<input type="email" value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} required placeholder="person@example.com" /></label>
           <label>Login username<input value={inviteUsername} onChange={(event) => setInviteUsername(event.target.value)} placeholder="e.g. jyapu.waiter" /></label>
           <label>Temporary password<input type="password" value={invitePassword} onChange={(event) => setInvitePassword(event.target.value)} minLength={8} placeholder="At least 8 characters" /></label>
-          <label>Role<select value={inviteRole} onChange={(event) => setInviteRole(event.target.value as Role)}>{roles.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}</select></label>
+          <label>Dashboard role<select value={inviteRole} onChange={(event) => setInviteRole(event.target.value as TeamRole)}><option value="none">No dashboard role</option>{roles.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}</select></label>
           <button type="button" className="hospitality-role-link" aria-expanded={permissionsOpen} onClick={() => setPermissionsOpen((current) => !current)}><CircleHelp size={16} />View role permissions</button>
           <button className="manage-button is-primary hospitality-invite-button" disabled={saving}>{saving ? <LoaderCircle size={16} className="is-spinning" /> : <Plus size={17} />}Add staff access</button>
         </form>
@@ -154,12 +155,12 @@ export function HospitalitySettingsPage() {
           <div role="row" className="hospitality-team-head"><span>Member</span><span>Role</span><span>Status</span><span>Action</span></div>
           {(payload.team || []).map((member) => <div role="row" className="hospitality-team-row" key={member.id}>
             <div className="hospitality-team-member"><span><strong>{member.name}</strong>{member.isCurrentUser ? <small>You</small> : null}</span><span className="hospitality-team-email">{member.email}</span></div>
-            {member.isCurrentUser ? <span className="hospitality-role-badge">{roles.find((role) => role.value === member.role)?.label}</span> : <select aria-label={`${member.name} role`} value={member.role} onChange={(event) => changeRole(member, event.target.value as Role)} disabled={saving}>{roles.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}</select>}
-            <em className={member.status === "active" ? "is-active" : ""}><i aria-hidden="true" />{member.status === "active" ? "Active" : "Invited"}</em>
+            {member.isCurrentUser ? <span className="hospitality-role-badge">{roles.find((role) => role.value === member.role)?.label}</span> : <select aria-label={`${member.name} role`} value={member.role} onChange={(event) => changeRole(member, event.target.value as TeamRole)} disabled={saving}><option value="none">No dashboard role</option>{roles.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}</select>}
+            <em className={member.status === "active" ? "is-active" : ""}><i aria-hidden="true" />{member.status === "active" ? member.role === "none" ? "No dashboard access" : "Active" : "Invited"}</em>
             <div className="hospitality-member-actions"><button type="button" className="hospitality-member-menu-button" aria-label={`Actions for ${member.name}`} aria-expanded={memberMenuId === member.id} onClick={() => setMemberMenuId((current) => current === member.id ? null : member.id)}><Ellipsis size={19} /></button>{memberMenuId === member.id ? <div className="hospitality-member-menu">{member.isCurrentUser ? <span>Current account</span> : <>{member.status === "invited" ? <button type="button" onClick={() => { setMemberMenuId(null); setActivatingMember(member); }}>Set login</button> : null}<button type="button" onClick={() => { setMemberMenuId(null); removeMember(member); }} disabled={saving}>Remove access</button></>}</div> : null}</div>
           </div>)}
         </div>
-        {activatingMember ? <div className="hospitality-login-dialog" role="dialog" aria-modal="true" aria-labelledby="activate-login-title"><div><button type="button" aria-label="Close" onClick={() => setActivatingMember(null)}>×</button><h3 id="activate-login-title">Set login for {activatingMember.email}</h3><p>This activates their {roles.find((role) => role.value === activatingMember.role)?.label.toLowerCase()} access immediately.</p><label>Login username<input autoFocus value={activationUsername} onChange={(event) => setActivationUsername(event.target.value)} placeholder="e.g. jyapu.waiter" /></label><label>Temporary password<input type="password" value={activationPassword} onChange={(event) => setActivationPassword(event.target.value)} minLength={8} placeholder="At least 8 characters" /></label><footer><button type="button" className="manage-button" onClick={() => setActivatingMember(null)}>Cancel</button><button type="button" className="manage-button is-primary" disabled={saving || !activationUsername.trim() || activationPassword.length < 8} onClick={() => void activateMember()}>Activate login</button></footer></div></div> : null}
+        {activatingMember ? <div className="hospitality-login-dialog" role="dialog" aria-modal="true" aria-labelledby="activate-login-title"><div><button type="button" aria-label="Close" onClick={() => setActivatingMember(null)}>×</button><h3 id="activate-login-title">Set login for {activatingMember.email}</h3><p>This creates their account. Assign a dashboard role whenever they need workspace access.</p><label>Login username<input autoFocus value={activationUsername} onChange={(event) => setActivationUsername(event.target.value)} placeholder="e.g. jyapu.waiter" /></label><label>Temporary password<input type="password" value={activationPassword} onChange={(event) => setActivationPassword(event.target.value)} minLength={8} placeholder="At least 8 characters" /></label><footer><button type="button" className="manage-button" onClick={() => setActivatingMember(null)}>Cancel</button><button type="button" className="manage-button is-primary" disabled={saving || !activationUsername.trim() || activationPassword.length < 8} onClick={() => void activateMember()}>Activate login</button></footer></div></div> : null}
       </section> : null}
 
       {tab === "Notifications" ? <section className="manage-card hospitality-settings-card"><div className="hospitality-settings-heading"><Bell size={20} /><div><h2>Email notifications</h2></div></div><div className="hospitality-preference-list">{[

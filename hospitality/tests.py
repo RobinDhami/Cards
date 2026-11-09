@@ -89,6 +89,21 @@ class HospitalityWorkspaceTests(TestCase):
         self.assertEqual(login_response.status_code, 200, login_response.content)
         self.assertIn(f'/{self.org.workspace_slug}/dashboard/', login_response.json()['redirectPath'])
 
+    def test_team_member_can_be_created_before_a_dashboard_role_is_assigned(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            f'/api/organizations/{self.org.pk}/venue/settings/',
+            data=json.dumps({'action': 'invite', 'email': 'new.staff@example.com', 'username': 'aurora.staff', 'password': 'StaffPass123!', 'role': 'none'}), content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 201, response.content)
+        member = OrganizationTeamMember.objects.get(organization=self.org, invite_email='new.staff@example.com')
+        self.assertEqual(member.status, 'active')
+        self.assertEqual(member.role, 'none')
+        self.assertEqual(member.user.username, 'aurora.staff')
+        self.assertEqual(self.client.patch(f'/api/organizations/{self.org.pk}/venue/settings/', data=json.dumps({'action': 'role', 'id': member.pk, 'role': 'waiter'}), content_type='application/json').status_code, 200)
+        member.refresh_from_db()
+        self.assertEqual(member.role, 'waiter')
+
     def test_super_admin_plan_controls_loyalty_visibility_and_api_access(self):
         super_admin = get_user_model().objects.create_superuser(username='platform-admin', password='pass')
         self.client.force_login(super_admin)

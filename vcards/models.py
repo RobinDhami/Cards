@@ -271,6 +271,7 @@ class OrganizationModuleAccess(models.Model):
 
 class OrganizationTeamMember(models.Model):
     ROLE_CHOICES = [
+        ('none', 'No dashboard role'),
         ('owner', 'Owner'),
         ('manager', 'Manager'),
         ('waiter', 'Waiter'),
@@ -281,7 +282,7 @@ class OrganizationTeamMember(models.Model):
     organization = models.ForeignKey(College, on_delete=models.CASCADE, related_name='team_members')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='organization_team_memberships', blank=True, null=True)
     invite_email = models.EmailField(blank=True)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='manager')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='none')
     status = models.CharField(max_length=12, choices=STATUS_CHOICES, default='active')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

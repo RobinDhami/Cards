@@ -906,8 +906,8 @@ def venue_settings_api(request, organization_id):
     action = str(data.get('action') or '')
     if request.method == 'POST' and action == 'invite':
         email = str(data.get('email') or '').strip().lower()
-        invite_role = str(data.get('role') or 'manager')
-        if invite_role not in {'owner', 'manager', 'waiter', 'kitchen', 'reception'}:
+        invite_role = str(data.get('role') or 'none')
+        if invite_role not in {'none', 'owner', 'manager', 'waiter', 'kitchen', 'reception'}:
             return JsonResponse({'error': 'Choose a valid team role.'}, status=400)
         try: validate_email(email)
         except ValidationError: return JsonResponse({'error': 'Enter a valid email address.'}, status=400)
@@ -955,7 +955,7 @@ def venue_settings_api(request, organization_id):
         return JsonResponse({'ok': True, 'member': _team_payload(member)})
     if request.method == 'PATCH' and action == 'role':
         new_role = str(data.get('role') or '')
-        if new_role not in {'owner', 'manager', 'waiter', 'kitchen', 'reception'}:
+        if new_role not in {'none', 'owner', 'manager', 'waiter', 'kitchen', 'reception'}:
             return JsonResponse({'error': 'Choose a valid team role.'}, status=400)
         if member.role == 'owner' and new_role != 'owner' and organization.team_members.filter(role='owner', status='active').count() <= 1:
             return JsonResponse({'error': 'Assign another owner before changing the last owner.'}, status=400)
