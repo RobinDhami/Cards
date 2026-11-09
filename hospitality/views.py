@@ -1789,6 +1789,53 @@ def venue_orders_manage_api(request, organization_id):
                 return JsonResponse({'error': _validation_message(exc)}, status=400)
             order.save(update_fields=['tax_amount', 'service_charge_amount', 'discount_amount', 'final_total', 'payment_status', 'paid_at', 'updated_at'])
             _record_operational_activity(venue, 'order_billing_updated', f'Billing updated for order #{order.order_number}', request, {'orderId': order.public_identifier, 'paymentStatus': order.payment_status, 'finalTotal': str(order.final_total)})
+        elif action == 'loyalty_award':
+            if role not in {'owner', 'manager'}:
+                return JsonResponse({'error': 'Only owners and managers can award loyalty from an order.'}, status=403)
+            if order.status in {'new', 'cancelled', 'expired'} or order.payment_status not in {'paid_cash', 'paid_online'}:
+                return JsonResponse({'error': 'Record a paid cash or online payment before awarding loyalty for this order.'}, status=400)
+            if 'loyalty' not in enabled_organization_modules(venue.organization):
+                return JsonResponse({'error': 'Loyalty is not included in this organization’s plan.'}, status=403)
+            program = VenueRewardsProgram.objects.filter(venue=venue, is_active=True).first()
+            if not program:
+                return JsonResponse({'error': 'Activate the loyalty program before awarding this order.'}, status=400)
+            membership_identifier = str(data.get('memberId') or '').replace('T2C-LOYALTY:', '').strip()
+            if not membership_identifier:
+                return JsonResponse({'error': 'Scan or enter the loyalty member code.'}, status=400)
+            reference = f'order:{order.public_identifier}'
+            try:
+                with transaction.atomic():
+                    membership = VenueLoyaltyMembership.objects.select_for_update().select_related('customer').get(
+                        venue=venue, public_identifier=membership_identifier, is_active=True,
+                    )
+                    if VenueRewardsTransaction.objects.filter(venue=venue, transaction_type='earn', receipt_reference=reference).exists():
+                        return JsonResponse({'error': 'Loyalty was already awarded for this order.'}, status=409)
+                    _expire_rewards_if_needed(membership, program)
+                    if order.final_total < program.minimum_order_amount:
+                        return JsonResponse({'error': f'This paid order must be at least Rs. {program.minimum_order_amount} to collect loyalty credit.'}, status=400)
+                    if program.program_type == 'stamps':
+                        membership.stamp_goal = program.stamp_goal
+                        membership.stamp_count += 1
+                        amount, balance_after = Decimal('1.00'), Decimal(membership.stamp_count)
+                        summary = f'Added 1 stamp from order #{order.order_number} for {membership.customer.phone_e164}'
+                    else:
+                        rate = program.points_per_currency if program.program_type == 'points' else program.reward_rate_percent / Decimal('100')
+                        amount = (order.final_total * rate).quantize(Decimal('0.01'))
+                        membership.reward_balance += amount
+                        membership.lifetime_rewards_earned += amount
+                        balance_after = membership.reward_balance
+                        unit = 'points' if program.program_type == 'points' else 'rewards'
+                        summary = f'Added {amount} {unit} from order #{order.order_number} for {membership.customer.phone_e164}'
+                    membership.last_activity_at = timezone.now()
+                    membership.save(update_fields=['stamp_count', 'stamp_goal', 'reward_balance', 'lifetime_rewards_earned', 'last_activity_at', 'updated_at'])
+                    VenueRewardsTransaction.objects.create(
+                        venue=venue, membership=membership, transaction_type='earn', reward_amount=amount,
+                        balance_after=balance_after, order_amount=order.final_total, receipt_reference=reference,
+                        idempotency_key=f'order-{order.public_identifier[:56]}', created_by=request.user,
+                    )
+            except VenueLoyaltyMembership.DoesNotExist:
+                return JsonResponse({'error': 'This loyalty member was not found for the café.'}, status=404)
+            _record_operational_activity(venue, 'order_loyalty_awarded', summary, request, {'orderId': order.public_identifier, 'membershipId': membership.public_identifier, 'amount': str(amount)})
         elif action == 'edit':
             if order.status not in {'new', 'accepted', 'preparing'}:
                 return JsonResponse({'error': 'Only pending, verified, or preparing orders can be changed.'}, status=400)
@@ -1873,13 +1920,20 @@ def venue_orders_manage_api(request, organization_id):
             ],
         } for order in orders[:100]]
     else:
-        order_payloads = [_order_payload(order) for order in orders[:100]]
+        rewarded_references = set(venue.rewards_transactions.filter(transaction_type='earn', receipt_reference__startswith='order:').values_list('receipt_reference', flat=True))
+        order_payloads = []
+        for order in orders[:100]:
+            payload = _order_payload(order)
+            payload['loyaltyRewarded'] = f'order:{order.public_identifier}' in rewarded_references
+            order_payloads.append(payload)
+    program = VenueRewardsProgram.objects.filter(venue=venue, is_active=True).first() if 'loyalty' in enabled_organization_modules(venue.organization) else None
     return JsonResponse({
         'orders': order_payloads,
         'tables': [] if role == 'kitchen' else [{'id': item.pk, 'name': item.name, 'publicIdentifier': item.public_identifier, 'qrUrl': request.build_absolute_uri(f'/venue/{venue.public_identifier}/?tab=menu&source={item.public_identifier}&entry=qr&order=1')} for item in venue.touchpoints.filter(destination='ordering').order_by('name')],
         'menuItems': [] if role == 'kitchen' else [{'id': item.pk, 'name': item.name, 'price': str(item.price)} for item in menu_items],
         'kitchenUrl': '' if role == 'kitchen' else request.build_absolute_uri(f'/venue/{venue.public_identifier}/kitchen/{venue.kitchen_access_token}/'),
         'waiterCalls': [] if role == 'kitchen' else [{'id': row.pk, 'table': row.table.name, 'note': row.note, 'createdAt': row.created_at.isoformat()} for row in calls],
+        'loyalty': _rewards_program_payload(program) if program and role != 'kitchen' else {'isActive': False},
     })
 
 

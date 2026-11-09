@@ -667,6 +667,29 @@ class HospitalityWorkspaceTests(TestCase):
         self.assertEqual(orders['items'][0], {'name': 'Pancakes', 'quantity': 2, 'amount': '24.00'})
         self.assertEqual({row['name'] for row in orders['categories']}, {'Breakfast', 'Drinks'})
 
+    def test_paid_order_can_award_loyalty_once_but_unpaid_or_cancelled_orders_cannot(self):
+        OrganizationModuleAccess.objects.update_or_create(organization=self.org, module_key='ordering', defaults={'is_enabled': True, 'enabled_at': timezone.now()})
+        program = VenueRewardsProgram.objects.create(venue=self.venue, is_active=True, program_type='points', points_per_currency='1.00')
+        customer = LoyaltyCustomer.objects.create(full_name='Robin', phone_e164='+9779800000000')
+        membership = VenueLoyaltyMembership.objects.create(venue=self.venue, customer=customer)
+        paid_order = VenueOrder.objects.create(venue=self.venue, order_number=1, status='completed', payment_status='paid_cash', total='250.00', final_total='250.00')
+        unpaid_order = VenueOrder.objects.create(venue=self.venue, order_number=2, status='completed', payment_status='unpaid', total='100.00', final_total='100.00')
+        cancelled_order = VenueOrder.objects.create(venue=self.venue, order_number=3, status='cancelled', payment_status='paid_cash', total='100.00', final_total='100.00')
+        self.client.force_login(self.user)
+
+        response = self.client.patch(f'/api/organizations/{self.org.pk}/venue/orders/', data=json.dumps({'id': paid_order.pk, 'action': 'loyalty_award', 'memberId': membership.public_identifier}), content_type='application/json')
+        self.assertEqual(response.status_code, 200, response.content)
+        membership.refresh_from_db()
+        self.assertEqual(str(membership.reward_balance), '250.00')
+        self.assertEqual(VenueRewardsTransaction.objects.filter(venue=self.venue, transaction_type='earn', receipt_reference=f'order:{paid_order.public_identifier}').count(), 1)
+        self.assertTrue(next(row for row in response.json()['orders'] if row['id'] == paid_order.pk)['loyaltyRewarded'])
+
+        duplicate = self.client.patch(f'/api/organizations/{self.org.pk}/venue/orders/', data=json.dumps({'id': paid_order.pk, 'action': 'loyalty_award', 'memberId': membership.public_identifier}), content_type='application/json')
+        self.assertEqual(duplicate.status_code, 409)
+        self.assertEqual(self.client.patch(f'/api/organizations/{self.org.pk}/venue/orders/', data=json.dumps({'id': unpaid_order.pk, 'action': 'loyalty_award', 'memberId': membership.public_identifier}), content_type='application/json').status_code, 400)
+        self.assertEqual(self.client.patch(f'/api/organizations/{self.org.pk}/venue/orders/', data=json.dumps({'id': cancelled_order.pk, 'action': 'loyalty_award', 'memberId': membership.public_identifier}), content_type='application/json').status_code, 400)
+        self.assertEqual(program.program_type, 'points')
+
     def test_authenticated_dashboard_preview_does_not_record_a_view(self):
         self.client.force_login(self.user)
         response = self.client.get(f'/api/venue/{self.venue.public_identifier}/?preview=dashboard')
