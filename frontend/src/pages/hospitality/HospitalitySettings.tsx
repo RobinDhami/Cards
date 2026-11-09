@@ -57,6 +57,7 @@ export function HospitalitySettingsPage() {
   const [inviteUsername, setInviteUsername] = useState("");
   const [invitePassword, setInvitePassword] = useState("");
   const [inviteRole, setInviteRole] = useState<TeamRole>("none");
+  const [addMemberOpen, setAddMemberOpen] = useState(false);
   const [permissionsOpen, setPermissionsOpen] = useState(false);
   const [memberMenuId, setMemberMenuId] = useState<number | null>(null);
   const [activatingMember, setActivatingMember] = useState<TeamMember | null>(null);
@@ -89,14 +90,16 @@ export function HospitalitySettingsPage() {
       await apiFetch(`/api/organizations/${id}/venue/settings/`, { method, headers: { "Content-Type": "application/json" }, body: jsonBody(data) });
       await load();
       setNotice("Saved.");
+      return true;
     } catch (reason) { setError(displayError(reason)); }
     finally { setSaving(false); }
+    return false;
   }
 
   async function invite(event: FormEvent) {
     event.preventDefault();
-    await request({ action: "invite", email: inviteEmail, username: inviteUsername, password: invitePassword, role: inviteRole }, "POST");
-    setInviteEmail(""); setInviteUsername(""); setInvitePassword("");
+    const saved = await request({ action: "invite", email: inviteEmail, username: inviteUsername, password: invitePassword, role: inviteRole }, "POST");
+    if (saved) { setInviteEmail(""); setInviteUsername(""); setInvitePassword(""); setInviteRole("none"); setAddMemberOpen(false); }
   }
 
   if (!payload) return <div className="manage-state">{error || "Loading settings…"}</div>;
@@ -140,17 +143,7 @@ export function HospitalitySettingsPage() {
       </section> : null}
 
       {tab === "Staff & Access" && owner ? <section className="manage-card hospitality-settings-card hospitality-team-access">
-        <div className="hospitality-section-title"><div><h2>Team access</h2><p>Create staff login access and manage workspace roles.</p></div></div>
-        <form className="hospitality-invite" onSubmit={invite}>
-          <label>Email address<input type="email" value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} required placeholder="person@example.com" /></label>
-          <label>Login username<input value={inviteUsername} onChange={(event) => setInviteUsername(event.target.value)} placeholder="e.g. jyapu.waiter" /></label>
-          <label>Temporary password<input type="password" value={invitePassword} onChange={(event) => setInvitePassword(event.target.value)} minLength={8} placeholder="At least 8 characters" /></label>
-          <label>Dashboard role<select value={inviteRole} onChange={(event) => setInviteRole(event.target.value as TeamRole)}><option value="none">No dashboard role</option>{roles.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}</select></label>
-          <button type="button" className="hospitality-role-link" aria-expanded={permissionsOpen} onClick={() => setPermissionsOpen((current) => !current)}><CircleHelp size={16} />View role permissions</button>
-          <button className="manage-button is-primary hospitality-invite-button" disabled={saving}>{saving ? <LoaderCircle size={16} className="is-spinning" /> : <Plus size={17} />}Add staff access</button>
-        </form>
-        <p className="hospitality-login-help">Set both login fields to activate the person immediately. Leaving them blank keeps the role pending until you set their login.</p>
-        {permissionsOpen ? <div className="hospitality-role-permissions" role="region" aria-label="Role permissions">{roles.map((role) => <div key={role.value}><strong>{role.label}</strong><p>{role.detail}</p></div>)}</div> : null}
+        <div className="hospitality-section-title hospitality-team-title"><div><h2>Team members</h2><p>Add people first, then assign their dashboard role when they need access.</p></div><button type="button" className="manage-button is-primary" onClick={() => setAddMemberOpen(true)}><Plus size={17} />Add member</button></div>
         <div className="hospitality-team-table" role="table" aria-label="Workspace team">
           <div role="row" className="hospitality-team-head"><span>Member</span><span>Role</span><span>Status</span><span>Action</span></div>
           {(payload.team || []).map((member) => <div role="row" className="hospitality-team-row" key={member.id}>
@@ -161,6 +154,7 @@ export function HospitalitySettingsPage() {
           </div>)}
         </div>
         {activatingMember ? <div className="hospitality-login-dialog" role="dialog" aria-modal="true" aria-labelledby="activate-login-title"><div><button type="button" aria-label="Close" onClick={() => setActivatingMember(null)}>×</button><h3 id="activate-login-title">Set login for {activatingMember.email}</h3><p>This creates their account. Assign a dashboard role whenever they need workspace access.</p><label>Login username<input autoFocus value={activationUsername} onChange={(event) => setActivationUsername(event.target.value)} placeholder="e.g. jyapu.waiter" /></label><label>Temporary password<input type="password" value={activationPassword} onChange={(event) => setActivationPassword(event.target.value)} minLength={8} placeholder="At least 8 characters" /></label><footer><button type="button" className="manage-button" onClick={() => setActivatingMember(null)}>Cancel</button><button type="button" className="manage-button is-primary" disabled={saving || !activationUsername.trim() || activationPassword.length < 8} onClick={() => void activateMember()}>Activate login</button></footer></div></div> : null}
+        {addMemberOpen ? <div className="hospitality-login-dialog" role="dialog" aria-modal="true" aria-labelledby="add-member-title"><form onSubmit={invite}><button type="button" aria-label="Close" onClick={() => setAddMemberOpen(false)}>×</button><h3 id="add-member-title">Add team member</h3><p>Create their account now. Their dashboard role can be assigned later from the team table.</p><label>Email address<input autoFocus type="email" value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} required placeholder="person@example.com" /></label><label>Login username<input value={inviteUsername} onChange={(event) => setInviteUsername(event.target.value)} placeholder="e.g. jyapu.waiter" /></label><label>Temporary password<input type="password" value={invitePassword} onChange={(event) => setInvitePassword(event.target.value)} minLength={8} placeholder="At least 8 characters" /></label><button type="button" className="hospitality-role-link" aria-expanded={permissionsOpen} onClick={() => setPermissionsOpen((current) => !current)}><CircleHelp size={16} />View role permissions</button>{permissionsOpen ? <div className="hospitality-role-permissions" role="region" aria-label="Role permissions">{roles.map((role) => <div key={role.value}><strong>{role.label}</strong><p>{role.detail}</p></div>)}</div> : null}<footer><button type="button" className="manage-button" onClick={() => setAddMemberOpen(false)}>Cancel</button><button className="manage-button is-primary" disabled={saving}>{saving ? <LoaderCircle size={16} className="is-spinning" /> : <Plus size={17} />}Add member</button></footer></form></div> : null}
       </section> : null}
 
       {tab === "Notifications" ? <section className="manage-card hospitality-settings-card"><div className="hospitality-settings-heading"><Bell size={20} /><div><h2>Email notifications</h2></div></div><div className="hospitality-preference-list">{[
