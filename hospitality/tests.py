@@ -771,6 +771,108 @@ class HospitalityWorkspaceTests(TestCase):
         response = self.client.get(f'/api/organizations/{self.org.pk}/venue/bills/')
         self.assertEqual(response.status_code, 403)
 
+    def test_full_ten_order_five_table_service_to_receipt_flow(self):
+        """Exercise the customer, waiter, kitchen, and billing paths together."""
+        OrganizationModuleAccess.objects.update_or_create(
+            organization=self.org, module_key='ordering',
+            defaults={'is_enabled': True, 'enabled_at': timezone.now()},
+        )
+        waiter = get_user_model().objects.create_user(username='service-waiter', password='pass')
+        OrganizationTeamMember.objects.create(
+            organization=self.org, user=waiter, role='waiter', status='active',
+        )
+        menu_item = self.category.items.get(name='Pancakes')
+        tables = []
+        self.client.force_login(self.user)
+        for number in range(1, 6):
+            response = self.client.post(
+                f'/api/organizations/{self.org.pk}/venue/orders/',
+                data=json.dumps({'tableName': f'Table {number}'}),
+                content_type='application/json',
+            )
+            self.assertEqual(response.status_code, 200, response.content)
+            tables.append(VenueTouchpoint.objects.get(venue=self.venue, name=f'Table {number}'))
+        self.client.logout()
+
+        placed = []
+        for table in tables:
+            for order_number in range(2):
+                response = self.client.post(
+                    f'/api/venue/{self.venue.public_identifier}/orders/',
+                    data=json.dumps({
+                        'table': str(table.public_identifier),
+                        'customerName': f'Guest {table.name}-{order_number + 1}',
+                        'items': [{'id': str(menu_item.public_identifier), 'quantity': order_number + 1}],
+                    }),
+                    content_type='application/json',
+                )
+                self.assertEqual(response.status_code, 201, response.content)
+                placed.append(response.json()['order'])
+        self.assertEqual(len(placed), 10)
+        self.assertEqual(VenueOrder.objects.filter(venue=self.venue, status='new').count(), 10)
+
+        self.client.force_login(waiter)
+        for order in placed:
+            row = VenueOrder.objects.get(pk=order['id'])
+            response = self.client.patch(
+                f'/api/organizations/{self.org.pk}/venue/orders/',
+                data=json.dumps({
+                    'id': row.pk, 'action': 'approve', 'verificationCode': row.verification_code,
+                }),
+                content_type='application/json',
+            )
+            self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(VenueOrder.objects.filter(venue=self.venue, status='accepted').count(), 10)
+        self.client.logout()
+
+        kitchen_url = f'/api/venue/{self.venue.public_identifier}/kitchen/{self.venue.kitchen_access_token}/orders/'
+        for order in placed:
+            response = self.client.patch(
+                kitchen_url,
+                data=json.dumps({'order': order['publicIdentifier'], 'status': 'preparing'}),
+                content_type='application/json',
+            )
+            self.assertEqual(response.status_code, 200, response.content)
+            response = self.client.patch(
+                kitchen_url,
+                data=json.dumps({'order': order['publicIdentifier'], 'status': 'ready'}),
+                content_type='application/json',
+            )
+            self.assertEqual(response.status_code, 200, response.content)
+
+        self.client.force_login(waiter)
+        for order in placed:
+            row = VenueOrder.objects.get(pk=order['id'])
+            response = self.client.patch(
+                f'/api/organizations/{self.org.pk}/venue/orders/',
+                data=json.dumps({'id': row.pk, 'status': 'completed'}),
+                content_type='application/json',
+            )
+            self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(VenueOrder.objects.filter(venue=self.venue, status='completed').count(), 10)
+
+        self.client.force_login(self.user)
+        response = self.client.get(f'/api/organizations/{self.org.pk}/venue/bills/?scope=open')
+        self.assertEqual(response.status_code, 200, response.content)
+        bills = response.json()['bills']
+        self.assertEqual(len(bills), 5)
+        self.assertEqual(sorted(len(bill['orders']) for bill in bills), [2, 2, 2, 2, 2])
+        for index, bill in enumerate(bills):
+            response = self.client.patch(
+                f'/api/organizations/{self.org.pk}/venue/bills/',
+                data=json.dumps({
+                    'id': bill['id'], 'action': 'settle',
+                    'method': 'cash' if index % 2 == 0 else 'online',
+                    'reference': f'BETA-{index + 1}',
+                }),
+                content_type='application/json',
+            )
+            self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(VenueBill.objects.filter(venue=self.venue, status='paid').count(), 5)
+        self.assertEqual(VenueBillPayment.objects.filter(bill__venue=self.venue, status='completed').count(), 5)
+        self.assertEqual(VenueReceipt.objects.filter(bill__venue=self.venue).count(), 5)
+        self.assertEqual(VenueOrder.objects.filter(venue=self.venue, payment_status='unpaid').count(), 0)
+
     def test_analytics_uses_scoped_timezone_range_and_trusted_definitions(self):
         other_org = College.objects.create(name='Unrelated Cafe', organization_code='UNRELATED', organization_type='hospitality')
         other_venue = VenueProfile.objects.create(organization=other_org)
