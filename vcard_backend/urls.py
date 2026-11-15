@@ -167,6 +167,7 @@ urlpatterns = [
     path('api/organizations/<int:organization_id>/venue/overview/', hospitality_views.venue_overview_api, name='venue_overview_api'),
     path('api/organizations/<int:organization_id>/venue/staff-cards/', hospitality_views.venue_staff_cards_manage_api, name='venue_staff_cards_manage_api'),
     path('api/organizations/<int:organization_id>/venue/orders/', hospitality_views.venue_orders_manage_api, name='venue_orders_manage_api'),
+    path('api/organizations/<int:organization_id>/venue/bills/', hospitality_views.venue_bills_manage_api, name='venue_bills_manage_api'),
     # Tenant vanity routes must remain last so "api/dashboard/..." and other
     # first-party paths cannot be mistaken for an organization slug.
     path('<slug:organization_slug>/dashboard/', react_app, name='organization_vanity_dashboard'),

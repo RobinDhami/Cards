@@ -26,6 +26,7 @@ from .models import (
     VenueMenuItemVariant, VenueOperationalActivity, VenueProfile, VenueRewardsProgram,
     VenueRewardsTransaction, VenueStaffLink,
     VenueStaffProfile, VenueTouchpoint, VenueOrder, VenueOrderItem, VenueWaiterCall,
+    VenueTableSession, VenueBill, VenueBillPayment, VenueBillAdjustment, VenueReceipt,
 )
 from django.contrib.auth import authenticate, get_user_model, login
 from vcards.models import CardBatchCard, College, OrganizationModuleAccess, OrganizationNotificationPreference, OrganizationServicePlan, OrganizationTeamMember
@@ -1608,6 +1609,128 @@ def _refresh_order_bill(order, *, tax_amount=None, service_charge_amount=None, d
     order.paid_at = timezone.now() if status in {'paid_cash', 'paid_online'} else None
 
 
+def _venue_local_date(venue):
+    try:
+        venue_zone = ZoneInfo(venue.timezone or 'Asia/Kathmandu')
+    except ZoneInfoNotFoundError:
+        venue_zone = ZoneInfo('Asia/Kathmandu')
+    return timezone.now().astimezone(venue_zone).date()
+
+
+def _new_bill_for_session(venue, table_session, user=None):
+    """Allocate an immutable venue bill number while the venue row is locked."""
+    VenueProfile.objects.select_for_update().get(pk=venue.pk)
+    latest = VenueBill.objects.filter(venue=venue).order_by('-sequence').first()
+    sequence = (latest.sequence if latest else 0) + 1
+    prefix = venue.organization.organization_code or venue.organization.workspace_slug.replace('-', '').upper()[:12] or 'BILL'
+    bill_number = f'{prefix}-{_venue_local_date(venue):%Y%m%d}-{sequence:04d}'
+    return VenueBill.objects.create(
+        venue=venue, table_session=table_session, sequence=sequence, bill_number=bill_number,
+        opened_by=user if getattr(user, 'is_authenticated', False) else None,
+    )
+
+
+def _recalculate_bill(bill, *, save=True):
+    subtotal = sum(
+        (order.total for order in bill.orders.exclude(status__in={'cancelled', 'expired'})),
+        Decimal('0.00'),
+    ).quantize(Decimal('0.01'))
+    before_discount = subtotal + bill.tax_amount + bill.service_charge_amount
+    if bill.discount_amount > before_discount:
+        raise ValidationError('Discount cannot be more than the bill total.')
+    bill.subtotal = subtotal
+    bill.final_total = before_discount - bill.discount_amount
+    if save:
+        bill.save(update_fields=['subtotal', 'final_total', 'updated_at'])
+    return bill
+
+
+def _attach_order_to_bill(order, user=None):
+    """Join a verified order to the current table check or open a new check."""
+    if order.bill_id:
+        return _recalculate_bill(order.bill)
+    with transaction.atomic():
+        order = VenueOrder.objects.select_for_update().select_related('venue__organization', 'table').get(pk=order.pk)
+        if order.bill_id:
+            return _recalculate_bill(order.bill)
+        now = timezone.now()
+        session = None
+        if order.table_id:
+            session = VenueTableSession.objects.select_for_update().filter(
+                venue=order.venue, table=order.table, status='open', expires_at__gt=now,
+            ).first()
+        if not session:
+            session = VenueTableSession.objects.create(
+                venue=order.venue, table=order.table, expires_at=order.table_session_expires_at or now + timedelta(hours=4),
+            )
+        try:
+            bill = session.bill
+        except VenueBill.DoesNotExist:
+            bill = _new_bill_for_session(order.venue, session, user)
+        order.table_session = session
+        order.bill = bill
+        order.save(update_fields=['table_session', 'bill', 'updated_at'])
+        if not bill.customer_name and order.customer_name:
+            bill.customer_name = order.customer_name
+        if not bill.customer_phone and order.customer_phone:
+            bill.customer_phone = order.customer_phone
+        _recalculate_bill(bill, save=False)
+        bill.save(update_fields=['customer_name', 'customer_phone', 'subtotal', 'final_total', 'updated_at'])
+        return bill
+
+
+def _receipt_snapshot(bill):
+    orders = bill.orders.prefetch_related('items').order_by('created_at', 'id')
+    return {
+        'business': {
+            'name': bill.venue.organization.name,
+            'address': bill.venue.organization.address or '',
+            'phone': bill.venue.organization.phone or '',
+        },
+        'billNumber': bill.bill_number,
+        'table': bill.table_session.table.name if bill.table_session.table_id else 'Counter',
+        'orders': [{
+            'number': order.order_number,
+            'items': [{
+                'name': item.name, 'quantity': item.quantity, 'unitPrice': str(item.unit_price),
+                'note': item.note, 'variant': item.selected_variant, 'addOns': item.add_ons,
+            } for item in order.items.all()],
+        } for order in orders],
+        'subtotal': str(bill.subtotal), 'taxAmount': str(bill.tax_amount),
+        'serviceChargeAmount': str(bill.service_charge_amount), 'discountAmount': str(bill.discount_amount),
+        'finalTotal': str(bill.final_total), 'status': bill.status,
+    }
+
+
+def _bill_payload(bill, rewarded_references=None):
+    receipt = getattr(bill, 'receipt', None)
+    return {
+        'id': bill.pk, 'publicIdentifier': bill.public_identifier, 'number': bill.bill_number,
+        'status': bill.status,
+        'table': bill.table_session.table.name if bill.table_session.table_id else 'Counter',
+        'customerName': bill.customer_name, 'customerPhone': bill.customer_phone,
+        'subtotal': str(bill.subtotal), 'taxAmount': str(bill.tax_amount),
+        'serviceChargeAmount': str(bill.service_charge_amount), 'discountAmount': str(bill.discount_amount),
+        'finalTotal': str(bill.final_total),
+        'openedAt': bill.created_at.isoformat(), 'paidAt': bill.paid_at.isoformat() if bill.paid_at else None,
+        'loyaltyRewarded': f'bill:{bill.public_identifier}' in (rewarded_references or set()),
+        'receipt': {'number': receipt.receipt_number, 'issuedAt': receipt.issued_at.isoformat(), 'snapshot': receipt.snapshot} if receipt else None,
+        'payments': [{
+            'id': payment.pk, 'method': payment.method, 'status': payment.status,
+            'amount': str(payment.amount), 'reference': payment.reference,
+            'paidAt': payment.paid_at.isoformat(),
+        } for payment in bill.payments.all()],
+        'orders': [{
+            'id': order.pk, 'number': order.order_number, 'status': order.status,
+            'total': str(order.total), 'createdAt': order.created_at.isoformat(),
+            'items': [{
+                'id': item.pk, 'name': item.name, 'quantity': item.quantity,
+                'unitPrice': str(item.unit_price), 'note': item.note,
+            } for item in order.items.all()],
+        } for order in bill.orders.all()],
+    }
+
+
 def _expire_pending_orders(venue):
     """A photographed table QR may create a request, never a kitchen order."""
     now = timezone.now()
@@ -1617,10 +1740,24 @@ def _expire_pending_orders(venue):
 def _expire_table_sessions(venue):
     """A table QR remains reusable, but an open meal session cannot live forever."""
     now = timezone.now()
-    return VenueOrder.objects.filter(
+    expired_orders = VenueOrder.objects.filter(
         venue=venue, status__in=['accepted', 'preparing', 'ready'],
         table_session_expires_at__isnull=False, table_session_expires_at__lte=now,
-    ).update(status='cancelled', cancellation_reason='Table session expired')
+    )
+    session_ids = list(expired_orders.exclude(table_session_id=None).values_list('table_session_id', flat=True).distinct())
+    updated = expired_orders.update(status='cancelled', cancellation_reason='Table session expired')
+    for session in VenueTableSession.objects.filter(pk__in=session_ids, status='open').select_related('bill'):
+        session.status = 'expired'; session.closed_at = now
+        session.save(update_fields=['status', 'closed_at'])
+        try:
+            bill = session.bill
+        except VenueBill.DoesNotExist:
+            continue
+        if bill.status == 'open':
+            bill.status = 'voided'; bill.locked_at = now
+            bill.save(update_fields=['status', 'locked_at', 'updated_at'])
+            VenueBillAdjustment.objects.create(bill=bill, kind='void', reason='Table session expired')
+    return updated
 
 
 def _kitchen_order_payload(order):
@@ -1774,8 +1911,10 @@ def venue_orders_manage_api(request, organization_id):
                 return JsonResponse({'error': 'This verification code has expired. Ask the customer to place a new order.'}, status=400)
             if not hmac.compare_digest(order.verification_code, code):
                 return JsonResponse({'error': 'That verification code does not match this order.'}, status=400)
-            order.status = 'accepted'; order.verified_at = timezone.now(); order.verified_by = request.user.get_full_name() or request.user.username
-            order.save(update_fields=['status', 'verified_at', 'verified_by', 'updated_at'])
+            with transaction.atomic():
+                order.status = 'accepted'; order.verified_at = timezone.now(); order.verified_by = request.user.get_full_name() or request.user.username
+                order.save(update_fields=['status', 'verified_at', 'verified_by', 'updated_at'])
+                _attach_order_to_bill(order, request.user)
             _record_operational_activity(venue, 'order_verified', f'Order #{order.order_number} verified at {order.table.name if order.table_id else "Counter"}', request, {'orderId': order.public_identifier})
         elif action == 'reject':
             if order.status != 'new': return JsonResponse({'error': 'Only pending orders can be rejected.'}, status=400)
@@ -1791,6 +1930,10 @@ def venue_orders_manage_api(request, organization_id):
                 return JsonResponse({'error': 'Only orders at the same pending or verified stage can be merged.'}, status=400)
             if order.payment_status != 'unpaid' or source.payment_status != 'unpaid':
                 return JsonResponse({'error': 'Only unpaid orders can be merged. Settle the orders separately instead.'}, status=400)
+            if (order.bill_id and order.bill.status != 'open') or (source.bill_id and source.bill.status != 'open'):
+                return JsonResponse({'error': 'Paid bills cannot be merged.'}, status=409)
+            if order.bill_id and source.bill_id and order.bill_id != source.bill_id:
+                return JsonResponse({'error': 'These orders belong to different table bills.'}, status=400)
             with transaction.atomic():
                 for row in source.items.all():
                     matching = order.items.filter(menu_item_id=row.menu_item_id, name=row.name, unit_price=row.unit_price, note=row.note).first()
@@ -1804,22 +1947,11 @@ def venue_orders_manage_api(request, organization_id):
                 order.save(update_fields=['total', 'tax_amount', 'service_charge_amount', 'discount_amount', 'final_total', 'payment_status', 'paid_at', 'updated_at'])
                 source.status = 'cancelled'; source.cancellation_reason = f'Merged into order #{order.order_number}'
                 source.save(update_fields=['status', 'cancellation_reason', 'updated_at'])
+                if order.bill_id:
+                    _recalculate_bill(order.bill)
             _record_operational_activity(venue, 'orders_merged', f'Merged order #{source.order_number} into #{order.order_number} at {order.table.name}', request, {'orderId': order.public_identifier, 'mergedOrderId': source.public_identifier})
         elif action == 'billing':
-            if order.status in {'new', 'cancelled', 'expired'}:
-                return JsonResponse({'error': 'Verify an active order before updating its bill.'}, status=400)
-            try:
-                _refresh_order_bill(
-                    order,
-                    tax_amount=data.get('taxAmount'),
-                    service_charge_amount=data.get('serviceChargeAmount'),
-                    discount_amount=data.get('discountAmount'),
-                    payment_status=str(data.get('paymentStatus') or 'unpaid'),
-                )
-            except ValidationError as exc:
-                return JsonResponse({'error': _validation_message(exc)}, status=400)
-            order.save(update_fields=['tax_amount', 'service_charge_amount', 'discount_amount', 'final_total', 'payment_status', 'paid_at', 'updated_at'])
-            _record_operational_activity(venue, 'order_billing_updated', f'Billing updated for order #{order.order_number}', request, {'orderId': order.public_identifier, 'paymentStatus': order.payment_status, 'finalTotal': str(order.final_total)})
+            return JsonResponse({'error': 'Use the Bills workspace to update charges and collect payment.'}, status=400)
         elif action == 'loyalty_award':
             if role not in {'owner', 'manager'}:
                 return JsonResponse({'error': 'Only owners and managers can award loyalty from an order.'}, status=403)
@@ -1868,6 +2000,8 @@ def venue_orders_manage_api(request, organization_id):
                 return JsonResponse({'error': 'This loyalty member was not found for the café.'}, status=404)
             _record_operational_activity(venue, 'order_loyalty_awarded', summary, request, {'orderId': order.public_identifier, 'membershipId': membership.public_identifier, 'amount': str(amount)})
         elif action == 'edit':
+            if order.bill_id and order.bill.status != 'open':
+                return JsonResponse({'error': 'This bill is already settled. Paid orders cannot be edited.'}, status=409)
             if order.status not in {'new', 'accepted', 'preparing'}:
                 return JsonResponse({'error': 'Only pending, verified, or preparing orders can be changed.'}, status=400)
             rows = data.get('items')
@@ -1908,6 +2042,8 @@ def venue_orders_manage_api(request, organization_id):
                 order.total = total
                 _refresh_order_bill(order)
                 order.save(update_fields=['note', 'total', 'tax_amount', 'service_charge_amount', 'discount_amount', 'final_total', 'payment_status', 'paid_at', 'updated_at'])
+                if order.bill_id:
+                    _recalculate_bill(order.bill)
             _record_operational_activity(venue, 'order_edited', f'Order #{order.order_number} edited before verification', request, {'orderId': order.public_identifier})
         else:
             status = str(data.get('status') or '')
@@ -1927,10 +2063,14 @@ def venue_orders_manage_api(request, organization_id):
             if status not in allowed_transitions.get(order.status, set()):
                 return JsonResponse({'error': 'Use the next order step shown in the queue.'}, status=400)
             if status == 'cancelled':
+                if order.bill_id and order.bill.status != 'open':
+                    return JsonResponse({'error': 'This bill is already settled. Refund or void it from Bills instead.'}, status=409)
                 reason = str(data.get('cancellationReason') or '').strip()[:300]
                 if len(reason) < 3: return JsonResponse({'error': 'Add a short reason for cancelling this order.'}, status=400)
                 order.cancellation_reason = reason
             order.status = status; order.save(update_fields=['status', 'cancellation_reason', 'updated_at'])
+            if order.bill_id and status == 'cancelled':
+                _recalculate_bill(order.bill)
             _record_operational_activity(venue, 'order_status_updated', f'Order #{order.order_number} marked {order.get_status_display().lower()}', request, {'orderId': order.public_identifier})
     status_filter = request.GET.get('status', '')
     orders = venue.orders.select_related('table').prefetch_related('items')
@@ -1965,6 +2105,212 @@ def venue_orders_manage_api(request, organization_id):
         'kitchenUrl': '' if role == 'kitchen' else request.build_absolute_uri(f'/venue/{venue.public_identifier}/kitchen/{venue.kitchen_access_token}/'),
         'waiterCalls': [] if role == 'kitchen' else [{'id': row.pk, 'table': row.table.name, 'note': row.note, 'createdAt': row.created_at.isoformat()} for row in calls],
         'loyalty': _rewards_program_payload(program) if program and role != 'kitchen' else {'isActive': False},
+    })
+
+
+@require_http_methods(['GET', 'PATCH'])
+def venue_bills_manage_api(request, organization_id):
+    venue = _venue_for(request, organization_id, 'ordering')
+    if not venue:
+        return JsonResponse({'error': 'Ordering and billing are not included in this organization’s plan.'}, status=403)
+    role = organization_role(request.user, venue.organization)
+    if role not in {'owner', 'manager'}:
+        return JsonResponse({'error': 'Only owners and managers can access bills.'}, status=403)
+
+    # Bring verified legacy orders into the new table-check flow without ever
+    # combining an already settled historical order with a current table bill.
+    active_unbilled = venue.orders.filter(
+        bill__isnull=True, status__in=['accepted', 'preparing', 'ready', 'completed'],
+        payment_status='unpaid', created_at__gte=timezone.now() - timedelta(hours=12),
+    ).select_related('table', 'venue__organization').order_by('created_at', 'id')
+    for legacy_order in active_unbilled:
+        _attach_order_to_bill(legacy_order, request.user)
+
+    if request.method == 'PATCH':
+        data = _body(request) or {}
+        action = str(data.get('action') or '')
+        try:
+            with transaction.atomic():
+                bill = get_object_or_404(
+                    VenueBill.objects.select_for_update().select_related('table_session__table', 'venue__organization'),
+                    venue=venue, pk=data.get('id'),
+                )
+                if action == 'update':
+                    if bill.status != 'open':
+                        return JsonResponse({'error': 'Paid, voided, and refunded bills are locked.'}, status=409)
+                    reason = str(data.get('reason') or 'Bill charges updated').strip()[:300]
+                    changes = [
+                        ('tax', 'tax_amount', _bill_amount(data.get('taxAmount'), 'tax amount')),
+                        ('service_charge', 'service_charge_amount', _bill_amount(data.get('serviceChargeAmount'), 'service charge')),
+                        ('discount', 'discount_amount', _bill_amount(data.get('discountAmount'), 'discount')),
+                    ]
+                    for kind, field, amount in changes:
+                        previous = getattr(bill, field)
+                        if previous != amount:
+                            VenueBillAdjustment.objects.create(
+                                bill=bill, kind=kind, previous_amount=previous, amount=amount,
+                                reason=reason, created_by=request.user,
+                            )
+                            setattr(bill, field, amount)
+                    _recalculate_bill(bill, save=False)
+                    bill.save(update_fields=['tax_amount', 'service_charge_amount', 'discount_amount', 'subtotal', 'final_total', 'updated_at'])
+                    message = f'Bill {bill.bill_number} updated.'
+                elif action == 'settle':
+                    if bill.status != 'open':
+                        return JsonResponse({'error': 'This bill has already been settled.'}, status=409)
+                    method = str(data.get('method') or '')
+                    if method not in dict(VenueBillPayment.METHOD_CHOICES):
+                        return JsonResponse({'error': 'Choose cash, online, or complimentary payment.'}, status=400)
+                    _recalculate_bill(bill)
+                    now = timezone.now()
+                    bill.status = 'complimentary' if method == 'complimentary' else 'paid'
+                    bill.paid_at = now; bill.locked_at = now
+                    bill.save(update_fields=['status', 'paid_at', 'locked_at', 'updated_at'])
+                    VenueBillPayment.objects.create(
+                        bill=bill, method=method, amount=Decimal('0.00') if method == 'complimentary' else bill.final_total,
+                        reference=str(data.get('reference') or '').strip()[:120], received_by=request.user,
+                    )
+                    bill.table_session.status = 'closed'; bill.table_session.closed_at = now
+                    bill.table_session.save(update_fields=['status', 'closed_at'])
+                    legacy_payment_status = {
+                        'cash': 'paid_cash', 'online': 'paid_online', 'complimentary': 'complimentary',
+                    }[method]
+                    bill.orders.update(payment_status=legacy_payment_status, paid_at=now)
+                    receipt, _ = VenueReceipt.objects.get_or_create(
+                        bill=bill,
+                        defaults={
+                            'receipt_number': f'R-{bill.bill_number}', 'snapshot': _receipt_snapshot(bill),
+                            'issued_by': request.user,
+                        },
+                    )
+                    message = f'Payment recorded. Receipt {receipt.receipt_number} is ready.'
+                elif action == 'void':
+                    if bill.status != 'open':
+                        return JsonResponse({'error': 'Only an open bill can be voided.'}, status=409)
+                    reason = str(data.get('reason') or '').strip()[:300]
+                    if len(reason) < 3:
+                        return JsonResponse({'error': 'Add a reason for voiding this bill.'}, status=400)
+                    now = timezone.now()
+                    bill.status = 'voided'; bill.locked_at = now
+                    bill.save(update_fields=['status', 'locked_at', 'updated_at'])
+                    VenueBillAdjustment.objects.create(bill=bill, kind='void', reason=reason, created_by=request.user)
+                    bill.table_session.status = 'cancelled'; bill.table_session.closed_at = now
+                    bill.table_session.save(update_fields=['status', 'closed_at'])
+                    bill.orders.exclude(status='completed').update(status='cancelled', cancellation_reason=f'Bill voided: {reason}')
+                    message = f'Bill {bill.bill_number} voided.'
+                elif action == 'refund':
+                    if bill.status not in {'paid', 'complimentary'}:
+                        return JsonResponse({'error': 'Only a settled bill can be refunded.'}, status=409)
+                    reason = str(data.get('reason') or '').strip()[:300]
+                    if len(reason) < 3:
+                        return JsonResponse({'error': 'Add a reason for this refund.'}, status=400)
+                    bill.status = 'refunded'; bill.locked_at = timezone.now()
+                    bill.save(update_fields=['status', 'locked_at', 'updated_at'])
+                    bill.payments.filter(status='completed').update(status='refunded')
+                    VenueBillAdjustment.objects.create(
+                        bill=bill, kind='refund', previous_amount=bill.final_total,
+                        amount=bill.final_total, reason=reason, created_by=request.user,
+                    )
+                    reward_reference = f'bill:{bill.public_identifier}'
+                    earned = VenueRewardsTransaction.objects.select_related('membership').filter(
+                        venue=venue, transaction_type='earn', receipt_reference=reward_reference,
+                    ).first()
+                    if earned and not VenueRewardsTransaction.objects.filter(
+                        venue=venue, transaction_type='reverse', receipt_reference=reward_reference,
+                    ).exists():
+                        membership = VenueLoyaltyMembership.objects.select_for_update().get(pk=earned.membership_id)
+                        program = VenueRewardsProgram.objects.filter(venue=venue).first()
+                        if program and program.program_type == 'stamps':
+                            removed = min(Decimal(membership.stamp_count), abs(earned.reward_amount))
+                            membership.stamp_count = max(0, membership.stamp_count - int(removed))
+                            balance_after = Decimal(membership.stamp_count)
+                        else:
+                            removed = min(membership.reward_balance, abs(earned.reward_amount))
+                            membership.reward_balance -= removed
+                            membership.lifetime_rewards_earned = max(Decimal('0.00'), membership.lifetime_rewards_earned - removed)
+                            balance_after = membership.reward_balance
+                        membership.last_activity_at = timezone.now()
+                        membership.save(update_fields=['stamp_count', 'reward_balance', 'lifetime_rewards_earned', 'last_activity_at', 'updated_at'])
+                        VenueRewardsTransaction.objects.create(
+                            venue=venue, membership=membership, transaction_type='reverse',
+                            reward_amount=-removed, balance_after=balance_after, order_amount=bill.final_total,
+                            receipt_reference=reward_reference, idempotency_key=f'reverse-bill-{bill.public_identifier[:51]}',
+                            created_by=request.user,
+                        )
+                    message = f'Bill {bill.bill_number} marked refunded.'
+                elif action == 'loyalty_award':
+                    if bill.status != 'paid':
+                        return JsonResponse({'error': 'Only a paid cash or online bill can receive loyalty credit.'}, status=400)
+                    if 'loyalty' not in enabled_organization_modules(venue.organization):
+                        return JsonResponse({'error': 'Loyalty is not included in this organization’s plan.'}, status=403)
+                    program = VenueRewardsProgram.objects.filter(venue=venue, is_active=True).first()
+                    if not program:
+                        return JsonResponse({'error': 'Activate the loyalty program before awarding this bill.'}, status=400)
+                    membership_identifier = str(data.get('memberId') or '').replace('T2C-LOYALTY:', '').strip()
+                    if not membership_identifier:
+                        return JsonResponse({'error': 'Scan or enter the loyalty member code.'}, status=400)
+                    reference = f'bill:{bill.public_identifier}'
+                    if VenueRewardsTransaction.objects.filter(venue=venue, transaction_type='earn', receipt_reference=reference).exists():
+                        return JsonResponse({'error': 'Loyalty was already awarded for this bill.'}, status=409)
+                    membership = VenueLoyaltyMembership.objects.select_for_update().select_related('customer').filter(
+                        venue=venue, public_identifier=membership_identifier, is_active=True,
+                    ).first()
+                    if not membership:
+                        return JsonResponse({'error': 'This loyalty member was not found for the café.'}, status=404)
+                    _expire_rewards_if_needed(membership, program)
+                    if bill.final_total < program.minimum_order_amount:
+                        return JsonResponse({'error': f'This paid bill must be at least Rs. {program.minimum_order_amount} to collect loyalty credit.'}, status=400)
+                    if program.program_type == 'stamps':
+                        membership.stamp_goal = program.stamp_goal; membership.stamp_count += 1
+                        amount, balance_after = Decimal('1.00'), Decimal(membership.stamp_count)
+                    else:
+                        rate = program.points_per_currency if program.program_type == 'points' else program.reward_rate_percent / Decimal('100')
+                        amount = (bill.final_total * rate).quantize(Decimal('0.01'))
+                        membership.reward_balance += amount; membership.lifetime_rewards_earned += amount
+                        balance_after = membership.reward_balance
+                    membership.last_activity_at = timezone.now()
+                    membership.save(update_fields=['stamp_count', 'stamp_goal', 'reward_balance', 'lifetime_rewards_earned', 'last_activity_at', 'updated_at'])
+                    VenueRewardsTransaction.objects.create(
+                        venue=venue, membership=membership, transaction_type='earn', reward_amount=amount,
+                        balance_after=balance_after, order_amount=bill.final_total, receipt_reference=reference,
+                        idempotency_key=f'bill-{bill.public_identifier[:59]}', created_by=request.user,
+                    )
+                    message = f'Loyalty credit added for bill {bill.bill_number}.'
+                else:
+                    return JsonResponse({'error': 'Choose a valid billing action.'}, status=400)
+        except ValidationError as exc:
+            return JsonResponse({'error': _validation_message(exc)}, status=400)
+        _record_operational_activity(
+            venue, f'bill_{action}', message, request,
+            {'billId': bill.public_identifier, 'billNumber': bill.bill_number, 'status': bill.status},
+        )
+
+    scope = str(request.GET.get('scope') or 'open')
+    bills = VenueBill.objects.filter(venue=venue).select_related(
+        'table_session__table', 'venue__organization', 'receipt',
+    ).prefetch_related('orders__items', 'payments')
+    if scope == 'open':
+        bills = bills.filter(status='open')
+    elif scope == 'paid':
+        bills = bills.filter(status__in=['paid', 'complimentary'])
+    elif scope == 'closed':
+        bills = bills.filter(status__in=['voided', 'refunded'])
+    elif scope != 'all':
+        return JsonResponse({'error': 'Choose open, paid, closed, or all bills.'}, status=400)
+    all_bills = VenueBill.objects.filter(venue=venue)
+    rewarded_references = set(venue.rewards_transactions.filter(
+        transaction_type='earn', receipt_reference__startswith='bill:',
+    ).values_list('receipt_reference', flat=True))
+    program = VenueRewardsProgram.objects.filter(venue=venue, is_active=True).first() if 'loyalty' in enabled_organization_modules(venue.organization) else None
+    return JsonResponse({
+        'bills': [_bill_payload(bill, rewarded_references) for bill in bills[:100]],
+        'loyalty': _rewards_program_payload(program) if program else {'isActive': False},
+        'summary': {
+            'open': all_bills.filter(status='open').count(),
+            'openTotal': str(sum((bill.final_total for bill in all_bills.filter(status='open')), Decimal('0.00'))),
+            'paidToday': all_bills.filter(status__in=['paid', 'complimentary'], paid_at__date=_venue_local_date(venue)).count(),
+            'paidTodayTotal': str(sum((bill.final_total for bill in all_bills.filter(status='paid', paid_at__date=_venue_local_date(venue))), Decimal('0.00'))),
+        },
     })
 
 

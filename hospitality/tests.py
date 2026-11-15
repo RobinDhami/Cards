@@ -9,7 +9,7 @@ from django.utils import timezone
 from datetime import timedelta
 
 from vcards.models import CardBatch, CardBatchCard, College, OrganizationModuleAccess, OrganizationServicePlan, OrganizationTeamMember
-from .models import LoyaltyCustomer, VenueAnalyticsEvent, VenueCardAssignment, VenueFeedback, VenueLink, VenueLoyaltyMembership, VenueMenuCategory, VenueMenuItem, VenueMenuItemVariant, VenueOrder, VenueOrderItem, VenueProfile, VenueRewardsProgram, VenueRewardsTransaction, VenueStaffProfile, VenueTouchpoint
+from .models import LoyaltyCustomer, VenueAnalyticsEvent, VenueBill, VenueBillPayment, VenueCardAssignment, VenueFeedback, VenueLink, VenueLoyaltyMembership, VenueMenuCategory, VenueMenuItem, VenueMenuItemVariant, VenueOrder, VenueOrderItem, VenueProfile, VenueReceipt, VenueRewardsProgram, VenueRewardsTransaction, VenueStaffProfile, VenueTouchpoint
 
 
 class HospitalityWorkspaceTests(TestCase):
@@ -665,6 +665,110 @@ class HospitalityWorkspaceTests(TestCase):
 
     def test_analytics_requires_organization_membership(self):
         response = self.client.get(f'/api/organizations/{self.org.pk}/venue/analytics/')
+        self.assertEqual(response.status_code, 403)
+
+    def test_bills_group_table_orders_and_lock_after_payment(self):
+        OrganizationModuleAccess.objects.update_or_create(
+            organization=self.org, module_key='ordering',
+            defaults={'is_enabled': True, 'enabled_at': timezone.now()},
+        )
+        table = VenueTouchpoint.objects.create(venue=self.venue, name='Table 7', destination='ordering')
+        item = self.category.items.get(name='Pancakes')
+        first = VenueOrder.objects.create(
+            venue=self.venue, table=table, order_number=1, status='accepted',
+            total='24.00', final_total='24.00', table_session_expires_at=timezone.now() + timedelta(hours=4),
+        )
+        second = VenueOrder.objects.create(
+            venue=self.venue, table=table, order_number=2, status='ready',
+            total='12.00', final_total='12.00', table_session_expires_at=timezone.now() + timedelta(hours=4),
+        )
+        VenueOrderItem.objects.create(order=first, menu_item=item, name=item.name, unit_price='12.00', quantity=2)
+        VenueOrderItem.objects.create(order=second, menu_item=item, name=item.name, unit_price='12.00', quantity=1)
+
+        self.client.force_login(self.user)
+        listed = self.client.get(f'/api/organizations/{self.org.pk}/venue/bills/?scope=open')
+        self.assertEqual(listed.status_code, 200, listed.content)
+        self.assertEqual(len(listed.json()['bills']), 1)
+        bill_data = listed.json()['bills'][0]
+        self.assertEqual(bill_data['table'], 'Table 7')
+        self.assertEqual(len(bill_data['orders']), 2)
+        self.assertEqual(bill_data['subtotal'], '36.00')
+        self.assertTrue(bill_data['number'].startswith('AURORA-'))
+        bill = VenueBill.objects.get(pk=bill_data['id'])
+        self.assertEqual(first.__class__.objects.get(pk=first.pk).bill_id, bill.pk)
+        self.assertEqual(second.__class__.objects.get(pk=second.pk).bill_id, bill.pk)
+
+        updated = self.client.patch(
+            f'/api/organizations/{self.org.pk}/venue/bills/',
+            data=json.dumps({'id': bill.pk, 'action': 'update', 'taxAmount': '3.60', 'serviceChargeAmount': '2.00', 'discountAmount': '1.00'}),
+            content_type='application/json',
+        )
+        self.assertEqual(updated.status_code, 200, updated.content)
+        bill.refresh_from_db(); self.assertEqual(str(bill.final_total), '40.60')
+
+        settled = self.client.patch(
+            f'/api/organizations/{self.org.pk}/venue/bills/',
+            data=json.dumps({'id': bill.pk, 'action': 'settle', 'method': 'cash'}),
+            content_type='application/json',
+        )
+        self.assertEqual(settled.status_code, 200, settled.content)
+        bill.refresh_from_db()
+        self.assertEqual(bill.status, 'paid')
+        self.assertEqual(VenueBillPayment.objects.get(bill=bill).amount, bill.final_total)
+        self.assertTrue(VenueReceipt.objects.filter(bill=bill, receipt_number=f'R-{bill.bill_number}').exists())
+
+        program = VenueRewardsProgram.objects.create(
+            venue=self.venue, is_active=True, program_type='points', points_per_currency='1.00', minimum_order_amount='0.00',
+        )
+        customer = LoyaltyCustomer.objects.create(full_name='Billing Member', phone_e164='+9779800000000')
+        membership = VenueLoyaltyMembership.objects.create(venue=self.venue, customer=customer)
+        OrganizationModuleAccess.objects.update_or_create(
+            organization=self.org, module_key='loyalty',
+            defaults={'is_enabled': True, 'enabled_at': timezone.now()},
+        )
+        rewarded = self.client.patch(
+            f'/api/organizations/{self.org.pk}/venue/bills/',
+            data=json.dumps({'id': bill.pk, 'action': 'loyalty_award', 'memberId': membership.public_identifier}),
+            content_type='application/json',
+        )
+        self.assertEqual(rewarded.status_code, 200, rewarded.content)
+        membership.refresh_from_db(); self.assertEqual(membership.reward_balance, bill.final_total)
+
+        locked = self.client.patch(
+            f'/api/organizations/{self.org.pk}/venue/bills/',
+            data=json.dumps({'id': bill.pk, 'action': 'update', 'taxAmount': '0', 'serviceChargeAmount': '0', 'discountAmount': '0'}),
+            content_type='application/json',
+        )
+        self.assertEqual(locked.status_code, 409)
+
+        refunded = self.client.patch(
+            f'/api/organizations/{self.org.pk}/venue/bills/',
+            data=json.dumps({'id': bill.pk, 'action': 'refund', 'reason': 'Customer payment reversed'}),
+            content_type='application/json',
+        )
+        self.assertEqual(refunded.status_code, 200, refunded.content)
+        membership.refresh_from_db(); self.assertEqual(membership.reward_balance, 0)
+        self.assertTrue(VenueRewardsTransaction.objects.filter(venue=self.venue, transaction_type='reverse', receipt_reference=f'bill:{bill.public_identifier}').exists())
+
+        later = VenueOrder.objects.create(
+            venue=self.venue, table=table, order_number=3, status='accepted',
+            total='12.00', final_total='12.00', table_session_expires_at=timezone.now() + timedelta(hours=4),
+        )
+        VenueOrderItem.objects.create(order=later, menu_item=item, name=item.name, unit_price='12.00', quantity=1)
+        open_again = self.client.get(f'/api/organizations/{self.org.pk}/venue/bills/?scope=open')
+        self.assertEqual(open_again.status_code, 200)
+        self.assertEqual(len(open_again.json()['bills']), 1)
+        self.assertNotEqual(open_again.json()['bills'][0]['id'], bill.pk)
+
+    def test_waiter_cannot_access_bills(self):
+        OrganizationModuleAccess.objects.update_or_create(
+            organization=self.org, module_key='ordering',
+            defaults={'is_enabled': True, 'enabled_at': timezone.now()},
+        )
+        waiter = get_user_model().objects.create_user(username='billing-waiter', password='pass')
+        OrganizationTeamMember.objects.create(organization=self.org, user=waiter, role='waiter', status='active')
+        self.client.force_login(waiter)
+        response = self.client.get(f'/api/organizations/{self.org.pk}/venue/bills/')
         self.assertEqual(response.status_code, 403)
 
     def test_analytics_uses_scoped_timezone_range_and_trusted_definitions(self):

@@ -106,7 +106,8 @@ class VenueRewardsTransaction(models.Model):
     EARN = 'earn'
     REDEEM = 'redeem'
     EXPIRE = 'expire'
-    TRANSACTION_TYPES = [(EARN, 'Reward earned'), (REDEEM, 'Reward redeemed'), (EXPIRE, 'Rewards expired')]
+    REVERSE = 'reverse'
+    TRANSACTION_TYPES = [(EARN, 'Reward earned'), (REDEEM, 'Reward redeemed'), (EXPIRE, 'Rewards expired'), (REVERSE, 'Reward reversed')]
     venue = models.ForeignKey(VenueProfile, on_delete=models.CASCADE, related_name='rewards_transactions')
     membership = models.ForeignKey(VenueLoyaltyMembership, on_delete=models.CASCADE, related_name='rewards_transactions')
     transaction_type = models.CharField(max_length=12, choices=TRANSACTION_TYPES)
@@ -283,11 +284,108 @@ class VenueTouchpoint(models.Model):
         constraints = [models.UniqueConstraint(fields=['venue', 'name'], name='venue_touchpoint_name_unique')]
 
 
+class VenueTableSession(models.Model):
+    STATUS_CHOICES = [('open', 'Open'), ('closed', 'Closed'), ('cancelled', 'Cancelled'), ('expired', 'Expired')]
+    venue = models.ForeignKey(VenueProfile, on_delete=models.CASCADE, related_name='table_sessions')
+    table = models.ForeignKey(VenueTouchpoint, on_delete=models.SET_NULL, blank=True, null=True, related_name='table_sessions')
+    public_identifier = models.CharField(max_length=64, unique=True, default=public_identifier, editable=False)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
+    opened_at = models.DateTimeField(auto_now_add=True)
+    closed_at = models.DateTimeField(blank=True, null=True)
+    expires_at = models.DateTimeField()
+
+    class Meta:
+        ordering = ['-opened_at', '-id']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['venue', 'table'], condition=models.Q(status='open'),
+                name='venue_open_table_session_unique',
+            ),
+        ]
+
+
+class VenueBill(models.Model):
+    STATUS_CHOICES = [
+        ('open', 'Open'), ('paid', 'Paid'), ('complimentary', 'Complimentary'),
+        ('voided', 'Voided'), ('refunded', 'Refunded'),
+    ]
+    venue = models.ForeignKey(VenueProfile, on_delete=models.CASCADE, related_name='bills')
+    table_session = models.OneToOneField(VenueTableSession, on_delete=models.CASCADE, related_name='bill')
+    public_identifier = models.CharField(max_length=64, unique=True, default=public_identifier, editable=False)
+    sequence = models.PositiveIntegerField(editable=False)
+    bill_number = models.CharField(max_length=48, editable=False)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
+    customer_name = models.CharField(max_length=120, blank=True)
+    customer_phone = models.CharField(max_length=40, blank=True)
+    subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    tax_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    service_charge_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    discount_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    final_total = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    opened_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, related_name='opened_venue_bills')
+    paid_at = models.DateTimeField(blank=True, null=True)
+    locked_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at', '-id']
+        constraints = [
+            models.UniqueConstraint(fields=['venue', 'sequence'], name='venue_bill_sequence_unique'),
+            models.UniqueConstraint(fields=['venue', 'bill_number'], name='venue_bill_number_unique'),
+        ]
+
+
+class VenueBillPayment(models.Model):
+    METHOD_CHOICES = [('cash', 'Cash'), ('online', 'Online'), ('complimentary', 'Complimentary')]
+    STATUS_CHOICES = [('completed', 'Completed'), ('voided', 'Voided'), ('refunded', 'Refunded')]
+    bill = models.ForeignKey(VenueBill, on_delete=models.CASCADE, related_name='payments')
+    method = models.CharField(max_length=20, choices=METHOD_CHOICES)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='completed')
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    reference = models.CharField(max_length=120, blank=True)
+    received_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, related_name='received_venue_bill_payments')
+    paid_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['paid_at', 'id']
+
+
+class VenueBillAdjustment(models.Model):
+    KIND_CHOICES = [
+        ('tax', 'Tax'), ('service_charge', 'Service charge'), ('discount', 'Discount'),
+        ('void', 'Void'), ('refund', 'Refund'),
+    ]
+    bill = models.ForeignKey(VenueBill, on_delete=models.CASCADE, related_name='adjustments')
+    kind = models.CharField(max_length=24, choices=KIND_CHOICES)
+    previous_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    reason = models.CharField(max_length=300, blank=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, related_name='venue_bill_adjustments')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at', 'id']
+
+
+class VenueReceipt(models.Model):
+    bill = models.OneToOneField(VenueBill, on_delete=models.CASCADE, related_name='receipt')
+    receipt_number = models.CharField(max_length=52, unique=True, editable=False)
+    snapshot = models.JSONField(default=dict)
+    issued_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, related_name='issued_venue_receipts')
+    issued_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['bill'], name='venue_bill_receipt_unique')]
+
+
 class VenueOrder(models.Model):
     STATUS_CHOICES = [('new', 'Pending verification'), ('accepted', 'Verified'), ('preparing', 'Preparing'), ('ready', 'Ready'), ('completed', 'Served'), ('cancelled', 'Rejected'), ('expired', 'Expired')]
     PAYMENT_STATUS_CHOICES = [('unpaid', 'Unpaid'), ('paid_cash', 'Paid cash'), ('paid_online', 'Paid online'), ('complimentary', 'Complimentary')]
     venue = models.ForeignKey(VenueProfile, on_delete=models.CASCADE, related_name='orders')
     table = models.ForeignKey(VenueTouchpoint, on_delete=models.SET_NULL, blank=True, null=True, related_name='orders')
+    table_session = models.ForeignKey(VenueTableSession, on_delete=models.SET_NULL, blank=True, null=True, related_name='orders')
+    bill = models.ForeignKey(VenueBill, on_delete=models.SET_NULL, blank=True, null=True, related_name='orders')
     public_identifier = models.CharField(max_length=64, unique=True, default=public_identifier, editable=False)
     order_number = models.PositiveIntegerField()
     customer_name = models.CharField(max_length=120, blank=True)
