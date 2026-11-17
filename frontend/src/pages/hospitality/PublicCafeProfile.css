@@ -29,7 +29,7 @@
 .cafe-public .cafe-toolbar button { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid #eadfce; border-radius: 50%; background: #fffdf9; color: var(--cafe-ink); box-shadow: 0 2px 8px #38201620; }
 .cafe-public .cafe-share-status { position: absolute; top: 68px; right: 16px; z-index: 3; padding: 8px 12px; border-radius: 8px; background: #fff; font-size: 12px; }
 .cafe-public .cafe-identity { padding: 0 22px; }
-.cafe-public .hospitality-public-logo, .cafe-public .cafe-monogram { display: flex; align-items: center; justify-content: center; position: relative; width: 112px; height: 112px; margin: -100px 0 8px; border: 5px solid #fffcf5; border-radius: 50%; background: var(--cafe-brand); color: white; font: 38px Georgia, serif; object-fit: cover; box-shadow: 0 3px 9px #38201625; }
+.cafe-public .hospitality-public-logo, .cafe-public .cafe-monogram { display: flex; align-items: center; justify-content: center; position: relative; width: 112px; height: 112px; margin: -100px 0 8px; border: 5px solid #fffcf5; border-radius: 50%; background: var(--cafe-brand); color: white; font: 38px Georgia, serif; object-fit: contain; box-shadow: 0 3px 9px #38201625; }
 .cafe-public .cafe-header:not(:has(.cafe-cover)) .cafe-identity { padding-top: 70px; }
 .cafe-public .cafe-header:not(:has(.cafe-cover)) .cafe-monogram, .cafe-public .cafe-header:not(:has(.cafe-cover)) .hospitality-public-logo { margin-top: 0; }
 .cafe-public h1 { margin: 0 0 3px; font-size: 36px; letter-spacing: -.7px; overflow-wrap: anywhere; }
