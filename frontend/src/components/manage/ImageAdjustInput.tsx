@@ -121,15 +121,13 @@ export function ImageAdjustInput({
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const pendingPreviewRef = useRef('')
-  const adjustedPreviewRef = useRef('')
   const [sourceUrl, setSourceUrl] = useState('')
   const [sourceFile, setSourceFile] = useState<File | null>(null)
   const [pendingPreviewUrl, setPendingPreviewUrl] = useState('')
-  const [adjustedPreviewUrl, setAdjustedPreviewUrl] = useState('')
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [rotation, setRotation] = useState(0)
-  const [padding, setPadding] = useState(mode === 'logo' ? 16 : 0)
+  const [padding, setPadding] = useState(0)
   const [background, setBackground] = useState<'transparent' | 'white'>(mode === 'logo' ? 'transparent' : 'white')
   const [fitMode, setFitMode] = useState<'fit' | 'fill'>('fit')
   const [croppedArea, setCroppedArea] = useState<Area | null>(null)
@@ -145,10 +143,6 @@ export function ImageAdjustInput({
 
   useEffect(() => () => {
     if (pendingPreviewRef.current) URL.revokeObjectURL(pendingPreviewRef.current)
-  }, [])
-
-  useEffect(() => () => {
-    if (adjustedPreviewRef.current) URL.revokeObjectURL(adjustedPreviewRef.current)
   }, [])
 
   useEffect(() => {
@@ -168,50 +162,12 @@ export function ImageAdjustInput({
     return () => document.removeEventListener('keydown', closeOnEscape)
   })
 
-  useEffect(() => {
-    if (mode !== 'logo' || !sourceUrl || !sourceFile || !croppedArea) {
-      if (adjustedPreviewRef.current) URL.revokeObjectURL(adjustedPreviewRef.current)
-      adjustedPreviewRef.current = ''
-      setAdjustedPreviewUrl('')
-      return
-    }
-
-    let cancelled = false
-    const timer = window.setTimeout(() => {
-      void adjustedImageFile({
-        sourceUrl,
-        sourceName: sourceFile.name,
-        crop: croppedArea,
-        rotation,
-        mode,
-        padding,
-        background,
-      }).then((file) => {
-        const nextUrl = URL.createObjectURL(file)
-        if (cancelled) {
-          URL.revokeObjectURL(nextUrl)
-          return
-        }
-        if (adjustedPreviewRef.current) URL.revokeObjectURL(adjustedPreviewRef.current)
-        adjustedPreviewRef.current = nextUrl
-        setAdjustedPreviewUrl(nextUrl)
-      }).catch(() => {
-        // Export errors are shown when Apply image is selected; the live preview is best-effort.
-      })
-    }, 120)
-
-    return () => {
-      cancelled = true
-      window.clearTimeout(timer)
-    }
-  }, [background, croppedArea, mode, padding, rotation, sourceFile, sourceUrl])
-
-  function resetAdjustments(nextFitMode: 'fit' | 'fill' = fitMode) {
+  function resetAdjustments() {
     setCrop({ x: 0, y: 0 })
     // Zoom is relative to the cropper's object-fit baseline: Fit always starts at 100%.
-    setZoom(nextFitMode === 'fit' && mode === 'logo' ? 0.84 : 1)
+    setZoom(1)
     setRotation(0)
-    setPadding(mode === 'logo' ? 16 : 0)
+    setPadding(0)
     setBackground(mode === 'logo' ? 'transparent' : 'white')
     setError('')
   }
@@ -223,7 +179,7 @@ export function ImageAdjustInput({
     setSourceFile(file)
     setSourceUrl(nextUrl)
     setFitMode('fit')
-    resetAdjustments('fit')
+    resetAdjustments()
   }
 
   function setPendingPreview(file: File) {
@@ -320,7 +276,7 @@ export function ImageAdjustInput({
                     {(['fit', 'fill'] as const).map((item) => (
                       <button className={fitMode === item ? 'is-selected' : ''} type="button" onClick={() => {
                         setFitMode(item)
-                        resetAdjustments(item)
+                        resetAdjustments()
                       }} key={item}>{item === 'fit' ? 'Fit' : 'Fill'}</button>
                     ))}
                   </div>
@@ -351,12 +307,6 @@ export function ImageAdjustInput({
                           </button>
                         ))}
                       </div>
-                    </div>
-                    <div className="image-adjust-saved-preview">
-                      <strong>Saved logo preview</strong>
-                      <span className={background === 'transparent' ? 'is-transparent' : ''}>
-                        {adjustedPreviewUrl ? <img src={adjustedPreviewUrl} alt="Exact result that will be saved" /> : <ImageIcon size={16} aria-hidden="true" />}
-                      </span>
                     </div>
                   </>
                 ) : null}
