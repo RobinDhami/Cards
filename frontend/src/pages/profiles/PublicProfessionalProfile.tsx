@@ -327,12 +327,13 @@ function Hero({ profile }: { profile: PublicProfile }) {
 }
 
 function PrimaryActions({ actions }: { actions: PublicAction[] }) {
-  if (actions.length === 0) {
+  const visibleActions = actions.filter((action) => action.brand_class !== 'brand-map')
+  if (visibleActions.length === 0) {
     return null
   }
   return (
     <nav className="profile-actions" aria-label="Contact actions">
-      {actions.map((action) => {
+      {visibleActions.map((action) => {
         const Icon = actionIcons[action.icon] ?? LinkIcon
         return (
           <a className="profile-action" href={actionHref(action.href)} target={action.external ? '_blank' : undefined} rel={action.external ? 'noopener noreferrer' : undefined} key={action.label}>
@@ -377,12 +378,13 @@ function OrganizationActionPair({ data }: { data: PublicProfileData }) {
 }
 
 function OrganizationContactLinks({ actions }: { actions: PublicAction[] }) {
-  if (actions.length === 0) return null
+  const visibleActions = actions.filter((action) => action.brand_class !== 'brand-map')
+  if (visibleActions.length === 0) return null
   return (
     <section className="profile-section profile-organization-links" aria-labelledby="organization-links-title">
       <h2 className="profile-section-title" id="organization-links-title">Contact &amp; Links</h2>
       <nav aria-label="Organization contact links">
-        {actions.map((action) => {
+        {visibleActions.map((action) => {
           const Icon = actionIcons[action.icon] ?? LinkIcon
           return (
             <a
@@ -398,6 +400,30 @@ function OrganizationContactLinks({ actions }: { actions: PublicAction[] }) {
           )
         })}
       </nav>
+    </section>
+  )
+}
+
+function LocationMap({ profile }: { profile: PublicProfile }) {
+  const address = profile.officeAddress || profile.location || profile.workAddress || profile.academicAddress
+  const mapUrl = profile.publicMapUrl || (address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}` : '')
+  if (!mapUrl) return null
+  const embedUrl = address
+    ? `https://maps.google.com/maps?q=${encodeURIComponent(address)}&output=embed`
+    : ''
+  return (
+    <section className="profile-section profile-location-map" aria-labelledby="profile-location-map-title">
+      <div className="profile-location-map-heading">
+        <div>
+          <h2 className="profile-section-title" id="profile-location-map-title">Location</h2>
+          <p>{address || 'Open directions in Maps.'}</p>
+        </div>
+        <MapPin size={18} aria-hidden="true" />
+      </div>
+      <div className="profile-location-map-box">
+        {embedUrl ? <iframe title={`Map for ${profile.fullName}`} src={embedUrl} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <span><MapPin size={32} aria-hidden="true" /></span>}
+        <a href={mapUrl} target="_blank" rel="noopener noreferrer"><MapPin size={15} aria-hidden="true" />Open map</a>
+      </div>
     </section>
   )
 }
@@ -1145,6 +1171,7 @@ function ModernTemplate({ data, showToast }: { data: PublicProfileData; showToas
       <FocusSection profile={profile} />
       <Services services={data.services} title="Skills & Services" />
       <IdentityCards profile={profile} />
+      <LocationMap profile={profile} />
       <Highlights highlights={data.highlights} />
       <Testimonials testimonials={data.testimonials} />
       <SocialLinks actions={data.actions.extra} />
@@ -1167,6 +1194,7 @@ function OrganizationTemplate({ data, showToast }: { data: PublicProfileData; sh
       <GoogleReviewCta action={data.actions.googleReview} />
       <Intro>{profile.about || profile.shortTagline || profile.organizationTagline}</Intro>
       <OrganizationContactLinks actions={data.actions.organizationLinks} />
+      <LocationMap profile={profile} />
       <Services services={data.services} title="What We Offer" variant="organization" />
       <Highlights highlights={data.highlights} title="Featured Work" variant="organization" />
       <BusinessHours profile={profile} />

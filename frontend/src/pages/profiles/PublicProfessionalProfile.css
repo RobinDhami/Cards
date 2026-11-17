@@ -533,6 +533,76 @@
   background: #f3efff;
 }
 
+.profile-location-map {
+  display: grid;
+  gap: 13px;
+}
+
+.profile-location-map-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.profile-location-map-heading p {
+  margin: 5px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.profile-location-map-heading > svg {
+  flex: 0 0 auto;
+  color: var(--profile-accent);
+}
+
+.profile-location-map-box {
+  position: relative;
+  width: min(100%, 360px);
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid var(--profile-line);
+  border-radius: 18px;
+  background: var(--profile-soft);
+}
+
+.profile-location-map-box iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.profile-location-map-box > span {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: var(--profile-accent);
+}
+
+.profile-location-map-box > a {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  border-radius: 10px;
+  background: var(--profile-accent);
+  padding: 0 12px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--profile-accent) 32%, transparent);
+}
+
+.profile-location-map-box > a:hover {
+  filter: brightness(1.08);
+}
+
 .profile-intro {
   position: relative;
   margin-top: 20px;
