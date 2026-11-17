@@ -559,11 +559,11 @@
 
 .profile-location-map-box {
   position: relative;
-  width: min(100%, 360px);
-  aspect-ratio: 1;
+  width: 100%;
+  height: 210px;
   overflow: hidden;
   border: 1px solid var(--profile-line);
-  border-radius: 18px;
+  border-radius: 12px;
   background: var(--profile-soft);
 }
 
@@ -581,26 +581,30 @@
   color: var(--profile-accent);
 }
 
-.profile-location-map-box > a {
-  position: absolute;
-  right: 12px;
-  bottom: 12px;
+.profile-location-map-action {
   display: inline-flex;
+  width: 100%;
+  min-height: 46px;
+  box-sizing: border-box;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  min-height: 36px;
-  border-radius: 10px;
-  background: var(--profile-accent);
-  padding: 0 12px;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 800;
+  border-radius: 12px;
+  background: var(--profile-soft);
+  color: var(--profile-accent);
+  font-size: 13px;
+  font-weight: 750;
   text-decoration: none;
-  box-shadow: 0 8px 18px color-mix(in srgb, var(--profile-accent) 32%, transparent);
 }
 
-.profile-location-map-box > a:hover {
-  filter: brightness(1.08);
+.profile-location-map-action:hover {
+  background: color-mix(in srgb, var(--profile-accent) 12%, var(--profile-soft));
+}
+
+@media (max-width: 560px) {
+  .profile-location-map-box {
+    height: 180px;
+  }
 }
 
 .profile-intro {

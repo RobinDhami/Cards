@@ -422,8 +422,8 @@ function LocationMap({ profile }: { profile: PublicProfile }) {
       </div>
       <div className="profile-location-map-box">
         {embedUrl ? <iframe title={`Map for ${profile.fullName}`} src={embedUrl} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <span><MapPin size={32} aria-hidden="true" /></span>}
-        <a href={mapUrl} target="_blank" rel="noopener noreferrer"><MapPin size={15} aria-hidden="true" />Open map</a>
       </div>
+      <a className="profile-location-map-action" href={mapUrl} target="_blank" rel="noopener noreferrer"><MapPin size={18} aria-hidden="true" />Open map</a>
     </section>
   )
 }
