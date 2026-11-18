@@ -6,8 +6,8 @@ from .models import College, OrganizationModuleAccess, OrganizationTeamMember
 
 
 ROLE_CAPABILITIES = {
-    'owner': {'overview', 'profile', 'menu', 'feedback', 'staff', 'loyalty', 'ordering', 'analytics', 'settings', 'team'},
-    'manager': {'overview', 'menu', 'ordering', 'analytics'},
+    'owner': {'overview', 'profile', 'menu', 'feedback', 'staff', 'loyalty', 'ordering', 'inventory', 'analytics', 'settings', 'team'},
+    'manager': {'overview', 'menu', 'ordering', 'inventory', 'analytics'},
     'waiter': {'ordering'},
     'kitchen': {'ordering'},
     'reception': {'loyalty'},
@@ -22,9 +22,10 @@ MODULE_CAPABILITIES = {
     'loyalty': {'loyalty'},
     'analytics': {'analytics'},
     'ordering': {'ordering'},
+    'inventory': {'inventory'},
 }
 MODULE_KEYS = tuple(MODULE_CAPABILITIES)
-DEFAULT_HOSPITALITY_MODULES = {'overview', 'profile', 'menu', 'feedback', 'staff_cards', 'loyalty', 'analytics'}
+DEFAULT_HOSPITALITY_MODULES = {'overview', 'profile', 'menu', 'feedback', 'staff_cards', 'loyalty', 'inventory', 'analytics'}
 
 
 def ensure_organization_modules(organization):

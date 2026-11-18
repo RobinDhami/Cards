@@ -221,6 +221,59 @@ class VenueMenuItemVariant(models.Model):
         ordering = ['display_order', 'id']
 
 
+class VenueInventoryItem(models.Model):
+    """A stock-controlled ingredient or supply owned by one venue."""
+    UNIT_CHOICES = [
+        ('piece', 'Pieces'), ('g', 'Grams'), ('kg', 'Kilograms'), ('ml', 'Millilitres'),
+        ('l', 'Litres'), ('pack', 'Packs'), ('portion', 'Portions'),
+    ]
+    venue = models.ForeignKey(VenueProfile, on_delete=models.CASCADE, related_name='inventory_items')
+    name = models.CharField(max_length=160)
+    unit = models.CharField(max_length=12, choices=UNIT_CHOICES, default='piece')
+    quantity_on_hand = models.DecimalField(max_digits=12, decimal_places=3, default=Decimal('0.000'))
+    reorder_level = models.DecimalField(max_digits=12, decimal_places=3, default=Decimal('0.000'))
+    unit_cost = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name', 'id']
+        constraints = [models.UniqueConstraint(fields=['venue', 'name'], name='venue_inventory_item_name_unique')]
+        indexes = [models.Index(fields=['venue', 'is_active', 'name'])]
+
+    def __str__(self):
+        return f'{self.venue.organization.name} · {self.name}'
+
+
+class VenueMenuItemIngredient(models.Model):
+    """Recipe quantity consumed by one sale of a menu item."""
+    menu_item = models.ForeignKey(VenueMenuItem, on_delete=models.CASCADE, related_name='inventory_ingredients')
+    inventory_item = models.ForeignKey(VenueInventoryItem, on_delete=models.PROTECT, related_name='menu_recipes')
+    quantity = models.DecimalField(max_digits=12, decimal_places=3, validators=[MinValueValidator(Decimal('0.001'))])
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['menu_item', 'inventory_item'], name='venue_menu_recipe_unique')]
+
+
+class VenueInventoryMovement(models.Model):
+    MOVEMENT_CHOICES = [
+        ('received', 'Stock received'), ('adjustment', 'Stock adjustment'), ('waste', 'Waste / spoilage'),
+        ('sale', 'Menu sale'), ('count', 'Stock count'),
+    ]
+    inventory_item = models.ForeignKey(VenueInventoryItem, on_delete=models.CASCADE, related_name='movements')
+    quantity_change = models.DecimalField(max_digits=12, decimal_places=3)
+    quantity_after = models.DecimalField(max_digits=12, decimal_places=3)
+    movement_type = models.CharField(max_length=16, choices=MOVEMENT_CHOICES)
+    note = models.CharField(max_length=280, blank=True)
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, related_name='inventory_movements')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at', '-id']
+        indexes = [models.Index(fields=['inventory_item', 'created_at'])]
+
+
 class VenueLink(models.Model):
     venue = models.ForeignKey(VenueProfile, on_delete=models.CASCADE, related_name='links')
     link_type = models.CharField(max_length=40)

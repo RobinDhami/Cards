@@ -251,6 +251,7 @@ class OrganizationModuleAccess(models.Model):
         ('loyalty', 'Loyalty'),
         ('analytics', 'Analytics'),
         ('ordering', 'Ordering'),
+        ('inventory', 'Inventory'),
     ]
     organization = models.ForeignKey(College, on_delete=models.CASCADE, related_name='module_access')
     module_key = models.CharField(max_length=32, choices=MODULE_CHOICES)

@@ -9,7 +9,7 @@ from django.utils import timezone
 from datetime import timedelta
 
 from vcards.models import CardBatch, CardBatchCard, College, OrganizationModuleAccess, OrganizationServicePlan, OrganizationTeamMember
-from .models import LoyaltyCustomer, VenueAnalyticsEvent, VenueBill, VenueBillPayment, VenueCardAssignment, VenueFeedback, VenueLink, VenueLoyaltyMembership, VenueMenuCategory, VenueMenuItem, VenueMenuItemVariant, VenueOrder, VenueOrderItem, VenueProfile, VenueReceipt, VenueRewardsProgram, VenueRewardsTransaction, VenueStaffProfile, VenueTouchpoint
+from .models import LoyaltyCustomer, VenueAnalyticsEvent, VenueBill, VenueBillPayment, VenueCardAssignment, VenueFeedback, VenueInventoryItem, VenueLink, VenueLoyaltyMembership, VenueMenuCategory, VenueMenuItem, VenueMenuItemIngredient, VenueMenuItemVariant, VenueOrder, VenueOrderItem, VenueProfile, VenueReceipt, VenueRewardsProgram, VenueRewardsTransaction, VenueStaffProfile, VenueTouchpoint
 
 
 class HospitalityWorkspaceTests(TestCase):
@@ -58,12 +58,35 @@ class HospitalityWorkspaceTests(TestCase):
 
         self.client.force_login(manager)
         self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/menu/items/').status_code, 200)
+        self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/inventory/').status_code, 200)
         self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/analytics/').status_code, 200)
         self.assertEqual(self.client.post(f'/api/organizations/{self.org.pk}/venue/settings/', data='{"action":"invite","email":"new@example.com","role":"manager"}', content_type='application/json').status_code, 403)
 
         self.client.force_login(reception)
         self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/rewards/members/').status_code, 200)
         self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/orders/').status_code, 403)
+        self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/inventory/').status_code, 403)
+
+    def test_inventory_tracks_stock_movements_and_menu_recipes(self):
+        self.client.force_login(self.user)
+        url = f'/api/organizations/{self.org.pk}/venue/inventory/'
+        created = self.client.post(url, data=json.dumps({
+            'name': 'Coffee beans', 'unit': 'kg', 'quantityOnHand': '2.5', 'reorderLevel': '0.5', 'unitCost': '1800', 'isActive': True,
+        }), content_type='application/json')
+        self.assertEqual(created.status_code, 201, created.content)
+        item_id = created.json()['item']['id']
+        self.assertEqual(VenueInventoryItem.objects.get(pk=item_id).quantity_on_hand, 2.5)
+        moved = self.client.post(url, data=json.dumps({
+            'action': 'movement', 'id': item_id, 'quantityChange': '-0.25', 'movementType': 'waste', 'note': 'Spillage',
+        }), content_type='application/json')
+        self.assertEqual(moved.status_code, 200, moved.content)
+        self.assertEqual(str(VenueInventoryItem.objects.get(pk=item_id).quantity_on_hand), '2.250')
+        menu_item = self.venue.menu_items.get(name='Pancakes')
+        recipe = self.client.post(url, data=json.dumps({
+            'action': 'recipe', 'menuItemId': menu_item.pk, 'ingredients': [{'inventoryItemId': item_id, 'quantity': '0.03'}],
+        }), content_type='application/json')
+        self.assertEqual(recipe.status_code, 200, recipe.content)
+        self.assertTrue(VenueMenuItemIngredient.objects.filter(menu_item=menu_item, inventory_item_id=item_id).exists())
 
     def test_pending_team_member_can_be_activated_with_login_credentials(self):
         self.client.force_login(self.user)

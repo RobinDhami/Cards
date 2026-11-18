@@ -59,6 +59,7 @@ import { HospitalityRewardsMembers } from "./HospitalityRewardsMembers";
 import { HospitalityActivityNotifications } from "./HospitalityActivityNotifications";
 import { HospitalityOrders } from "./HospitalityOrders";
 import { HospitalityBills } from "./HospitalityBills";
+import { HospitalityInventory } from "./HospitalityInventory";
 import "./HospitalityWorkspace.css";
 import "./HospitalityDashboardSystem.css";
 import "./PublicCafeProfile.css";
@@ -267,7 +268,7 @@ type HospitalityShell = {
   schools: Array<{ id: number; name: string }>;
   user: { displayName: string };
 };
-type HospitalityAdminSection = "overview" | "profile" | "menu" | "feedback" | "staff" | "loyalty" | "members" | "orders" | "bills" | "analytics";
+type HospitalityAdminSection = "overview" | "profile" | "menu" | "feedback" | "staff" | "loyalty" | "members" | "orders" | "bills" | "inventory" | "analytics";
 
 function organizationId() {
   return currentOrganizationId();
@@ -275,7 +276,7 @@ function organizationId() {
 
 function hospitalityAdminSection(): HospitalityAdminSection {
   const section = vanityDashboardMatch()?.[2] || new URLSearchParams(window.location.search).get("tab");
-  return section === "profile" || section === "menu" || section === "feedback" || section === "staff" || section === "loyalty" || section === "members" || section === "orders" || section === "bills" || section === "analytics"
+  return section === "profile" || section === "menu" || section === "feedback" || section === "staff" || section === "loyalty" || section === "members" || section === "orders" || section === "bills" || section === "inventory" || section === "analytics"
     ? section
     : "overview";
 }
@@ -293,6 +294,7 @@ const hospitalitySectionDetails: Record<
   members: { title: "Loyalty members" },
   orders: { title: "Ordering" },
   bills: { title: "Bills" },
+  inventory: { title: "Inventory" },
   analytics: { title: "Analytics" },
 };
 
@@ -1233,7 +1235,7 @@ function HospitalityAdminPanel() {
   useEffect(() => {
     if (!shell) return;
     const capabilityFor: Record<HospitalityAdminSection, string> = {
-      overview: "overview", profile: "profile", menu: "menu", feedback: "feedback", staff: "staff", loyalty: "loyalty", members: "loyalty", orders: "ordering", bills: "ordering", analytics: "analytics",
+      overview: "overview", profile: "profile", menu: "menu", feedback: "feedback", staff: "staff", loyalty: "loyalty", members: "loyalty", orders: "ordering", bills: "ordering", inventory: "inventory", analytics: "analytics",
     };
     if (!shell.capabilities.includes(capabilityFor[activeTab])) {
       const firstAvailable = ["overview", "profile", "menu"].find((item) => shell.capabilities.includes(item)) || "overview";
@@ -1455,6 +1457,7 @@ function HospitalityAdminPanel() {
       {activeTab === "members" ? <HospitalityRewardsMembers organizationId={id} role={shell.role} /> : null}
       {activeTab === "orders" ? <HospitalityOrders organizationId={id} role={shell.role} /> : null}
       {activeTab === "bills" ? <HospitalityBills organizationId={id} /> : null}
+      {activeTab === "inventory" ? <HospitalityInventory organizationId={id} /> : null}
       <div hidden>
         {venue && legacyProfileEnabled ? (
           <div className="hospitality-profile-grid">

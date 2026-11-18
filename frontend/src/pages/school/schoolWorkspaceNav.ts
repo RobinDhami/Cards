@@ -14,6 +14,7 @@ import Store from 'lucide-react/dist/esm/icons/store.js'
 import Gift from 'lucide-react/dist/esm/icons/gift.js'
 import QrCode from 'lucide-react/dist/esm/icons/qr-code.js'
 import ReceiptText from 'lucide-react/dist/esm/icons/receipt-text.js'
+import Package from 'lucide-react/dist/esm/icons/package.js'
 import { queryString } from '../../lib/api'
 import { platformNavigation } from '../../components/manage/platformNavigation'
 import { workspaceMemberNavigation } from './organizationModuleConfig'
@@ -43,12 +44,13 @@ export function schoolWorkspaceNav(schoolId?: number | null, isSuperAdmin = fals
         { label: 'Members', href: vanity ? organizationWorkspaceHref(schoolId, 'members') : `${hospitalityRoot}/?tab=members`, icon: Users, active: section === 'members' },
         { label: 'Ordering', href: vanity ? organizationWorkspaceHref(schoolId, 'orders') : `${hospitalityRoot}/?tab=orders`, icon: QrCode, active: section === 'orders' },
         { label: 'Bills', href: vanity ? organizationWorkspaceHref(schoolId, 'bills') : `${hospitalityRoot}/?tab=bills`, icon: ReceiptText, active: section === 'bills' },
+        { label: 'Inventory', href: vanity ? organizationWorkspaceHref(schoolId, 'inventory') : `${hospitalityRoot}/?tab=inventory`, icon: Package, active: section === 'inventory' },
         { label: 'Analytics', href: vanity ? organizationWorkspaceHref(schoolId, 'analytics') : `${hospitalityRoot}/?tab=analytics`, icon: BarChart3, active: section === 'analytics' },
         { label: 'Settings', href: vanity ? organizationWorkspaceHref(schoolId, 'settings') : `${workspaceRoot}/settings/`, icon: Settings, active: section === 'settings' || path.includes('/settings') },
       ]
       const capabilityFor: Record<string, string> = {
         Overview: 'overview', Profile: 'profile', Menu: 'menu', Feedback: 'feedback',
-        'Staff & Cards': 'staff', Rewards: 'loyalty', Members: 'loyalty', Ordering: 'ordering', Bills: 'ordering', Analytics: 'analytics', Settings: 'settings',
+        'Staff & Cards': 'staff', Rewards: 'loyalty', Members: 'loyalty', Ordering: 'ordering', Bills: 'ordering', Inventory: 'inventory', Analytics: 'analytics', Settings: 'settings',
       }
       return capabilities ? items.filter((item) => capabilities.includes(capabilityFor[item.label])) : items
     }

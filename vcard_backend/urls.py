@@ -161,6 +161,7 @@ urlpatterns = [
     path('api/organizations/<int:organization_id>/venue/activity/', hospitality_views.venue_operational_activity_api, name='venue_operational_activity_api'),
     path('api/organizations/<int:organization_id>/venue/menu/categories/', hospitality_views.venue_menu_categories_api, name='venue_menu_categories_api'),
     path('api/organizations/<int:organization_id>/venue/menu/items/', hospitality_views.venue_menu_items_api, name='venue_menu_items_api'),
+    path('api/organizations/<int:organization_id>/venue/inventory/', hospitality_views.venue_inventory_api, name='venue_inventory_api'),
     path('api/organizations/<int:organization_id>/venue/links/', hospitality_views.venue_links_api, name='venue_links_api'),
     path('api/organizations/<int:organization_id>/venue/feedback/', hospitality_views.venue_feedback_manage_api, name='venue_feedback_manage_api'),
     path('api/organizations/<int:organization_id>/venue/analytics/', hospitality_views.venue_analytics_api, name='venue_analytics_api'),

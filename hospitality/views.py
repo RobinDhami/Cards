@@ -27,6 +27,7 @@ from .models import (
     VenueRewardsTransaction, VenueStaffLink,
     VenueStaffProfile, VenueTouchpoint, VenueOrder, VenueOrderItem, VenueWaiterCall,
     VenueTableSession, VenueBill, VenueBillPayment, VenueBillAdjustment, VenueReceipt,
+    VenueInventoryItem, VenueInventoryMovement, VenueMenuItemIngredient,
 )
 from django.contrib.auth import authenticate, get_user_model, login
 from vcards.models import CardBatchCard, College, OrganizationModuleAccess, OrganizationNotificationPreference, OrganizationServicePlan, OrganizationTeamMember
@@ -1245,6 +1246,111 @@ def venue_menu_items_api(request, organization_id):
         return JsonResponse({'message': message}, status=400)
     _record_operational_activity(venue, 'menu_item_updated' if item_id else 'menu_item_created', f'{"Updated" if item_id else "Added"} menu item: {item.name}', request)
     return JsonResponse({'item': _menu_item_payload(request, item)}, status=200 if item_id else 201)
+
+
+def _inventory_item_payload(item, include_recipe=True):
+    payload = {
+        'id': item.pk, 'name': item.name, 'unit': item.unit,
+        'quantityOnHand': str(item.quantity_on_hand), 'reorderLevel': str(item.reorder_level),
+        'unitCost': str(item.unit_cost), 'isActive': item.is_active,
+        'isLow': item.is_active and item.quantity_on_hand <= item.reorder_level,
+        'updatedAt': item.updated_at.isoformat(),
+    }
+    if include_recipe:
+        payload['usedBy'] = [
+            {'menuItemId': row.menu_item_id, 'menuItemName': row.menu_item.name, 'quantity': str(row.quantity)}
+            for row in item.menu_recipes.select_related('menu_item').order_by('menu_item__name')
+        ]
+    return payload
+
+
+@require_http_methods(['GET', 'POST', 'PATCH', 'DELETE'])
+def venue_inventory_api(request, organization_id):
+    """Inventory ledger. Stock is always changed through an immutable movement."""
+    venue = _venue_for(request, organization_id, 'inventory')
+    if not venue:
+        return JsonResponse({'error': 'Not authorized.'}, status=403)
+    if request.method == 'GET':
+        items = list(venue.inventory_items.prefetch_related('menu_recipes__menu_item').all())
+        movements = VenueInventoryMovement.objects.filter(inventory_item__venue=venue).select_related('inventory_item', 'actor')[:20]
+        menu_items = list(venue.menu_items.order_by('name').values('id', 'name'))
+        return JsonResponse({
+            'items': [_inventory_item_payload(item) for item in items],
+            'menuItems': menu_items,
+            'movements': [{
+                'id': row.pk, 'itemId': row.inventory_item_id, 'itemName': row.inventory_item.name,
+                'quantityChange': str(row.quantity_change), 'quantityAfter': str(row.quantity_after),
+                'type': row.movement_type, 'note': row.note, 'createdAt': row.created_at.isoformat(),
+                'actor': (row.actor.get_full_name().strip() or row.actor.username) if row.actor else 'System',
+            } for row in movements],
+        })
+    data = _body(request) or {}
+    if request.method == 'DELETE':
+        item = get_object_or_404(VenueInventoryItem, pk=data.get('id'), venue=venue)
+        if item.menu_recipes.exists():
+            return JsonResponse({'error': 'Remove this ingredient from its menu recipes before deleting it.'}, status=409)
+        item.delete()
+        _record_operational_activity(venue, 'inventory_item_deleted', 'Deleted inventory item', request)
+        return JsonResponse({'ok': True})
+    if request.method == 'POST' and data.get('action') == 'movement':
+        try:
+            item_id = int(data.get('id'))
+            quantity_change = Decimal(str(data.get('quantityChange')))
+            movement_type = str(data.get('movementType') or 'adjustment')
+            if movement_type not in dict(VenueInventoryMovement.MOVEMENT_CHOICES) or quantity_change == 0:
+                raise ValidationError('Choose a valid movement and quantity.')
+            with transaction.atomic():
+                item = VenueInventoryItem.objects.select_for_update().get(pk=item_id, venue=venue)
+                item.quantity_on_hand += quantity_change
+                item.save(update_fields=['quantity_on_hand', 'updated_at'])
+                VenueInventoryMovement.objects.create(
+                    inventory_item=item, quantity_change=quantity_change, quantity_after=item.quantity_on_hand,
+                    movement_type=movement_type, note=str(data.get('note') or '').strip()[:280], actor=request.user,
+                )
+            _record_operational_activity(venue, 'inventory_adjusted', f'Adjusted {item.name} stock', request)
+            return JsonResponse({'item': _inventory_item_payload(item)})
+        except (ValueError, InvalidOperation, VenueInventoryItem.DoesNotExist, ValidationError) as exc:
+            return JsonResponse({'error': _validation_message(exc) if isinstance(exc, ValidationError) else 'Enter a valid stock quantity.'}, status=400)
+    if request.method == 'POST' and data.get('action') == 'recipe':
+        try:
+            menu_item = VenueMenuItem.objects.get(pk=int(data.get('menuItemId')), venue=venue)
+            ingredients = data.get('ingredients', [])
+            if not isinstance(ingredients, list): raise ValidationError('Recipe ingredients are invalid.')
+            with transaction.atomic():
+                VenueMenuItemIngredient.objects.filter(menu_item=menu_item).delete()
+                rows = []
+                for ingredient in ingredients:
+                    inventory = VenueInventoryItem.objects.get(pk=int(ingredient.get('inventoryItemId')), venue=venue, is_active=True)
+                    quantity = Decimal(str(ingredient.get('quantity')))
+                    if quantity <= 0: raise ValidationError('Recipe quantities must be greater than zero.')
+                    rows.append(VenueMenuItemIngredient(menu_item=menu_item, inventory_item=inventory, quantity=quantity))
+                VenueMenuItemIngredient.objects.bulk_create(rows)
+            _record_operational_activity(venue, 'inventory_recipe_updated', f'Updated recipe for {menu_item.name}', request)
+            return JsonResponse({'ok': True})
+        except (ValueError, InvalidOperation, VenueMenuItem.DoesNotExist, VenueInventoryItem.DoesNotExist, ValidationError):
+            return JsonResponse({'error': 'Check the recipe ingredients and quantities.'}, status=400)
+    item = get_object_or_404(VenueInventoryItem, pk=data.get('id'), venue=venue) if request.method == 'PATCH' else VenueInventoryItem(venue=venue)
+    try:
+        initial_quantity = Decimal(str(data.get('quantityOnHand', '0'))) if request.method == 'POST' else item.quantity_on_hand
+        if request.method == 'POST':
+            item.quantity_on_hand = initial_quantity
+        for field, key in (('name', 'name'), ('unit', 'unit'), ('reorder_level', 'reorderLevel'), ('unit_cost', 'unitCost'), ('is_active', 'isActive')):
+            if key in data: setattr(item, field, data[key])
+        item.reorder_level = Decimal(str(item.reorder_level))
+        item.unit_cost = Decimal(str(item.unit_cost))
+        item.quantity_on_hand = Decimal(str(item.quantity_on_hand))
+        if isinstance(item.is_active, str):
+            item.is_active = item.is_active.strip().lower() in {'1', 'true', 'yes', 'on'}
+        if item.unit not in dict(VenueInventoryItem.UNIT_CHOICES): raise ValidationError('Choose a valid unit.')
+        if not item.name.strip(): raise ValidationError('Inventory item name is required.')
+        if item.reorder_level < 0 or item.unit_cost < 0 or item.quantity_on_hand < 0: raise ValidationError('Stock, reorder level, and unit cost cannot be negative.')
+        item.full_clean(); item.save()
+        if request.method == 'POST' and initial_quantity:
+            VenueInventoryMovement.objects.create(inventory_item=item, quantity_change=initial_quantity, quantity_after=initial_quantity, movement_type='received', note='Opening stock', actor=request.user)
+    except (ValidationError, InvalidOperation, ValueError, IntegrityError) as exc:
+        return JsonResponse({'error': _validation_message(exc) if isinstance(exc, ValidationError) else 'Check the inventory values. Item names must be unique.'}, status=400)
+    _record_operational_activity(venue, 'inventory_item_updated' if request.method == 'PATCH' else 'inventory_item_created', f'{"Updated" if request.method == "PATCH" else "Added"} inventory item: {item.name}', request)
+    return JsonResponse({'item': _inventory_item_payload(item)}, status=200 if request.method == 'PATCH' else 201)
 
 
 @require_http_methods(['GET', 'POST', 'PATCH', 'DELETE'])
