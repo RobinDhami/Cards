@@ -119,6 +119,7 @@ export function HospitalityOrders({
   organizationId: number;
   role?: string;
 }) {
+  const isKitchen = role === "kitchen" || role === "barista";
   const [orders, setOrders] = useState<Order[]>([]);
   const [tables, setTables] = useState<Table[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -136,8 +137,8 @@ export function HospitalityOrders({
   const [mergeSourceId, setMergeSourceId] = useState("");
 
   useEffect(() => {
-    if (role === "kitchen") setQueue("kitchen");
-  }, [role]);
+    if (isKitchen) setQueue("kitchen");
+  }, [isKitchen]);
 
   const load = useCallback(async () => {
     try {
@@ -370,9 +371,9 @@ export function HospitalityOrders({
       <section className="hospitality-order-card hospitality-order-workspace">
         <header>
           <div>
-            <h2>{role === "kitchen" ? "Kitchen orders" : "Order workspace"}</h2>
+            <h2>{isKitchen ? "Kitchen orders" : "Order workspace"}</h2>
             <p>
-              {role === "kitchen"
+              {isKitchen
                 ? "Start preparation and mark completed dishes ready."
                 : "Verify requests at the table, then prepare and serve them in order."}
             </p>
@@ -432,7 +433,7 @@ export function HospitalityOrders({
             </button>
           </nav>
         ) : null}
-        {queue === "waiter" && waiterCalls.length && role !== "kitchen" ? (
+        {queue === "waiter" && waiterCalls.length && !isKitchen ? (
           <section
             className="hospitality-waiter-calls"
             aria-label="Waiter requests"
@@ -483,12 +484,12 @@ export function HospitalityOrders({
                   <Clock3 size={12} /> {orderAge(order.createdAt)}
                 </small>
               </div>
-              {role !== "kitchen" ? (
+              {!isKitchen ? (
                 <div className="hospitality-order-total">
                   <b>Rs. {order.finalTotal}</b>
                 </div>
               ) : null}
-              {order.status === "new" && role !== "kitchen" ? (
+              {order.status === "new" && !isKitchen ? (
                 <div className="hospitality-order-verify">
                   <label>
                     Customer code
@@ -549,7 +550,7 @@ export function HospitalityOrders({
               ) : (
                 <div className="hospitality-order-active-actions">
                   {["accepted", "preparing"].includes(order.status) &&
-                  role !== "kitchen" ? (
+                  !isKitchen ? (
                     <button
                       className="hospitality-order-icon"
                       type="button"

@@ -45,9 +45,11 @@ class HospitalityWorkspaceTests(TestCase):
     def test_team_roles_are_enforced_by_hospitality_endpoints(self):
         manager = get_user_model().objects.create_user(username='venue-manager', password='pass', email='manager@example.com')
         waiter = get_user_model().objects.create_user(username='venue-waiter', password='pass', email='waiter@example.com')
+        cashier = get_user_model().objects.create_user(username='venue-cashier', password='pass', email='cashier@example.com')
         reception = get_user_model().objects.create_user(username='venue-reception', password='pass', email='reception@example.com')
         OrganizationTeamMember.objects.create(organization=self.org, user=manager, invite_email=manager.email, role='manager')
         OrganizationTeamMember.objects.create(organization=self.org, user=waiter, invite_email=waiter.email, role='waiter')
+        OrganizationTeamMember.objects.create(organization=self.org, user=cashier, invite_email=cashier.email, role='cashier')
         OrganizationTeamMember.objects.create(organization=self.org, user=reception, invite_email=reception.email, role='reception')
         OrganizationModuleAccess.objects.update_or_create(organization=self.org, module_key='ordering', defaults={'is_enabled': True, 'enabled_at': timezone.now()})
 
@@ -66,6 +68,10 @@ class HospitalityWorkspaceTests(TestCase):
         self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/rewards/members/').status_code, 200)
         self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/orders/').status_code, 403)
         self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/inventory/').status_code, 403)
+
+        self.client.force_login(cashier)
+        self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/bills/').status_code, 200)
+        self.assertEqual(self.client.get(f'/api/organizations/{self.org.pk}/venue/orders/').status_code, 403)
 
     def test_inventory_tracks_stock_movements_and_menu_recipes(self):
         self.client.force_login(self.user)

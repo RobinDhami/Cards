@@ -277,6 +277,9 @@ class OrganizationTeamMember(models.Model):
         ('manager', 'Manager'),
         ('waiter', 'Waiter'),
         ('kitchen', 'Kitchen'),
+        ('barista', 'Barista'),
+        ('cashier', 'Cashier'),
+        ('inventory_manager', 'Inventory manager'),
         ('reception', 'Reception'),
     ]
     STATUS_CHOICES = [('active', 'Active'), ('invited', 'Invited')]

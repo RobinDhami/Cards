@@ -23,7 +23,7 @@ import "./HospitalityWorkspace.css";
 import "./HospitalitySettings.css";
 import "./HospitalityDashboardSystem.css";
 
-type Role = "owner" | "manager" | "waiter" | "kitchen" | "reception";
+type Role = "owner" | "manager" | "waiter" | "kitchen" | "barista" | "cashier" | "inventory_manager" | "reception";
 type TeamRole = Role | "none";
 type TeamMember = { id: number; name: string; email: string; role: TeamRole; status: "active" | "invited"; isCurrentUser: boolean };
 type SettingsPayload = {
@@ -39,6 +39,9 @@ const roles: Array<{ value: Role; label: string; detail: string }> = [
   { value: "manager", label: "Manager", detail: "Can manage menu, orders, and reports." },
   { value: "waiter", label: "Waiter", detail: "Can verify, edit, and progress table orders." },
   { value: "kitchen", label: "Kitchen", detail: "Can only start preparing and mark orders ready." },
+  { value: "barista", label: "Barista", detail: "Uses the kitchen queue for drink orders and marks them ready." },
+  { value: "cashier", label: "Cashier", detail: "Can collect cash or online payments, close bills, and issue receipts." },
+  { value: "inventory_manager", label: "Inventory manager", detail: "Can receive stock, record waste, and manage menu recipes." },
   { value: "reception", label: "Reception", detail: "Can scan loyalty members and add or redeem their loyalty balance." },
 ];
 

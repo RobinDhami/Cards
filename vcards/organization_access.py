@@ -10,6 +10,9 @@ ROLE_CAPABILITIES = {
     'manager': {'overview', 'menu', 'ordering', 'inventory', 'analytics'},
     'waiter': {'ordering'},
     'kitchen': {'ordering'},
+    'barista': {'ordering'},
+    'cashier': {'ordering'},
+    'inventory_manager': {'inventory'},
     'reception': {'loyalty'},
 }
 

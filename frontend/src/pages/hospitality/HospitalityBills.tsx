@@ -109,9 +109,12 @@ function receiptHtml(bill: Bill) {
 
 export function HospitalityBills({
   organizationId,
+  role,
 }: {
   organizationId: number;
+  role: string;
 }) {
+  const canManageBills = role === "owner" || role === "manager";
   const [scope, setScope] = useState<Scope>("open");
   const [bills, setBills] = useState<Bill[]>([]);
   const [summary, setSummary] = useState<Summary>({
@@ -236,17 +239,19 @@ export function HospitalityBills({
     setError("");
     setNotice("");
     try {
-      await apiFetch(`/api/organizations/${organizationId}/venue/bills/`, {
-        method: "PATCH",
-        body: jsonBody({
-          id: selected.id,
-          action: "update",
-          taxAmount: tax,
-          serviceChargeAmount: serviceCharge,
-          discountAmount: discount,
-          reason: reason || "Final charges confirmed",
-        }),
-      });
+      if (canManageBills) {
+        await apiFetch(`/api/organizations/${organizationId}/venue/bills/`, {
+          method: "PATCH",
+          body: jsonBody({
+            id: selected.id,
+            action: "update",
+            taxAmount: tax,
+            serviceChargeAmount: serviceCharge,
+            discountAmount: discount,
+            reason: reason || "Final charges confirmed",
+          }),
+        });
+      }
       await apiFetch(`/api/organizations/${organizationId}/venue/bills/`, {
         method: "PATCH",
         body: jsonBody({
@@ -498,7 +503,7 @@ export function HospitalityBills({
                   <span>Subtotal</span>
                   <strong>Rs. {money(selected.subtotal)}</strong>
                 </div>
-                {selected.status === "open" ? (
+                {selected.status === "open" && canManageBills ? (
                   <>
                     <label>
                       <span>Tax</span>
@@ -553,7 +558,7 @@ export function HospitalityBills({
                   <span>Final total</span>
                   <strong>
                     Rs.{" "}
-                    {selected.status === "open"
+                    {selected.status === "open" && canManageBills
                       ? money(
                           Number(selected.subtotal) +
                             Number(tax || 0) +
@@ -582,13 +587,13 @@ export function HospitalityBills({
                       <CreditCard size={17} />
                       Online
                     </button>
-                    <button
+                    {canManageBills ? <button
                       className={method === "complimentary" ? "is-active" : ""}
                       onClick={() => setMethod("complimentary")}
                     >
                       <CheckCircle2 size={17} />
                       Complimentary
-                    </button>
+                    </button> : null}
                   </div>
                   <label>
                     Payment reference <small>optional</small>
@@ -598,14 +603,14 @@ export function HospitalityBills({
                       placeholder="Transaction or note reference"
                     />
                   </label>
-                  <label>
+                  {canManageBills ? <label>
                     Change reason <small>recommended for discounts</small>
                     <input
                       value={reason}
                       onChange={(event) => setReason(event.target.value)}
                       placeholder="Why were charges changed?"
                     />
-                  </label>
+                  </label> : null}
                 </section>
               ) : (
                 <>
@@ -624,8 +629,8 @@ export function HospitalityBills({
                       <strong>{selected.receipt.number}</strong>
                     ) : null}
                   </section>
-                  {selected.status === "paid" ||
-                  selected.status === "complimentary" ? (
+                  {canManageBills && (selected.status === "paid" ||
+                  selected.status === "complimentary") ? (
                     <label className="hospitality-bill-refund-reason">
                       Refund reason <small>required</small>
                       <input
@@ -635,7 +640,7 @@ export function HospitalityBills({
                       />
                     </label>
                   ) : null}
-                  {selected.status === "paid" && loyalty.isActive ? (
+                  {canManageBills && selected.status === "paid" && loyalty.isActive ? (
                     <section className="hospitality-bill-loyalty">
                       <h3>Loyalty</h3>
                       {selected.loyaltyRewarded ? (
@@ -679,23 +684,23 @@ export function HospitalityBills({
             <footer>
               {selected.status === "open" ? (
                 <>
-                  <button
+                  {canManageBills ? <button
                     className="manage-button is-danger"
                     type="button"
                     disabled={saving || reason.trim().length < 3}
                     onClick={() => void mutate("void", { reason })}
                   >
                     Void bill
-                  </button>
+                  </button> : null}
                   <span />
-                  <button
+                  {canManageBills ? <button
                     className="manage-button"
                     type="button"
                     disabled={saving}
                     onClick={() => void saveCharges()}
                   >
                     Save charges
-                  </button>
+                  </button> : null}
                   <button
                     className="manage-button is-primary"
                     type="button"
@@ -709,7 +714,7 @@ export function HospitalityBills({
                 </>
               ) : (
                 <>
-                  <button
+                  {canManageBills ? <button
                     className="manage-button is-danger"
                     type="button"
                     disabled={
@@ -721,7 +726,7 @@ export function HospitalityBills({
                     onClick={() => void mutate("refund", { reason })}
                   >
                     Refund
-                  </button>
+                  </button> : null}
                   <span />
                   <button
                     className="manage-button is-primary"
