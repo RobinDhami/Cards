@@ -3,6 +3,7 @@ import type { CSSProperties, FormEvent, ReactNode } from "react";
 import { create } from "zustand";
 import QRCode from "qrcode";
 import MessageSquare from "lucide-react/dist/esm/icons/message-square.js";
+import Bell from "lucide-react/dist/esm/icons/bell.js";
 import Eye from "lucide-react/dist/esm/icons/eye.js";
 import Moon from "lucide-react/dist/esm/icons/moon.js";
 import Sun from "lucide-react/dist/esm/icons/sun.js";
@@ -2344,8 +2345,7 @@ export function PublicHospitalityProfile() {
       </section> : null}
       {orderingAvailable && cartOpen ? <><button className="cafe-order-backdrop" type="button" aria-label="Close order" onClick={() => setCartOpen(false)} /><aside className="cafe-order-cart" aria-live="polite"><header><span><ShoppingCart size={18} /> Your order</span><button type="button" aria-label="Close order" onClick={() => setCartOpen(false)}><X size={18} /></button></header>{orderItems.length ? orderItems.map((item) => <div key={item.id}><span>{item.quantity}× {item.name}{item.variant ? ` · ${item.variant}` : ''}{item.addOns?.length ? ` · ${item.addOns.join(', ')}` : ''}{item.spiceLevel ? ` · ${item.spiceLevel}` : ''}</span><button type="button" aria-label={`Remove ${item.name}`} onClick={() => setOrderItems((rows) => rows.filter((row) => row.id !== item.id))}><X size={15} /></button></div>) : <p>Your cart is empty. Add items from the menu.</p>}{orderItems.length ? <><label>Your name <input value={orderName} onChange={(event) => setOrderName(event.target.value)} placeholder="Optional" /></label><button className="cafe-primary" type="button" disabled={placingOrder} onClick={() => void placeOrder()}>{placingOrder ? 'Sending…' : 'Place order'}</button></> : null}{orderCode ? <strong className="cafe-order-code">Waiter code {orderCode}</strong> : null}{orderMessage ? <p>{orderMessage}</p> : null}</aside></> : null}
       {orderingAvailable ? <div className="cafe-table-service-actions">
-        <button className="cafe-call-waiter" type="button" disabled={callingWaiter} onClick={() => void callWaiter()}><MessageSquare size={18} /> {callingWaiter ? 'Calling…' : 'Call waiter'}</button>
-        {!cartOpen ? <button className="cafe-order-fab" type="button" onClick={() => setCartOpen(true)}><ShoppingCart size={20} /> View order <span>· {orderItems.reduce((total, item) => total + item.quantity, 0)}</span></button> : null}
+        <button className="cafe-call-waiter" type="button" disabled={callingWaiter} onClick={() => void callWaiter()}><Bell size={20} /> {callingWaiter ? 'Requesting…' : 'Request waiter'}</button>
       </div> : null}
       {waiterCallMessage ? <p className="cafe-waiter-call-message" role="status">{waiterCallMessage}</p> : null}
       <footer className="cafe-footer">Powered by <a href="/">Tap2Connect</a></footer>
