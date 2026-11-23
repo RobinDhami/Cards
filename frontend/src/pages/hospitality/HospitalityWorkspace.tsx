@@ -2325,7 +2325,7 @@ export function PublicHospitalityProfile() {
         </section>
       )}
       {selectedMenuItem ? <section ref={detailRef} className="hospitality-menu-detail" role="dialog" aria-modal="true" aria-labelledby="hospitality-menu-detail-title">
-        <button type="button" onClick={() => setSelectedMenuItem(null)} aria-label="Close menu item details"><X size={18} /></button>
+        <button className="cafe-menu-detail-close" type="button" onClick={() => setSelectedMenuItem(null)} aria-label="Close menu item details"><X size={18} /></button>
         {selectedMenuItem.image ? <img src={selectedMenuItem.image} alt="" /> : null}
         {(itemIsTodaySpecial(selectedMenuItem) || itemIsOffer(selectedMenuItem)) ? <div className="cafe-detail-badges">
           {itemIsTodaySpecial(selectedMenuItem) ? <span className="is-special">Today’s special</span> : null}
@@ -2341,7 +2341,7 @@ export function PublicHospitalityProfile() {
           {itemHasReducedPrice(selectedMenuItem) ? <span>Was <del>Rs. {itemOriginalPrice(selectedMenuItem)}</del></span> : null}
           <strong>{itemHasReducedPrice(selectedMenuItem) ? 'Now ' : ''}Rs. {selectedMenuItem.price}</strong>
         </div>
-        {orderingAvailable && selectedMenuItem.isAvailable !== false ? <button type="button" className="cafe-primary" onClick={() => addOrderItem(selectedMenuItem, { variant: selectedVariant, addOns: selectedAddOns, spiceLevel: selectedSpiceLevel })}>Add to table order</button> : null}
+        {orderingAvailable && selectedMenuItem.isAvailable !== false ? <button type="button" className="cafe-primary cafe-menu-detail-add" aria-label={`Add ${selectedMenuItem.name} to order`} onClick={() => addOrderItem(selectedMenuItem, { variant: selectedVariant, addOns: selectedAddOns, spiceLevel: selectedSpiceLevel })}><Plus size={21} /></button> : null}
       </section> : null}
       {orderingAvailable && cartOpen ? <><button className="cafe-order-backdrop" type="button" aria-label="Close order" onClick={() => setCartOpen(false)} /><aside className="cafe-order-cart" aria-live="polite"><header><span><ShoppingCart size={18} /> Your order</span><button type="button" aria-label="Close order" onClick={() => setCartOpen(false)}><X size={18} /></button></header>{orderItems.length ? orderItems.map((item) => <div key={item.id}><span>{item.quantity}× {item.name}{item.variant ? ` · ${item.variant}` : ''}{item.addOns?.length ? ` · ${item.addOns.join(', ')}` : ''}{item.spiceLevel ? ` · ${item.spiceLevel}` : ''}</span><button type="button" aria-label={`Remove ${item.name}`} onClick={() => setOrderItems((rows) => rows.filter((row) => row.id !== item.id))}><X size={15} /></button></div>) : <p>Your cart is empty. Add items from the menu.</p>}{orderItems.length ? <><label>Your name <input value={orderName} onChange={(event) => setOrderName(event.target.value)} placeholder="Optional" /></label><button className="cafe-primary" type="button" disabled={placingOrder} onClick={() => void placeOrder()}>{placingOrder ? 'Sending…' : 'Place order'}</button></> : null}{orderCode ? <strong className="cafe-order-code">Waiter code {orderCode}</strong> : null}{orderMessage ? <p>{orderMessage}</p> : null}</aside></> : null}
       {orderingAvailable ? <div className="cafe-table-service-actions">
