@@ -132,7 +132,7 @@
 .cafe-public .hospitality-badge { display: inline-block; margin: 3px 4px 0 0; padding: 1px 5px; border-radius: 4px; background: #f1e3c9; color: #845920; font-size: 9px; }
 .cafe-public .hospitality-badge.is-sold-out { background: #f4e0dd; color: #9c4141; }
 .cafe-public .hospitality-menu-detail { position: fixed; inset: 50% auto auto 50%; transform: translate(-50%,-50%); width: min(440px,calc(100vw - 32px)); max-height: 85dvh; overflow: auto; padding: 24px; border: 1px solid var(--cafe-line); border-radius: 16px; background: var(--cafe-paper); z-index: 100; box-shadow: 0 0 0 100vmax #38201680; }
-.cafe-public .hospitality-menu-detail > button { display: grid; place-items: center; position: absolute; right: 12px; top: 12px; width: 40px; height: 40px; border: 1px solid var(--cafe-line); border-radius: 50%; background: var(--cafe-paper); }
+.cafe-public .hospitality-menu-detail > button { display: grid; place-items: center; position: absolute; right: 12px; top: 12px; width: 40px; height: 40px; border: 1px solid color-mix(in srgb,var(--cafe-brand) 78%,#fff); border-radius: 50%; background: var(--cafe-brand); color: #fff; box-shadow: 0 4px 12px #10264438; }
 .cafe-public .hospitality-menu-detail > img { width: 100%; max-height: 260px; object-fit: cover; border-radius: 8px; margin-bottom: 12px; }
 .cafe-public .hospitality-menu-detail h3 { font-size: 25px; margin: 0 0 10px; }.cafe-public .hospitality-menu-detail strong { display: block; margin-top: 12px; }
 .cafe-public .cafe-empty { padding: 20px 8px; }
