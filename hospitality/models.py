@@ -346,6 +346,9 @@ class VenueTableSession(models.Model):
     opened_at = models.DateTimeField(auto_now_add=True)
     closed_at = models.DateTimeField(blank=True, null=True)
     expires_at = models.DateTimeField()
+    access_code = models.CharField(max_length=6, blank=True)
+    access_attempts = models.PositiveSmallIntegerField(default=0)
+    access_locked_until = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         ordering = ['-opened_at', '-id']

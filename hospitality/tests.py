@@ -800,6 +800,35 @@ class HospitalityWorkspaceTests(TestCase):
         response = self.client.get(f'/api/organizations/{self.org.pk}/venue/bills/')
         self.assertEqual(response.status_code, 403)
 
+    def test_table_session_code_is_required_for_public_orders_and_waiter_calls(self):
+        OrganizationModuleAccess.objects.update_or_create(
+            organization=self.org, module_key='ordering',
+            defaults={'is_enabled': True, 'enabled_at': timezone.now()},
+        )
+        table = VenueTouchpoint.objects.create(venue=self.venue, name='Table 9', destination='ordering')
+        item = self.category.items.get(name='Pancakes')
+        order_url = f'/api/venue/{self.venue.public_identifier}/orders/'
+        order_data = {'table': str(table.public_identifier), 'items': [{'id': str(item.public_identifier), 'quantity': 1}]}
+        self.client.logout()
+        self.assertEqual(self.client.post(order_url, data=json.dumps(order_data), content_type='application/json').status_code, 400)
+        self.assertEqual(self.client.post(f'/api/venue/{self.venue.public_identifier}/waiter-call/', data=json.dumps({'table': str(table.public_identifier)}), content_type='application/json').status_code, 403)
+
+        self.client.force_login(self.user)
+        opened = self.client.patch(
+            f'/api/organizations/{self.org.pk}/venue/orders/',
+            data=json.dumps({'action': 'open_table_session', 'tableId': table.pk}), content_type='application/json',
+        )
+        self.assertEqual(opened.status_code, 200, opened.content)
+        code = opened.json()['session']['accessCode']
+        self.client.logout()
+        unlock_url = f'/api/venue/{self.venue.public_identifier}/table-session/'
+        self.assertEqual(self.client.post(unlock_url, data=json.dumps({'table': str(table.public_identifier), 'code': '000000'}), content_type='application/json').status_code, 400)
+        unlocked = self.client.post(unlock_url, data=json.dumps({'table': str(table.public_identifier), 'code': code}), content_type='application/json')
+        self.assertEqual(unlocked.status_code, 200, unlocked.content)
+        order_data['session'] = unlocked.json()['session']['publicIdentifier']
+        self.assertEqual(self.client.post(order_url, data=json.dumps(order_data), content_type='application/json').status_code, 201)
+        self.assertEqual(self.client.post(f'/api/venue/{self.venue.public_identifier}/waiter-call/', data=json.dumps({'table': str(table.public_identifier), 'session': order_data['session']}), content_type='application/json').status_code, 200)
+
     def test_full_ten_order_five_table_service_to_receipt_flow(self):
         """Exercise the customer, waiter, kitchen, and billing paths together."""
         OrganizationModuleAccess.objects.update_or_create(
@@ -821,6 +850,15 @@ class HospitalityWorkspaceTests(TestCase):
             )
             self.assertEqual(response.status_code, 200, response.content)
             tables.append(VenueTouchpoint.objects.get(venue=self.venue, name=f'Table {number}'))
+        sessions = {}
+        for table in tables:
+            response = self.client.patch(
+                f'/api/organizations/{self.org.pk}/venue/orders/',
+                data=json.dumps({'action': 'open_table_session', 'tableId': table.pk}),
+                content_type='application/json',
+            )
+            self.assertEqual(response.status_code, 200, response.content)
+            sessions[table.pk] = response.json()['session']['publicIdentifier']
         self.client.logout()
 
         placed = []
@@ -830,6 +868,7 @@ class HospitalityWorkspaceTests(TestCase):
                     f'/api/venue/{self.venue.public_identifier}/orders/',
                     data=json.dumps({
                         'table': str(table.public_identifier),
+                        'session': sessions[table.pk],
                         'customerName': f'Guest {table.name}-{order_number + 1}',
                         'items': [{'id': str(menu_item.public_identifier), 'quantity': order_number + 1}],
                     }),

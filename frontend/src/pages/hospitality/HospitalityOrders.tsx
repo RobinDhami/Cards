@@ -53,6 +53,7 @@ type Table = {
   name: string;
   publicIdentifier: string;
   qrUrl: string;
+  session?: { publicIdentifier: string; expiresAt: string; accessCode: string; lockedUntil?: string | null } | null;
 };
 type MenuItem = { id: number; name: string; price: string };
 type WaiterCall = {
@@ -73,7 +74,7 @@ const statusLabel: Record<string, string> = {
   expired: "Expired",
 };
 
-function TableQr({ table }: { table: Table }) {
+function TableQr({ table, onOpenSession, canManageQr }: { table: Table; onOpenSession: (table: Table) => void; canManageQr: boolean }) {
   const [image, setImage] = useState("");
   useEffect(() => {
     void QRCode.toDataURL(table.qrUrl, { width: 180, margin: 2 }).then(
@@ -91,14 +92,11 @@ function TableQr({ table }: { table: Table }) {
       </div>
       <section>
         <strong>{table.name}</strong>
-        <small>Customers scan this to open their table menu and order.</small>
-        <a
-          className="manage-button"
-          href={image || undefined}
-          download={`${table.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-qr.png`}
-        >
-          Download QR
-        </a>
+        <small>{table.session ? `Ordering open · code ${table.session.accessCode}` : "Open a session before customers can order."}</small>
+        <div className="hospitality-table-actions">
+          <button className="manage-button is-primary" type="button" onClick={() => onOpenSession(table)}>{table.session ? "Show table code" : "Open table"}</button>
+          {canManageQr ? <a className="manage-button" href={image || undefined} download={`${table.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-qr.png`}>Download QR</a> : null}
+        </div>
       </section>
     </article>
   );
@@ -221,6 +219,19 @@ export function HospitalityOrders({
       { id: order.id, action: "approve", verificationCode },
       `Order #${order.number} verified and sent to the kitchen queue.`,
     );
+  }
+  async function openTableSession(table: Table) {
+    setError("");
+    try {
+      const result = await apiFetch<{ message: string }>(`/api/organizations/${organizationId}/venue/orders/`, {
+        method: "PATCH",
+        body: jsonBody({ action: "open_table_session", tableId: table.id }),
+      });
+      setNotice(result.message);
+      await load();
+    } catch (reason) {
+      setError(displayError(reason));
+    }
   }
   function openEdit(order: Order) {
     setEditing({ ...order, items: order.items.map((item) => ({ ...item })) });
@@ -612,7 +623,7 @@ export function HospitalityOrders({
         </div>
       </section>
 
-      {role === "owner" || role === "manager" ? (
+      {!isKitchen ? (
         <section className="hospitality-order-card">
           <header>
             <div>
@@ -623,22 +634,15 @@ export function HospitalityOrders({
               </p>
             </div>
           </header>
-          <form onSubmit={createTable}>
-            <Field label="Table name">
-              <TextInput
-                required
-                value={tableName}
-                onChange={(event) => setTableName(event.target.value)}
-                placeholder="e.g. Table 1, Patio 2, Counter"
-              />
-            </Field>
-            <button className="manage-button is-primary">
-              <Plus size={18} /> Create table QR
-            </button>
-          </form>
+          {role === "owner" || role === "manager" ? <form onSubmit={createTable}>
+              <Field label="Table name">
+                <TextInput required value={tableName} onChange={(event) => setTableName(event.target.value)} placeholder="e.g. Table 1, Patio 2, Counter" />
+              </Field>
+              <button className="manage-button is-primary"><Plus size={18} /> Create table QR</button>
+            </form> : <p className="hospitality-table-help">Open the table before handing the current six-digit code to the guests.</p>}
           <div className="hospitality-order-tables">
             {tables.map((table) => (
-              <TableQr key={table.id} table={table} />
+              <TableQr key={table.id} table={table} onOpenSession={openTableSession} canManageQr={role === "owner" || role === "manager"} />
             ))}
             {!tables.length ? (
               <div className="hospitality-orders-empty">

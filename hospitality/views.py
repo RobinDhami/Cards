@@ -1850,8 +1850,9 @@ def _expire_table_sessions(venue):
         venue=venue, status__in=['accepted', 'preparing', 'ready'],
         table_session_expires_at__isnull=False, table_session_expires_at__lte=now,
     )
-    session_ids = list(expired_orders.exclude(table_session_id=None).values_list('table_session_id', flat=True).distinct())
+    session_ids = set(expired_orders.exclude(table_session_id=None).values_list('table_session_id', flat=True).distinct())
     updated = expired_orders.update(status='cancelled', cancellation_reason='Table session expired')
+    session_ids.update(VenueTableSession.objects.filter(venue=venue, status='open', expires_at__lte=now).values_list('pk', flat=True))
     for session in VenueTableSession.objects.filter(pk__in=session_ids, status='open').select_related('bill'):
         session.status = 'expired'; session.closed_at = now
         session.save(update_fields=['status', 'closed_at'])
@@ -1864,6 +1865,33 @@ def _expire_table_sessions(venue):
             bill.save(update_fields=['status', 'locked_at', 'updated_at'])
             VenueBillAdjustment.objects.create(bill=bill, kind='void', reason='Table session expired')
     return updated
+
+
+def _new_table_access_code():
+    return f'{secrets.randbelow(1_000_000):06d}'
+
+
+def _active_table_session(venue, table, session_identifier, now=None, *, lock=False):
+    now = now or timezone.now()
+    sessions = VenueTableSession.objects
+    if lock:
+        sessions = sessions.select_for_update()
+    return sessions.filter(
+        venue=venue, table=table, public_identifier=str(session_identifier or ''),
+        status='open', expires_at__gt=now,
+    ).first()
+
+
+def _table_session_payload(session, *, include_code=False):
+    payload = {
+        'publicIdentifier': session.public_identifier,
+        'status': session.status,
+        'expiresAt': session.expires_at.isoformat(),
+    }
+    if include_code:
+        payload['accessCode'] = session.access_code
+        payload['lockedUntil'] = session.access_locked_until.isoformat() if session.access_locked_until else None
+    return payload
 
 
 def _kitchen_order_payload(order):
@@ -1921,6 +1949,9 @@ def venue_public_order_api(request, public_identifier):
     try:
         with transaction.atomic():
             _expire_pending_orders(venue); _expire_table_sessions(venue)
+            session = _active_table_session(venue, table, data.get('session'), lock=True)
+            if not session:
+                raise ValidationError('Enter the current table code before placing an order.')
             if venue.orders.filter(table=table, status='new', verification_expires_at__gt=timezone.now()).count() >= 3:
                 return JsonResponse({'error': 'This table already has orders waiting for waiter verification. Please ask your waiter for help.'}, status=429)
             ordered_items, total = [], Decimal('0.00')
@@ -1949,12 +1980,47 @@ def venue_public_order_api(request, public_identifier):
                 total += unit_price * quantity
                 ordered_items.append((item, unit_price, quantity, str(row.get('note') or '').strip()[:300], variant_label, clean_add_ons, spice_level))
             latest = venue.orders.select_for_update().order_by('-order_number').first()
-            order = VenueOrder.objects.create(venue=venue, table=table, order_number=(latest.order_number if latest else 0) + 1, customer_name=str(data.get('customerName') or '').strip()[:120], customer_phone=str(data.get('customerPhone') or '').strip()[:40], note=str(data.get('note') or '').strip()[:1000], total=total, final_total=total, verification_code=f'{secrets.randbelow(10000):04d}', verification_expires_at=timezone.now() + timedelta(minutes=10), table_session_expires_at=timezone.now() + timedelta(hours=4))
+            order = VenueOrder.objects.create(venue=venue, table=table, table_session=session, order_number=(latest.order_number if latest else 0) + 1, customer_name=str(data.get('customerName') or '').strip()[:120], customer_phone=str(data.get('customerPhone') or '').strip()[:40], note=str(data.get('note') or '').strip()[:1000], total=total, final_total=total, verification_code=f'{secrets.randbelow(10000):04d}', verification_expires_at=timezone.now() + timedelta(minutes=10), table_session_expires_at=session.expires_at)
             VenueOrderItem.objects.bulk_create([VenueOrderItem(order=order, menu_item=item, name=item.name, unit_price=unit_price, quantity=quantity, note=note, selected_variant=variant, add_ons=add_ons, spice_level=spice) for item, unit_price, quantity, note, variant, add_ons, spice in ordered_items])
     except (ValidationError, ValueError) as exc:
         return JsonResponse({'error': _validation_message(exc) if isinstance(exc, ValidationError) else 'Choose valid order quantities.'}, status=400)
     _record_operational_activity(venue, 'order_created', f'New table order #{order.order_number} from {table.name}', request, {'orderId': order.public_identifier, 'table': table.name})
     return JsonResponse({'order': _order_payload(VenueOrder.objects.prefetch_related('items').select_related('table').get(pk=order.pk))}, status=201)
+
+
+@require_http_methods(['POST'])
+def venue_public_table_session_api(request, public_identifier):
+    """Unlock ordering only for a live, staff-opened table visit."""
+    venue = get_object_or_404(VenueProfile.objects.select_related('organization'), public_identifier=public_identifier, is_active=True)
+    if 'ordering' not in enabled_organization_modules(venue.organization):
+        return JsonResponse({'error': 'Online ordering is not available for this café.'}, status=404)
+    data = _body(request) or {}
+    table = VenueTouchpoint.objects.filter(venue=venue, public_identifier=str(data.get('table') or ''), destination='ordering', is_active=True).first()
+    if not table:
+        return JsonResponse({'error': 'This table QR code is no longer active. Ask the café for help.'}, status=400)
+    now = timezone.now()
+    with transaction.atomic():
+        _expire_table_sessions(venue)
+        session = VenueTableSession.objects.select_for_update().filter(venue=venue, table=table, status='open', expires_at__gt=now).first()
+        if not session:
+            return JsonResponse({'error': 'This table is not open for ordering yet. Please ask your waiter for the current table code.'}, status=403)
+        if session.access_locked_until and session.access_locked_until > now:
+            return JsonResponse({'error': 'Too many incorrect attempts. Please wait a few minutes or ask your waiter for help.'}, status=429)
+        code = str(data.get('code') or '').strip()
+        if not code or not hmac.compare_digest(session.access_code, code):
+            attempts = session.access_attempts + 1
+            if attempts >= 5:
+                session.access_attempts = 0
+                session.access_locked_until = now + timedelta(minutes=10)
+                session.save(update_fields=['access_attempts', 'access_locked_until'])
+                return JsonResponse({'error': 'Too many incorrect attempts. Ordering is locked for 10 minutes; ask your waiter for help.'}, status=429)
+            session.access_attempts = attempts
+            session.save(update_fields=['access_attempts'])
+            return JsonResponse({'error': f'Incorrect table code. {5 - attempts} attempt(s) remaining.'}, status=400)
+        session.access_attempts = 0
+        session.access_locked_until = None
+        session.save(update_fields=['access_attempts', 'access_locked_until'])
+    return JsonResponse({'session': _table_session_payload(session)})
 
 
 @require_http_methods(['POST'])
@@ -1966,6 +2032,8 @@ def venue_public_waiter_call_api(request, public_identifier):
     table = VenueTouchpoint.objects.filter(venue=venue, public_identifier=str(data.get('table') or ''), destination='ordering', is_active=True).first()
     if not table:
         return JsonResponse({'error': 'This table QR code is no longer active. Ask the café for help.'}, status=400)
+    if not _active_table_session(venue, table, data.get('session')):
+        return JsonResponse({'error': 'Enter the current table code before requesting a waiter.'}, status=403)
     cutoff = timezone.now() - timedelta(minutes=3)
     if VenueWaiterCall.objects.filter(venue=venue, table=table, status='pending', created_at__gte=cutoff).exists():
         return JsonResponse({'error': 'Your waiter call is already pending. Someone will be with you shortly.'}, status=429)
@@ -2000,14 +2068,36 @@ def venue_orders_manage_api(request, organization_id):
         action = str(data.get('action') or '')
         if role in {'kitchen', 'barista'} and action:
             return JsonResponse({'error': 'Kitchen staff can only update preparation status.'}, status=403)
-        if role == 'waiter' and action not in {'', 'approve', 'edit'}:
-            return JsonResponse({'error': 'Waiters can verify, edit, and complete orders only.'}, status=403)
-        order = None if action == 'acknowledge_waiter_call' else get_object_or_404(VenueOrder, venue=venue, pk=data.get('id'))
+        if role == 'waiter' and action not in {'', 'approve', 'edit', 'open_table_session'}:
+            return JsonResponse({'error': 'Waiters can open tables, verify, edit, and complete orders only.'}, status=403)
+        order = None if action in {'acknowledge_waiter_call', 'open_table_session'} else get_object_or_404(VenueOrder, venue=venue, pk=data.get('id'))
         if action == 'acknowledge_waiter_call':
             call = get_object_or_404(VenueWaiterCall, venue=venue, pk=data.get('waiterCallId'), status='pending')
             call.status = 'acknowledged'; call.acknowledged_at = timezone.now()
             call.save(update_fields=['status', 'acknowledged_at'])
             _record_operational_activity(venue, 'waiter_call_acknowledged', f'Waiter call acknowledged at {call.table.name}', request, {'waiterCallId': call.pk, 'table': call.table.name})
+        elif action == 'open_table_session':
+            table = get_object_or_404(VenueTouchpoint, venue=venue, pk=data.get('tableId'), destination='ordering', is_active=True)
+            now = timezone.now()
+            with transaction.atomic():
+                session = VenueTableSession.objects.select_for_update().filter(venue=venue, table=table, status='open').first()
+                if session and session.expires_at <= now:
+                    session.status = 'expired'; session.closed_at = now
+                    session.save(update_fields=['status', 'closed_at'])
+                    session = None
+                if not session:
+                    session = VenueTableSession.objects.create(
+                        venue=venue, table=table, expires_at=now + timedelta(hours=4), access_code=_new_table_access_code(),
+                    )
+                    action_label = 'Opened'
+                elif not session.access_code:
+                    session.access_code = _new_table_access_code()
+                    session.save(update_fields=['access_code'])
+                    action_label = 'Secured'
+                else:
+                    action_label = 'Active'
+            _record_operational_activity(venue, 'table_session_opened', f'{action_label} table session for {table.name}', request, {'table': table.name, 'sessionId': session.public_identifier})
+            return JsonResponse({'session': _table_session_payload(session, include_code=True), 'message': f'Table {table.name} is open. Share code {session.access_code} with the customer.'})
         elif action == 'approve':
             code = str(data.get('verificationCode') or '').strip()
             if order.status != 'new':
@@ -2204,9 +2294,14 @@ def venue_orders_manage_api(request, organization_id):
             payload['loyaltyRewarded'] = f'order:{order.public_identifier}' in rewarded_references
             order_payloads.append(payload)
     program = VenueRewardsProgram.objects.filter(venue=venue, is_active=True).first() if 'loyalty' in enabled_organization_modules(venue.organization) else None
+    table_sessions = {
+        session.table_id: session for session in VenueTableSession.objects.filter(
+            venue=venue, status='open', expires_at__gt=timezone.now(), table__destination='ordering',
+        ).select_related('table')
+    }
     return JsonResponse({
         'orders': order_payloads,
-        'tables': [] if role in {'kitchen', 'barista'} else [{'id': item.pk, 'name': item.name, 'publicIdentifier': item.public_identifier, 'qrUrl': request.build_absolute_uri(f'/venue/{venue.public_identifier}/?tab=menu&source={item.public_identifier}&entry=qr&order=1')} for item in venue.touchpoints.filter(destination='ordering').order_by('name')],
+        'tables': [] if role in {'kitchen', 'barista'} else [{'id': item.pk, 'name': item.name, 'publicIdentifier': item.public_identifier, 'qrUrl': request.build_absolute_uri(f'/venue/{venue.public_identifier}/?tab=menu&source={item.public_identifier}&entry=qr&order=1'), 'session': _table_session_payload(table_sessions[item.pk], include_code=True) if item.pk in table_sessions else None} for item in venue.touchpoints.filter(destination='ordering').order_by('name')],
         'menuItems': [] if role in {'kitchen', 'barista'} else [{'id': item.pk, 'name': item.name, 'price': str(item.price)} for item in menu_items],
         'kitchenUrl': '' if role in {'kitchen', 'barista'} else request.build_absolute_uri(f'/venue/{venue.public_identifier}/kitchen/{venue.kitchen_access_token}/'),
         'waiterCalls': [] if role in {'kitchen', 'barista'} else [{'id': row.pk, 'table': row.table.name, 'note': row.note, 'createdAt': row.created_at.isoformat()} for row in calls],
