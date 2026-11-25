@@ -877,19 +877,6 @@ class HospitalityWorkspaceTests(TestCase):
                 self.assertEqual(response.status_code, 201, response.content)
                 placed.append(response.json()['order'])
         self.assertEqual(len(placed), 10)
-        self.assertEqual(VenueOrder.objects.filter(venue=self.venue, status='new').count(), 10)
-
-        self.client.force_login(waiter)
-        for order in placed:
-            row = VenueOrder.objects.get(pk=order['id'])
-            response = self.client.patch(
-                f'/api/organizations/{self.org.pk}/venue/orders/',
-                data=json.dumps({
-                    'id': row.pk, 'action': 'approve', 'verificationCode': row.verification_code,
-                }),
-                content_type='application/json',
-            )
-            self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(VenueOrder.objects.filter(venue=self.venue, status='accepted').count(), 10)
         self.client.logout()
 

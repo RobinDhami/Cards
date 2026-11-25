@@ -1980,11 +1980,12 @@ def venue_public_order_api(request, public_identifier):
                 total += unit_price * quantity
                 ordered_items.append((item, unit_price, quantity, str(row.get('note') or '').strip()[:300], variant_label, clean_add_ons, spice_level))
             latest = venue.orders.select_for_update().order_by('-order_number').first()
-            order = VenueOrder.objects.create(venue=venue, table=table, table_session=session, order_number=(latest.order_number if latest else 0) + 1, customer_name=str(data.get('customerName') or '').strip()[:120], customer_phone=str(data.get('customerPhone') or '').strip()[:40], note=str(data.get('note') or '').strip()[:1000], total=total, final_total=total, verification_code=f'{secrets.randbelow(10000):04d}', verification_expires_at=timezone.now() + timedelta(minutes=10), table_session_expires_at=session.expires_at)
+            order = VenueOrder.objects.create(venue=venue, table=table, table_session=session, order_number=(latest.order_number if latest else 0) + 1, customer_name=str(data.get('customerName') or '').strip()[:120], customer_phone=str(data.get('customerPhone') or '').strip()[:40], note=str(data.get('note') or '').strip()[:1000], status='accepted', verified_at=timezone.now(), verified_by='Table session', total=total, final_total=total, table_session_expires_at=session.expires_at)
             VenueOrderItem.objects.bulk_create([VenueOrderItem(order=order, menu_item=item, name=item.name, unit_price=unit_price, quantity=quantity, note=note, selected_variant=variant, add_ons=add_ons, spice_level=spice) for item, unit_price, quantity, note, variant, add_ons, spice in ordered_items])
+            _attach_order_to_bill(order)
     except (ValidationError, ValueError) as exc:
         return JsonResponse({'error': _validation_message(exc) if isinstance(exc, ValidationError) else 'Choose valid order quantities.'}, status=400)
-    _record_operational_activity(venue, 'order_created', f'New table order #{order.order_number} from {table.name}', request, {'orderId': order.public_identifier, 'table': table.name})
+    _record_operational_activity(venue, 'order_created', f'New table order #{order.order_number} from {table.name} sent to kitchen', request, {'orderId': order.public_identifier, 'table': table.name})
     return JsonResponse({'order': _order_payload(VenueOrder.objects.prefetch_related('items').select_related('table').get(pk=order.pk))}, status=201)
 
 
