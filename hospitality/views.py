@@ -1756,7 +1756,11 @@ def _attach_order_to_bill(order, user=None):
     if order.bill_id:
         return _recalculate_bill(order.bill)
     with transaction.atomic():
-        order = VenueOrder.objects.select_for_update().select_related('venue__organization', 'table').get(pk=order.pk)
+        # `table` is optional.  PostgreSQL cannot apply `FOR UPDATE` to the
+        # nullable side of the outer join introduced by `select_related`, so
+        # lock the order row first and let Django fetch its table only if it is
+        # needed below.
+        order = VenueOrder.objects.select_for_update().select_related('venue__organization').get(pk=order.pk)
         if order.bill_id:
             return _recalculate_bill(order.bill)
         now = timezone.now()
