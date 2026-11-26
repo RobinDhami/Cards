@@ -1993,6 +1993,38 @@ def venue_public_order_api(request, public_identifier):
     return JsonResponse({'order': _order_payload(VenueOrder.objects.prefetch_related('items').select_related('table').get(pk=order.pk))}, status=201)
 
 
+@require_http_methods(['GET'])
+def venue_public_table_orders_api(request, public_identifier):
+    """Return only the progress of orders for the caller's live table visit."""
+    venue = get_object_or_404(
+        VenueProfile.objects.select_related('organization'), public_identifier=public_identifier, is_active=True,
+    )
+    if 'ordering' not in enabled_organization_modules(venue.organization):
+        return JsonResponse({'error': 'Online ordering is not available for this café.'}, status=404)
+    table = VenueTouchpoint.objects.filter(
+        venue=venue,
+        public_identifier=str(request.GET.get('table') or ''),
+        destination='ordering',
+        is_active=True,
+    ).first()
+    if not table:
+        return JsonResponse({'error': 'This table QR code is no longer active. Ask the café for help.'}, status=400)
+    _expire_table_sessions(venue)
+    session = _active_table_session(venue, table, request.GET.get('session'))
+    if not session:
+        return JsonResponse({'error': 'Enter the current table code to view this table order.'}, status=403)
+    orders = venue.orders.filter(table_session=session).order_by('created_at', 'id')
+    return JsonResponse({
+        'table': table.name,
+        'orders': [{
+            'publicIdentifier': order.public_identifier,
+            'number': order.order_number,
+            'status': order.status,
+            'createdAt': order.created_at.isoformat(),
+        } for order in orders],
+    })
+
+
 @require_http_methods(['POST'])
 def venue_public_table_session_api(request, public_identifier):
     """Unlock ordering only for a live, staff-opened table visit."""

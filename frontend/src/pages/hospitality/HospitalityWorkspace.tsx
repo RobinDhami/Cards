@@ -129,6 +129,22 @@ type Item = {
   addOns?: Array<{ name: string; price: string }>;
   spiceLevels?: string[];
 };
+type PublicTableOrder = {
+  publicIdentifier: string;
+  number: number;
+  status: string;
+  createdAt: string;
+};
+
+const publicTableOrderStatus: Record<string, { label: string; detail: string }> = {
+  new: { label: "Awaiting confirmation", detail: "Your café team is checking your order." },
+  accepted: { label: "Confirmed", detail: "Your order has been received by the kitchen." },
+  preparing: { label: "Preparing", detail: "Your food is being prepared." },
+  ready: { label: "Ready to serve", detail: "Your order is ready and will be brought to your table." },
+  completed: { label: "Served", detail: "Enjoy your meal." },
+  cancelled: { label: "Cancelled", detail: "Please ask a waiter if you need help with this order." },
+  expired: { label: "Expired", detail: "Please ask a waiter if you would still like this order." },
+};
 
 type CafeFeedbackDraft = {
   rating: number;
@@ -1960,6 +1976,7 @@ export function PublicHospitalityProfile() {
   const [orderName, setOrderName] = useState("");
   const [orderMessage, setOrderMessage] = useState("");
   const [orderSent, setOrderSent] = useState(false);
+  const [tableOrders, setTableOrders] = useState<PublicTableOrder[]>([]);
   const [placingOrder, setPlacingOrder] = useState(false);
   const [callingWaiter, setCallingWaiter] = useState(false);
   const [waiterCallMessage, setWaiterCallMessage] = useState("");
@@ -2006,9 +2023,24 @@ export function PublicHospitalityProfile() {
   const tableSessionStorageKey = `tap2connect:table-session:v1:${identifier}:${tableIdentifier}`;
   const tableAccessGranted = orderingAvailable && Boolean(tableSessionId);
   function requestTableAccess() { if (!tableAccessGranted) setTableAccessOpen(true); }
+  const refreshTableOrders = useCallback(async () => {
+    if (!tableAccessGranted) {
+      setTableOrders([]);
+      return;
+    }
+    try {
+      const result = await apiFetch<{ orders: PublicTableOrder[] }>(
+        `/api/venue/${identifier}/table-orders/${queryString({ table: tableIdentifier, session: tableSessionId })}`,
+      );
+      setTableOrders(result.orders);
+    } catch {
+      // The session may have been closed after payment. Keep the last known
+      // order state on screen rather than surfacing a technical error to guests.
+    }
+  }, [identifier, tableAccessGranted, tableIdentifier, tableSessionId]);
   function addOrderItem(item: Item, options: { variant?: string; addOns?: string[]; spiceLevel?: string } = {}) { if (!tableAccessGranted) { requestTableAccess(); return; } const itemId = String(item.id || ''); if (!itemId) return; setOrderSent(false); const id = `${itemId}:${options.variant || ''}:${[...(options.addOns || [])].sort().join('|')}:${options.spiceLevel || ''}`; const variantPrice = item.priceVariants?.find((variant) => variant.label === options.variant)?.price || item.price; const extras = (options.addOns || []).reduce((total, name) => total + Number(item.addOns?.find((addOn) => addOn.name === name)?.price || 0), 0); const price = (Number(variantPrice) + extras).toFixed(2); setOrderItems((rows) => { const current = rows.find((row) => row.id === id); return current ? rows.map((row) => row.id === id ? { ...row, quantity: row.quantity + 1 } : row) : [...rows, { id, menuItemId: itemId, name: item.name, price, quantity: 1, ...options }] }); setSelectedMenuItem(null); }
   async function unlockTableOrdering() { if (tableAccessCode.trim().length !== 6) { setTableAccessMessage('Enter the six-digit code from your waiter.'); return; } setUnlockingTable(true); setTableAccessMessage(''); try { const result = await apiFetch<{ session: { publicIdentifier: string; expiresAt: string } }>(`/api/venue/${identifier}/table-session/`, { method: 'POST', body: jsonBody({ table: tableIdentifier, code: tableAccessCode.trim() }) }); setTableSessionId(result.session.publicIdentifier); sessionStorage.setItem(tableSessionStorageKey, JSON.stringify(result.session)); setTableAccessCode(''); setTableAccessOpen(false); } catch (reason) { setTableAccessMessage(displayError(reason)); } finally { setUnlockingTable(false); } }
-  async function placeOrder() { if (!orderItems.length) return; if (!tableAccessGranted) { requestTableAccess(); return; } setPlacingOrder(true); setOrderMessage(''); try { await apiFetch(`/api/venue/${identifier}/orders/`, { method: 'POST', body: jsonBody({ table: tableIdentifier, session: tableSessionId, customerName: orderName, items: orderItems.map(({ menuItemId, quantity, variant, addOns, spiceLevel }) => ({ id: menuItemId, quantity, variant, addOns, spiceLevel })) }) }); setOrderItems([]); setOrderSent(true); } catch (reason) { setOrderMessage(displayError(reason)); } finally { setPlacingOrder(false) } }
+  async function placeOrder() { if (!orderItems.length) return; if (!tableAccessGranted) { requestTableAccess(); return; } setPlacingOrder(true); setOrderMessage(''); try { await apiFetch(`/api/venue/${identifier}/orders/`, { method: 'POST', body: jsonBody({ table: tableIdentifier, session: tableSessionId, customerName: orderName, items: orderItems.map(({ menuItemId, quantity, variant, addOns, spiceLevel }) => ({ id: menuItemId, quantity, variant, addOns, spiceLevel })) }) }); setOrderItems([]); setOrderSent(true); void refreshTableOrders(); } catch (reason) { setOrderMessage(displayError(reason)); } finally { setPlacingOrder(false) } }
   async function callWaiter() { if (!tableIdentifier) return; if (!tableAccessGranted) { requestTableAccess(); return; } setCallingWaiter(true); setWaiterCallMessage(''); try { await apiFetch(`/api/venue/${identifier}/waiter-call/`, { method: 'POST', body: jsonBody({ table: tableIdentifier, session: tableSessionId }) }); setWaiterCallMessage('A waiter has been notified for your table.'); } catch (reason) { setWaiterCallMessage(displayError(reason)); } finally { setCallingWaiter(false) } }
   useEffect(() => {
     resetPublicCafeUI(feedbackSource, new URLSearchParams(window.location.search).get("tab") === "menu" ? "menu" : "home");
@@ -2021,6 +2053,12 @@ export function PublicHospitalityProfile() {
       else sessionStorage.removeItem(tableSessionStorageKey);
     } catch { sessionStorage.removeItem(tableSessionStorageKey); }
   }, [tableIdentifier, tableSessionStorageKey]);
+  useEffect(() => {
+    if (!tableAccessGranted) return;
+    void refreshTableOrders();
+    const interval = window.setInterval(() => void refreshTableOrders(), 15000);
+    return () => window.clearInterval(interval);
+  }, [refreshTableOrders, tableAccessGranted]);
   useEffect(() => {
     if (!selectedMenuItem) return;
     setSelectedVariant(selectedMenuItem.priceVariants?.[0]?.label || ''); setSelectedAddOns([]); setSelectedSpiceLevel(selectedMenuItem.spiceLevels?.[0] || '');
@@ -2362,7 +2400,24 @@ export function PublicHospitalityProfile() {
         {orderingAvailable && selectedMenuItem.isAvailable !== false ? <button type="button" className="cafe-primary cafe-menu-detail-add" aria-label={`Add ${selectedMenuItem.name} to order`} onClick={() => addOrderItem(selectedMenuItem, { variant: selectedVariant, addOns: selectedAddOns, spiceLevel: selectedSpiceLevel })}><Plus size={21} /></button> : null}
       </section> : null}
       {orderingAvailable && tableAccessOpen ? <><button className="cafe-order-backdrop" type="button" aria-label="Close table code entry" onClick={() => setTableAccessOpen(false)} /><section className="cafe-table-access" role="dialog" aria-modal="true" aria-labelledby="cafe-table-access-title"><span className="cafe-table-access-icon"><LockKeyhole size={21} /></span><h2 id="cafe-table-access-title">Enter table code</h2><p>Ask your waiter for the current six-digit code for this table.</p><form onSubmit={(event) => { event.preventDefault(); void unlockTableOrdering(); }}><input autoFocus inputMode="numeric" pattern="[0-9]*" maxLength={6} value={tableAccessCode} onChange={(event) => setTableAccessCode(event.target.value.replace(/\D/g, ''))} placeholder="000000" aria-label="Six-digit table code" /><button className="cafe-primary" type="submit" disabled={unlockingTable}>{unlockingTable ? 'Checking…' : 'Unlock ordering'}</button></form>{tableAccessMessage ? <small role="status">{tableAccessMessage}</small> : null}</section></> : null}
-      {tableAccessGranted && cartOpen ? <><button className="cafe-order-backdrop" type="button" aria-label="Close order" onClick={() => setCartOpen(false)} /><aside className="cafe-order-cart" aria-live="polite"><header><span><ShoppingCart size={18} /> Your order</span><button type="button" aria-label="Close order" onClick={() => setCartOpen(false)}><X size={18} /></button></header>{orderSent ? <section className="cafe-order-confirmation"><strong>Order sent to kitchen</strong><span>Your table code already confirmed that you are seated here.</span><small>Your café team will prepare the order. Use the bell if you need help.</small><button type="button" onClick={() => { setOrderSent(false); setOrderMessage(''); setCartOpen(false); }}>Continue browsing</button></section> : <>{orderItems.length ? orderItems.map((item) => <div key={item.id}><span>{item.quantity}× {item.name}{item.variant ? ` · ${item.variant}` : ''}{item.addOns?.length ? ` · ${item.addOns.join(', ')}` : ''}{item.spiceLevel ? ` · ${item.spiceLevel}` : ''}</span><button type="button" aria-label={`Remove ${item.name}`} onClick={() => setOrderItems((rows) => rows.filter((row) => row.id !== item.id))}><X size={15} /></button></div>) : <p>Your cart is empty. Add items from the menu.</p>}{orderItems.length ? <><label>Your name <input value={orderName} onChange={(event) => setOrderName(event.target.value)} placeholder="Optional" /></label><button className="cafe-primary" type="button" disabled={placingOrder} onClick={() => void placeOrder()}>{placingOrder ? 'Sending…' : 'Place order'}</button></> : null}{orderMessage ? <p>{orderMessage}</p> : null}</>}</aside></> : null}
+      {tableAccessGranted && cartOpen ? <>
+        <button className="cafe-order-backdrop" type="button" aria-label="Close order" onClick={() => setCartOpen(false)} />
+        <aside className="cafe-order-cart" aria-live="polite">
+          <header><span><ShoppingCart size={18} /> Your order</span><button type="button" aria-label="Close order" onClick={() => setCartOpen(false)}><X size={18} /></button></header>
+          {orderSent ? <section className="cafe-order-confirmation"><strong>Order sent to kitchen</strong><span>Your table code already confirmed that you are seated here.</span><small>We will update the status here while your café team prepares it.</small><button type="button" onClick={() => { setOrderSent(false); setOrderMessage(''); setCartOpen(false); }}>Continue browsing</button></section> : <>
+            {orderItems.length ? orderItems.map((item) => <div key={item.id}><span>{item.quantity}× {item.name}{item.variant ? ` · ${item.variant}` : ''}{item.addOns?.length ? ` · ${item.addOns.join(', ')}` : ''}{item.spiceLevel ? ` · ${item.spiceLevel}` : ''}</span><button type="button" aria-label={`Remove ${item.name}`} onClick={() => setOrderItems((rows) => rows.filter((row) => row.id !== item.id))}><X size={15} /></button></div>) : <p>Your cart is empty. Add items from the menu.</p>}
+            {orderItems.length ? <><label>Your name <input value={orderName} onChange={(event) => setOrderName(event.target.value)} placeholder="Optional" /></label><button className="cafe-primary" type="button" disabled={placingOrder} onClick={() => void placeOrder()}>{placingOrder ? 'Sending…' : 'Place order'}</button></> : null}
+            {orderMessage ? <p>{orderMessage}</p> : null}
+          </>}
+          {tableOrders.length ? <section className="cafe-table-order-status" aria-label="Table order status">
+            <header><strong>Table order status</strong><small>Updates automatically</small></header>
+            <ol>{tableOrders.map((order) => {
+              const status = publicTableOrderStatus[order.status] || { label: 'Order received', detail: 'Your café team is handling your order.' };
+              return <li key={order.publicIdentifier} className={`is-${order.status}`}><span><b>Order #{order.number}</b><small>{status.detail}</small></span><em>{status.label}</em></li>;
+            })}</ol>
+          </section> : null}
+        </aside>
+      </> : null}
       {orderingAvailable ? <div className="cafe-table-service-actions">
         <button className="cafe-call-waiter" type="button" aria-label={callingWaiter ? 'Requesting waiter' : 'Request waiter'} disabled={callingWaiter} onClick={() => void callWaiter()}><span className="cafe-call-waiter-icon"><Bell size={19} /></span><span className="cafe-call-waiter-label">{callingWaiter ? 'Requesting…' : 'Request waiter'}</span></button>
       </div> : null}

@@ -827,6 +827,20 @@ class HospitalityWorkspaceTests(TestCase):
         self.assertEqual(unlocked.status_code, 200, unlocked.content)
         order_data['session'] = unlocked.json()['session']['publicIdentifier']
         self.assertEqual(self.client.post(order_url, data=json.dumps(order_data), content_type='application/json').status_code, 201)
+        progress = self.client.get(
+            f'/api/venue/{self.venue.public_identifier}/table-orders/',
+            {'table': str(table.public_identifier), 'session': order_data['session']},
+        )
+        self.assertEqual(progress.status_code, 200, progress.content)
+        self.assertEqual(progress.json()['table'], 'Table 9')
+        self.assertEqual(progress.json()['orders'][0]['status'], 'accepted')
+        self.assertEqual(
+            self.client.get(
+                f'/api/venue/{self.venue.public_identifier}/table-orders/',
+                {'table': str(table.public_identifier), 'session': 'not-this-session'},
+            ).status_code,
+            403,
+        )
         self.assertEqual(self.client.post(f'/api/venue/{self.venue.public_identifier}/waiter-call/', data=json.dumps({'table': str(table.public_identifier), 'session': order_data['session']}), content_type='application/json').status_code, 200)
 
     def test_full_ten_order_five_table_service_to_receipt_flow(self):
