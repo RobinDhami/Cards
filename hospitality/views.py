@@ -2339,8 +2339,12 @@ def venue_bills_manage_api(request, organization_id):
             return JsonResponse({'error': 'Cashiers can collect payment and print receipts. A manager must change charges, void, refund, or award loyalty.'}, status=403)
         try:
             with transaction.atomic():
+                # A table session always exists for a bill, but its linked table
+                # can be null. Do not join that optional relation while locking:
+                # PostgreSQL rejects FOR UPDATE on the nullable side of an outer
+                # join. The table is fetched normally when receipt data needs it.
                 bill = get_object_or_404(
-                    VenueBill.objects.select_for_update().select_related('table_session__table', 'venue__organization'),
+                    VenueBill.objects.select_for_update().select_related('table_session', 'venue__organization'),
                     venue=venue, pk=data.get('id'),
                 )
                 if action == 'update':
