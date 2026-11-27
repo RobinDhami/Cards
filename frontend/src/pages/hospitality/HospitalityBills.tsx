@@ -33,10 +33,13 @@ type Payment = {
   reference: string;
   paidAt: string;
 };
+type ReceiptSnapshot = {
+  business?: { name?: string; address?: string; phone?: string };
+};
 type Receipt = {
   number: string;
   issuedAt: string;
-  snapshot: Record<string, unknown>;
+  snapshot: ReceiptSnapshot;
 };
 type Bill = {
   id: number;
@@ -97,6 +100,10 @@ function receiptHtml(bill: Bill) {
           '"': "&quot;",
         })[character] || character,
     );
+  const business = bill.receipt?.snapshot.business;
+  const issuedAt = new Date(bill.paidAt || bill.openedAt);
+  const issuedAtLabel = issuedAt.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+  const payment = bill.payments[0];
   const items = bill.orders
     .flatMap((order) => order.items)
     .map(
@@ -104,7 +111,12 @@ function receiptHtml(bill: Bill) {
         `<tr><td>${escape(item.name)}${item.note ? `<small>${escape(item.note)}</small>` : ""}</td><td>${item.quantity}</td><td>Rs. ${money(Number(item.unitPrice) * item.quantity)}</td></tr>`,
     )
     .join("");
-  return `<!doctype html><html><head><title>${escape(bill.receipt?.number || bill.number)}</title><style>body{font:14px Arial,sans-serif;color:#172033;max-width:380px;margin:28px auto;padding:0 18px}h1{font-size:21px;margin:0 0 5px}p{color:#526174;margin:4px 0 18px}table{width:100%;border-collapse:collapse}td{padding:9px 0;border-bottom:1px solid #e4e8ee;vertical-align:top}td:nth-child(2){text-align:center}td:last-child{text-align:right}small{display:block;color:#68768a;margin-top:3px}.total td{border:0;padding:5px 0}.grand td{font-size:18px;font-weight:700;padding-top:11px;border-top:2px solid #172033}.status{margin-top:18px;padding:9px 11px;background:#eef5ff;border-radius:6px;font-weight:700}</style></head><body><h1>${escape(bill.receipt?.number || bill.number)}</h1><p>${escape(bill.table)} · ${new Date(bill.paidAt || bill.openedAt).toLocaleString()}</p><table><tbody>${items}<tr class="total"><td colspan="2">Subtotal</td><td>Rs. ${money(bill.subtotal)}</td></tr><tr class="total"><td colspan="2">Tax</td><td>Rs. ${money(bill.taxAmount)}</td></tr><tr class="total"><td colspan="2">Service charge</td><td>Rs. ${money(bill.serviceChargeAmount)}</td></tr><tr class="total"><td colspan="2">Discount</td><td>− Rs. ${money(bill.discountAmount)}</td></tr><tr class="grand"><td colspan="2">Total</td><td>Rs. ${money(bill.finalTotal)}</td></tr></tbody></table><div class="status">${escape(statusLabel[bill.status])}</div></body></html>`;
+  const optionalCharges = [
+    Number(bill.taxAmount) ? `<tr><td colspan="2">Tax</td><td>Rs. ${money(bill.taxAmount)}</td></tr>` : "",
+    Number(bill.serviceChargeAmount) ? `<tr><td colspan="2">Service charge</td><td>Rs. ${money(bill.serviceChargeAmount)}</td></tr>` : "",
+    Number(bill.discountAmount) ? `<tr><td colspan="2">Discount</td><td>− Rs. ${money(bill.discountAmount)}</td></tr>` : "",
+  ].join("");
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escape(bill.receipt?.number || bill.number)}</title><style>@page{size:80mm auto;margin:7mm}*{box-sizing:border-box}body{width:66mm;margin:0 auto;color:#151515;background:#fff;font:12px/1.4 Arial,Helvetica,sans-serif}.receipt-header{text-align:center}.receipt-header h1{margin:0 0 5px;font-size:21px;line-height:1.15;letter-spacing:-.2px}.receipt-header p{margin:1px 0;color:#292929}.rule{margin:15px 0;border:0;border-top:2px dotted #3d3d3d}.meta{display:grid;gap:3px}.meta-row{display:flex;justify-content:space-between;gap:12px}.meta-row span:last-child{text-align:right}.items{width:100%;border-collapse:collapse}.items th{padding:0 0 8px;text-align:left;font-size:11px;font-weight:500}.items th:nth-child(2),.items td:nth-child(2){width:12%;text-align:center}.items th:last-child,.items td:last-child{width:31%;text-align:right}.items td{padding:4px 0;vertical-align:top}.items small{display:block;margin-top:1px;color:#555;font-size:10px}.summary{width:100%;border-collapse:collapse}.summary td{padding:3px 0}.summary td:last-child{text-align:right}.summary .grand td{padding-top:9px;border-top:1px solid #222;font-size:18px;font-weight:800}.payment{margin:11px 0 0;text-align:center;font-size:11px}.payment strong{font-size:12px}.thanks{margin:16px 0 0;text-align:center;font-size:15px;font-weight:800;letter-spacing:.2px}.receipt-number{margin-top:9px;text-align:center;color:#555;font-size:10px}@media print{body{width:auto}.receipt-header h1{font-size:20px}}</style></head><body><header class="receipt-header"><h1>${escape(business?.name || "Receipt")}</h1>${business?.address ? `<p>${escape(business.address)}</p>` : ""}${business?.phone ? `<p>Tel: ${escape(business.phone)}</p>` : ""}</header><hr class="rule"><section class="meta"><div class="meta-row"><span>Receipt: ${escape(bill.receipt?.number || bill.number)}</span><span>${escape(bill.table)}</span></div><div class="meta-row"><span>${escape(issuedAtLabel)}</span><span>${escape(statusLabel[bill.status] || bill.status)}</span></div></section><hr class="rule"><table class="items"><thead><tr><th>Name</th><th>Qty</th><th>Price</th></tr></thead><tbody>${items}</tbody></table><hr class="rule"><table class="summary"><tbody><tr><td colspan="2">Subtotal</td><td>Rs. ${money(bill.subtotal)}</td></tr>${optionalCharges}<tr class="grand"><td colspan="2">Total</td><td>Rs. ${money(bill.finalTotal)}</td></tr></tbody></table>${payment ? `<p class="payment"><strong>Paid by ${escape(paymentLabel[payment.method] || payment.method)}</strong>${payment.reference ? `<br>${escape(payment.reference)}` : ""}</p>` : ""}<p class="thanks">THANK YOU!</p><p class="receipt-number">${escape(bill.receipt?.number || bill.number)}</p></body></html>`;
 }
 
 export function HospitalityBills({
