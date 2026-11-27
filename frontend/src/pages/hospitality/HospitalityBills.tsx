@@ -275,16 +275,35 @@ export function HospitalityBills({
     const receiptWindow = window.open(
       "",
       "_blank",
-      "noopener,noreferrer,width=440,height=720",
+      "width=440,height=720",
     );
     if (!receiptWindow) {
       setError("Allow pop-ups to print this receipt.");
       return;
     }
-    receiptWindow.document.write(receiptHtml(bill));
-    receiptWindow.document.close();
-    receiptWindow.focus();
-    receiptWindow.print();
+    // `noopener` on an about:blank popup makes Chrome detach the new window
+    // before its document can be populated, leaving staff with a blank tab.
+    // This page is generated locally and contains no external navigation.
+    try {
+      receiptWindow.opener = null;
+      receiptWindow.document.open();
+      receiptWindow.document.write(receiptHtml(bill));
+      receiptWindow.document.close();
+      let printed = false;
+      const printWhenReady = () => {
+        if (printed || receiptWindow.closed) return;
+        printed = true;
+        receiptWindow.focus();
+        receiptWindow.print();
+      };
+      receiptWindow.addEventListener("load", () => window.setTimeout(printWhenReady, 100), { once: true });
+      // Some browsers mark an about:blank window as loaded before the listener
+      // is attached, so keep a small ready-state fallback.
+      if (receiptWindow.document.readyState === "complete") window.setTimeout(printWhenReady, 100);
+    } catch {
+      receiptWindow.close();
+      setError("We could not prepare this receipt. Please try again.");
+    }
   }
 
   return (
